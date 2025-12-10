@@ -1,0 +1,149 @@
+# assume all env config files under project_root/config directory
+client_env_path: config/.env
+mcp_env_path: config/.mcpenv
+shared_env_path: config/.sharedenv
+
+mcp_server:
+#  slack: http://localhost:8000/mcpslack
+#  google_mail: http://localhost:8001/mcpgmail
+#  weather: http://localhost:8002/mcpweather
+#  gdrive: http://localhost:8003/mcpgdrive
+   webarena: http://localhost:8000/
+
+agent_llm_provider: openai
+agent_llm_model: gpt-4.1
+
+llm_access_retry: 3
+
+llm_providers:
+ openai:
+  - model: gpt-5
+    temp: 1.0
+
+  - model: gpt-5-mini
+    temp: 1.0
+
+  - model: gpt-5-nano
+    temp: 1.0
+
+  - model: gpt-4.1
+    temp: 0.0
+
+  - model: gpt-4o
+    temp: 1.0
+
+  - model: o3
+    temp: 1.0
+
+  - model: o3-mini
+    temp: 1.0
+
+  - model: o4-mini
+    temp: 1.0
+
+ anthropic:
+  - model: claude-3-7-sonnet-20250219
+    temp: 1.0
+
+  - model: claude-opus-4-1-20250805
+    temp: 1.0
+
+  - model: claude-sonnet-4-0
+    temp: 1.0
+
+  - model: claude-sonnet-3-7
+    temp: 1.0
+
+ google:
+  - model: gemini-1.5-flash
+    temp: 1.0
+  - model: gemini-1.5-pro
+    temp: 1.0
+  - model: gemini-1.0-pro
+    temp: 1.0
+  - model: text-bison
+    temp: 1.0
+  - model: chat-bison
+    temp: 1.0
+  - model: gemini-2.5-flash
+    temp: 1.0
+  - model: gemini-2.5-flash-lite
+    temp: 1.0
+
+# app_list:
+#   - shopping
+
+# suites:
+#   suite1:
+#     apps:
+#       - google_mail
+#       - google_calendar
+#       - google_drive 
+#   suite2:
+#     apps:
+#       - google_mail
+#       - dropbox
+#       - slack
+
+
+
+# scope_hierarchy: 
+#   mapping: data/mapping/{APP}_mapping.json
+#   tree: data/tree/{APP}_tree.json
+
+# mcp_reverse_mapping: miniscope/mcp/server/{APP}/reverse_mapping.json
+
+
+# Evaluation
+
+# Synthetic requests
+eval_prompts:
+  # scope coverage benchmark
+  single_app_multi_methods: data/evaluation/single_app_multi_methods/{APP1}.json
+  single_app_single_methods: data/evaluation/single_app_single_methods/{APP1}.json
+  multi_app_multi_methods: data/evaluation/multi_app_multi_methods/{APP1}.json # misleading name, APP is actually a suite defined in suite_dict
+  # end-to-end benchmark
+  real_accounts_single: data/evaluation/real_accounts_single/{PROVIDER}/{MODEL}/{APP1}.json
+  real_accounts_multiple: data/evaluation/real_accounts_multiple/{PROVIDER}/{MODEL}/{APP1}.json
+  real_accounts_cross_app: data/evaluation/real_accounts_multiple/{PROVIDER}/{MODEL}/{APP1}_{APP2}.json
+
+
+
+# llm
+llm_solution:
+  single_app_multi_methods: data/results/{PROVIDER}/{MODEL}/{APP1}/{APP1}_llm_single_app_multi_methods_solutions.json
+  single_app_single_methods: data/results/{PROVIDER}/{MODEL}/{APP1}/{APP1}_llm_single_app_single_methods_solutions.json
+  multi_app_multi_methods: data/results/{PROVIDER}/{MODEL}/{APP1}/{APP1}_llm_multi_app_multi_methods_solutions.json
+
+miniscope_solution:
+  single_app_multi_methods: data/results/miniscope/{APP1}/{APP1}_miniscope_single_app_multi_methods_solutions.json
+  single_app_single_methods: data/results/miniscope/{APP1}/{APP1}_miniscope_single_app_single_methods_solutions.json
+  multi_app_multi_methods:  data/results/miniscope/{APP1}/{APP1}_miniscope_multi_app_multi_methods_solutions.json
+
+test_accounts:
+  gmail:
+    - name: <name1>
+      email: <email1>
+
+    - name: <name2>
+      email: <email2>
+
+  gdrive:
+    - name: <name1>
+      email: <email1>
+
+    - name: <name2>
+      email: <email2>
+
+  slack:
+     - name: <name1>
+       email: <email1>
+       user_id: <user_id1>
+
+     - name: <name2>
+       email: <email2>
+       user_id: <user_id2>
+
+  slack_gmail:
+     - example: list Slack channels → create a Gmail draft summarizing them
+     - example: a Slack channel_id can be reused only in gmail tools/args that accept a channel; a gmail draft_id only in gmail tools/args that accept a draft.
