@@ -24,7 +24,10 @@ API_PREFIX = "/rest/V1"
 DEFAULT_TIMEOUT = 30.0
 
 # Store tokens for authenticated requests
-auth_tokens = {"customer": None, "admin": None}
+auth_tokens = {
+    "customer": "eyJraWQiOiIxIiwiYWxnIjoiSFMyNTYifQ.eyJ1aWQiOjM1LCJ1dHlwaWQiOjMsImlhdCI6MTc2MzU5OTAyNiwiZXhwIjoxNzYzNjAyNjI2fQ.M7yJ5UunbrCRHpcgZ347LwuEorK9dK5sFJMFG3FS5AE",
+    "admin": None,
+}
 
 
 class AuthCredentials(BaseModel):
@@ -105,10 +108,15 @@ async def make_request(
 
     async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
         try:
+            print(
+                f"Making {method} request to {url} with data: {data} and headers: {headers}"
+            )
             response = await client.request(
                 method=method, url=url, headers=headers, json=data
             )
             response.raise_for_status()
+            print(f"Response status: {response.status_code}")
+            print(f"Response content: {response.text}")
 
             # Handle empty responses
             if response.text:
@@ -149,7 +157,7 @@ async def customer_login(credentials: AuthCredentials) -> Dict[str, Any]:
         {"username": credentials.username, "password": credentials.password},
     )
 
-    if not result.get("error") and isinstance(result, str):
+    if isinstance(result, str) and "error" not in result.lower():
         auth_tokens["customer"] = result
         return {"token": result, "message": "Login successful"}
     return result

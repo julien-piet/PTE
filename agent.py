@@ -989,6 +989,7 @@ class PlanThenExecuteAgent:
                     result_value = outcome
 
         except Exception:
+            breakpoint()
             return ExecutionResult(
                 success=False,
                 attempt=attempt,
