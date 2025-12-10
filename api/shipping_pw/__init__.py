@@ -8,6 +8,11 @@ from .constants import (
     ORDER_HISTORY_URL,
     LOGIN_URL,
 )
+from .config import (
+    DEFAULT_CUSTOMER_EMAIL,
+    DEFAULT_CUSTOMER_PASSWORD,
+    get_default_customer_credentials,
+)
 from .shipping import Address, ShippingStepResult, complete_shipping_step
 from .search import (
     AdvancedSearchQuery,
@@ -68,6 +73,9 @@ __all__ = [
     "WISHLIST_URL",
     "ORDER_HISTORY_URL",
     "LOGIN_URL",
+    "DEFAULT_CUSTOMER_EMAIL",
+    "DEFAULT_CUSTOMER_PASSWORD",
+    "get_default_customer_credentials",
     "Address",
     "ShippingStepResult",
     "complete_shipping_step",
