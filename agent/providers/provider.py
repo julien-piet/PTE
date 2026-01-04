@@ -30,7 +30,7 @@ class ModelProvider(object):
                     f"Unsupported model provider: {self.config.llm_provider.lower()}"
                 )
         try:
-            module = importlib.import_module(f'miniscope.providers.{provider}')
+            module = importlib.import_module(f'agent.providers.{provider}')
             provider_class = getattr(module, MODEL_PROVIDERS.get(provider, DEFAULT_PROVIDER) )
             provider_instance = provider_class(self.config)
             return provider_instance

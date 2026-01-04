@@ -781,7 +781,7 @@ class ToolCallAgent:
         workflow.add_node("router", self.router)  # Routing node
         workflow.add_node("planner", self.planner)  # Creates draft plan with tool selection
         workflow.add_node("requirement_analyzer", self.requirement_analyzer)  # Checks other requirements
-        workflow.add_node("argument_mapper", self.argument_mapper)
+        # workflow.add_node("argument_mapper", self.argument_mapper)
         workflow.add_node("executor", self.executor)
         workflow.add_node("responder", self.responder)
 
@@ -948,6 +948,10 @@ async def main():
     parser = argparse.ArgumentParser(description="Enhanced Agent with Routing and Requirement Analysis")
     parser.add_argument("--miniscope", action="store_true", default=False,
                         help="Enable miniscope interceptor node (default: False)")
+    parser.add_argument("--provider", type=str, default=None,
+                        help="LLM provider: openai, anthropic, or google (overrides config)")
+    parser.add_argument("--model", type=str, default=None,
+                        help="Model name (overrides config, e.g., 'gpt-4.1', 'claude-sonnet-3-7')")
     args = parser.parse_args()
     
     # Load configuration
@@ -958,8 +962,8 @@ async def main():
     config.get_mcp_servers()
     
 
-    # Initialize model
-    provider = ModelProvider(config)
+    # Initialize model (use command-line args if provided, otherwise use config)
+    provider = ModelProvider(config, model_provider=args.provider, model_name=args.model)
     print(provider.llm_provider + ":" + provider.model_name)
     llm_signature = provider.llm_provider + ":" + provider.model_name
 
@@ -972,7 +976,7 @@ async def main():
 
     # Optionally: Authenticate and save tokens to .env file
     # Uncomment the line below to authenticate and save tokens:
-    await setup_authentication(tools, token_store, config)
+    # await setup_authentication(tools, token_store, config)
 
     # Run interactive session with tools
     await run_interactive_session(llm=llm_signature, miniscope=args.miniscope, tools=tools)

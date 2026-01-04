@@ -1,4 +1,4 @@
-# agent_models_and_helpers.py
+# tracks which steps are ready, completed, failed, and manages dependencies between steps
 from __future__ import annotations
 
 from dataclasses import dataclass

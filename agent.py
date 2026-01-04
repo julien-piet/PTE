@@ -300,11 +300,7 @@ def _parse_api_file(
 
 
 
-class ChatMessage(BaseModel):
-    """Minimal chat message schema for LLM clients."""
-
-    role: Literal["system", "user", "assistant"]
-    content: str
+from agent.common.types import ChatMessage
 
 
 class StepLog(BaseModel):
@@ -335,10 +331,7 @@ class RequirementAnalysisResult(BaseModel):
     notes: Optional[str] = None
 
 
-class ChatModel(Protocol):
-    """Simple protocol an LLM client must satisfy."""
-
-    def complete(self, messages: Sequence[ChatMessage]) -> str: ...
+from agent.common.types import ChatModel
 
 
 class AgentConfig(BaseModel):

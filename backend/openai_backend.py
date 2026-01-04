@@ -5,7 +5,7 @@ OpenAI-backed ChatModel implementation.
 import os
 from typing import Sequence
 
-from agent import ChatMessage, ChatModel
+from agent.common.types import ChatMessage, ChatModel
 
 
 class OpenAIChatModel(ChatModel):
