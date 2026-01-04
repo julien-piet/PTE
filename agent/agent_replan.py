@@ -504,6 +504,104 @@ class ToolCallAgent:
 
         return state
 
+    ## PLAN REVIEWER NODE##
+    async def plan_reviewer(self, state: AgentState) -> AgentState:
+        """
+        Plan Reviewer: Reviews the plan after requirement analysis and updates it if needed.
+        Checks if the plan needs to be modified based on requirements context, user inputs, etc.
+        """
+        plan = state.get("plan")
+        if not plan:
+            return state
+
+        messages = state.get("messages", [])
+        task = self._extract_user_query(messages)
+        api_context = state.get("api_context", "")
+        requirements_context = state.get("requirements_context", "")
+        user_inputs = state.get("user_inputs", {})
+
+        if not task:
+            return state
+
+        try:
+            # Convert plan to string representation
+            plan_str = pretty_print_plan(plan) if plan else ""
+
+            # Create a plan review agent
+            review_agent = Agent(
+                self.llm if isinstance(self.llm, str) else str(self.llm),
+                output_type=str,
+                system_prompt=(
+                    "You are an expert at reviewing and refining execution plans. "
+                    "Review the plan and determine if it needs updates based on the requirements analysis. "
+                    "If the plan is good as-is, respond with 'NO_CHANGES_NEEDED'. "
+                    "If changes are needed, provide a JSON response with the updated plan structure."
+                )
+            )
+
+            review_prompt = (
+                f"Task: {task}\n\n"
+                f"Current Plan:\n{plan_str}\n\n"
+                f"Requirements Context:\n{requirements_context}\n\n"
+                f"User Inputs Provided: {user_inputs}\n\n"
+                f"API Context:\n{api_context}\n\n"
+                "Review this plan and determine if any changes are needed based on the requirements analysis. "
+                "Consider:\n"
+                "1. Are all required inputs accounted for in the plan?\n"
+                "2. Do the tool calls match the requirements context?\n"
+                "3. Are there any logical issues or missing steps?\n"
+                "4. Should the plan be updated with the user inputs or model decisions?\n\n"
+                "If no changes are needed, respond with: 'NO_CHANGES_NEEDED'\n"
+                "If changes are needed, provide guidance on what should be updated."
+            )
+
+            result = await review_agent.run(review_prompt)
+            review_output = result.output.strip()
+
+            if "NO_CHANGES_NEEDED" in review_output.upper():
+                print("\n✅ Plan review: No changes needed, proceeding to execution")
+                return state
+
+            # If changes are suggested, re-plan with updated context
+            print(f"\n⚠️ Plan review suggests changes:\n{review_output}")
+            print("🔄 Re-planning with updated requirements context...")
+            
+            # Re-run planner with enhanced context including requirements and review feedback
+            enhanced_query = f"{task}\n\n"
+            if requirements_context and requirements_context != "No additional requirement notes.":
+                enhanced_query += f"Requirements Context:\n{requirements_context}\n\n"
+            if user_inputs:
+                enhanced_query += f"User Provided Values:\n"
+                for key, value in user_inputs.items():
+                    enhanced_query += f"  - {key}: {value}\n"
+                enhanced_query += "\n"
+            if review_output:
+                enhanced_query += f"Plan Review Feedback:\n{review_output}\n\n"
+            if api_context:
+                enhanced_query += f"Available APIs:\n{api_context}"
+            
+            message_history = self.get_message_history(state)
+            result = await self.planning_agent.run(
+                enhanced_query,
+                message_history=message_history,
+                model_settings=ModelSettings(temperature=0.0)
+            )
+            plan_model = result.output
+            
+            # Validate the updated plan
+            if validate_plan(plan_model):
+                state["plan"] = plan_model.steps
+                print("✅ Plan updated based on review")
+                print(pretty_print_plan(state["plan"]))
+            else:
+                print("⚠️ Updated plan validation failed, using original plan")
+
+        except Exception as e:
+            print(f"Plan review error: {e}")
+            # Continue with original plan if review fails
+
+        return state
+
 
     ## PLANNER NODE##
     async def planner(self, state: AgentState) -> AgentState:
@@ -781,6 +879,7 @@ class ToolCallAgent:
         workflow.add_node("router", self.router)  # Routing node
         workflow.add_node("planner", self.planner)  # Creates draft plan with tool selection
         workflow.add_node("requirement_analyzer", self.requirement_analyzer)  # Checks other requirements
+        workflow.add_node("plan_reviewer", self.plan_reviewer)  # Reviews and validates plan before execution
         # workflow.add_node("argument_mapper", self.argument_mapper)
         workflow.add_node("executor", self.executor)
         workflow.add_node("responder", self.responder)
@@ -790,7 +889,8 @@ class ToolCallAgent:
         workflow.set_entry_point("router")  # Start with routing
         workflow.add_edge("router", "planner")  # Route -> Plan (draft with tool selection)
         workflow.add_edge("planner", "requirement_analyzer")  # Plan -> Check Other Requirements
-        workflow.add_edge("requirement_analyzer", "executor")  # Requirements -> Execute
+        workflow.add_edge("requirement_analyzer", "plan_reviewer")  # Requirements -> Review Plan
+        workflow.add_edge("plan_reviewer", "executor")  # Plan Review -> Execute
 
         workflow.add_conditional_edges("executor", self.replanning, { ##replanning React might need to remove
             "responder": "responder",
@@ -897,6 +997,9 @@ async def run_interactive_session(llm=None, miniscope=False, tools=None):
             # Run requirement analyzer
             state = await agent.requirement_analyzer(state)
             
+            # Run plan reviewer
+            state = await agent.plan_reviewer(state)
+            
             print("\r" + " " * 60 + "\r", end="")  # Clear the "Processing..." message
             
             # Display results
@@ -948,10 +1051,6 @@ async def main():
     parser = argparse.ArgumentParser(description="Enhanced Agent with Routing and Requirement Analysis")
     parser.add_argument("--miniscope", action="store_true", default=False,
                         help="Enable miniscope interceptor node (default: False)")
-    parser.add_argument("--provider", type=str, default=None,
-                        help="LLM provider: openai, anthropic, or google (overrides config)")
-    parser.add_argument("--model", type=str, default=None,
-                        help="Model name (overrides config, e.g., 'gpt-4.1', 'claude-sonnet-3-7')")
     args = parser.parse_args()
     
     # Load configuration
@@ -962,8 +1061,8 @@ async def main():
     config.get_mcp_servers()
     
 
-    # Initialize model (use command-line args if provided, otherwise use config)
-    provider = ModelProvider(config, model_provider=args.provider, model_name=args.model)
+    # Initialize model
+    provider = ModelProvider(config)
     print(provider.llm_provider + ":" + provider.model_name)
     llm_signature = provider.llm_provider + ":" + provider.model_name
 
