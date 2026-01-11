@@ -2,6 +2,7 @@
 client_env_path: config/.env
 mcp_env_path: config/.mcpenv
 shared_env_path: config/.sharedenv
+server_env_path: config/.server_env
 
 mcp_server:
 #  slack: http://localhost:8000/mcpslack

@@ -162,6 +162,10 @@ class Configurator:
     def load_shared_env(self):
         p = os.path.join(self.project_root, self.get_key('shared_env_path'))
         load_dotenv(dotenv_path=p)
+    
+    def load_server_env(self):
+        p = os.path.join(self.project_root, self.get_key('server_env_path'))
+        load_dotenv(dotenv_path=p)
 
     def get_hostname_port(self, url):
         parsed = urlparse(url)

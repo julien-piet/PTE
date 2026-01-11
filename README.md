@@ -55,7 +55,7 @@ source venv/bin/activate  # On macOS/Linux
 venv\Scripts\activate  # On Windows
 
 # Run the agent
-python3 agent/agent_replan.py
+python3 python3 -m agent.agent_replan
 ```
 
 The agent will:

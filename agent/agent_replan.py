@@ -47,8 +47,6 @@ from agent.strict_planner import (
     pretty_print_plan
 )
 
-permissions_handler = None
-
 # Utility functions for JSON parsing
 def _load_json_from_text(text: str) -> Optional[object]:
     """Attempt to parse the first JSON payload embedded in text."""
@@ -82,6 +80,44 @@ def _strip_code_fences(text: str) -> str:
         if cleaned.endswith("```"):
             cleaned = "\n".join(cleaned.splitlines()[:-1])
     return cleaned.strip()
+
+
+def _extract_text_from_review(text: str) -> str:
+    """Extract text explanation from review output, removing JSON code blocks."""
+    # Find the position of the first code fence (```json or ```)
+    # This handles the case where JSON is in a code block
+    code_fence_pattern = r'```(?:json)?\s*\n'
+    match = re.search(code_fence_pattern, text, re.IGNORECASE)
+    
+    if match:
+        # Extract everything before the code fence
+        text = text[:match.start()].strip()
+    
+    # Also handle standalone JSON blocks (without code fences)
+    # Look for lines that start with { and contain JSON structure indicators
+    lines = text.splitlines()
+    filtered_lines = []
+    
+    for line in lines:
+        stripped = line.strip()
+        # Stop at lines that look like the start of a JSON block
+        # Check for common JSON structure indicators
+        if stripped.startswith('{') and (
+            'steps' in stripped.lower() or 
+            'step_id' in stripped.lower() or 
+            '"step_id"' in stripped or
+            len(stripped) < 50  # Short line starting with { is likely JSON start
+        ):
+            break  # Stop processing at the first JSON block
+        filtered_lines.append(line)
+    
+    result = '\n'.join(filtered_lines).strip()
+    
+    # Final cleanup: remove any remaining JSON artifacts
+    # Remove patterns like single-line JSON objects
+    result = re.sub(r'\s*\{[^}]*"[^"]*"\s*:\s*"[^"]*"[^}]*\}\s*', '', result)
+    
+    return result.strip()
 
 
 class ToolCallAgent:
@@ -488,12 +524,7 @@ class ToolCallAgent:
 
             if model_decisions or defaults or user_inputs:
                 print(f"\n✅ Requirement analysis complete:")
-                if model_decisions:
-                    print(f"  Model decisions: {[r.name for r in model_decisions]}")
-                if defaults:
-                    print(f"  Using defaults: {[r.name for r in defaults]}")
-                if user_inputs:
-                    print(f"  User provided: {list(user_inputs.keys())}")
+                print(state["requirements_context"])
 
         except Exception as e:
             print(f"Requirement analysis error: {e}")
@@ -504,11 +535,11 @@ class ToolCallAgent:
 
         return state
 
-    ## PLAN REVIEWER NODE##
-    async def plan_reviewer(self, state: AgentState) -> AgentState:
+    ## REPLANNING NODE##
+    async def replanning(self, state: AgentState) -> AgentState:
         """
-        Plan Reviewer: Reviews the plan after requirement analysis and updates it if needed.
-        Checks if the plan needs to be modified based on requirements context, user inputs, etc.
+        Replanning: Reviews the plan after requirement analysis and updates it if needed.
+        Checks if the plan is good - if yes, proceeds to executor. If not, replans and then proceeds to executor.
         """
         plan = state.get("plan")
         if not plan:
@@ -559,11 +590,14 @@ class ToolCallAgent:
             review_output = result.output.strip()
 
             if "NO_CHANGES_NEEDED" in review_output.upper():
-                print("\n✅ Plan review: No changes needed, proceeding to execution")
+                print("\n✅ Replanning: Plan is good, no changes needed, proceeding to execution")
                 return state
 
+            # Extract text explanation without JSON code blocks
+            review_text = _extract_text_from_review(review_output)
+            
             # If changes are suggested, re-plan with updated context
-            print(f"\n⚠️ Plan review suggests changes:\n{review_output}")
+            print(f"\n⚠️ Replanning: Plan needs changes:\n{review_text}")
             print("🔄 Re-planning with updated requirements context...")
             
             # Re-run planner with enhanced context including requirements and review feedback
@@ -671,10 +705,9 @@ class ToolCallAgent:
             return state
 
         # Initialize execution context if not present
-        
-        # if "execution_context" not in state or state["execution_context"] is None:
-        #     state["execution_context"] = ExecutionContext(plan)
-        state["execution_context"] = ExecutionContext(plan)
+        # CRITICAL: Only create new context if it doesn't exist, otherwise reuse to preserve progress
+        if "execution_context" not in state or state["execution_context"] is None:
+            state["execution_context"] = ExecutionContext(plan)
         ctx = state["execution_context"]
 
         # Get steps ready to execute (all dependencies completed)
@@ -712,7 +745,6 @@ class ToolCallAgent:
 
                 # Mark as completed in context
                 ctx.mark_completed(step_id, result)
-                # print("added summary: ", f"{step_id}({tool_name}) => {result}")
                 ctx.add_summary(f"{step_id}({tool_name}) => {result}")
                 if "Insufficient permissions to execute this function" in result:
                     print("❌ Permission denied for this tool call.")
@@ -773,9 +805,32 @@ class ToolCallAgent:
                     )
                     # tool return trace
                     output = ctx.get_step_output(step_id)
+                    # Convert output to proper format: ensure it's a dict or string, not raw int/other types
+                    if output is None:
+                        output_dict = None
+                    elif isinstance(output, dict):
+                        output_dict = output
+                    elif isinstance(output, str):
+                        # Try to parse as JSON, otherwise use as string
+                        try:
+                            output_dict = json.loads(output)
+                        except (json.JSONDecodeError, TypeError):
+                            output_dict = {"result": output}
+                    else:
+                        # Convert non-dict types (int, list, etc.) to dict
+                        output_dict = {"result": str(output)}
+                    
+                    # Truncate large outputs to prevent token limit issues (keep first 2000 chars)
+                    if output_dict and isinstance(output_dict, dict):
+                        for key, value in output_dict.items():
+                            if isinstance(value, str) and len(value) > 2000:
+                                output_dict[key] = value[:2000] + "... [truncated]"
+                            elif isinstance(value, (list, dict)) and len(str(value)) > 2000:
+                                output_dict[key] = str(value)[:2000] + "... [truncated]"
+                    
                     message_history.append(
                         ModelRequest(parts=[
-                            ToolReturnPart(tool_name=tool_name, content=output, tool_call_id=step_id)
+                            ToolReturnPart(tool_name=tool_name, content=output_dict, tool_call_id=step_id)
                         ])
                     )
 
@@ -808,7 +863,6 @@ class ToolCallAgent:
 
         messages = state.get("messages", [])
         message_history = self.get_message_history(state)
-        # print(f"Message history: {message_history}")
 
         # Current user query (last message)
         user_query = ""
@@ -848,24 +902,6 @@ class ToolCallAgent:
 
         state['plan'] = None # reset the plan
         return state
-    
-    ## REPLANNING NODE##
-    def replanning(self, state: AgentState) -> str:
-        """
-        Replanning: Replans the state if the previous plan is not complete.
-        """
-        ctx = state.get('execution_context')
-        if ctx is None:
-            return "responder"
-        
-        denial_message = "Insufficient permissions to execute this function"
-        summaries = ctx.tool_summaries if hasattr(ctx, 'tool_summaries') else []
-        
-        if not ctx.is_complete() and all([denial_message not in str(summary) for summary in summaries]):
-            print("Replanning...")
-            return "planner"
-        else:
-            return "responder" # previous plan is complete, so we can respond
 
     
     def _create_graph(self):
@@ -879,23 +915,49 @@ class ToolCallAgent:
         workflow.add_node("router", self.router)  # Routing node
         workflow.add_node("planner", self.planner)  # Creates draft plan with tool selection
         workflow.add_node("requirement_analyzer", self.requirement_analyzer)  # Checks other requirements
-        workflow.add_node("plan_reviewer", self.plan_reviewer)  # Reviews and validates plan before execution
         # workflow.add_node("argument_mapper", self.argument_mapper)
+        workflow.add_node("replanning", self.replanning)  # Reviews plan and replans if needed
         workflow.add_node("executor", self.executor)
         workflow.add_node("responder", self.responder)
 
 
         # Define edges
         workflow.set_entry_point("router")  # Start with routing
-        workflow.add_edge("router", "planner")  # Route -> Plan (draft with tool selection)
-        workflow.add_edge("planner", "requirement_analyzer")  # Plan -> Check Other Requirements
-        workflow.add_edge("requirement_analyzer", "plan_reviewer")  # Requirements -> Review Plan
-        workflow.add_edge("plan_reviewer", "executor")  # Plan Review -> Execute
-
-        workflow.add_conditional_edges("executor", self.replanning, { ##replanning React might need to remove
-            "responder": "responder",
-            "planner": "planner",
-        })
+        workflow.add_edge("router", "planner")  # Route -> Plan
+        workflow.add_edge("planner", "requirement_analyzer")  # Plan -> Check Requirements
+        workflow.add_edge("requirement_analyzer", "replanning")  # Requirements -> Replanning (conditional)
+        workflow.add_edge("replanning", "executor")  # Replanning -> Execute
+        
+        # Executor can loop back to itself if there are more steps to execute
+        # Or go to responder when all steps are complete
+        def should_continue_execution(state: AgentState) -> str:
+            """Determine if executor should continue or move to responder."""
+            ctx = state.get("execution_context")
+            if ctx is None:
+                return "responder"
+            
+            # If execution is complete, go to responder
+            if ctx.is_complete():
+                print(f"\n✅ All steps completed! {ctx.get_progress()}")
+                return "responder"
+            
+            # Check if there are ready steps to execute (dependencies met)
+            ready_steps = ctx.get_ready_steps()
+            if ready_steps:
+                return "executor"  # More steps ready, continue executing
+            
+            # No ready steps but not complete - could be waiting for dependencies or stuck
+            # For now, if no ready steps and not complete, assume we're done (some steps may have failed)
+            return "responder"
+        
+        workflow.add_conditional_edges(
+            "executor",
+            should_continue_execution,
+            {
+                "executor": "executor",  # Loop back to execute more steps
+                "responder": "responder",  # All done, generate response
+            }
+        )
         workflow.add_edge("responder", END)
 
         # Compile the graph
@@ -916,7 +978,7 @@ class ToolCallAgent:
         return await self.graph.ainvoke(state)
 
 
-async def run_interactive_session(llm=None, miniscope=False, tools=None):
+async def run_interactive_session(llm=None, miniscope=False, tools=None, planner_only=False):
     """
     Runs an interactive command-line session with the agent.
 
@@ -924,6 +986,8 @@ async def run_interactive_session(llm=None, miniscope=False, tools=None):
         llm: Optional language model instance to pass to the agent.
         miniscope: If True, include interceptor node in the graph.
         tools: Dictionary of available tools.
+        planner_only: If True, only run planning nodes (router, planner, requirement_analyzer, replanning) 
+                     without executing the plan. If False, run full graph including executor.
     """
     agent = ToolCallAgent(llm=llm, miniscope=miniscope, tools=tools)
 
@@ -947,7 +1011,6 @@ async def run_interactive_session(llm=None, miniscope=False, tools=None):
 
         # Skip empty inputs
         if not user_input:
-            permissions_handler.permission_manager.cleanup_session()
             break
 
         # Add user message to conversation history
@@ -971,63 +1034,64 @@ async def run_interactive_session(llm=None, miniscope=False, tools=None):
             "auth_requirements": None,
         }
 
-        ##UNCOMMENT AFTER TESTING
-        # # Invoke the agent (async)
-        # print("\nAgent: Processing...", end="", flush=True)
-        #     # try:
-        # result = await agent.invoke(state)
-        # print("\r" + " " * 30 + "\r", end="")  # Clear the "Processing..." message
+        if planner_only:
+            # Planner-only mode: run planner and show plan (do not execute)
+            print("\nAgent: Planning...", end="", flush=True)
+            try:
+                # Run router
+                state = await agent.router(state)
+                
+                # Run planner
+                state = await agent.planner(state)
+                
+                # Run requirement analyzer
+                state = await agent.requirement_analyzer(state)
+                
+                # Run replanning
+                state = await agent.replanning(state)
+                
+                print("\r" + " " * 60 + "\r", end="")  # Clear the "Processing..." message
+                
+                # Display results
+                plan = state.get("plan")
+                if plan:
+                    print("\n=== Generated Plan ===")
+                    try:
+                        print(pretty_print_plan(plan))
+                    except Exception:
+                        print(plan)
 
-        # # Display the response
-        # response = result.get("response", "No response generated")
-        # print(f"Agent: {response}")
+                    
+                    print("\n✅ Plan and requirements ready. Execution stopped before running tools.")
+                else:
+                    print("No plan generated.")
+                    
+            except asyncio.TimeoutError:
+                print("\nProcessing timed out")
+            except Exception as e:
+                print(f"\nError: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            # Executor mode: run full graph including executor
+            print("\nAgent: Processing...", end="", flush=True)
+            try:
+                result = await agent.invoke(state) #invoke runs full graph including executor
+                print("\r" + " " * 30 + "\r", end="")  # Clear the "Processing..." message
 
-        # # Add agent response to conversation history
-        # conversation_history.append({"role": "assistant", "content": response})
+                # Display the response
+                response = result.get("response", "No response generated")
+                print(f"Agent: {response}")
 
-        # Planner-only mode: run planner and show plan (do not execute)
-        print("\nAgent: Planning...", end="", flush=True)
-        try:
-            # Run router
-            state = await agent.router(state)
-            
-            # Run planner
-            state = await agent.planner(state)
-            
-            # Run requirement analyzer
-            state = await agent.requirement_analyzer(state)
-            
-            # Run plan reviewer
-            state = await agent.plan_reviewer(state)
-            
-            print("\r" + " " * 60 + "\r", end="")  # Clear the "Processing..." message
-            
-            # Display results
-            plan = state.get("plan")
-            if plan:
-                print("\n=== Generated Plan ===")
-                try:
-                    print(pretty_print_plan(plan))
-                except Exception:
-                    print(plan)
+                # Add agent response to conversation history
+                conversation_history.append({"role": "assistant", "content": response})
                 
-               
-                
-                req_context = state.get("requirements_context")
-                if req_context and req_context != "No additional requirement notes.":
-                    print("\n=== Requirement Analysis ===")
-                    print(req_context)
-                
-                print("\n✅ Plan and requirements ready. Execution stopped before running tools.")
-            else:
-                print("No plan generated.")
-                
-        except asyncio.TimeoutError:
-            print("\nProcessing timed out")
-        except Exception as e:
-            print(f"\nError: {e}")
-            import traceback
-            traceback.print_exc()
+            except asyncio.TimeoutError:
+                print("\nProcessing timed out")
+            except Exception as e:
+                print(f"\nError: {e}")
+                import traceback
+                traceback.print_exc()
 
 
         # Optionally show debug info
@@ -1051,12 +1115,15 @@ async def main():
     parser = argparse.ArgumentParser(description="Enhanced Agent with Routing and Requirement Analysis")
     parser.add_argument("--miniscope", action="store_true", default=False,
                         help="Enable miniscope interceptor node (default: False)")
+    parser.add_argument("--planner-only", action="store_true", default=False,
+                        help="Run in planner-only mode (no execution). If False, runs full graph including executor (default: False)")
     args = parser.parse_args()
     
     # Load configuration
     config = Configurator()
     config.load_client_env()
     config.load_shared_env()
+    config.load_server_env()  # Load server tokens from .server_env
     config.check_llm_env_vars()
     config.get_mcp_servers()
     
@@ -1078,7 +1145,7 @@ async def main():
     # await setup_authentication(tools, token_store, config)
 
     # Run interactive session with tools
-    await run_interactive_session(llm=llm_signature, miniscope=args.miniscope, tools=tools)
+    await run_interactive_session(llm=llm_signature, miniscope=args.miniscope, tools=tools, planner_only=args.planner_only)
 
 
 if __name__ == "__main__":
