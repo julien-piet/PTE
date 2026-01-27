@@ -63,9 +63,9 @@ def search_and_extract_products(page: Page, query: str) -> List[ProductSummary]:
     Perform a search via the header search box and return all products across paginated results.
     """
     page.fill("#search", query)
-    with page.expect_load_state("networkidle"):
-        page.press("#search", "Enter")
+    page.press("#search", "Enter")
 
+    page.wait_for_load_state("networkidle")
     return _collect_paginated_results(page)
 
 
@@ -75,9 +75,9 @@ def advanced_search_and_extract_products(
     """
     Use Magento's Advanced Search form to search by multiple fields and return all results.
     """
-    with page.expect_load_state("networkidle"):
-        page.goto(ADVANCED_SEARCH_URL)
+    page.goto(ADVANCED_SEARCH_URL)
 
+    page.wait_for_load_state("networkidle")
     def _fill_if_present(selector: str, value: Optional[object]) -> None:
         if value is None:
             return
@@ -96,17 +96,17 @@ def advanced_search_and_extract_products(
     if submit_btn.count() == 0:
         submit_btn = page.locator("form.search.advanced button[type='submit']").first
 
-    with page.expect_load_state("networkidle"):
-        submit_btn.click()
+    submit_btn.click()
 
+    page.wait_for_load_state("networkidle")
     return _collect_paginated_results(page)
 
 
 def get_popular_search_terms(page: Page) -> List[SearchTerm]:
     """Return the list of popular search terms shown on /search/term/popular/."""
-    with page.expect_load_state("networkidle"):
-        page.goto(SEARCH_TERMS_URL)
+    page.goto(SEARCH_TERMS_URL)
 
+    page.wait_for_load_state("networkidle")
     terms: List[SearchTerm] = []
     items = page.locator("ul.search-terms li")
 
@@ -151,9 +151,9 @@ def navigate_category_and_extract_products(
     """
     Navigate via the site menu to a given category/subcategory and return all products across pages.
     """
-    with page.expect_load_state("networkidle"):
-        page.goto(BASE_URL)
+    page.goto(BASE_URL)
 
+    page.wait_for_load_state("networkidle")
     target = _norm(category_name)
     nav_links = page.locator("nav.navigation a")
     match_href: Optional[str] = None
@@ -187,9 +187,9 @@ def navigate_category_and_extract_products(
     results: List[ProductSummary] = []
     page_num = 1
 
-    with page.expect_load_state("networkidle"):
-        page.goto(match_href)
+    page.goto(match_href)
 
+    page.wait_for_load_state("networkidle")
     while True:
         results.extend(_extract_products_from_listing(page, page_num))
 
@@ -202,9 +202,9 @@ def navigate_category_and_extract_products(
             break
 
         page_num += 1
-        with page.expect_load_state("networkidle"):
-            page.goto(next_href)
+        page.goto(next_href)
 
+        page.wait_for_load_state("networkidle")
     return results
 
 
@@ -226,9 +226,9 @@ def _collect_paginated_results(page: Page) -> List[ProductSummary]:
             break
 
         page_num += 1
-        with page.expect_load_state("networkidle"):
-            page.goto(next_href)
+        page.goto(next_href)
 
+        page.wait_for_load_state("networkidle")
     return results
 
 

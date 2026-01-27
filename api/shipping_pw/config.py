@@ -7,7 +7,9 @@ from typing import Tuple
 
 # Override these via environment variables for your own account.
 DEFAULT_CUSTOMER_EMAIL = "customer@example.com"
-DEFAULT_CUSTOMER_PASSWORD = "secret"
+DEFAULT_CUSTOMER_PASSWORD = "secret1234!"
+DEFAULT_CUSTOMER_FIRST_NAME = "Test"
+DEFAULT_CUSTOMER_LAST_NAME = "Test"
 
 EMAIL_ENV_VARS = (
     "SHOPPING_CUSTOMER_EMAIL",
@@ -35,6 +37,8 @@ def get_default_customer_credentials() -> tuple[str, str]:
     - Email: SHOPPING_CUSTOMER_EMAIL or WEBARENA_SHOPPING_EMAIL
     - Password: SHOPPING_CUSTOMER_PASSWORD or WEBARENA_SHOPPING_PASSWORD
     """
-    email = _first_env(EMAIL_ENV_VARS) or DEFAULT_CUSTOMER_EMAIL
-    password = _first_env(PASSWORD_ENV_VARS) or DEFAULT_CUSTOMER_PASSWORD
+    # email = _first_env(EMAIL_ENV_VARS) or DEFAULT_CUSTOMER_EMAIL
+    # password = _first_env(PASSWORD_ENV_VARS) or DEFAULT_CUSTOMER_PASSWORD
+    email = DEFAULT_CUSTOMER_EMAIL
+    password = DEFAULT_CUSTOMER_PASSWORD
     return email, password

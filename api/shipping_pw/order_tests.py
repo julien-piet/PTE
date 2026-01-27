@@ -114,12 +114,14 @@ class OrderTests(unittest.TestCase):
                 ".page.messages .message-error, .page.messages .error.message, div.messages .message-error, div.messages .error.message": FakeLocator(count_value=0),
             }
         )
-        original_get_cart_items = cart_module.get_cart_items
-        cart_module.get_cart_items = lambda _page: [1, 2, 3]  # type: ignore[assignment]
+        # Patch get_cart_items in the order module (not cart_module)
+        # because order.py does "from .cart import get_cart_items"
+        original_get_cart_items = order.get_cart_items
+        order.get_cart_items = lambda _page: [1, 2, 3]  # type: ignore[assignment]
         try:
             result = order.reorder_order(page, "http://example.com/order/1")
         finally:
-            cart_module.get_cart_items = original_get_cart_items  # type: ignore[assignment]
+            order.get_cart_items = original_get_cart_items  # type: ignore[assignment]
         self.assertTrue(result.success)
         self.assertEqual(result.cart_count_after, 3)
 

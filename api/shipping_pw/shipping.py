@@ -70,7 +70,7 @@ def _find_existing_shipping_address_index(
         return None
 
     target_str = _address_inline_string(addr)
-    target_tokens = set(target_str.split())
+    target_tokens = set(_norm(target_str).split())
     best_score = 0.0
     best_index = None
 
@@ -128,10 +128,14 @@ def _create_new_shipping_address_popup(page: Page, addr: Address) -> None:
 
     region_select = form.locator("select[name=region_id]")
     if region_select.count() > 0:
+        page.wait_for_timeout(1000)  # Wait for region options to load
         try:
-            region_select.select_option({"label": addr.region})
+            region_select.select_option(label=addr.region)
         except Exception:
-            pass
+            try:
+                region_select.select_option(value=addr.region)
+            except Exception:
+                pass  # Region selection failed
 
     form.locator("input[name=postcode]").fill(addr.postcode)
     form.locator("input[name=telephone]").fill(addr.phone)
@@ -142,9 +146,9 @@ def _create_new_shipping_address_popup(page: Page, addr: Address) -> None:
             save_cb.set_checked(True)
 
     ship_here_btn = modal.locator("button.action-save-address")
-    with page.expect_load_state("networkidle"):
-        ship_here_btn.click()
+    ship_here_btn.click()
 
+    page.wait_for_load_state("networkidle")
     modal.wait_for(state="hidden")
 
 
@@ -188,10 +192,14 @@ def _fill_inline_shipping_form(
 
     region_select = form.locator("select[name=region_id]")
     if region_select.count() > 0:
+        page.wait_for_timeout(1000)  # Wait for region options to load
         try:
-            region_select.select_option({"label": addr.region})
+            region_select.select_option(label=addr.region)
         except Exception:
-            pass
+            try:
+                region_select.select_option(value=addr.region)
+            except Exception:
+                pass  # Region selection failed
 
     form.locator("input[name=postcode]").fill(addr.postcode)
     form.locator("input[name=telephone]").fill(addr.phone)
@@ -224,7 +232,7 @@ def _select_shipping_method(
                 chosen_index = i
                 chosen_code = value
                 price_text = (
-                    row.locator(".col-price .price").inner_text().strip()
+                    row.locator(".col-price .price").last.inner_text().strip()
                 )
                 chosen_price = _parse_price(price_text)
                 break
@@ -235,7 +243,7 @@ def _select_shipping_method(
             if radio.count() == 0:
                 continue
             value = radio.first.get_attribute("value")
-            price_text = row.locator(".col-price .price").inner_text().strip()
+            price_text = row.locator(".col-price .price").last.inner_text().strip()
             price = _parse_price(price_text)
             if price is None:
                 continue
@@ -275,9 +283,9 @@ def complete_shipping_step(
     created_new = False
 
     try:
-        with page.expect_load_state("networkidle"):
-            page.goto(CHECKOUT_URL)
+        page.goto(CHECKOUT_URL)
 
+        page.wait_for_load_state("networkidle")
         shipping_step = page.locator("li#shipping")
         shipping_step.wait_for()
 
@@ -357,9 +365,9 @@ def complete_shipping_step(
             "button[data-role='opc-continue'], button.button.action.continue.primary"
         )
 
-        with page.expect_load_state("networkidle"):
-            next_btn.first.click()
+        next_btn.first.click()
 
+        page.wait_for_load_state("networkidle")
         payment_step = page.locator("li#payment")
         payment_step.wait_for(state="visible", timeout=10000)
 
@@ -402,7 +410,8 @@ def _address_inline_string(addr: Address) -> str:
         addr.postcode,
         country_text,
     ]
-    return _norm(", ".join(str(p) for p in parts if p))
+    # Use spaces instead of commas to avoid comma-in-token issues during matching
+    return _norm(" ".join(str(p) for p in parts if p))
 
 
 def _extract_inline_addresses_from_page(
@@ -448,8 +457,8 @@ def _find_best_matching_existing_address(
 
     for node, text in candidates:
         # Simple token overlap score
-        t_tokens = set(target_str.split())
-        c_tokens = set(text.split())
+        t_tokens = set(_norm(target_str).split())
+        c_tokens = set(_norm(text).split())
         if not t_tokens or not c_tokens:
             continue
         overlap = len(t_tokens & c_tokens) / len(t_tokens | c_tokens)
@@ -549,7 +558,7 @@ def _fill_billing_form_inputs(form_root: Tag, addr: Address) -> dict[str, str]:
             if best_option is not None and best_option.get("value"):
                 data[name] = best_option["value"]
         else:
-            data[name] = addr.country
+            data[name] = addr.country_code
 
     # Region: Magento has both region_id (select) and region (text)
     region_select = form_root.select_one("select[name='region_id']")

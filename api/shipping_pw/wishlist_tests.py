@@ -82,7 +82,7 @@ class WishlistTests(unittest.TestCase):
             attributes={"id": "item_3"},
             nested={
                 "strong.product-item-name a": FakeLocator(text="Wish Item", attributes={"href": "http://example.com/p"}),
-                "input[type='number'][name^='qty['": FakeLocator(count_value=1, attributes={"value": "4"}),
+                "input[type='number'][name^='qty[']": FakeLocator(count_value=1, attributes={"value": "4"}),
                 "span.price": FakeLocator(text="$10.00"),
                 "img.product-image-photo": FakeLocator(attributes={"src": "http://img/wish.jpg"}),
             },
@@ -129,21 +129,21 @@ class WishlistTests(unittest.TestCase):
         self.assertTrue(wishlist.remove_wishlist_item(page, "5"))
         self.assertTrue(any(action[0] == "click" for action in remove_link.actions))
 
+        # Fixed: Mock should return the delete link directly, not the parent item
         def locator_func(selector: str) -> FakeLocator:
-            if selector.startswith("div.products-grid.wishlist ol.product-items"):
+            # Match the actual selector used in empty_wishlist()
+            # which selects DELETE LINKS, not parent items
+            if "a[data-role='remove']" in selector or "a.action.delete" in selector:
                 if getattr(page, "cleared", False):
                     return FakeLocator(count_value=0)
-                delete_link = FakeLocator(
+                
+                # Return the delete link directly (with on_click handler)
+                return FakeLocator(
                     count_value=1,
                     on_click=lambda: setattr(page, "cleared", True),
                 )
-                item = FakeLocator(
-                    nested={
-                        "a[data-role='remove'], a.action.delete": delete_link,
-                    }
-                )
-                return FakeLocator(children=[item], count_value=1)
-            return page.locators.get(selector, FakeLocator())
+            
+            return page.locators.get(selector, FakeLocator(count_value=0))
 
         page.locator = locator_func  # type: ignore[assignment]
         page.locators = {}

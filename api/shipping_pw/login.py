@@ -33,9 +33,9 @@ def login_customer(page: Page, email: str, password: str) -> LoginResult:
     and reports whether the attempt succeeded. Magento renders invalid credentials
     as a `.message-error` block; those are surfaced as explicit failures.
     """
-    with page.expect_load_state("networkidle"):
-        page.goto(LOGIN_URL)
+    page.goto(LOGIN_URL)
 
+    page.wait_for_load_state("networkidle")
     form = page.locator("form#login-form")
     if form.count() == 0:
         return LoginResult(False, None, "Login form not found on page")
@@ -57,9 +57,9 @@ def login_customer(page: Page, email: str, password: str) -> LoginResult:
     if submit_btn.count() == 0:
         return LoginResult(False, None, "Sign-in submit button not found")
 
-    with page.expect_load_state("networkidle"):
-        submit_btn.click()
+    submit_btn.click()
 
+    page.wait_for_load_state("networkidle")
     error_loc = page.locator(ERROR_SELECTOR)
     if error_loc.count() > 0:
         message = error_loc.nth(0).inner_text().strip()

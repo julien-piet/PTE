@@ -54,9 +54,9 @@ class ComparePageData:
 
 def add_product_to_compare(page: Page, product_url: str) -> AddToCompareResult:
     """Navigate to a product page and click the Add to Compare control."""
-    with page.expect_load_state("networkidle"):
-        page.goto(product_url)
+    page.goto(product_url)
 
+    page.wait_for_load_state("networkidle")
     compare_btn = page.locator("a.action.tocompare[data-post]").first
     if compare_btn.count() == 0:
         return AddToCompareResult(
@@ -66,9 +66,9 @@ def add_product_to_compare(page: Page, product_url: str) -> AddToCompareResult:
             error_message="Add to Compare button not found",
         )
 
-    with page.expect_load_state("networkidle"):
-        compare_btn.click()
+    compare_btn.click()
 
+    page.wait_for_load_state("networkidle")
     error_loc = page.locator(
         ".page.messages .message-error, "
         ".page.messages .error.message, "
@@ -116,12 +116,12 @@ def open_compare_page(page: Page) -> Optional[str]:
 
     href = compare_link.get_attribute("href")
 
-    with page.expect_load_state("networkidle"):
-        if href:
-            page.goto(href)
-        else:
-            compare_link.click()
+    if href:
+        page.goto(href)
+    else:
+        compare_link.click()
 
+    page.wait_for_load_state("networkidle")
     return href or page.url
 
 

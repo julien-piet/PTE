@@ -32,9 +32,9 @@ def leave_product_review(
     if rating > 5:
         rating = 5
 
-    with page.expect_load_state("networkidle"):
-        page.goto(product_url)
+    page.goto(product_url)
 
+    page.wait_for_load_state("networkidle")
     # Reveal the reviews tab / form.
     reviews_tab = page.locator("a#tab-label-reviews-title")
     if reviews_tab.count() == 0:
@@ -51,9 +51,9 @@ def leave_product_review(
     page.locator("input#summary_field").fill(title)
     page.locator("textarea#review_field").fill(detail)
 
-    with page.expect_load_state("networkidle"):
-        page.locator("form#review-form button.action.submit").click()
+    page.locator("form#review-form button.action.submit").click()
 
+    page.wait_for_load_state("networkidle")
     error_loc = page.locator(
         ".page.messages .message-error, "
         ".page.messages .error.message, "

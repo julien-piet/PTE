@@ -46,9 +46,9 @@ def add_product_to_wishlist(
     if quantity < 1:
         quantity = 1
 
-    with page.expect_load_state("networkidle"):
-        page.goto(product_url)
+    page.goto(product_url)
 
+    page.wait_for_load_state("networkidle")
     form = page.locator("form#product_addtocart_form")
     form.wait_for()
 
@@ -154,9 +154,9 @@ def add_product_to_wishlist(
             error_message="Add to Wish List button not found",
         )
 
-    with page.expect_load_state("networkidle"):
-        wishlist_btn.click()
+    wishlist_btn.click()
 
+    page.wait_for_load_state("networkidle")
     # Capture any error messages surfaced by Magento.
     error_loc = page.locator(
         ".page.messages .message-error, "
@@ -198,9 +198,9 @@ def add_product_to_wishlist(
 
 def get_wishlist_items(page: Page) -> List[WishlistItem]:
     """Return the list of products currently in the wishlist, with quantities."""
-    with page.expect_load_state("networkidle"):
-        page.goto(WISHLIST_URL)
+    page.goto(WISHLIST_URL)
 
+    page.wait_for_load_state("networkidle")
     items: List[WishlistItem] = []
     product_items = page.locator("div.products-grid.wishlist ol.product-items > li")
 
@@ -257,9 +257,9 @@ def set_wishlist_item_quantity(page: Page, item_id: str, quantity: int) -> bool:
     if quantity < 1:
         quantity = 1
 
-    with page.expect_load_state("networkidle"):
-        page.goto(WISHLIST_URL)
+    page.goto(WISHLIST_URL)
 
+    page.wait_for_load_state("networkidle")
     # Locate the specific quantity input for this item.
     qty_input = page.locator(
         f"form.form-wishlist-items input[name='qty[{item_id}]']"
@@ -279,17 +279,17 @@ def set_wishlist_item_quantity(page: Page, item_id: str, quantity: int) -> bool:
     if update_button.count() == 0:
         return False
 
-    with page.expect_load_state("networkidle"):
-        update_button.click()
+    update_button.click()
 
+    page.wait_for_load_state("networkidle")
     return True
 
 
 def remove_wishlist_item(page: Page, item_id: str) -> bool:
     """Delete an item from the wishlist based on its item id."""
-    with page.expect_load_state("networkidle"):
-        page.goto(WISHLIST_URL)
+    page.goto(WISHLIST_URL)
 
+    page.wait_for_load_state("networkidle")
     item = page.locator(f"li#item_{item_id}").first
     if item.count() == 0:
         return False
@@ -298,18 +298,18 @@ def remove_wishlist_item(page: Page, item_id: str) -> bool:
     if remove_link.count() == 0:
         return False
 
-    with page.expect_load_state("networkidle"):
-        remove_link.click()
+    remove_link.click()
 
+    page.wait_for_load_state("networkidle")
     return True
 
 
 def empty_wishlist(page: Page) -> None:
     """Remove all items from the wishlist by iteratively deleting them."""
     while True:
-        with page.expect_load_state("networkidle"):
-            page.goto(WISHLIST_URL)
+        page.goto(WISHLIST_URL)
 
+        page.wait_for_load_state("networkidle")
         item_links = page.locator(
             "div.products-grid.wishlist ol.product-items > li a[data-role='remove'], "
             "div.products-grid.wishlist ol.product-items > li a.action.delete"
@@ -317,5 +317,5 @@ def empty_wishlist(page: Page) -> None:
         if item_links.count() == 0:
             break
 
-        with page.expect_load_state("networkidle"):
-            item_links.nth(0).click()
+        item_links.nth(0).click()
+        page.wait_for_load_state("networkidle")

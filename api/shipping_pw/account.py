@@ -42,9 +42,9 @@ def update_account_info(
             message="No changes were requested",
         )
 
-    with page.expect_load_state("networkidle"):
-        page.goto(ACCOUNT_EDIT_URL)
+    page.goto(ACCOUNT_EDIT_URL)
 
+    page.wait_for_load_state("networkidle")
     # Update names
     if first_name:
         page.locator("input#firstname").fill(first_name)
@@ -102,9 +102,9 @@ def update_account_info(
 
     # Submit the form.
     submit_btn = page.locator("form#form-validate button.action.save").first
-    with page.expect_load_state("networkidle"):
-        submit_btn.click()
+    submit_btn.click()
 
+    page.wait_for_load_state("networkidle")
     # Check for Magento messages.
     error_loc = page.locator(
         ".page.messages .message-error, "

@@ -117,9 +117,9 @@ def _clean_block_text(node) -> Optional[str]:
 
 def get_order_history(page: Page) -> List[OrderSummary]:
     """Return the list of orders from the account order history page."""
-    with page.expect_load_state("networkidle"):
-        page.goto(ORDER_HISTORY_URL)
+    page.goto(ORDER_HISTORY_URL)
 
+    page.wait_for_load_state("networkidle")
     rows = page.locator("table#my-orders-table tbody tr")
     count = rows.count()
     orders: List[OrderSummary] = []
@@ -160,9 +160,9 @@ def get_order_history(page: Page) -> List[OrderSummary]:
 
 def get_order_details(page: Page, order_url: str) -> OrderDetails:
     """Go to an order detail page and extract item + address details."""
-    with page.expect_load_state("networkidle"):
-        page.goto(order_url)
+    page.goto(order_url)
 
+    page.wait_for_load_state("networkidle")
     title_loc = page.locator("h1.page-title span.base")
     title_text = _text_or_blank(title_loc)
     order_number = title_text.replace("Order #", "").strip() or title_text
@@ -270,9 +270,9 @@ def reorder_order(page: Page, order_url: str) -> ReorderResult:
     simply presses the button and reports any visible errors plus the cart
     item count afterward.
     """
-    with page.expect_load_state("networkidle"):
-        page.goto(order_url)
+    page.goto(order_url)
 
+    page.wait_for_load_state("networkidle")
     reorder_link = page.locator(".order-actions-toolbar a.action.order").first
     if reorder_link.count() == 0:
         return ReorderResult(
@@ -282,9 +282,9 @@ def reorder_order(page: Page, order_url: str) -> ReorderResult:
             error_message="Reorder link not found on order page.",
         )
 
-    with page.expect_load_state("networkidle"):
-        reorder_link.click()
+    reorder_link.click()
 
+    page.wait_for_load_state("networkidle")
     error_loc = page.locator(
         ".page.messages .message-error, "
         ".page.messages .error.message, "

@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-from bs4 import BeautifulSoup
 from playwright.sync_api import Page
 
 
@@ -172,9 +171,9 @@ def _parse_product_options(page: Page) -> List[ProductOption]:
 
 def extract_product_details(page: Page, url: str) -> ProductDetails:
     """Navigate to a Magento product page and extract detailed product information."""
-    with page.expect_load_state("networkidle"):
-        page.goto(url)
+    page.goto(url)
 
+    page.wait_for_load_state("networkidle")
     # Name / title
     name_loc = page.locator("h1.page-title span.base")
     if name_loc.count() > 0:

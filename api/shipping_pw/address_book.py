@@ -66,10 +66,10 @@ def _fill_address_form(
             shipping_cb.set_checked(set_default_shipping)
 
     submit_btn = page.locator("form#form-validate button.action.save").first
-    with page.expect_load_state("networkidle"):
-        submit_btn.click()
+    submit_btn.click()
 
 
+    page.wait_for_load_state("networkidle")
 def _extract_flash_message(page: Page, selector: str) -> Optional[str]:
     loc = page.locator(selector)
     if loc.count() > 0:
@@ -113,9 +113,9 @@ def edit_address(
     `target` can be "default_billing", "default_shipping", or a fuzzy text/identifier
     that will be matched against rows in the Additional Addresses table.
     """
-    with page.expect_load_state("networkidle"):
-        page.goto(ADDRESS_BOOK_URL)
+    page.goto(ADDRESS_BOOK_URL)
 
+    page.wait_for_load_state("networkidle")
     edit_href: Optional[str] = None
 
     if target == "default_billing":
@@ -134,9 +134,9 @@ def edit_address(
             message="Could not locate an address to edit",
         )
 
-    with page.expect_load_state("networkidle"):
-        page.goto(edit_href)
+    page.goto(edit_href)
 
+    page.wait_for_load_state("networkidle")
     _fill_address_form(
         page,
         updated_address,
@@ -165,18 +165,18 @@ def add_address(
     set_default_shipping: bool = False,
 ) -> AddressSaveResult:
     """Add a new address entry via the Address Book add flow."""
-    with page.expect_load_state("networkidle"):
-        page.goto(ADDRESS_BOOK_URL)
+    page.goto(ADDRESS_BOOK_URL)
 
+    page.wait_for_load_state("networkidle")
     add_btn = page.locator("button[role='add-address'], button.action.add").first
     if add_btn.count() == 0:
         return AddressSaveResult(
             success=False, message="Add New Address button not found"
         )
 
-    with page.expect_load_state("networkidle"):
-        add_btn.click()
+    add_btn.click()
 
+    page.wait_for_load_state("networkidle")
     _fill_address_form(
         page,
         new_address,

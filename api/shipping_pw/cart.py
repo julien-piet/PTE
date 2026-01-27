@@ -51,9 +51,9 @@ def add_product_to_cart(
     if quantity < 1:
         quantity = 1
 
-    with page.expect_load_state("networkidle"):
-        page.goto(product_url)
+    page.goto(product_url)
 
+    page.wait_for_load_state("networkidle")
     form = page.locator("form#product_addtocart_form")
     form.wait_for()
 
@@ -174,9 +174,9 @@ def add_product_to_cart(
             error_message="Add to Cart button not found",
         )
 
-    with page.expect_load_state("networkidle"):
-        btn.click()
+    btn.click()
 
+    page.wait_for_load_state("networkidle")
     # 6) Check for Magento error messages after submit
     error_loc = page.locator(
         ".page.messages .message-error, "
@@ -220,9 +220,9 @@ def add_product_to_cart(
 
 def get_cart_items(page: Page) -> List[CartItem]:
     """Return the list of products currently in the shopping cart, with quantities."""
-    with page.expect_load_state("networkidle"):
-        page.goto(CART_URL)
+    page.goto(CART_URL)
 
+    page.wait_for_load_state("networkidle")
     items: List[CartItem] = []
 
     tbodies = page.locator("#shopping-cart-table tbody.cart.item")
@@ -288,9 +288,9 @@ def set_cart_item_quantity(page: Page, sku: str, quantity: int) -> bool:
     if quantity < 0:
         quantity = 0
 
-    with page.expect_load_state("networkidle"):
-        page.goto(CART_URL)
+    page.goto(CART_URL)
 
+    page.wait_for_load_state("networkidle")
     tbodies = page.locator("#shopping-cart-table tbody.cart.item")
     target_input = None
 
@@ -317,17 +317,17 @@ def set_cart_item_quantity(page: Page, sku: str, quantity: int) -> bool:
     if update_button.count() == 0:
         return False
 
-    with page.expect_load_state("networkidle"):
-        update_button.click()
+    update_button.click()
 
+    page.wait_for_load_state("networkidle")
     return True
 
 
 def remove_cart_item(page: Page, sku: str) -> bool:
     """Delete an item from the cart based on its SKU."""
-    with page.expect_load_state("networkidle"):
-        page.goto(CART_URL)
+    page.goto(CART_URL)
 
+    page.wait_for_load_state("networkidle")
     tbodies = page.locator("#shopping-cart-table tbody.cart.item")
 
     for i in range(tbodies.count()):
@@ -340,8 +340,8 @@ def remove_cart_item(page: Page, sku: str) -> bool:
         if delete_link.count() == 0:
             continue
 
-        with page.expect_load_state("networkidle"):
-            delete_link.click()
+        delete_link.click()
+        page.wait_for_load_state("networkidle")
         return True
 
     return False
@@ -350,9 +350,9 @@ def remove_cart_item(page: Page, sku: str) -> bool:
 def empty_cart(page: Page) -> None:
     """Remove all items from the cart by iteratively deleting them."""
     while True:
-        with page.expect_load_state("networkidle"):
-            page.goto(CART_URL)
+        page.goto(CART_URL)
 
+        page.wait_for_load_state("networkidle")
         tbodies = page.locator("#shopping-cart-table tbody.cart.item")
         if tbodies.count() == 0:
             break
@@ -362,5 +362,5 @@ def empty_cart(page: Page) -> None:
         if delete_link.count() == 0:
             break
 
-        with page.expect_load_state("networkidle"):
-            delete_link.click()
+        delete_link.click()
+        page.wait_for_load_state("networkidle")

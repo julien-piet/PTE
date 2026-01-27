@@ -61,7 +61,16 @@ class FakeLocator:
         self.attributes = attributes or {}
         self.children = children or []
         self.nested = nested or {}
-        self.count_value = len(self.children) if count_value is None else count_value
+        # Default count: if not specified, use len(children), but if we have content (text/html/attrs/nested), default to 1
+        if count_value is None:
+            if len(self.children) > 0:
+                self.count_value = len(self.children)
+            elif text or html or self.attributes or self.nested:
+                self.count_value = 1
+            else:
+                self.count_value = 0
+        else:
+            self.count_value = count_value
         self.actions: List[tuple[str, Any]] = []
         self.on_click = on_click
 
@@ -69,16 +78,30 @@ class FakeLocator:
         return self.count_value
 
     def nth(self, idx: int) -> "FakeLocator":
-        if 0 <= idx < len(self.children):
-            return self.children[idx]
+        # If we have children, return the indexed child
+        if len(self.children) > 0:
+            if 0 <= idx < len(self.children):
+                return self.children[idx]
+            return FakeLocator()
+        # If no children but we have a count > 0, return self for index 0
+        if idx == 0 and self.count_value > 0:
+            return self
         return FakeLocator()
 
     @property
     def first(self) -> "FakeLocator":
+        # If this locator itself has a count > 0, return self
+        # Otherwise return the first child
+        if self.count_value > 0 and len(self.children) == 0:
+            return self
         return self.nth(0)
 
     def locator(self, selector: str) -> "FakeLocator":
-        return self.nested.get(selector, FakeLocator())
+        result = self.nested.get(selector, FakeLocator())
+        # Ensure nested locators maintain their count
+        if result.count_value == 0 and (result.text or result.attributes or result.nested):
+            result.count_value = 1
+        return result
 
     def inner_text(self) -> str:
         return self.text
@@ -137,7 +160,11 @@ class FakePage:
         self.visited.append(url)
 
     def locator(self, selector: str) -> FakeLocator:
-        return self.locators.get(selector, FakeLocator())
+        # Auto-create locators so they can be accessed, but with count=0
+        # to match real Playwright behavior (missing elements have count=0)
+        if selector not in self.locators:
+            self.locators[selector] = FakeLocator(count_value=0)
+        return self.locators[selector]
 
     def fill(self, selector: str, value: Any) -> None:
         loc = self.locators.setdefault(selector, FakeLocator())

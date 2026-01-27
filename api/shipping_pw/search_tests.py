@@ -34,12 +34,22 @@ class SearchTests(unittest.TestCase):
         original = search._collect_paginated_results
         search._collect_paginated_results = lambda _page: collected  # type: ignore[assignment]
         try:
-            page = FakePage()
+            # Pre-populate search box for simple search
+            page = FakePage(locators={"#search": FakeLocator(count_value=1)})
             results = search.search_and_extract_products(page, "query")
             self.assertEqual(results, collected)
             self.assertEqual(page.locators["#search"].text, "query")
 
-            adv_page = FakePage()
+            # Pre-populate form fields for advanced search
+            adv_page = FakePage(
+                locators={
+                    "input#name": FakeLocator(count_value=1),
+                    "input#sku": FakeLocator(count_value=1),
+                    "input[name='price[from]']": FakeLocator(count_value=1),
+                    "input[name='price[to]']": FakeLocator(count_value=1),
+                    "form#form-validate button[type='submit']": FakeLocator(count_value=1),
+                }
+            )
             query = search.AdvancedSearchQuery(name="Hat", sku="123", price_from=1, price_to=5)
             adv_results = search.advanced_search_and_extract_products(adv_page, query)
             self.assertEqual(adv_results, collected)
