@@ -320,6 +320,11 @@ def set_cart_item_quantity(page: Page, sku: str, quantity: int) -> bool:
     update_button.click()
 
     page.wait_for_load_state("networkidle")
+    
+    # Wait a moment for Magento to process the update
+    import time
+    time.sleep(2)
+    
     return True
 
 

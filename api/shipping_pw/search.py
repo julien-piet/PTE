@@ -62,9 +62,10 @@ def search_and_extract_products(page: Page, query: str) -> List[ProductSummary]:
     """
     Perform a search via the header search box and return all products across paginated results.
     """
+    page.goto(BASE_URL)
+    page.wait_for_load_state("networkidle")
     page.fill("#search", query)
     page.press("#search", "Enter")
-
     page.wait_for_load_state("networkidle")
     return _collect_paginated_results(page)
 

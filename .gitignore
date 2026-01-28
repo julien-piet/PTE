@@ -216,3 +216,4 @@ __marimo__/
 .streamlit/secrets.toml
 notebooks/*.DS_Store
 .DS_Store
+.DS_Store

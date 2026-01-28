@@ -41,7 +41,7 @@ def login_customer(page: Page, email: str, password: str) -> LoginResult:
         return LoginResult(False, None, "Login form not found on page")
 
     email_input = form.locator("input#email")
-    password_input = form.locator("input#pass")
+    password_input = form.locator("input#pass").first
 
     if email_input.count() == 0:
         return LoginResult(False, None, "Email input not found on login page")
