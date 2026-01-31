@@ -24,11 +24,19 @@ class TokenStore:
         # Check for common token environment variables
         customer_token = os.getenv("CUSTOMER_AUTH_TOKEN") or os.getenv("AUTH_TOKEN")
         admin_token = os.getenv("ADMIN_AUTH_TOKEN")
-        
+
+        # IMPORTANT:
+        # Tool calls look up tokens by MCP server name (e.g. "webarena" from config.yaml),
+        # but older code stored tokens under "shopping". Register tokens under both names
+        # for backward compatibility.
+        server_aliases = ["webarena", "shopping"]
+
         if customer_token:
-            self.set_token("shopping", "customer", customer_token)
+            for server in server_aliases:
+                self.set_token(server, "customer", customer_token)
         if admin_token:
-            self.set_token("shopping", "admin", admin_token)
+            for server in server_aliases:
+                self.set_token(server, "admin", admin_token)
     
     def set_token(self, server_name: str, token_type: str, token: str):
         """Set a token for a specific server and type."""

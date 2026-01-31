@@ -12,10 +12,10 @@ from fastmcp import FastMCP
 from pydantic import BaseModel, Field
 
 # Initialize FastMCP server
-mcp = FastMCP("WebArena API Server")
+mcp = FastMCP("Shopping API Server")
 
 # Configuration
-BASE_URL = os.getenv("WEBARENA_BASE_URL", "http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082/")
+BASE_URL = os.getenv("Shopping_BASE_URL", "http://127.0.0.1:7770")
 API_PREFIX = "/rest/V1"
 DEFAULT_TIMEOUT = 30.0
 
@@ -335,6 +335,7 @@ async def search_products(search_term: str, page_size: int = 20) -> Dict[str, An
         f"&searchCriteria[filter_groups][0][filters][0][condition_type]=like"
         f"&searchCriteria[pageSize]={page_size}"
     )
+    print(f"Searching for products: {params}")
     return await make_request("GET", f"/products{params}", use_admin=True)
 
 

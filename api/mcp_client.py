@@ -12,9 +12,13 @@ from fastmcp import Client
 # You can override each URL via environment variables.
 SERVER_CONFIG: Dict[str, Dict[str, str]] = {
     "shopping": {
-        "env": "WEBARENA_BASE_URL",
-        "default": "http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082/",
+        "env": "Shopping_BASE_URL",
+        "default": "127.0.0.1:7770",
     },
+    "gitlab": {
+        "env": "Gitlab_BASE_URL",
+        "default": "127.0.0.1:8023",
+    }
     # Example for future servers:
     # "flights": {
     #     "env": "FLIGHTS_MCP_URL",

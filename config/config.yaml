@@ -10,6 +10,7 @@ mcp_server:
 #  weather: http://localhost:8002/mcpweather
 #  gdrive: http://localhost:8003/mcpgdrive
    webarena: http://localhost:8000/
+   gitlab: http://localhost:8001/
 
 # agent_llm_provider: openai
 # agent_llm_model: gpt-4.1
