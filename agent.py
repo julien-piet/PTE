@@ -79,6 +79,18 @@ def _is_tool_decorated(
                 return True
     return False
 
+def _is_public_api_function(
+    node: Union[ast.AsyncFunctionDef, ast.FunctionDef],
+) -> bool:
+    """
+    Treat top-level async functions without a leading underscore as API endpoints.
+
+    This lets us document client wrapper functions like `search_products`
+    in `api/shopping.py`, even if they are not decorated with @mcp.tool.
+    """
+    # Only consider async functions, and ignore private/internal names
+    return isinstance(node, ast.AsyncFunctionDef) and not node.name.startswith("_")
+
 
 def _infer_section(lines: List[str], lineno: int) -> Optional[str]:
     """Infer the section heading from preceding comment blocks."""
@@ -272,9 +284,13 @@ def _parse_api_file(
     for node in module_ast.body:
         if isinstance(node, ast.ClassDef) and _is_pydantic_model(node):
             types.append(_build_type_description(node))
-        elif isinstance(
-            node, (ast.FunctionDef, ast.AsyncFunctionDef)
-        ) and _is_tool_decorated(node):
+        # elif isinstance(
+        #     node, (ast.FunctionDef, ast.AsyncFunctionDef)
+        # ) and _is_tool_decorated(node):
+        #     endpoints.append(_build_endpoint_description(node, lines))
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
+            _is_tool_decorated(node) or _is_public_api_function(node)
+        ):
             endpoints.append(_build_endpoint_description(node, lines))
 
     endpoints.sort(key=lambda endpoint: (endpoint.section or "", endpoint.name))
@@ -282,11 +298,9 @@ def _parse_api_file(
     return endpoints, types
 
 
-class ChatMessage(BaseModel):
-    """Minimal chat message schema for LLM clients."""
 
-    role: Literal["system", "user", "assistant"]
-    content: str
+
+from agent.common.types import ChatMessage
 
 
 class StepLog(BaseModel):
@@ -317,10 +331,7 @@ class RequirementAnalysisResult(BaseModel):
     notes: Optional[str] = None
 
 
-class ChatModel(Protocol):
-    """Simple protocol an LLM client must satisfy."""
-
-    def complete(self, messages: Sequence[ChatMessage]) -> str: ...
+from agent.common.types import ChatModel
 
 
 class AgentConfig(BaseModel):

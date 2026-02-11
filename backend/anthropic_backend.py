@@ -5,7 +5,7 @@ Anthropic-backed ChatModel implementation.
 import os
 from typing import List, Sequence
 
-from agent import ChatMessage, ChatModel
+from agent.common.types import ChatMessage, ChatModel
 
 
 class AnthropicChatModel(ChatModel):
