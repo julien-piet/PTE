@@ -1,5 +1,5 @@
 import os
-from langchain_google_vertexai import ChatVertexAI
+from pydantic_ai import models
 
 class GoogleProvider(object):
 
@@ -12,11 +12,12 @@ class GoogleProvider(object):
             if model.model == model_name:
                 break
         if not model:
-            raise Exception(f'{model_name} for Vertex AI provider not found in the config.yaml file')
+            raise Exception(f'{model_name} for Google provider not found in the config.yaml file')
         
-        return ChatVertexAI(
-            project=os.environ.get("GOOGLE_CLOUD_PROJECT", "secure-agent-451919"),  # Your project ID
-            location=os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1"),        # Your region
-            model_name=model.model,
-            temperature=model.temp
-        )
+        # Use direct Gemini API instead of Vertex AI
+        # pydantic-ai uses GOOGLE_API_KEY, but also check GEMINI_API_KEY for backwards compatibility
+        api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GOOGLE_API_KEY or GEMINI_API_KEY environment variable must be set")
+
+        return f"google-gla:{model.model}"  # pydantic-ai format for Gemini

@@ -59,14 +59,18 @@ def build_pydantic_tools_from_mcp(
         input_schema = spec.inputSchema if hasattr(spec, 'inputSchema') else {}
 
         # Create async execution function with closure that retrieves token dynamically
-        def make_execute(tool_name: str, server_url: str, server_name: str, token_store: TokenStore):
+        def make_execute(tool_name: str, server_url: str, server_name: str, token_store: TokenStore, schema: Dict[str, Any]):
             async def execute(**kwargs):
                 # Get appropriate token for this tool
                 token = token_store.get_token_for_tool(server_name, tool_name)
                 if not token:
                     # Fallback: try to get any available token
-                    token = token_store.get_token(server_name, "customer") or token_store.get_token(server_name, "admin")
-                
+                    token = token_store.get_token(server_name, "customer") or token_store.get_token(server_name, "admin") or token_store.get_token(server_name, "token")
+
+                # If the tool expects a 'token' parameter and we have a token, add it to kwargs
+                if token and 'token' in (schema.get('properties', {}).keys() if schema else []):
+                    kwargs['token'] = token
+
                 # Use server_url (not server_name) for the actual MCP call
                 result = await call_tool_with_token(server_url, token or "", tool_name, kwargs)
                 return result
@@ -78,7 +82,7 @@ def build_pydantic_tools_from_mcp(
             server=server,
             description=description,
             input_schema=input_schema,
-            execute=make_execute(original_name, server_url, server_name, token_store)
+            execute=make_execute(original_name, server_url, server_name, token_store, input_schema)
         )
 
         tools.append(tool_def)
@@ -128,12 +132,15 @@ async def initialize_tools(
                 # Check if tokens are available
                 has_customer = token_store.has_token(server_name, "customer")
                 has_admin = token_store.has_token(server_name, "admin")
+                has_token = token_store.has_token(server_name, "token")
                 token_status = []
                 if has_customer:
                     token_status.append("customer")
                 if has_admin:
                     token_status.append("admin")
-                
+                if has_token:
+                    token_status.append("token")
+
                 status_msg = f"  ✓ Loaded {len(tool_definitions)} tools from {server_name}"
                 if token_status:
                     status_msg += f" (tokens: {', '.join(token_status)})"

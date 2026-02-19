@@ -24,12 +24,14 @@ class TokenStore:
         # Check for common token environment variables
         customer_token = os.getenv("CUSTOMER_AUTH_TOKEN") or os.getenv("AUTH_TOKEN")
         admin_token = os.getenv("ADMIN_AUTH_TOKEN")
+        gitlab_token = os.getenv("GRAPHQL_TOKEN")
+        reddit_token = os.getenv("REDDIT_TOKEN")
 
         # IMPORTANT:
         # Tool calls look up tokens by MCP server name (e.g. "webarena" from config.yaml),
         # but older code stored tokens under "shopping". Register tokens under both names
         # for backward compatibility.
-        server_aliases = ["webarena", "shopping"]
+        server_aliases = ["webarena", "shopping", "gitlab", "reddit"]
 
         if customer_token:
             for server in server_aliases:
@@ -37,6 +39,10 @@ class TokenStore:
         if admin_token:
             for server in server_aliases:
                 self.set_token(server, "admin", admin_token)
+        if gitlab_token:
+            self.set_token("gitlab", "token", gitlab_token)
+        if reddit_token:
+            self.set_token("reddit", "token", reddit_token)
     
     def set_token(self, server_name: str, token_type: str, token: str):
         """Set a token for a specific server and type."""
@@ -49,10 +55,17 @@ class TokenStore:
         return self._tokens.get(server_name, {}).get(token_type)
     
     def get_token_for_tool(self, server_name: str, tool_name: str) -> Optional[str]:
-        """Get appropriate token based on tool name (admin vs customer)."""
-        # Check if tool requires admin token
+        """Get appropriate token based on tool name and server (admin vs customer vs generic)."""
+        # Convert server name to lowercase for comparison
+        server_lower = server_name.lower()
         tool_lower = tool_name.lower()
-        if any(keyword in tool_lower for keyword in ['admin', 'create_product', 'update_product', 
+
+        # For GitLab, Reddit, and other servers, use the generic "token" type
+        if server_lower in ["gitlab", "reddit"]:
+            return self.get_token(server_name, "token")
+
+        # For webarena/shopping, check if tool requires admin token
+        if any(keyword in tool_lower for keyword in ['admin', 'create_product', 'update_product',
                 'delete_product', 'create_category', 'update_customer', 'delete_customer',
                 'create_invoice', 'create_shipment', 'cancel_order']):
             return self.get_token(server_name, "admin") or self.get_token(server_name, "customer")

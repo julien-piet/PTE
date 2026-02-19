@@ -25,7 +25,7 @@ class GeminiChatModel(ChatModel):
 
         genai.configure(api_key=api_key)
         self._genai = genai
-        self.model_name = model or os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        self.model_name = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
     def complete(self, messages: Sequence[ChatMessage]) -> str:
         system_instruction = None

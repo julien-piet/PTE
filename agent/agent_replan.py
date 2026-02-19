@@ -125,7 +125,7 @@ class ToolCallAgent:
     LangGraph-based agent with planner, interceptor, executor, argument mapper, and responder nodes.
     """
 
-    def __init__(self, llm=None, miniscope=False, tools=None, api_index_path: Optional[Path] = None):
+    def __init__(self, llm=None, miniscope=False, tools=None, api_index_path: Optional[Path] = None, token_store: Optional[TokenStore] = None):
         """
         Initialize the ToolCallAgent.
 
@@ -134,6 +134,7 @@ class ToolCallAgent:
             miniscope: If True, include interceptor node in the graph. If False, skip interceptor.
             tools: Dictionary of available tools (tool_name -> ToolDefinition).
             api_index_path: Path to API index.json file.
+            token_store: Optional TokenStore instance for authentication tokens.
         """
         if not llm:
             raise ValueError("LLM instance is required for ToolCallAgent")
@@ -142,6 +143,7 @@ class ToolCallAgent:
         self.miniscope = miniscope
         self.tools = tools or {}
         self.api_index_path = api_index_path or API_INDEX_FILE
+        self.token_store = token_store or TokenStore()  # Initialize if not provided
         
         # Load API registry
         try:
@@ -229,6 +231,20 @@ class ToolCallAgent:
             ]
             blocks.append("\n".join(header + ["", spec_block]))
         return "\n\n".join(blocks)
+
+    def _build_api_context_minimal(self, websites: Sequence[WebsiteAPI]) -> str:
+        """
+        Build minimal API context with just website names and descriptions.
+        This saves 20k-40k tokens compared to full API documentation.
+        """
+        if not websites:
+            return ""
+
+        lines = []
+        for site in websites:
+            lines.append(f"- {site.name}: {site.description}")
+
+        return "\n".join(lines)
 
     def _parse_routing_response(self, text: str) -> Optional[List[str]]:
         """Parse the routing model response and return a list of website identifiers."""
@@ -480,6 +496,7 @@ class ToolCallAgent:
         """
         Requirement Analyzer: Checks if task description is enough to execute.
         Identifies missing arguments (address, payment, etc).
+        Auto-fills tokens from TokenStore when available.
         """
         plan = state.get("plan")
         if not plan:
@@ -504,25 +521,68 @@ class ToolCallAgent:
                 analysis.requirements
             )
 
-            # Collect user inputs if needed
+            # Check for tokens in TokenStore and move them from user_inputs_needed to model_decisions
+            auto_filled_tokens: Dict[str, str] = {}
+            remaining_user_inputs_needed: List[RequirementDetail] = []
+
+            for requirement in user_inputs_needed:
+                # Check if this is a token requirement
+                if requirement.name.lower() == "token" and plan:
+                    # Try to get token from plan (find which server the tools are from)
+                    server_name = None
+                    for step in plan:
+                        if hasattr(step, 'tool'):
+                            tool_name = step.tool
+                            # Extract server name from tool (e.g., "gitlab-list_issues" -> "gitlab")
+                            if "-" in tool_name:
+                                server_name = tool_name.split("-")[0]
+                                break
+
+                    if server_name:
+                        # Try to get token for this server
+                        token = self.token_store.get_token_for_tool(server_name, "")
+                        if not token:
+                            # Fallback: try to get any token type
+                            token = (self.token_store.get_token(server_name, "token") or
+                                   self.token_store.get_token(server_name, "customer") or
+                                   self.token_store.get_token(server_name, "admin"))
+
+                        if token:
+                            # We have a token - use it as a model decision instead of asking user
+                            auto_filled_tokens[requirement.name] = token
+                            model_decisions.append(requirement)
+                            continue
+
+                # Not a token or no token found - ask user for it
+                remaining_user_inputs_needed.append(requirement)
+
+            # Collect user inputs if needed (excluding auto-filled tokens)
             user_inputs: Dict[str, str] = {}
-            if user_inputs_needed:
+            if remaining_user_inputs_needed:
                 print("\n📋 Missing information required to complete the task:")
-                for req in user_inputs_needed:
+                for req in remaining_user_inputs_needed:
                     print(f"  - {req.name}: {req.description or req.prompt or 'No description'}")
-                user_inputs = await self._collect_user_inputs(user_inputs_needed)
+                user_inputs = await self._collect_user_inputs(remaining_user_inputs_needed)
+
+            # Combine auto-filled tokens with user inputs
+            all_user_inputs = {**auto_filled_tokens, **user_inputs}
+
+            if auto_filled_tokens:
+                print("\n✅ Auto-filled tokens from configuration:")
+                for name in auto_filled_tokens.keys():
+                    print(f"  - {name}: [loaded from config]")
 
             # Format requirements context
             requirements_context = self._format_requirement_context(
-                model_decisions, defaults, user_inputs, analysis.notes
+                model_decisions, defaults, all_user_inputs, analysis.notes
             )
 
             state["requirements_context"] = requirements_context
             state["model_decisions"] = [r.name for r in model_decisions]
             state["defaults_used"] = [r.name for r in defaults]
-            state["user_inputs"] = user_inputs
+            state["user_inputs"] = all_user_inputs
 
-            if model_decisions or defaults or user_inputs:
+            if model_decisions or defaults or all_user_inputs:
                 print(f"\n✅ Requirement analysis complete:")
                 print(state["requirements_context"])
 
@@ -547,11 +607,15 @@ class ToolCallAgent:
 
         messages = state.get("messages", [])
         task = self._extract_user_query(messages)
-        api_context = state.get("api_context", "")
         requirements_context = state.get("requirements_context", "")
         user_inputs = state.get("user_inputs", {})
 
         if not task:
+            return state
+
+        # Early exit if no requirements to address (saves 10k-20k tokens)
+        if not user_inputs and (not requirements_context or requirements_context == "No additional requirement notes."):
+            print("\n✅ No requirements to address, skipping replanning")
             return state
 
         try:
@@ -570,12 +634,12 @@ class ToolCallAgent:
                 )
             )
 
+            # Omit API context from review to save tokens (5k-10k savings)
             review_prompt = (
                 f"Task: {task}\n\n"
                 f"Current Plan:\n{plan_str}\n\n"
                 f"Requirements Context:\n{requirements_context}\n\n"
                 f"User Inputs Provided: {user_inputs}\n\n"
-                f"API Context:\n{api_context}\n\n"
                 "Review this plan and determine if any changes are needed based on the requirements analysis. "
                 "Consider:\n"
                 "1. Are all required inputs accounted for in the plan?\n"
@@ -601,6 +665,7 @@ class ToolCallAgent:
             print("🔄 Re-planning with updated requirements context...")
             
             # Re-run planner with enhanced context including requirements and review feedback
+            # Use minimal API context to save tokens
             enhanced_query = f"{task}\n\n"
             if requirements_context and requirements_context != "No additional requirement notes.":
                 enhanced_query += f"Requirements Context:\n{requirements_context}\n\n"
@@ -611,13 +676,17 @@ class ToolCallAgent:
                 enhanced_query += "\n"
             if review_output:
                 enhanced_query += f"Plan Review Feedback:\n{review_output}\n\n"
-            if api_context:
-                enhanced_query += f"Available APIs:\n{api_context}"
-            
-            message_history = self.get_message_history(state)
+
+            # Use minimal API context to save tokens (20k-40k savings)
+            routed_websites = state.get("routed_websites", [])
+            if routed_websites:
+                minimal_api_context = self._build_api_context_minimal(routed_websites)
+                enhanced_query += f"Available APIs:\n{minimal_api_context}"
+
+            # Don't pass message_history to save tokens (20-40k savings)
             result = await self.planning_agent.run(
                 enhanced_query,
-                message_history=message_history,
+                message_history=None,
                 model_settings=ModelSettings(temperature=0.0)
             )
             plan_model = result.output
@@ -656,18 +725,20 @@ class ToolCallAgent:
             return state
 
         # Enhance query with API context if available
-        api_context = state.get("api_context", "")
-        if api_context:
-            # Add API context to the planning prompt
-            enhanced_query = f"{user_query}\n\nAvailable APIs:\n{api_context}"
+        # Use minimal API context to save tokens (20k-40k token savings)
+        routed_websites = state.get("routed_websites", [])
+        if routed_websites:
+            minimal_api_context = self._build_api_context_minimal(routed_websites)
+            enhanced_query = f"{user_query}\n\nAvailable APIs:\n{minimal_api_context}"
         else:
             enhanced_query = user_query
 
         try:
-            message_history = self.get_message_history(state)
+            # Don't pass message_history to planner to save 20-40k tokens
+            # Planner only needs current query, not prior conversation context
             result = await self.planning_agent.run(
                 enhanced_query,
-                message_history=message_history,
+                message_history=None,
                 model_settings=ModelSettings(temperature=0.0)
             )
             plan_model = result.output
@@ -949,7 +1020,7 @@ class ToolCallAgent:
             # No ready steps but not complete - could be waiting for dependencies or stuck
             # For now, if no ready steps and not complete, assume we're done (some steps may have failed)
             return "responder"
-        
+
         workflow.add_conditional_edges(
             "executor",
             should_continue_execution,
@@ -978,7 +1049,7 @@ class ToolCallAgent:
         return await self.graph.ainvoke(state)
 
 
-async def run_interactive_session(llm=None, miniscope=False, tools=None, planner_only=False):
+async def run_interactive_session(llm=None, miniscope=False, tools=None, planner_only=False, token_store=None):
     """
     Runs an interactive command-line session with the agent.
 
@@ -986,10 +1057,11 @@ async def run_interactive_session(llm=None, miniscope=False, tools=None, planner
         llm: Optional language model instance to pass to the agent.
         miniscope: If True, include interceptor node in the graph.
         tools: Dictionary of available tools.
-        planner_only: If True, only run planning nodes (router, planner, requirement_analyzer, replanning) 
+        planner_only: If True, only run planning nodes (router, planner, requirement_analyzer, replanning)
                      without executing the plan. If False, run full graph including executor.
+        token_store: Optional TokenStore instance for authentication tokens.
     """
-    agent = ToolCallAgent(llm=llm, miniscope=miniscope, tools=tools)
+    agent = ToolCallAgent(llm=llm, miniscope=miniscope, tools=tools, token_store=token_store)
 
     print("=" * 60)
     print("Enhanced Agent - Interactive Session")
@@ -1035,7 +1107,7 @@ async def run_interactive_session(llm=None, miniscope=False, tools=None, planner
         }
 
         if planner_only:
-            # Planner-only mode: run planner and show plan (do not execute)
+        # Planner-only mode: run planner and show plan (do not execute)
             print("\nAgent: Planning...", end="", flush=True)
             try:
                 # Run router
@@ -1049,9 +1121,9 @@ async def run_interactive_session(llm=None, miniscope=False, tools=None, planner
                 
                 # Run replanning
                 state = await agent.replanning(state)
-                
+            
                 print("\r" + " " * 60 + "\r", end="")  # Clear the "Processing..." message
-                
+            
                 # Display results
                 plan = state.get("plan")
                 if plan:
@@ -1060,12 +1132,12 @@ async def run_interactive_session(llm=None, miniscope=False, tools=None, planner
                         print(pretty_print_plan(plan))
                     except Exception:
                         print(plan)
-
+                    
                     
                     print("\n✅ Plan and requirements ready. Execution stopped before running tools.")
                 else:
                     print("No plan generated.")
-                    
+                
             except asyncio.TimeoutError:
                 print("\nProcessing timed out")
             except Exception as e:
@@ -1121,17 +1193,15 @@ async def main():
     
     # Load configuration
     config = Configurator()
-    config.load_client_env()
-    config.load_shared_env()
-    config.load_server_env()  # Load server tokens from .server_env
+    config.load_all_env()  # Load all env files (client, shared, server)
     config.check_llm_env_vars()
     config.get_mcp_servers()
     
 
     # Initialize model
     provider = ModelProvider(config)
-    print(provider.llm_provider + ":" + provider.model_name)
-    llm_signature = provider.llm_provider + ":" + provider.model_name
+    llm_signature = provider.get_llm_model_provider()
+    print(f"Using model: {llm_signature}")
 
     # Initialize tools from MCP servers
     tools, token_store = await initialize_tools(config)
@@ -1145,7 +1215,7 @@ async def main():
     # await setup_authentication(tools, token_store, config)
 
     # Run interactive session with tools
-    await run_interactive_session(llm=llm_signature, miniscope=args.miniscope, tools=tools, planner_only=args.planner_only)
+    await run_interactive_session(llm=llm_signature, miniscope=args.miniscope, tools=tools, planner_only=args.planner_only, token_store=token_store)
 
 
 if __name__ == "__main__":

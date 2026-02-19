@@ -9,13 +9,17 @@ mcp_server:
 #  google_mail: http://localhost:8001/mcpgmail
 #  weather: http://localhost:8002/mcpweather
 #  gdrive: http://localhost:8003/mcpgdrive
-   webarena: http://localhost:8000/
+  #  webarena: http://localhost:8000/
    gitlab: http://localhost:8001/
+  #  reddit: http://localhost:8002/
 
-# agent_llm_provider: openai
-# agent_llm_model: gpt-4.1
-agent_llm_provider: anthropic
-agent_llm_model: claude-3-7-sonnet-20250219
+agent_llm_provider: openai
+agent_llm_model: gpt-4.1
+# agent_llm_provider: anthropic
+# agent_llm_model: claude-opus-4-6
+
+# agent_llm_provider: google
+# agent_llm_model: gemini-2.5-flash
 
 llm_access_retry: 3
 
@@ -36,15 +40,6 @@ llm_providers:
   - model: gpt-4o
     temp: 1.0
 
-  - model: o3
-    temp: 1.0
-
-  - model: o3-mini
-    temp: 1.0
-
-  - model: o4-mini
-    temp: 1.0
-
  anthropic:
   - model: claude-3-7-sonnet-20250219
     temp: 1.0
@@ -58,7 +53,14 @@ llm_providers:
   - model: claude-sonnet-3-7
     temp: 1.0
 
+  - model: claude-opus-4-6
+    temp: 1.0
+
  google:
+  - model: gemini-3-pro-preview
+    temp: 1.0
+  - model: gemini-3-flash-preview
+    temp: 1.0
   - model: gemini-1.5-flash
     temp: 1.0
   - model: gemini-1.5-pro
@@ -73,29 +75,6 @@ llm_providers:
     temp: 1.0
   - model: gemini-2.5-flash-lite
     temp: 1.0
-
-# app_list:
-#   - shopping
-
-# suites:
-#   suite1:
-#     apps:
-#       - google_mail
-#       - google_calendar
-#       - google_drive 
-#   suite2:
-#     apps:
-#       - google_mail
-#       - dropbox
-#       - slack
-
-
-
-# scope_hierarchy: 
-#   mapping: data/mapping/{APP}_mapping.json
-#   tree: data/tree/{APP}_tree.json
-
-# mcp_reverse_mapping: miniscope/mcp/server/{APP}/reverse_mapping.json
 
 
 # Evaluation

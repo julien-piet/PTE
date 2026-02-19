@@ -19,18 +19,18 @@ from agent.common.token_manager import TokenStore, authenticate_and_save_tokens
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Authenticate and save tokens to .env file")
-    parser.add_argument("--customer-only", action="store_true", help="Only authenticate customer")
-    parser.add_argument("--admin-only", action="store_true", help="Only authenticate admin")
-    parser.add_argument("--customer-username", type=str, help="Customer username (will prompt if not provided)")
-    parser.add_argument("--customer-password", type=str, help="Customer password (will prompt if not provided)")
-    parser.add_argument("--admin-username", type=str, help="Admin username (will prompt if not provided)")
-    parser.add_argument("--admin-password", type=str, help="Admin password (will prompt if not provided)")
-    parser.add_argument("--no-save", action="store_true", help="Don't save to .env file (only store in TokenStore)")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="Load configs")
+    # parser.add_argument("--customer-only", action="store_true", help="Only authenticate customer")
+    # parser.add_argument("--admin-only", action="store_true", help="Only authenticate admin")
+    # parser.add_argument("--customer-username", type=str, help="Customer username (will prompt if not provided)")
+    # parser.add_argument("--customer-password", type=str, help="Customer password (will prompt if not provided)")
+    # parser.add_argument("--admin-username", type=str, help="Admin username (will prompt if not provided)")
+    # parser.add_argument("--admin-password", type=str, help="Admin password (will prompt if not provided)")
+    # parser.add_argument("--no-save", action="store_true", help="Don't save to .env file (only store in TokenStore)")
+    # args = parser.parse_args()
     
     print("=" * 60)
-    print("Authentication Token Setup")
+    print("Loading Tokens Setup")
     print("=" * 60)
     
     # Load configuration
@@ -44,18 +44,18 @@ async def main():
     print("\nInitializing tools...")
     tools, token_store = await initialize_tools(config)
     
-    # Determine what to authenticate
-    customer_username = args.customer_username if not args.admin_only else None
-    customer_password = args.customer_password if not args.admin_only else None
-    admin_username = args.admin_username if not args.customer_only else None
-    admin_password = args.admin_password if not args.customer_only else None
+    # # Determine what to authenticate
+    # customer_username = args.customer_username if not args.admin_only else None
+    # customer_password = args.customer_password if not args.admin_only else None
+    # admin_username = args.admin_username if not args.customer_only else None
+    # admin_password = args.admin_password if not args.customer_only else None
     
-    if args.customer_only:
-        admin_username = None
-        admin_password = None
-    elif args.admin_only:
-        customer_username = None
-        customer_password = None
+    # if args.customer_only:
+    #     admin_username = None
+    #     admin_password = None
+    # elif args.admin_only:
+    #     customer_username = None
+    #     customer_password = None
     
     # Authenticate and save tokens
     tokens = await authenticate_and_save_tokens(
@@ -85,7 +85,7 @@ async def main():
             print("✓ Customer token: Already exists (from previous authentication)")
     else:
         print("✗ Customer token: Not obtained")
-    
+        
     # Check for admin token (newly obtained or existing)
     admin_token = tokens["admin_token"] or token_store.get_token("shopping", "admin")
     if admin_token:

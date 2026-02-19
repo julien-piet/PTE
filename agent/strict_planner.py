@@ -142,22 +142,10 @@ def build_planning_models_from_mcp_specs(mcp_specs: List[Dict[str, Any]]):
 
 def catalog_text(mcp_specs: List[Dict[str, Any]]) -> str:
     """
-    Make a concise catalog string with exact tool names and canonical arg keys.
+    Make a concise catalog string with just tool names (no args).
+    Saves 5k-15k tokens since full schemas are already in the discriminated union.
     """
-    lines: List[str] = []
-    for s in mcp_specs:
-        name = s["full_name"]
-        inp = s.get("input_schema") or {}
-        # Normalize:
-        params = inp.get("parameters", inp)
-        props = (params or {}).get("properties", {}) or {}
-        req = set((params or {}).get("required", []) or [])
-        pretty_args = []
-        for k in props.keys():
-            pretty_args.append(f"{k}{' (req)' if k in req else ''}")
-        pretty = ", ".join(pretty_args) if pretty_args else "(no args)"
-        lines.append(f"- {name}: {pretty}")
-    return "\n".join(lines)
+    return "\n".join([f"- {s['full_name']}" for s in mcp_specs])
 
 
 def build_planning_agent(

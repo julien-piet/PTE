@@ -4,7 +4,7 @@ Backend chat model registry for PlanThenExecuteAgent.
 
 from typing import Callable, Dict
 
-from agent import ChatModel
+from agent.common.types import ChatModel
 from .anthropic_backend import AnthropicChatModel
 from .gemini_backend import GeminiChatModel
 from .openai_backend import OpenAIChatModel
@@ -13,7 +13,7 @@ from .openai_backend import OpenAIChatModel
 _REGISTRY: Dict[str, Callable[[], ChatModel]] = {
     "openai": OpenAIChatModel,
     "anthropic": AnthropicChatModel,
-    "gemini": GeminiChatModel,
+    "google": GeminiChatModel,
 }
 
 

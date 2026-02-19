@@ -162,10 +162,16 @@ class Configurator:
     def load_shared_env(self):
         p = os.path.join(self.project_root, self.get_key('shared_env_path'))
         load_dotenv(dotenv_path=p)
-    
+
     def load_server_env(self):
         p = os.path.join(self.project_root, self.get_key('server_env_path'))
         load_dotenv(dotenv_path=p)
+
+    def load_all_env(self):
+        """Load all environment files at once (client, shared, and server)."""
+        self.load_client_env()
+        self.load_shared_env()
+        self.load_server_env()
 
     def get_hostname_port(self, url):
         parsed = urlparse(url)
@@ -176,6 +182,7 @@ class Configurator:
             "OPENAI_API_KEY": "OpenAI",
             "ANTHROPIC_API_KEY": "Anthropic",
             "GOOGLE_API_KEY": "Google",
+            "GEMINI_API_KEY": "Google Generative AI (Gemini)",
             # "AZURE_OPENAI_API_KEY": "Azure OpenAI",
             # "MISTRAL_API_KEY": "Mistral",
             # "COHERE_API_KEY": "Cohere",
