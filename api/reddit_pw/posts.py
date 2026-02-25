@@ -101,11 +101,66 @@ def create_post(
     page.fill(Selectors.POST_TITLE_INPUT, title)
     page.fill(Selectors.POST_BODY_INPUT, body)
 
-    # Select forum by visible label text (options have numeric values, not forum names)
-    page.select_option(Selectors.POST_FORUM_SELECT, label=forum)
+    # Select the forum using Select2-aware interaction.
+    # The #submission_forum element is a Select2-enhanced widget (aria-hidden="true",
+    # class="select2-hidden-accessible"), so Playwright's select_option() cannot find
+    # options by label.  Instead we interact with Select2's custom UI:
+    #   1. Click the visible Select2 container to open the dropdown.
+    #   2. Type the forum name into the search input.
+    #   3. Click the matching result in the dropdown list.
+    # If that fails for any reason we fall back to the native select_option() call.
+    # Strip any "r/" prefix the planner may add (e.g. "r/books" -> "books")
+    forum_clean = forum.lstrip("r/").strip() if forum else forum
+    try:
+        # The Select2 visible widget is a sibling/cousin of the hidden <select>.
+        # Clicking the container opens the dropdown search box.
+        page.locator(".select2-container").first.click(timeout=3000)
+        page.wait_for_timeout(300)  # give Select2 time to open
+        # Type into the search field (Select2 injects this into the body)
+        search_input = page.locator(".select2-search__field, .select2-search--dropdown input")
+        search_input.last.fill(forum_clean, timeout=3000)
+        page.wait_for_timeout(500)  # wait for results to filter
+        # Click the first matching result
+        page.locator(f".select2-results__option:has-text('{forum_clean}')").first.click(timeout=5000)
+        # Close the Select2 dropdown so it no longer intercepts pointer events.
+        # Without this, the open search overlay blocks the "Create submission" button.
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
+    except Exception:
+        # Always close any open Select2 dropdown before proceeding,
+        # otherwise it will intercept pointer events on the submit button.
+        try:
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(200)
+        except Exception:
+            pass
+        # Fallback: try the native select_option (works if Select2 is not active)
+        try:
+            page.select_option(Selectors.POST_FORUM_SELECT, label=forum_clean, timeout=5000)
+        except Exception:
+            pass  # best-effort — let submit proceed and detect failure via URL check
 
-    # Submit - using sync pattern
-    page.click(Selectors.POST_SUBMIT_BUTTON)
+    # Ensure Select2 dropdown is closed before submitting.
+    # Press Escape one more time and click somewhere neutral (the title field)
+    # to guarantee any open dropdown overlay is dismissed.
+    try:
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(150)
+        # Click the title field to move focus away from Select2
+        page.click(Selectors.POST_TITLE_INPUT, timeout=2000)
+        page.wait_for_timeout(150)
+    except Exception:
+        pass
+
+    # Submit - use force=True as a last resort if the dropdown still intercepts
+    try:
+        page.click(Selectors.POST_SUBMIT_BUTTON, timeout=5000)
+    except Exception:
+        # If normal click fails (overlay still blocking), force the click
+        try:
+            page.locator(Selectors.POST_SUBMIT_BUTTON).dispatch_event("click")
+        except Exception:
+            pass
     page.wait_for_load_state("networkidle")
 
     # Give a bit more time for navigation to complete

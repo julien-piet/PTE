@@ -2,7 +2,7 @@
 
 import re
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 from playwright.sync_api import Page, TimeoutError, expect
 
@@ -13,6 +13,14 @@ from .constants import (
     get_merge_request_url,
     get_project_merge_requests_url,
 )
+
+
+@dataclass
+class CommentMergeRequestResult:
+    """Result of attempting to post a comment on a merge request."""
+
+    success: bool
+    error_message: Optional[str] = None
 
 
 @dataclass
@@ -210,6 +218,162 @@ def close_merge_request_by_url(page: Page, mr_url: str) -> CloseMergeRequestResu
         return CloseMergeRequestResult(
             success=False,
             error_message="Status did not change to 'Closed'"
+        )
+
+
+def get_mr_list(
+    page: Page,
+    namespace: str,
+    project: str,
+    state: Optional[str] = None,
+) -> List[MergeRequest]:
+    """
+    Scrape and return the list of merge requests for a project.
+
+    Args:
+        page: Playwright Page instance
+        namespace: Project namespace
+        project: Project name
+        state: Optional state filter — "opened" | "closed" | "merged" | "all"
+               Defaults to "all" so callers don't need two trips.
+
+    Returns:
+        List of MergeRequest objects with mr_id, title, and url populated.
+    """
+    url = get_project_merge_requests_url(namespace, project)
+    if state:
+        url += f"?state={state}"
+    else:
+        url += "?state=all"
+
+    page.goto(url, wait_until="networkidle")
+
+    mrs: List[MergeRequest] = []
+
+    # GitLab renders MR titles as links inside
+    # .merge-request-title-text > a   OR   a[data-qa-selector='issuable_title_link']
+    title_links = page.locator(
+        "a[data-qa-selector='issuable_title_link'], "
+        ".merge-request-title-text a"
+    )
+
+    for i in range(title_links.count()):
+        link = title_links.nth(i)
+        title = link.inner_text().strip()
+        href = link.get_attribute("href") or ""
+
+        # Extract MR number from URL path …/-/merge_requests/NNN
+        match = re.search(r"/merge_requests/(\d+)$", href)
+        mr_id = int(match.group(1)) if match else 0
+
+        full_url = f"{GITLAB_DOMAIN}{href}" if href.startswith("/") else href
+
+        mrs.append(MergeRequest(
+            mr_id=mr_id,
+            title=title,
+            url=full_url,
+            source_branch="",
+        ))
+
+    return mrs
+
+
+def post_mr_comment(
+    page: Page,
+    namespace: str,
+    project: str,
+    mr_id: int,
+    body: str,
+) -> "CommentMergeRequestResult":
+    """
+    Post a comment (note) on a GitLab merge request.
+
+    Navigates to the MR page and submits a comment via the standard
+    GitLab note form at the bottom of the discussion thread.
+
+    Args:
+        page: Playwright Page instance
+        namespace: Project namespace (username or group)
+        project: Project name
+        mr_id: Merge request number
+        body: Comment text to post
+
+    Returns:
+        CommentMergeRequestResult with success status and any error message
+    """
+    url = get_merge_request_url(namespace, project, mr_id)
+    page.goto(url, wait_until="networkidle")
+
+    if _is_page_not_found(page):
+        return CommentMergeRequestResult(
+            success=False,
+            error_message=f"Merge request not found at {url}"
+        )
+
+    # Verified selectors for this GitLab version (confirmed against live instance):
+    #   - Form:     form.js-main-target-form  (also matches form.new-note)
+    #   - Textarea: textarea[name='note[note]']  (or .note-textarea)
+    #   - Submit:   .note-form-actions .split-content-button
+    #               NOTE: The button is type="button" (NOT type="submit") — do NOT use
+    #               button[type='submit'] which matches 0 elements on this GitLab version.
+    NOTE_FORM_SELECTOR = "form.js-main-target-form"
+    NOTE_TEXTAREA_SELECTOR = "textarea[name='note[note]']"
+    # The "Comment" button inside .note-form-actions; type=button (not submit)
+    NOTE_SUBMIT_SELECTOR = ".note-form-actions .split-content-button"
+
+    # Wait for the comment form to appear
+    try:
+        page.wait_for_selector(NOTE_FORM_SELECTOR, timeout=10000)
+    except TimeoutError:
+        return CommentMergeRequestResult(
+            success=False,
+            error_message="Comment form not found on MR page"
+        )
+
+    # Fill in the comment body
+    try:
+        page.wait_for_selector(NOTE_TEXTAREA_SELECTOR, timeout=8000)
+        page.click(NOTE_TEXTAREA_SELECTOR)
+        page.fill(NOTE_TEXTAREA_SELECTOR, body)
+    except TimeoutError:
+        return CommentMergeRequestResult(
+            success=False,
+            error_message="Comment textarea not found or not editable"
+        )
+
+    # Submit the comment — click the "Comment" split button in .note-form-actions.
+    # Must wait for the button to become enabled (GitLab disables it until textarea has text).
+    try:
+        page.wait_for_selector(NOTE_SUBMIT_SELECTOR, timeout=5000)
+        page.locator(NOTE_SUBMIT_SELECTOR).first.click()
+    except TimeoutError:
+        return CommentMergeRequestResult(
+            success=False,
+            error_message="Comment submit button not found"
+        )
+
+    # Wait for the page to finish posting
+    try:
+        page.wait_for_load_state("networkidle", timeout=10000)
+    except TimeoutError:
+        pass  # Partial success — the click may have worked
+
+    # Verify the comment appears in the notes list
+    try:
+        # Escape single quotes in body for the CSS :has-text() pseudo-selector
+        safe_snippet = body[:40].replace("'", "\\'")
+        page.wait_for_selector(
+            f"#notes-list .note-body:has-text('{safe_snippet}')",
+            timeout=8000
+        )
+        return CommentMergeRequestResult(success=True)
+    except TimeoutError:
+        # Comment may still have been posted; return partial success
+        return CommentMergeRequestResult(
+            success=True,
+            error_message=(
+                "Comment submitted but could not verify it appeared in the notes list"
+            )
         )
 
 

@@ -314,6 +314,7 @@ class ExecutionContext:
         self.plan = plan
         self.completed_steps: Set[str] = set()
         self.executing_steps: Set[str] = set()
+        self.failed_steps: Set[str] = set()
         self.step_outputs: Dict[str, Any] = {}
         self.tool_summaries: List[str] = []
 
@@ -328,7 +329,8 @@ class ExecutionContext:
 
     def mark_failed(self, step_id: str, error: str) -> None:
         self.executing_steps.discard(step_id)
-        # self.completed_steps.add(step_id)
+        self.completed_steps.add(step_id)   # treat as done so dependents can unblock
+        self.failed_steps.add(step_id)
         self.step_outputs[step_id] = f"Error: {error}"
 
     def add_summary(self, summary: str) -> None:
@@ -354,5 +356,6 @@ class ExecutionContext:
     def get_progress(self) -> str:
         total = len(self.plan)
         completed = len(self.completed_steps)
+        failed = len(self.failed_steps)
         executing = len(self.executing_steps)
-        return f"{completed}/{total} completed, {executing} executing"
+        return f"{completed}/{total} completed ({failed} failed), {executing} executing"

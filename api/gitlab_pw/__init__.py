@@ -58,7 +58,9 @@ from .projects import (
     Project,
     CreateProjectResult,
     DeleteProjectResult,
+    ForkProjectResult,
     create_private_project,
+    fork_project,
     delete_project,
 )
 from .groups import (
@@ -76,9 +78,12 @@ from .merge_requests import (
     MergeRequest,
     CreateMergeRequestResult,
     CloseMergeRequestResult,
+    CommentMergeRequestResult,
     create_merge_request,
     close_merge_request,
     close_merge_request_by_url,
+    get_mr_list,
+    post_mr_comment,
 )
 from .branches import (
     Branch,
@@ -165,7 +170,9 @@ __all__ = [
     "Project",
     "CreateProjectResult",
     "DeleteProjectResult",
+    "ForkProjectResult",
     "create_private_project",
+    "fork_project",
     "delete_project",
     # Groups
     "Group",
@@ -181,9 +188,12 @@ __all__ = [
     "MergeRequest",
     "CreateMergeRequestResult",
     "CloseMergeRequestResult",
+    "CommentMergeRequestResult",
     "create_merge_request",
     "close_merge_request",
     "close_merge_request_by_url",
+    "get_mr_list",
+    "post_mr_comment",
     # Branches
     "Branch",
     "CreateBranchResult",

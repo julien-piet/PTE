@@ -6,9 +6,14 @@ import argparse
 import asyncio
 import re
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
+# Add project root to path so agent module can be imported
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from typing import TypedDict, Annotated, List, Dict, Any, Callable, Optional, Sequence, Tuple, Literal, Union
 from langgraph.graph import StateGraph, END
@@ -89,7 +94,7 @@ class ToolCallAgent:
     LangGraph-based agent with planner, interceptor, executor, argument mapper, and responder nodes.
     """
 
-    def __init__(self, llm=None, miniscope=False, tools=None, api_index_path: Optional[Path] = None):
+    def __init__(self, llm=None, miniscope=False, tools=None, api_index_path: Optional[Path] = None, automated: bool = False):
         """
         Initialize the ToolCallAgent.
 
@@ -98,6 +103,9 @@ class ToolCallAgent:
             miniscope: If True, include interceptor node in the graph. If False, skip interceptor.
             tools: Dictionary of available tools (tool_name -> ToolDefinition).
             api_index_path: Path to API index.json file.
+            automated: If True, skip interactive user-input prompts during requirement
+                       analysis. Missing inputs are left empty so execution can proceed
+                       unattended (useful for automated benchmarking).
         """
         if not llm:
             raise ValueError("LLM instance is required for ToolCallAgent")
@@ -106,6 +114,7 @@ class ToolCallAgent:
         self.miniscope = miniscope
         self.tools = tools or {}
         self.api_index_path = api_index_path or API_INDEX_FILE
+        self.automated = automated
         
         # Load API registry
         try:
@@ -474,7 +483,10 @@ class ToolCallAgent:
                 print("\n📋 Missing information required to complete the task:")
                 for req in user_inputs_needed:
                     print(f"  - {req.name}: {req.description or req.prompt or 'No description'}")
-                user_inputs = await self._collect_user_inputs(user_inputs_needed)
+                if self.automated:
+                    print("  ⚡ Automated mode: skipping interactive prompts, proceeding without user input.")
+                else:
+                    user_inputs = await self._collect_user_inputs(user_inputs_needed)
 
             # Format requirements context
             requirements_context = self._format_requirement_context(
@@ -670,11 +682,9 @@ class ToolCallAgent:
         if not plan:
             return state
 
-        # Initialize execution context if not present
-        
-        # if "execution_context" not in state or state["execution_context"] is None:
-        #     state["execution_context"] = ExecutionContext(plan)
-        state["execution_context"] = ExecutionContext(plan)
+        # Initialize execution context only once — preserve state across loop waves
+        if "execution_context" not in state or state["execution_context"] is None:
+            state["execution_context"] = ExecutionContext(plan)
         ctx = state["execution_context"]
 
         # Get steps ready to execute (all dependencies completed)
@@ -701,6 +711,88 @@ class ToolCallAgent:
             # exact tool name and typed args
             tool_name = step.tool                       # Literal[...] string
             args = step.args.model_dump(exclude_none=True, exclude_unset=True)
+
+            # ── Runtime reference resolution ─────────────────────────────────
+            # Resolve any argument value that looks like a step-output reference.
+            # Patterns supported:
+            #   "{step_2.mr_number}"          → scalar field lookup in step_2 output
+            #   "{step_2.merge_requests.0.mr_number}" → list/nested path
+            # The step output is typically a JSON string; we parse it first.
+            import re as _re, json as _json
+
+            def _resolve_references(value, outputs: dict):
+                """
+                Recursively walk a value and replace any string matching
+                {step_N.field[.field2...]} with the actual value from outputs.
+                """
+                if isinstance(value, str):
+                    # Match the whole string being a reference
+                    m = _re.fullmatch(r'\{(step_\w+)\.([^}]+)\}', value)
+                    if m:
+                        ref_step, dotpath = m.group(1), m.group(2)
+                        raw = outputs.get(ref_step)
+                        if raw is not None:
+                            # Parse JSON output if it's a string
+                            if isinstance(raw, str):
+                                try:
+                                    raw = _json.loads(raw)
+                                except Exception:
+                                    pass
+                            # Walk dot-path (supports list indices too)
+                            parts = dotpath.split(".")
+                            cur = raw
+                            for part in parts:
+                                if cur is None:
+                                    break
+                                if isinstance(cur, dict):
+                                    cur = cur.get(part)
+                                elif isinstance(cur, list):
+                                    try:
+                                        cur = cur[int(part)]
+                                    except (ValueError, IndexError):
+                                        cur = None
+                                else:
+                                    cur = None
+                            if cur is not None:
+                                return cur
+                    # Also handle inline references within a larger string
+                    def _inline_sub(m2):
+                        ref_step, dotpath = m2.group(1), m2.group(2)
+                        raw = outputs.get(ref_step)
+                        if raw is None:
+                            return m2.group(0)
+                        if isinstance(raw, str):
+                            try:
+                                raw = _json.loads(raw)
+                            except Exception:
+                                pass
+                        parts = dotpath.split(".")
+                        cur = raw
+                        for part in parts:
+                            if cur is None:
+                                break
+                            if isinstance(cur, dict):
+                                cur = cur.get(part)
+                            elif isinstance(cur, list):
+                                try:
+                                    cur = cur[int(part)]
+                                except (ValueError, IndexError):
+                                    cur = None
+                            else:
+                                cur = None
+                        return str(cur) if cur is not None else m2.group(0)
+                    return _re.sub(r'\{(step_\w+)\.([^}]+)\}', _inline_sub, value)
+                elif isinstance(value, dict):
+                    return {k: _resolve_references(v, outputs) for k, v in value.items()}
+                elif isinstance(value, list):
+                    return [_resolve_references(v, outputs) for v in value]
+                return value
+
+            resolved_args = _resolve_references(args, ctx.step_outputs)
+            if resolved_args != args:
+                print(f"   🔗 Resolved references in {step_id} args: {resolved_args}")
+            args = resolved_args
+            # ─────────────────────────────────────────────────────────────────
 
             try:
                 # Execute
