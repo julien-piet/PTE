@@ -141,6 +141,31 @@ async def initialize_tools(
                 if has_token:
                     token_status.append("token")
 
+                # Push token into the MCP server process via its set_token tool.
+                # Servers like gitlab use a global auth dict populated at startup from
+                # env vars. If the server process doesn't have the env var set, the
+                # HTTP Authorization header the agent sends is ignored. Calling the
+                # set_token tool is the only way to reliably inject the token.
+                if has_token:
+                    set_token_tool_name = f"{server_name}-{server_name}_set_token"
+                    if set_token_tool_name not in tools_dict:
+                        # Try common naming patterns
+                        for candidate in [
+                            f"{server_name}-{server_name}_set_token",
+                            f"{server_name}-gitlab_set_token",
+                            f"{server_name}-set_token",
+                        ]:
+                            if candidate in tools_dict:
+                                set_token_tool_name = candidate
+                                break
+                    if set_token_tool_name in tools_dict:
+                        try:
+                            token_val = token_store.get_token(server_name, "token")
+                            await tools_dict[set_token_tool_name].execute(token=token_val)
+                            token_status.append("(pushed to server)")
+                        except Exception as e:
+                            print(f"  ⚠ Could not push token to {server_name}: {e}")
+
                 status_msg = f"  ✓ Loaded {len(tool_definitions)} tools from {server_name}"
                 if token_status:
                     status_msg += f" (tokens: {', '.join(token_status)})"

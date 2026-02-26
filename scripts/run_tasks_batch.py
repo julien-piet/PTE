@@ -20,7 +20,7 @@ from agent.agent_replan import ToolCallAgent
 class TaskBatchRunner:
     """Runs multiple tasks through the agent and collects results."""
 
-    def __init__(self, tasks_file: str, output_file: str, start: int = 0, limit: Optional[int] = None):
+    def __init__(self, tasks_file: str, output_file: str, start: int = 0, limit: Optional[int] = None, dryrun: bool = False):
         """
         Initialize the batch runner.
 
@@ -29,11 +29,13 @@ class TaskBatchRunner:
             output_file: Path to save results JSON
             start: Index to start from (default: 0)
             limit: Maximum number of tasks to run (None = all)
+            dryrun: If True, only print prompts without running the agent
         """
         self.tasks_file = Path(tasks_file)
         self.output_file = Path(output_file)
         self.start = max(0, start)  # Ensure non-negative
         self.limit = limit
+        self.dryrun = dryrun
         self.agent = None
         self.tools = None
         self.token_store = None
@@ -103,13 +105,31 @@ class TaskBatchRunner:
         task_id = task.get("task_id", "unknown")
         intent = task.get("intent", "")
 
-        print(f"Running task {task_id}: {intent[:60]}...")
+        # Enrich the prompt with repo context from start_url when present.
+        # Many tasks omit the repo from intent but encode it in start_url
+        # (e.g. "__GITLAB__/owner/repo"). Without this the agent has no idea
+        # which repo to query.
+        start_url = task.get("start_url", "")
+        repo_path = start_url.replace("__GITLAB__", "").strip("/")
+        if repo_path:
+            prompt = f"Project path: {repo_path}\n\nTask: {intent}"
+        else:
+            prompt = intent
+
+        print(f"\n{'='*70}")
+        print(f"Task {task_id} — full prompt sent to agent:")
+        print(f"{'-'*70}")
+        print(prompt)
+        print(f"{'='*70}\n")
+
+        if self.dryrun:
+            return {"task_id": task_id, "intent": intent, "prompt": prompt, "status": "dryrun"}
 
         try:
             # Prepare state for agent
             state = {
                 "messages": [
-                    {"role": "user", "content": intent}
+                    {"role": "user", "content": prompt}
                 ],
                 "plan": None,
                 "intercepted": False,
@@ -169,6 +189,11 @@ class TaskBatchRunner:
                 print(f"✅ Task {task_id} completed")
             else:
                 print(f"❌ Task {task_id} failed: {error}")
+
+            print(f"\nAgent response:")
+            print(f"{'-'*70}")
+            print(response)
+            print(f"{'-'*70}")
             return result
 
         except Exception as e:
@@ -290,6 +315,11 @@ async def main():
         default=None,
         help="Maximum number of tasks to run (default: all)"
     )
+    parser.add_argument(
+        "--dryrun",
+        action="store_true",
+        help="Print prompts only without running the agent"
+    )
 
     args = parser.parse_args()
 
@@ -299,11 +329,13 @@ async def main():
             tasks_file=args.tasks_file,
             output_file=args.output_file,
             start=args.start,
-            limit=args.limit
+            limit=args.limit,
+            dryrun=args.dryrun
         )
 
-        # Initialize
-        await runner.initialize()
+        # Skip agent initialization in dryrun mode
+        if not args.dryrun:
+            await runner.initialize()
 
         # Run all tasks
         await runner.run_all_tasks()

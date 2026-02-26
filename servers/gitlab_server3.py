@@ -11,6 +11,7 @@ from fastmcp import FastMCP, Context
 import base64
 from urllib.parse import quote
 from typing import Any, Optional, Union, List, Dict
+from servers.utils import truncate_mcp_response
 
 # Initialize FastMCP server
 mcp = FastMCP("GitLab API Server")
@@ -54,7 +55,7 @@ def _graphql_request(
         timeout=DEFAULT_TIMEOUT,
     )
     resp.raise_for_status()
-    return resp.json()
+    return truncate_mcp_response(resp.json())
 
 # --- Token management tools ---
 
