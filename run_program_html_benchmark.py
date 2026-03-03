@@ -36,6 +36,7 @@ if str(project_root) not in sys.path:
 from playwright.sync_api import sync_playwright
 from api import gitlab_pw
 from program_html_evaluator import ProgramHtmlEvaluator, DEFAULT_BASE_URLS
+from url_match_evaluator import UrlMatchEvaluator
 from gitlab_state_reset import GitLabStateReset
 
 
@@ -221,6 +222,7 @@ class AgentRunner:
         self.agent = None
         self.task_runner = None
         self._evaluator = ProgramHtmlEvaluator()
+        self._url_match_evaluator = UrlMatchEvaluator()
         # State resetter — shared across all tasks (reuses OAuth token)
         self._resetter = GitLabStateReset() if enable_reset else None
 
@@ -276,14 +278,15 @@ class AgentRunner:
     # ------------------------------------------------------------------
 
     def _evaluate_url_match(self, task: Dict[str, Any], result: Dict[str, Any]) -> bool:
-        expected_url = _resolve_placeholder(task["eval"]["reference_url"])
         actual_url = result.get("final_url")
-        if not actual_url:
-            return False
-        note = task["eval"].get("url_note", "")
-        if note == "GOLD in PRED":
-            return expected_url in actual_url
-        return actual_url == expected_url or actual_url.startswith(expected_url)
+        detail = self._url_match_evaluator.evaluate(task, actual_url)
+        if not detail["passed"]:
+            if detail.get("error"):
+                print(f"         error    : {detail['error']}")
+            else:
+                print(f"         expected : {detail['expected_urls']}")
+                print(f"         actual   : {actual_url}")
+        return detail["passed"]
 
     def _evaluate_string_match(self, task: Dict[str, Any], result: Dict[str, Any]) -> bool:
         answer = result.get("answer", "")
@@ -426,8 +429,6 @@ class AgentRunner:
 
         if "url_match" in eval_types:
             passed = self._evaluate_url_match(task, agent_result)
-            expected = _resolve_placeholder(task["eval"]["reference_url"])
-            print(f"     expected url     : {expected}")
             print(f"     url_match        : {'PASS' if passed else 'FAIL'}")
             return passed, agent_result, None, None
 
