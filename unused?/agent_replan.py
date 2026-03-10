@@ -36,8 +36,8 @@ from agent.common.tool_manager import ToolDefinition, initialize_tools
 from agent.common.token_manager import TokenStore, setup_authentication
 
 # Agent imports
-from agent.providers.provider import ModelProvider
-from agent.prompts import planner_prompt, responder_prompt
+from agent.providers.provider import ModelProvider 
+from prompts import planner_prompt, responder_prompt
 from agent.planner import ExecutionContext
 from agent.strict_planner import (
     gather_specs_from_tool_definitions,

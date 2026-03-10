@@ -1,355 +1,322 @@
 """
-Batch task runner script: Parse tasks from gitlab_tasks.json and run them through agent_replan.
-Outputs results to a JSON file.
+Batch task runner: plans each task with PlanningAgent then executes the plan
+with ExecutionAgent using curl.
+
+Results include both the generated plan and the execution output per step.
+Use --skip-execution to plan only (same as run_planning_batch.py).
 """
 
 import asyncio
 import json
 import sys
-from pathlib import Path
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-# Imports from the agent
-from agent.common.configurator import Configurator
-from agent.common.tool_manager import initialize_tools
-from agent.providers.provider import ModelProvider
-from agent.agent_replan import ToolCallAgent
+from agent.auth import AuthRegistry
+from agent.execution_agent import ExecutionAgent
+from agent.planning_agent import PlanningAgent
+from agent.planner import pretty_print_plan, pretty_print_execution
 
 
 class TaskBatchRunner:
-    """Runs multiple tasks through the agent and collects results."""
+    """Plans and executes tasks, saving both plan and execution results."""
 
-    def __init__(self, tasks_file: str, output_file: str, start: int = 0, limit: Optional[int] = None, dryrun: bool = False):
-        """
-        Initialize the batch runner.
-
-        Args:
-            tasks_file: Path to gitlab_tasks.json
-            output_file: Path to save results JSON
-            start: Index to start from (default: 0)
-            limit: Maximum number of tasks to run (None = all)
-            dryrun: If True, only print prompts without running the agent
-        """
+    def __init__(
+        self,
+        tasks_file: str,
+        output_file: str,
+        server: str,
+        env_file: str = "config/.server_env",
+        api_dir: str = "api",
+        start: int = 0,
+        limit: Optional[int] = None,
+        task_ids: Optional[List[int]] = None,
+        skip_execution: bool = False,
+        debug: bool = False,
+    ):
         self.tasks_file = Path(tasks_file)
         self.output_file = Path(output_file)
-        self.start = max(0, start)  # Ensure non-negative
+        self.server = server
+        self.env_file = env_file
+        self.api_dir = api_dir
+        self.start = max(0, start)
         self.limit = limit
-        self.dryrun = dryrun
-        self.agent = None
-        self.tools = None
-        self.token_store = None
-        self.results = []
+        self.task_ids = task_ids
+        self.skip_execution = skip_execution
+        self.debug = debug
 
-    async def initialize(self):
-        """Initialize the agent, tools, and LLM."""
-        print("Initializing agent...")
+        self.planning_agent: Optional[PlanningAgent] = None
+        self.execution_agent: Optional[ExecutionAgent] = None
+        self.results: List[Dict[str, Any]] = []
 
-        # Load configuration
-        config = Configurator()
-        config.load_all_env()
-        config.check_llm_env_vars()
-        config.get_mcp_servers()
-
-        # Initialize model
-        provider = ModelProvider(config)
-        print(f"Using model: {provider.llm_provider}:{provider.model_name}")
-        llm_signature = provider.llm_provider + ":" + provider.model_name
-
-        # Initialize tools from MCP servers
-        self.tools, self.token_store = await initialize_tools(config)
-
-        print(f"Loaded {len(self.tools)} tools")
-
-        # Create agent
-        self.agent = ToolCallAgent(
-            llm=llm_signature,
-            miniscope=False,
-            tools=self.tools,
-            token_store=self.token_store
+    def initialize(self):
+        print("Initializing PlanningAgent...")
+        self.planning_agent = PlanningAgent(
+            api_dir=self.api_dir,
+            debug_responses=self.debug,
+            debug_prompts=False,
         )
+        print("PlanningAgent ready")
 
-        print("Agent initialized successfully\n")
+        if not self.skip_execution:
+            print(f"Initializing ExecutionAgent (server={self.server!r})...")
+            registry = AuthRegistry.build_default(self.env_file)
+            if self.server not in registry:
+                raise ValueError(
+                    f"Server {self.server!r} not found in auth registry. "
+                    f"Check that its token is set in {self.env_file!r}."
+                )
+            self.execution_agent = ExecutionAgent(
+                auth=registry.get(self.server),
+                debug=self.debug,
+            )
+            print("ExecutionAgent ready\n")
 
     def load_tasks(self) -> List[Dict[str, Any]]:
-        """Load tasks from gitlab_tasks.json with start and limit."""
         if not self.tasks_file.exists():
             raise FileNotFoundError(f"Tasks file not found: {self.tasks_file}")
 
-        with open(self.tasks_file, 'r') as f:
+        with open(self.tasks_file) as f:
             all_tasks = json.load(f)
 
-        # Apply start and limit
-        end_index = self.start + self.limit if self.limit else len(all_tasks)
-        tasks = all_tasks[self.start:end_index]
-
-        print(f"Loaded {len(tasks)} tasks from {self.tasks_file}")
-        if self.start > 0:
-            print(f"  Starting from task index: {self.start}")
-        if self.limit:
-            print(f"  Limiting to: {self.limit} tasks")
-        print(f"  Running tasks {self.start} to {self.start + len(tasks) - 1} (out of {len(all_tasks)} total)")
+        if self.task_ids is not None:
+            id_set = set(self.task_ids)
+            tasks = [t for t in all_tasks if t.get("task_id") in id_set]
+            id_order = {tid: i for i, tid in enumerate(self.task_ids)}
+            tasks.sort(key=lambda t: id_order.get(t.get("task_id"), 0))
+            missing = id_set - {t.get("task_id") for t in tasks}
+            if missing:
+                print(f"  Warning: task IDs not found: {sorted(missing)}")
+            print(f"Loaded {len(tasks)} tasks (filtered by IDs: {self.task_ids})")
+        else:
+            end_index = self.start + self.limit if self.limit else len(all_tasks)
+            tasks = all_tasks[self.start:end_index]
+            print(f"Loaded {len(tasks)} tasks (index {self.start}–{self.start + len(tasks) - 1} of {len(all_tasks)} total)")
 
         return tasks
 
     async def run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Run a single task through the agent.
-
-        Args:
-            task: Task dictionary from gitlab_tasks.json
-
-        Returns:
-            Result dictionary with task info and agent output
-        """
         task_id = task.get("task_id", "unknown")
         intent = task.get("intent", "")
 
-        # Enrich the prompt with repo context from start_url when present.
-        # Many tasks omit the repo from intent but encode it in start_url
-        # (e.g. "__GITLAB__/owner/repo"). Without this the agent has no idea
-        # which repo to query.
         start_url = task.get("start_url", "")
-        repo_path = start_url.replace("__GITLAB__", "").strip("/")
-        if repo_path:
-            prompt = f"Project path: {repo_path}\n\nTask: {intent}"
-        else:
-            prompt = intent
+        repo_path = start_url.replace("__GITLAB__", "").replace("__SHOPPING__", "").strip("/")
+        prompt = f"Project path: {repo_path}\n\nTask: {intent}" if repo_path else intent
 
         print(f"\n{'='*70}")
-        print(f"Task {task_id} — full prompt sent to agent:")
-        print(f"{'-'*70}")
-        print(prompt)
-        print(f"{'='*70}\n")
+        print(f"Task {task_id}: {intent}")
+        print(f"{'='*70}")
 
-        if self.dryrun:
-            return {"task_id": task_id, "intent": intent, "prompt": prompt, "status": "dryrun"}
-
+        # ── Planning ──────────────────────────────────────────────────────────
         try:
-            # Prepare state for agent
-            state = {
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ],
-                "plan": None,
-                "intercepted": False,
-                "execution_result": {},
-                "mapped_arguments": {},
-                "response": "",
-                "global_message_history": [{"role": "user", "content": intent}],
-                "routed_websites": None,
-                "api_context": None,
-                "requirements_context": None,
-                "model_decisions": None,
-                "defaults_used": None,
-                "user_inputs": None,
-                "auth_requirements": None,
-            }
-
-            # Run agent with timeout
-            try:
-                result_state = await asyncio.wait_for(
-                    self.agent.invoke(state),
-                    timeout=300  # 5 minute timeout per task
-                )
-            except asyncio.TimeoutError:
-                result_state = {
-                    "response": "Task execution timed out after 5 minutes",
-                    "error": "timeout"
-                }
-
-            # Extract response
-            response = result_state.get("response", "No response")
-            plan = result_state.get("plan")
-            error = result_state.get("error")
-
-            # Determine status based on whether an error occurred
-            status = "failed" if error else "success"
-
-            result = {
-                "task_id": task_id,
-                "intent": intent,
-                "status": status,
-                "response": response,
-                "plan_generated": plan is not None,
-                "execution_context": result_state.get("execution_context"),
-            }
-
-            # Add error if present
-            if error:
-                result["error"] = error
-
-            # Add optional fields if they exist
-            if result_state.get("routed_websites"):
-                result["routed_websites"] = [w.name for w in result_state["routed_websites"]]
-            if result_state.get("user_inputs"):
-                result["user_inputs"] = result_state["user_inputs"]
-
-            if status == "success":
-                print(f"✅ Task {task_id} completed")
-            else:
-                print(f"❌ Task {task_id} failed: {error}")
-
-            print(f"\nAgent response:")
-            print(f"{'-'*70}")
-            print(response)
-            print(f"{'-'*70}")
-            return result
-
+            plan_response = await asyncio.wait_for(
+                self.planning_agent.plan(prompt),
+                timeout=120,
+            )
+        except asyncio.TimeoutError:
+            print(f"  ⏱ Planning timed out")
+            return {"task_id": task_id, "intent": intent, "status": "failed",
+                    "error": "planning timeout", "plan": None, "execution": None}
         except Exception as e:
-            print(f"❌ Task {task_id} failed: {str(e)}")
+            print(f"  ❌ Planning failed: {e}")
+            return {"task_id": task_id, "intent": intent, "status": "failed",
+                    "error": str(e), "plan": None, "execution": None}
+
+        plan_steps = [
+            {
+                "step_id": step.step_id,
+                "tool_name": step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
+                "arguments": [
+                    {"name": a.name, "value": a.value, "value_type": a.value_type}
+                    for a in (step.arguments or [])
+                ],
+                "depends_on": step.depends_on or [],
+                "hints": step.hints or "",
+            }
+            for step in plan_response.plan
+        ]
+        print(pretty_print_plan(plan_response.plan))
+        print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
+
+        if self.skip_execution:
             return {
                 "task_id": task_id,
                 "intent": intent,
-                "status": "failed",
-                "error": str(e),
-                "response": None,
-                "plan_generated": False,
+                "status": "planned",
+                "plan": plan_steps,
+                "plan_step_count": len(plan_steps),
+                "execution": None,
             }
 
-    async def run_all_tasks(self):
-        """Run all tasks and collect results."""
-        # Load tasks
+        # ── Execution ─────────────────────────────────────────────────────────
+        print(f"\n  Executing plan...")
+        try:
+            result = await asyncio.wait_for(
+                self.execution_agent.execute(plan_response, task=prompt),
+                timeout=120,
+            )
+            print(pretty_print_execution(plan_response.plan, result.answer))
+            print(f"  ✅ Execution complete ({len(result.outputs)} steps)")
+            return {
+                "task_id": task_id,
+                "intent": intent,
+                "status": "success",
+                "plan": plan_steps,
+                "plan_step_count": len(plan_steps),
+                "execution": result.outputs,
+                "answer": result.answer,
+            }
+        except asyncio.TimeoutError:
+            print(f"  ⏱ Execution timed out")
+            return {
+                "task_id": task_id,
+                "intent": intent,
+                "status": "execution_failed",
+                "error": "execution timeout",
+                "plan": plan_steps,
+                "plan_step_count": len(plan_steps),
+                "execution": None,
+            }
+        except Exception as e:
+            print(f"  ❌ Execution failed: {e}")
+            return {
+                "task_id": task_id,
+                "intent": intent,
+                "status": "execution_failed",
+                "error": str(e),
+                "plan": plan_steps,
+                "plan_step_count": len(plan_steps),
+                "execution": None,
+            }
+
+    async def run_all(self):
         tasks = self.load_tasks()
+        print(f"\nStarting batch run of {len(tasks)} tasks\n" + "=" * 70)
 
-        print(f"Starting batch execution of {len(tasks)} tasks\n")
-        print("=" * 70)
-
-        # Run tasks sequentially (change to concurrent if needed)
         for i, task in enumerate(tasks, 1):
             print(f"\n[{i}/{len(tasks)}]", end=" ")
             result = await self.run_task(task)
             self.results.append(result)
 
         print("\n" + "=" * 70)
-        print(f"\nCompleted {len(self.results)} tasks")
 
     def save_results(self):
-        """Save results to output JSON file and print detailed summary."""
-        # Create output directory if it doesn't exist
         self.output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # Separate successful and failed tasks
-        successful_tasks = [r for r in self.results if r.get("status") == "success"]
-        failed_tasks = [r for r in self.results if r.get("status") == "failed"]
+        successful  = [r for r in self.results if r.get("status") == "success"]
+        planned     = [r for r in self.results if r.get("status") == "planned"]
+        exec_failed = [r for r in self.results if r.get("status") == "execution_failed"]
+        failed      = [r for r in self.results if r.get("status") == "failed"]
 
-        # Prepare output data
         output_data = {
             "timestamp": datetime.now().isoformat(),
+            "server": self.server,
             "total_tasks": len(self.results),
-            "successful_tasks": len(successful_tasks),
-            "failed_tasks": len(failed_tasks),
-            "tasks": self.results
+            "successful": len(successful),
+            "planned_only": len(planned),
+            "execution_failed": len(exec_failed),
+            "planning_failed": len(failed),
+            "tasks": self.results,
         }
 
-        # Save to file
-        with open(self.output_file, 'w') as f:
+        with open(self.output_file, "w") as f:
             json.dump(output_data, f, indent=2, default=str)
 
-        print(f"\n✅ Results saved to {self.output_file}")
-
-        # Print detailed summary
+        print(f"\n📄 Results saved to {self.output_file}")
         print("\n" + "=" * 70)
-        print("EXECUTION SUMMARY")
+        print("SUMMARY")
         print("=" * 70)
-        print(f"\nTotal tasks: {output_data['total_tasks']}")
-        print(f"Successful: {output_data['successful_tasks']}")
-        print(f"Failed: {output_data['failed_tasks']}")
-        success_rate = (output_data['successful_tasks'] / output_data['total_tasks'] * 100) if output_data['total_tasks'] > 0 else 0
-        print(f"Success rate: {success_rate:.1f}%")
+        print(f"  Total tasks:       {output_data['total_tasks']}")
+        print(f"  ✅ Success:        {output_data['successful']}")
+        if planned:
+            print(f"  📋 Planned only:   {output_data['planned_only']}")
+        print(f"  ❌ Exec failed:    {output_data['execution_failed']}")
+        print(f"  ❌ Plan failed:    {output_data['planning_failed']}")
 
-        # Show failed tasks with details
-        if failed_tasks:
+        if failed or exec_failed:
             print("\n" + "-" * 70)
-            print(f"FAILED TASKS ({len(failed_tasks)})")
+            print("FAILURES")
             print("-" * 70)
-            for task in failed_tasks:
-                print(f"\n  ❌ Task ID: {task.get('task_id', 'unknown')}")
-                print(f"     Intent: {task.get('intent', 'N/A')[:80]}...")
-                if task.get('error'):
-                    print(f"     Error: {task.get('error')[:150]}")
-
-        # Show passed tasks summary
-        if successful_tasks:
-            print("\n" + "-" * 70)
-            print(f"PASSED TASKS ({len(successful_tasks)})")
-            print("-" * 70)
-            for task in successful_tasks:
-                plan_info = "✓ Plan generated" if task.get('plan_generated') else "✗ No plan"
-                print(f"\n  ✅ Task ID: {task.get('task_id', 'unknown')}")
-                print(f"     Intent: {task.get('intent', 'N/A')[:80]}...")
-                print(f"     {plan_info}")
-                if task.get('routed_websites'):
-                    print(f"     Routed to: {', '.join(task['routed_websites'])}")
+            for r in failed + exec_failed:
+                print(f"\n  Task {r.get('task_id')}: {r.get('intent', '')[:70]}")
+                print(f"    Status: {r.get('status')}  |  Error: {r.get('error', '')[:100]}")
 
         print("\n" + "=" * 70)
 
 
 async def main():
-    """Main entry point."""
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Run batch tasks from gitlab_tasks.json through agent_replan"
+        description="Plan and execute batch tasks using PlanningAgent + ExecutionAgent"
     )
     parser.add_argument(
-        "--tasks-file",
-        default="gitlab_tasks.json",
+        "--tasks-file", default="gitlab_tasks.json",
         help="Path to tasks JSON file (default: gitlab_tasks.json)"
     )
     parser.add_argument(
-        "--output", "-o",
-        dest="output_file",
-        default="task_results.json",
+        "--output", "-o", dest="output_file", default="task_results.json",
         help="Path to save results JSON file (default: task_results.json)"
     )
     parser.add_argument(
-        "--start",
-        type=int,
-        default=0,
-        help="Start index for tasks to run (default: 0)"
+        "--server", default="gitlab",
+        help="Auth server to use from .server_env (default: gitlab)"
     )
     parser.add_argument(
-        "--limit",
-        type=int,
-        default=None,
-        help="Maximum number of tasks to run (default: all)"
+        "--env-file", default="config/.server_env",
+        help="Path to .env file containing auth tokens (default: config/.server_env)"
     )
     parser.add_argument(
-        "--dryrun",
-        action="store_true",
-        help="Print prompts only without running the agent"
+        "--api-dir", default="api",
+        help="Directory containing swagger files (default: api)"
+    )
+    parser.add_argument(
+        "--start", type=int, default=0,
+        help="Start index for tasks (default: 0)"
+    )
+    parser.add_argument(
+        "--limit", type=int, default=None,
+        help="Max number of tasks to run (default: all)"
+    )
+    parser.add_argument(
+        "--task-ids", nargs="+", type=int, default=None, metavar="ID",
+        help="Specific task IDs to run. Overrides --start and --limit."
+    )
+    parser.add_argument(
+        "--skip-execution", action="store_true",
+        help="Plan only, do not execute (equivalent to run_planning_batch.py)"
+    )
+    parser.add_argument(
+        "--debug", action="store_true",
+        help="Print curl commands and raw responses for each step"
     )
 
     args = parser.parse_args()
 
     try:
-        # Create runner
         runner = TaskBatchRunner(
             tasks_file=args.tasks_file,
             output_file=args.output_file,
+            server=args.server,
+            env_file=args.env_file,
+            api_dir=args.api_dir,
             start=args.start,
             limit=args.limit,
-            dryrun=args.dryrun
+            task_ids=args.task_ids,
+            skip_execution=args.skip_execution,
+            debug=args.debug,
         )
-
-        # Skip agent initialization in dryrun mode
-        if not args.dryrun:
-            await runner.initialize()
-
-        # Run all tasks
-        await runner.run_all_tasks()
-
-        # Save results
+        runner.initialize()
+        await runner.run_all()
         runner.save_results()
-
-        print("\n✅ Batch execution completed successfully!")
+        print("\n✅ Batch run completed successfully!")
 
     except KeyboardInterrupt:
-        print("\n\n⚠️  Batch execution interrupted by user")
+        print("\n\n⚠️  Interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Batch execution failed: {e}")
+        print(f"\n❌ Batch run failed: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

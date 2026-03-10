@@ -151,6 +151,7 @@ ormsgpack==1.10.0
 packaging==24.2
 pandas==2.3.2
 parse==1.20.2
+prance[osv]
 parso 
 pathable==0.4.4
 pathvalidate==3.3.1
