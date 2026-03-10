@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # Allow running from project root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from agent.agent_replan import ToolCallAgent
+from agent_replan import ToolCallAgent
 from agent.common.configurator import Configurator
 from agent.common.tool_manager import initialize_tools
 from agent.providers.provider import ModelProvider
