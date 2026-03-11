@@ -15,7 +15,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
-from urllib.parse import quote
+from urllib.parse import quote, quote_plus
 
 from pydantic_ai import Agent
 
@@ -139,7 +139,7 @@ class ExecutionAgent:
             path = path.replace(f"{{{pname}}}", quote(pval, safe=""))
         url = step_base_url + path
         if query_params:
-            qs = "&".join(f"{k}={v}" for k, v in query_params.items())
+            qs = "&".join(f"{k}={quote_plus(str(v))}" for k, v in query_params.items())
             url = f"{url}?{qs}"
 
         # Assemble curl command
@@ -214,7 +214,9 @@ class ExecutionAgent:
             f"Rules:\n"
             f"- If a single scalar is needed (e.g. a project ID, a number), return just that value as plain text.\n"
             f"- If the dependent step needs a structured sub-object, return it as compact JSON.\n"
-            f"- If the response is a list and one specific item is needed, extract only that item or field.\n"
+            f"- If the dependent step uses the value as a path parameter (e.g. /projects/{{id}}) and multiple values "
+            f"are needed, return a JSON array (e.g. [1, 2, 3]). The engine will call the step once per item.\n"
+            f"- If the response is a list and only one specific item is needed, extract only that item or field.\n"
             f"- Do NOT return the entire raw response. Return only the extracted value.\n"
             f"- Do NOT include any explanation."
         )
@@ -238,12 +240,47 @@ class ExecutionAgent:
         )
         print(f"[ExecutionAgent] → {step.step_id}: {tool_name}")
         try:
-            cmd = self._build_cmd(step, ctx.step_outputs)
-            self._debug(f"{step.step_id} curl command:\n  " + " ".join(
-                f"'{p}'" if " " in p else p for p in cmd
-            ))
             loop = asyncio.get_event_loop()
-            raw = await loop.run_in_executor(None, self._run_curl, cmd)
+
+            # Detect fan-out: if a path parameter resolves to a list, call the
+            # step once per item and collect all results into a list.
+            _, path_template = tool_name.split(" ", 1)
+            path_param_names = set(re.findall(r"\{(\w+)\}", path_template))
+
+            fan_out_ref_step: Optional[str] = None
+            fan_out_values: Optional[List[Any]] = None
+            for arg in (step.arguments or []):
+                if arg.name in path_param_names:
+                    # Check the raw stored output (not _resolve, which stringifies lists)
+                    m = re.search(r"\{(\w+)\.result", str(arg.value))
+                    ref_step_id = m.group(1) if m else None
+                    raw_val = ctx.step_outputs.get(ref_step_id) if ref_step_id else None
+                    if isinstance(raw_val, list):
+                        fan_out_ref_step = ref_step_id
+                        fan_out_values = raw_val
+                        break
+
+            if fan_out_values is not None:
+                print(f"[ExecutionAgent] Fan-out detected for {step.step_id}: {len(fan_out_values)} item(s)")
+                all_results = []
+                for item in fan_out_values:
+                    modified_outputs = dict(ctx.step_outputs)
+                    if fan_out_ref_step:
+                        modified_outputs[fan_out_ref_step] = item
+                    cmd = self._build_cmd(step, modified_outputs)
+                    self._debug(f"{step.step_id} curl command (item={item}):\n  " + " ".join(
+                        f"'{p}'" if " " in p else p for p in cmd
+                    ))
+                    result = await loop.run_in_executor(None, self._run_curl, cmd)
+                    all_results.append(result)
+                raw = all_results
+            else:
+                cmd = self._build_cmd(step, ctx.step_outputs)
+                self._debug(f"{step.step_id} curl command:\n  " + " ".join(
+                    f"'{p}'" if " " in p else p for p in cmd
+                ))
+                raw = await loop.run_in_executor(None, self._run_curl, cmd)
+
             self._debug(f"{step.step_id} response (2xx OK): {json.dumps(raw, indent=2) if isinstance(raw, (dict, list)) else raw}")
 
             # Always preserve the full raw response for final answer generation
