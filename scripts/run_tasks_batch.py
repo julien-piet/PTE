@@ -13,10 +13,24 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from agent.auth import AuthRegistry
-from agent.execution_agent import ExecutionAgent
-from agent.planning_agent import PlanningAgent
+from agent.agent import Agent
 from agent.planner import pretty_print_plan, pretty_print_execution
+
+
+def _serialize_plan(plan) -> list:
+    return [
+        {
+            "step_id": step.step_id,
+            "tool_name": step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
+            "arguments": [
+                {"name": a.name, "value": a.value, "value_type": a.value_type}
+                for a in (step.arguments or [])
+            ],
+            "depends_on": step.depends_on or [],
+            "hints": step.hints or "",
+        }
+        for step in plan
+    ]
 
 
 class TaskBatchRunner:
@@ -46,32 +60,19 @@ class TaskBatchRunner:
         self.skip_execution = skip_execution
         self.debug = debug
 
-        self.planning_agent: Optional[PlanningAgent] = None
-        self.execution_agent: Optional[ExecutionAgent] = None
+        self.agent: Optional[Agent] = None
         self.results: List[Dict[str, Any]] = []
 
     def initialize(self):
-        print("Initializing PlanningAgent...")
-        self.planning_agent = PlanningAgent(
+        print(f"Initializing Agent (server={self.server!r})...")
+        self.agent = Agent(
+            env_file=self.env_file,
             api_dir=self.api_dir,
-            debug_responses=self.debug,
-            debug_prompts=False,
+            skip_execution=self.skip_execution,
+            debug=self.debug,
         )
-        print("PlanningAgent ready")
-
-        if not self.skip_execution:
-            print(f"Initializing ExecutionAgent (server={self.server!r})...")
-            registry = AuthRegistry.build_default(self.env_file)
-            if self.server not in registry:
-                raise ValueError(
-                    f"Server {self.server!r} not found in auth registry. "
-                    f"Check that its token is set in {self.env_file!r}."
-                )
-            self.execution_agent = ExecutionAgent(
-                auth=registry.get(self.server),
-                debug=self.debug,
-            )
-            print("ExecutionAgent ready\n")
+        self.agent.initialize(server=self.server)
+        print("Agent ready\n")
 
     def load_tasks(self) -> List[Dict[str, Any]]:
         if not self.tasks_file.exists():
@@ -108,87 +109,49 @@ class TaskBatchRunner:
         print(f"Task {task_id}: {intent}")
         print(f"{'='*70}")
 
-        # ── Planning ──────────────────────────────────────────────────────────
+        # ── Plan + Execute ────────────────────────────────────────────────────
         try:
-            plan_response = await asyncio.wait_for(
-                self.planning_agent.plan(prompt),
-                timeout=120,
-            )
+            result = await self.agent.run_task(prompt)
         except asyncio.TimeoutError:
-            print(f"  ⏱ Planning timed out")
-            return {"task_id": task_id, "intent": intent, "status": "failed",
-                    "error": "planning timeout", "plan": None, "execution": None}
+            timed_out_during = "planning" if self.agent.last_plan_response is None else "execution"
+            print(f"  ⏱ {timed_out_during.capitalize()} timed out")
+            status = "failed" if timed_out_during == "planning" else "execution_failed"
+            return {"task_id": task_id, "intent": intent, "status": status,
+                    "error": f"{timed_out_during} timeout", "plan": None, "execution": None}
         except Exception as e:
-            print(f"  ❌ Planning failed: {e}")
-            return {"task_id": task_id, "intent": intent, "status": "failed",
-                    "error": str(e), "plan": None, "execution": None}
-
-        plan_steps = [
-            {
-                "step_id": step.step_id,
-                "tool_name": step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                "arguments": [
-                    {"name": a.name, "value": a.value, "value_type": a.value_type}
-                    for a in (step.arguments or [])
-                ],
-                "depends_on": step.depends_on or [],
-                "hints": step.hints or "",
+            if self.agent.last_plan_response is None:
+                print(f"  ❌ Planning failed: {e}")
+                return {"task_id": task_id, "intent": intent, "status": "failed",
+                        "error": str(e), "plan": None, "execution": None}
+            print(f"  ❌ Execution failed: {e}")
+            plan_response = self.agent.last_plan_response
+            plan_steps = _serialize_plan(plan_response.plan)
+            return {
+                "task_id": task_id, "intent": intent,
+                "status": "execution_failed", "error": str(e),
+                "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
             }
-            for step in plan_response.plan
-        ]
+
+        plan_response = self.agent.last_plan_response
+        plan_steps = _serialize_plan(plan_response.plan)
         print(pretty_print_plan(plan_response.plan))
         print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
 
         if self.skip_execution:
             return {
-                "task_id": task_id,
-                "intent": intent,
-                "status": "planned",
-                "plan": plan_steps,
-                "plan_step_count": len(plan_steps),
-                "execution": None,
+                "task_id": task_id, "intent": intent,
+                "status": "execution_failed",
+                "error": "execution skipped (--skip-execution flag)",
+                "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
             }
 
-        # ── Execution ─────────────────────────────────────────────────────────
-        print(f"\n  Executing plan...")
-        try:
-            result = await asyncio.wait_for(
-                self.execution_agent.execute(plan_response, task=prompt),
-                timeout=120,
-            )
-            print(pretty_print_execution(plan_response.plan, result.answer))
-            print(f"  ✅ Execution complete ({len(result.outputs)} steps)")
-            return {
-                "task_id": task_id,
-                "intent": intent,
-                "status": "success",
-                "plan": plan_steps,
-                "plan_step_count": len(plan_steps),
-                "execution": result.outputs,
-                "answer": result.answer,
-            }
-        except asyncio.TimeoutError:
-            print(f"  ⏱ Execution timed out")
-            return {
-                "task_id": task_id,
-                "intent": intent,
-                "status": "execution_failed",
-                "error": "execution timeout",
-                "plan": plan_steps,
-                "plan_step_count": len(plan_steps),
-                "execution": None,
-            }
-        except Exception as e:
-            print(f"  ❌ Execution failed: {e}")
-            return {
-                "task_id": task_id,
-                "intent": intent,
-                "status": "execution_failed",
-                "error": str(e),
-                "plan": plan_steps,
-                "plan_step_count": len(plan_steps),
-                "execution": None,
-            }
+        print(pretty_print_execution(plan_response.plan, result.answer))
+        print(f"  ✅ Execution complete ({len(result.outputs)} steps)")
+        return {
+            "task_id": task_id, "intent": intent, "status": "success",
+            "plan": plan_steps, "plan_step_count": len(plan_steps),
+            "execution": result.outputs, "answer": result.answer,
+        }
 
     async def run_all(self):
         tasks = self.load_tasks()

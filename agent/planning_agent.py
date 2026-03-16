@@ -76,7 +76,16 @@ class PlanningAgent:
         if not hints_path.exists():
             return {}
         with open(hints_path) as f:
-            return json.load(f)
+            raw = json.load(f)
+        import importlib.util
+        prompts_path = self.api_dir / "api_server_prompts.py"
+        spec = importlib.util.spec_from_file_location("api_server_prompts", prompts_path)
+        prompts = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(prompts)
+        return {
+            k: getattr(prompts, v, v)
+            for k, v in raw.items()
+        }
 
     # ------------------------------------------------------------------
     # Step 2: LLM picks which swagger file(s) to use
@@ -244,10 +253,12 @@ class PlanningAgent:
         return endpoints
 
     # ------------------------------------------------------------------
-    # Step 5b: LLM selects the best endpoints for the task 
+    # Step 5b: LLM selects the best endpoints for the task
+    # Returns (selected_endpoints, capabilities) where capabilities is a
+    # list of human-readable strings describing what each endpoint provides.
     # ------------------------------------------------------------------
-    async def _select_endpoints(self, task: str, endpoints: List[EndpointInfo]) -> List[EndpointInfo]:
-        candidates = endpoints #passed in everything
+    async def _select_endpoints(self, task: str, endpoints: List[EndpointInfo]):
+        candidates = endpoints
         endpoint_list = "\n".join(
             f"{i}. {ep.method} {ep.path} [{ep.api}] — {ep.summary}"
             for i, ep in enumerate(candidates)
@@ -256,106 +267,38 @@ class PlanningAgent:
         # Inject per-API hints for whichever schemas are in play
         hints = self._load_hints()
         api_files_used = {ep.api for ep in candidates}
-        api_hints_section = ""
         relevant_hints = [
             f"[ {fname} ]\n{hints[fname]}"
             for fname in api_files_used
             if fname in hints
         ]
-        if relevant_hints:
-            api_hints_section = "\nAPI-specific parameter rules (apply these before deciding):\n" + "\n\n".join(relevant_hints) + "\n"
+        api_hints_section = (
+            "\nAPI context (use to understand data models and identifier types):\n"
+            + "\n\n".join(relevant_hints) + "\n"
+            if relevant_hints else ""
+        )
 
-        # prompt = (
-        #     f"Task: {task}\n\n"
-        #     f"Available endpoints:\n{endpoint_list}\n\n"
-        #     "Select the minimal executable set of endpoints needed to complete this task.\n\n"
-        #     "Important rules:\n"
-        #     "1. First identify the most likely final goal endpoint.\n"
-        #     "2. Then inspect the required parameters for that endpoint.\n"
-        #     "3. Compare those required parameters against the information explicitly available in the task/context.\n"
-        #     "4. If a required parameter is missing, ambiguous, or in the wrong form, select one or more additional endpoints that can resolve or transform it.\n"
-        #     "5. Work backwards from the goal endpoint until every required parameter can be obtained.\n"
-        #     "6. Do NOT assume a parameter is directly usable just because it has a similar name.\n"
-        #     "   Example: a project name is not always a valid project id or namespaced path.\n"
-        #     "7. Prefer a valid multi-step chain over an invalid single-endpoint plan.\n"
-        #     "8. Only choose endpoints that are necessary to make the plan executable.\n"
-        #     "9. If multiple resolver endpoints are possible, prefer the most direct and reliable one.\n\n"
-        #     "When reasoning about parameters, pay attention to:\n"
-        #     "- numeric id vs string name vs full path\n"
-        #     "- namespace-qualified identifiers\n"
-        #     "- search results that must be resolved before use\n"
-        #     "- required path parameters vs optional query parameters\n"
-        #     "- whether the task provides enough context directly\n"
-        #     + api_hints_section + "\n"
-        #     "Your goal is not just to pick the endpoint that performs the final action.\n"
-        #     "Your goal is to pick the smallest set of endpoints that can actually be executed with the available information.\n\n"
-        #     'Respond with ONLY valid JSON in this format: '
-        #     '{"selected_indices": [0, 2, 5], "reasoning": "brief explanation"}'
-        # )
         prompt = (
             f"Task: {task}\n\n"
             f"Available endpoints:\n{endpoint_list}\n\n"
-            "Select the minimal executable set of endpoints needed to complete this task.\n\n"
-            "Important rules:\n"
-            "1. First identify the most likely final goal endpoint.\n"
-            "2. Then inspect the required parameters for that endpoint.\n"
-            "3. Compare those required parameters against the information explicitly available in the task/context.\n"
-            "4. If a required parameter is missing, ambiguous, or in the wrong form, you MUST add one or more resolver endpoints that can obtain or transform it.\n"
-            "5. Work backwards from the goal endpoint until every required parameter is available in a directly usable form.\n"
-            "6. Do NOT assume a parameter is directly usable just because it has a similar name.\n"
-            "7. Do NOT choose a goal endpoint alone if one of its required parameters still needs to be looked up or transformed.\n"
-            "8. Prefer a valid multi-step chain over an invalid single-endpoint plan.\n"
-            "9. Only choose endpoints that are necessary to make the plan executable.\n"
-            "10. If multiple resolver endpoints are possible, prefer the most direct and reliable one.\n"
-            "11. A plan is executable only if every selected endpoint can be called with the task/context plus outputs of earlier selected endpoints.\n"
-            "12. Never rely on 'it might work' or speculative identifier guessing. If direct usability is not established, add a resolver endpoint.\n\n"
-            "When reasoning about parameters, pay attention to:\n"
-            "- numeric id vs string name vs full path\n"
-            "- namespace-qualified identifiers\n"
-            "- search results that must be resolved before use\n"
-            "- required path parameters vs optional query parameters\n"
-            "- whether the task provides enough context directly\n"
             + api_hints_section + "\n"
-            "Your goal is not just to pick the endpoint that performs the final action.\n"
-            "Your goal is to pick the smallest set of endpoints that can actually be executed with the available information.\n\n"
-            'Respond with ONLY valid JSON in this format: '
-            '{"selected_indices": [0, 2, 5], "reasoning": "brief explanation"}'
+            "Select the minimal set of endpoints needed to complete this task.\n\n"
+            "Rules:\n"
+            "1. Identify the final goal endpoint (the one that performs the task's main action).\n"
+            "2. Check what required inputs that endpoint needs.\n"
+            "3. If any required input is not directly stated in the task (e.g. a numeric ID when only a name is given), "
+            "add a resolver endpoint that can provide it.\n"
+            "4. Work backwards until every required input is either from the task or from a prior endpoint's output.\n"
+            "5. Do NOT choose a goal endpoint if one of its required inputs still needs a lookup.\n"
+            "6. Only include endpoints that are necessary — no extras.\n\n"
+            "For each selected endpoint, describe in one sentence what it provides to the chain "
+            "(e.g. 'provides numeric project_id needed by the next step').\n\n"
+            "Do NOT decide exact argument values or enum choices here — that is handled later.\n\n"
+            'Respond with ONLY valid JSON:\n'
+            '{"selected_indices": [0, 2], "capabilities": ["resolves username to user_id", "creates the repository"], "reasoning": "brief"}'
         )
-        # prompt = (
-        #     f"Task: {task}\n\n"
-        #     f"Available endpoints:\n{endpoint_list}\n\n"
-        #     "Select the minimal executable endpoint chain needed to complete this task.\n\n"
-        #     "Planning procedure:\n"
-        #     "1. First identify the most likely final goal endpoint.\n"
-        #     "2. Inspect the required parameters for that endpoint.\n"
-        #     "3. Compare those required parameters against the information explicitly available in the task/context.\n"
-        #     "4. If the task/context already provides a parameter in a directly usable form, prefer using it immediately in the goal endpoint.\n"
-        #     "5. If a required parameter is missing, ambiguous, or in the wrong form, work backwards and add one or more resolver endpoints that can obtain or transform it.\n"
-        #     "6. Continue backward-chaining until every selected endpoint has all required inputs available.\n\n"
-        #     "Important rules:\n"
-        #     "7. Do NOT assume a parameter is directly usable just because it has a similar name.\n"
-        #     "   Example: a project name is not always a valid project id or namespaced path.\n"
-        #     "8. Do NOT assume that every path parameter named {id} requires a prior search call.\n"
-        #     "   Some APIs accept numeric ids, namespaced paths, slugs, URLs, or other structured identifiers directly.\n"
-        #     "9. If the task provides a specific structured identifier (for example a namespaced path, owner/resource path, full slug, URL, numeric id, or other resource-like identifier), prefer using it directly instead of adding an unnecessary lookup step.\n"
-        #     "10. Only add search/list/resolver endpoints when the current information is insufficient to execute the goal endpoint directly.\n"
-        #     "11. Prefer a valid direct call over an unnecessary lookup chain.\n"
-        #     "12. Prefer a valid multi-step chain over an invalid single-endpoint plan.\n"
-        #     "13. If multiple resolver endpoints are possible, choose the most direct and reliable one.\n"
-        #     "14. Only choose endpoints that are necessary to make the plan executable.\n\n"
-        #     "When reasoning about parameters, pay attention to:\n"
-        #     "- numeric id vs string name vs full path\n"
-        #     "- namespace-qualified or owner-qualified identifiers\n"
-        #     "- whether a provided identifier is already highly specific\n"
-        #     "- search results that must be resolved before use\n"
-        #     "- required path parameters vs optional query parameters\n"
-        #     "- whether the task already provides enough context directly\n\n"
-        #     "Your goal is not just to pick the endpoint that performs the final action.\n"
-        #     "Your goal is to pick the smallest executable chain of endpoints that can actually run with the available information.\n\n"
-        #     'Respond with ONLY valid JSON in this format: '
-        #     '{"selected_indices": [0, 2, 5], "reasoning": "brief explanation"}'
-        # )
-        # self._debug_print("_select_endpoints", prompt=prompt) #super long list of endpoints
+        self._debug_print("_select_endpoints", prompt=endpoint_list) #super long list of endpoints
+        # self._debug_print("_select_endpoints", prompt=prompt) #super long list of endpoints with prompt
         agent = Agent(self.llm, output_type=str)
         result = await agent.run(prompt)
         response = result.output
@@ -372,16 +315,18 @@ class PlanningAgent:
         if data is None:
             data = json.loads(response.strip())
         indices: List[int] = data.get("selected_indices", [])
-        return [candidates[i] for i in indices if 0 <= i < len(candidates)]
+        capabilities: List[str] = data.get("capabilities", [])
+        selected = [candidates[i] for i in indices if 0 <= i < len(candidates)]
+        return selected, capabilities
 
     # ------------------------------------------------------------------
     # Step 6: LLM builds a full execution plan
     # ------------------------------------------------------------------
-    async def _build_plan(self, task: str, selected: List[EndpointInfo]):
+    async def _build_plan(self, task: str, selected: List[EndpointInfo], capabilities: List[str] = None):
         tool_names = [f"{ep.method} {ep.path}" for ep in selected]
         bundle = build_agent_models(tool_names)
 
-        # Build a concise endpoint reference for the LLM
+        # Build a detailed endpoint reference including allowed values for params
         details = []
         for ep in selected:
             params = []
@@ -390,7 +335,15 @@ class PlanningAgent:
                     pname = p.get("name", "")
                     pin = p.get("in", "")
                     required = p.get("required", False)
-                    params.append(f"  - {pname} (in={pin}, required={required})")
+                    ptype = p.get("type", "")
+                    pdesc = p.get("description", "")
+                    enums = p.get("enum", [])
+                    line = f"  - {pname} (in={pin}, required={required}, type={ptype})"
+                    if enums:
+                        line += f", allowed values: {enums}"
+                    if pdesc:
+                        line += f"\n    description: {pdesc}"
+                    params.append(line)
             param_str = "\n".join(params) if params else "  (none)"
             entry = (
                 f"{ep.method} {ep.path}\n"
@@ -403,9 +356,32 @@ class PlanningAgent:
         endpoint_details = "\n\n".join(details)
         schema = json.dumps(bundle.ToolBasedResponse.model_json_schema(), indent=2)
 
+        hints = self._load_hints()
+        api_files_used = {ep.api for ep in selected}
+        relevant_hints = [
+            f"[ {fname} ]\n{hints[fname]}"
+            for fname in api_files_used
+            if fname in hints
+        ]
+        api_hints_section = (
+            "\nAPI-specific parameter rules (apply these before building the plan):\n"
+            + "\n\n".join(relevant_hints) + "\n"
+            if relevant_hints else ""
+        )
+
+        capabilities_section = ""
+        if capabilities:
+            cap_lines = "\n".join(
+                f"  {i+1}. {tool_names[i] if i < len(tool_names) else '?'}: {cap}"
+                for i, cap in enumerate(capabilities)
+            )
+            capabilities_section = f"\nEndpoint roles in the plan:\n{cap_lines}\n"
+
         prompt = (
             f"Task: {task}\n\n"
             f"Available API endpoints:\n{endpoint_details}\n\n"
+            + capabilities_section
+            + api_hints_section + "\n"
             "Build a step-by-step execution plan to complete this task.\n"
             "Steps can depend on each other using depends_on and reference prior outputs with '{step_id.result}'.\n\n"
             f"Respond with ONLY valid JSON matching this schema:\n{schema}\n\n"
@@ -415,7 +391,25 @@ class PlanningAgent:
             '- Each step needs a unique step_id (e.g. "step_1", "step_2")\n'
             f"- tool_name must be one of: {json.dumps(tool_names)}\n"
             "- arguments is a list of {name, value, value_type} objects\n"
-            '- value_type is "literal" for known values, "reference" for {step_id.result} placeholders'
+            '- value_type is "literal" for known values, "reference" for {step_id.result} placeholders\n'
+            "- CRITICAL: argument names must ONLY be parameter names explicitly listed in the endpoint's schema above. "
+            "Never invent or guess parameter names. If a parameter name is not in the schema, the task cannot be done with that endpoint.\n\n"
+            "Argument sourcing — every argument value must come from exactly one of:\n"
+            "  - 'literal': the value is a documented constant for that parameter\n"
+            "  - 'reference': the value comes from a prior step's output via {step_id.result}\n\n"
+            "Closed-enum rule:\n"
+            "- If a parameter lists allowed values (in its description), treat that list as CLOSED.\n"
+            "- ONLY use exact listed values — do not invent, paraphrase, or substitute.\n"
+            "- If the task requires an operation not expressible with documented values, use the nearest valid value "
+            "and add a post_processing instruction on that step to perform the remaining filtering/sorting.\n\n"
+            "Free-string parameter rule:\n"
+            "- If a parameter is a free string (no enum, no documented example values), do NOT invent a value for it. "
+            "Only include it if: (a) the task explicitly states the exact value, or (b) a prior step's output supplies it, or (c) you can look it up via another API endpoint first. "
+            "If none of these apply and the parameter is optional, omit it entirely. "
+            # "Do not guess values like 'blank', 'html', 'default', etc. for parameters whose valid values are not documented.\n\n"
+            "Post-processing:\n"
+            "- If the API cannot fully satisfy the task (e.g. unsupported sort order), retrieve with valid params "
+            "and describe the remaining client-side operation in the step's post_processing field.\n"
         )
         self._debug_print("_build_plan", prompt=prompt)
         agent = Agent(self.llm, output_type=str)
@@ -456,6 +450,63 @@ class PlanningAgent:
         return plan_result.model_copy(update={"plan": annotated_steps})
 
     # ------------------------------------------------------------------
+    # Step 7: Validate the plan for semantic correctness
+    # Checks: reference validity, closed-enum compliance, source provenance
+    # ------------------------------------------------------------------
+    async def _validate_plan(self, plan_result, selected: List[EndpointInfo]) -> None:
+        """
+        Validate the produced plan for semantic correctness beyond structural checks.
+        Raises ValueError with a description of all violations found.
+        """
+        plan = plan_result.plan
+        endpoint_map = {
+            (ep.method + " " + ep.path): ep for ep in selected
+        }
+
+        errors = []
+        step_ids_seen = []
+
+        for step in plan:
+            tool_name = step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
+            ep = endpoint_map.get(tool_name)
+            param_map = {}
+            if ep:
+                for p in ep.parameters:
+                    if isinstance(p, dict) and p.get("name"):
+                        param_map[p["name"]] = p
+
+            for arg in (step.arguments or []):
+                aname = arg.name
+                avalue = arg.value
+                atype = arg.value_type
+
+                # 1. Reference validity: {step_id.result} must refer to a prior step
+                if atype == "reference":
+                    import re as _re
+                    refs = _re.findall(r'\{(\w+)\.result\}', str(avalue))
+                    for ref_id in refs:
+                        if ref_id not in step_ids_seen:
+                            errors.append(
+                                f"Step '{step.step_id}', arg '{aname}': references '{ref_id}.result' "
+                                f"but '{ref_id}' has not appeared yet in the plan."
+                            )
+
+                # 2. Closed-enum compliance for literal values
+                if atype == "literal" and aname in param_map:
+                    param_def = param_map[aname]
+                    allowed = param_def.get("enum")
+                    if allowed and avalue not in allowed:
+                        errors.append(
+                            f"Step '{step.step_id}', arg '{aname}': value {avalue!r} is not in "
+                            f"the documented allowed values {allowed}."
+                        )
+
+            step_ids_seen.append(step.step_id)
+
+        if errors:
+            raise ValueError("Plan validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
+
+    # ------------------------------------------------------------------
     # Public entry point
     # ------------------------------------------------------------------
     async def plan(self, task: str):
@@ -478,8 +529,12 @@ class PlanningAgent:
         if not all_endpoints:
             raise ValueError("No endpoints extracted from selected swagger files.")
 
-        selected_endpoints = await self._select_endpoints(task, all_endpoints)
+        selected_endpoints, capabilities = await self._select_endpoints(task, all_endpoints)
         if not selected_endpoints:
             raise ValueError("LLM selected no endpoints for this task.")
 
-        return await self._build_plan(task, selected_endpoints)
+        plan_result = await self._build_plan(task, selected_endpoints, capabilities)
+
+        await self._validate_plan(plan_result, selected_endpoints)
+
+        return plan_result

@@ -1,5 +1,4 @@
 {
-  "gitlab_api_schema.json": "GitLab project `{id}` path parameter has exactly two directly usable forms:\n\n- a numeric project ID, for example `42`\n- a namespace-qualified project path of the form `namespace/project`, for example `byteblaze/a11yproject`\n\nA plain project name such as `a11yproject` is NOT a valid directly usable `{id}` value.\n\nDecision rule:\n- If the task provides a numeric ID, use it directly.\n- If the task provides a namespace-qualified path matching `namespace/project`, use it directly.\n- Otherwise, you MUST first resolve the project using a lookup endpoint such as `GET /projects?search=...` before calling endpoints that require `/projects/{id}/...`.\n\nDo not assume that a single project name can be used directly as `{id}`.\nDo not assume that a parameter named `{id}` can be guessed or partially matched.",
-
-  "shopping_api_schema.json": "N/A."
+  "gitlab_api_schema.json": "GITLAB_HINTS",
+  "shopping_api_schema.json": "SHOPPING_HINTS"
 }
