@@ -176,6 +176,31 @@ class AgentTaskRunner:
         if isinstance(execution_result, dict):
             final_url = execution_result.get("final_url") or execution_result.get("url")
 
+        # If still no final_url, scan step_outputs for any URL
+        # Note: MCP tool results are stored as JSON strings, not dicts
+        if not final_url:
+            import json as _json
+            ctx = state.get("execution_context")
+            if ctx is not None:
+                for step_out in reversed(list(ctx.step_outputs.values())):
+                    # Parse JSON string if needed
+                    if isinstance(step_out, str):
+                        try:
+                            step_out = _json.loads(step_out)
+                        except Exception:
+                            pass
+                    if isinstance(step_out, dict):
+                        url_val = (
+                            step_out.get("current_url")
+                            or step_out.get("url")
+                            or step_out.get("final_url")
+                            or step_out.get("post_url")
+                            or step_out.get("forum_url")
+                        )
+                        if url_val and isinstance(url_val, str) and url_val.startswith("http"):
+                            final_url = url_val
+                            break
+
         # Use response as answer (for data extraction tasks)
         if response:
             answer = response
@@ -193,6 +218,8 @@ class AgentTaskRunner:
         """Format context information for injection."""
         parts = []
 
+        if "start_url" in context:
+            parts.append(f"Starting URL (the page you are already on): {context['start_url']}")
         if "gitlab_username" in context:
             parts.append(f"GitLab username: {context['gitlab_username']}")
         if "gitlab_password" in context:

@@ -271,35 +271,58 @@ class ProgramHtmlEvaluator:
 
     def _reddit_get_post_url(self, page: Page, subreddit_url: str) -> str:
         """
-        Navigate to a subreddit sorted by new and return the URL of the
-        most recently submitted post.
+        Return the URL of the most recently submitted post in a subreddit.
 
-        The subreddit_url is typically something like:
-            http://localhost:9999/f/consoles
+        If subreddit_url is already a post URL (contains a numeric post ID),
+        return it directly — this is the post the agent just created.
+        Otherwise navigate to the subreddit's /new sort and return the first post.
         """
-        # Sort by new to get the most recently created post first
-        sort_url = subreddit_url.rstrip("/") + "?sort=new"
+        import re as _re
+        reddit_base = self.base_urls.get("__REDDIT__", "http://localhost:9999")
+
+        # If last_url is already a post URL (/f/{forum}/{id}/{slug}), use it directly.
+        # This handles create_post tasks where final_url is the newly created post.
+        post_url_m = _re.match(
+            r'(https?://[^/]+/f/[^/]+/\d+/[^/]*)',
+            subreddit_url or "",
+        )
+        if post_url_m:
+            return post_url_m.group(1)
+
+        # Extract just the subreddit base from the URL.
+        # Handles /f/{forum} forms.
+        m = _re.match(r'(https?://[^/]+/f/[^/]+)', subreddit_url)
+        if m:
+            subreddit_url = m.group(1)
+
+        # Postmill uses path-based sort: /f/{forum}/new  (not ?sort=new)
+        sort_url = subreddit_url.rstrip("/") + "/new"
         page.goto(sort_url, wait_until="networkidle", timeout=20000)
 
-        # The Postmill Reddit clone uses links like /f/{forum}/{id}/{slug}
-        # Try the most common selector patterns for post title links
-        selectors = [
-            "a.submission__link",          # Postmill
-            ".submission__title a",
-            "h2.listing__title a",
-            "article a[href*='/f/']",
-            "a[href*='/f/']",
-        ]
-        for selector in selectors:
-            link = page.query_selector(selector)
-            if link:
-                href = link.get_attribute("href") or ""
-                if href:
-                    if href.startswith("http"):
-                        return href
-                    # Relative href — prepend domain
-                    reddit_base = self.base_urls.get("__REDDIT__", "http://localhost:9999")
-                    return reddit_base.rstrip("/") + "/" + href.lstrip("/")
+        # Find the first local post link on the page.
+        # For text posts: h1.submission__title a links to /f/{forum}/{id}/{slug}.
+        # For link posts: that same element links to the external article.
+        # Use article-scoped search so we prefer the local post URL.
+        forum_slug = subreddit_url.rstrip("/").split("/f/")[-1]
+        local_pattern = _re.compile(rf"^/f/{_re.escape(forum_slug)}/\d+/", _re.IGNORECASE)
+
+        for article in page.query_selector_all("article"):
+            # Prefer a link that matches /f/{forum}/{id}/
+            for lnk in article.query_selector_all("a[href]"):
+                href = lnk.get_attribute("href") or ""
+                if local_pattern.match(href):
+                    return reddit_base.rstrip("/") + href
+            # Fallback: any /f/ link in the article
+            for lnk in article.query_selector_all("a[href^='/f/']"):
+                href = lnk.get_attribute("href") or ""
+                if _re.search(r"/\d+/", href) and "/edit" not in href:
+                    return reddit_base.rstrip("/") + href
+
+        # Last-resort: any matching link on the page
+        for lnk in page.query_selector_all(f"a[href*='/f/{forum_slug}/']"):
+            href = lnk.get_attribute("href") or ""
+            if _re.search(r"/\d+/", href):
+                return reddit_base.rstrip("/") + href
 
         raise ValueError(
             f"Could not find any post link on subreddit page: {sort_url}"

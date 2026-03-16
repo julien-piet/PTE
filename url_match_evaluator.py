@@ -144,8 +144,9 @@ class UrlMatchEvaluator:
     def _matches(self, actual: str, expected: str, mode: str) -> bool:
         """Return True if actual satisfies expected under the given mode."""
         if mode == "gold_in_pred":
-            # Expected URL must appear as a substring of actual
-            return expected in actual
+            # Expected URL must appear as a substring of actual.
+            # Use case-insensitive comparison for URL paths (e.g. /f/DIY vs /f/diy).
+            return expected.lower() in actual.lower()
         else:
             # Exact equality OR actual begins with expected
             # (handles trailing query params or fragment the agent appended)

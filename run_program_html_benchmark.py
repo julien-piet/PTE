@@ -201,17 +201,184 @@ class BaselineRunner:
 # Agent runner — with program_html evaluation wired in
 # ---------------------------------------------------------------------------
 
-class AgentRunner:
+class BaseAgentRunner:
     """
-    Runs tasks through the agent (async, MCP tools) then evaluates results.
+    Abstract base class for agent runners used by the test suite.
+
+    Subclass this to plug in any custom agent implementation. The base class
+    handles all evaluation logic (program_html, url_match, string_match) and
+    GitLab state resets. Subclasses only need to implement two methods:
+
+        async _init_agent(self) -> None
+            Initialise your agent (called once per test session).
+
+        async _run_task(self, task: dict) -> dict
+            Run your agent on a single task. Return a dict with at least:
+                {
+                    "final_url": str | None,   # URL the agent ended on
+                    "answer":    str | None,   # agent's text answer
+                }
+            Return {"success": False, "error": "..."} to signal a hard failure.
+
+    Minimal example
+    ───────────────
+        class MyAgentRunner(BaseAgentRunner):
+            async def _init_agent(self):
+                self.my_agent = MyAgent()
+
+            async def _run_task(self, task):
+                result = await self.my_agent.solve(task["intent"])
+                return {"final_url": result.url, "answer": result.text}
+
+    Then point the test suite at your runner:
+
+        python3 -m pytest tests/ --agent-runner mymodule.MyAgentRunner -v
+    """
+
+    def __init__(self, headless: bool = True, enable_reset: bool = True):
+        self.headless = headless
+        self.enable_reset = enable_reset
+        self._evaluator = ProgramHtmlEvaluator()
+        self._url_match_evaluator = UrlMatchEvaluator()
+        self._resetter = GitLabStateReset() if enable_reset else None
+
+    # ------------------------------------------------------------------
+    # Subclasses must implement these two methods
+    # ------------------------------------------------------------------
+
+    async def _init_agent(self) -> None:  # pragma: no cover
+        raise NotImplementedError("Subclasses must implement _init_agent()")
+
+    async def _run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:  # pragma: no cover
+        raise NotImplementedError("Subclasses must implement _run_task(task)")
+
+    # ------------------------------------------------------------------
+    # Evaluation helpers (shared — subclasses do not need to override)
+    # ------------------------------------------------------------------
+
+    def _evaluate_url_match(self, task: Dict[str, Any], result: Dict[str, Any]) -> bool:
+        actual_url = result.get("final_url")
+        detail = self._url_match_evaluator.evaluate(task, actual_url)
+        if not detail["passed"]:
+            if detail.get("error"):
+                print(f"         error    : {detail['error']}")
+            else:
+                print(f"         expected : {detail['expected_urls']}")
+                print(f"         actual   : {actual_url}")
+        return detail["passed"]
+
+    def _evaluate_string_match(self, task: Dict[str, Any], result: Dict[str, Any]) -> bool:
+        answer = result.get("answer", "")
+        if not answer:
+            return False
+        reference_answers = task["eval"].get("reference_answers", {})
+        must_include = reference_answers.get("must_include", [])
+        must_exclude = reference_answers.get("must_exclude", [])
+        answer_lower = answer.lower()
+        for item in must_include:
+            if isinstance(item, str) and item.lower() not in answer_lower:
+                return False
+            elif isinstance(item, (int, float)) and str(item) not in answer:
+                return False
+        for item in must_exclude:
+            if isinstance(item, str) and item.lower() in answer_lower:
+                return False
+        return True
+
+    def _run_program_html_check(
+        self,
+        task: Dict[str, Any],
+        last_url: Optional[str],
+    ) -> Dict[str, Any]:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=self.headless)
+            page = browser.new_page()
+            try:
+                logged_in = _login_for_task(page, task)
+                if not logged_in:
+                    return {
+                        "applicable": True,
+                        "passed": False,
+                        "checks": [],
+                        "error": "Login failed for program_html check",
+                    }
+                eval_result = self._evaluator.evaluate(task, page, last_url=last_url)
+            finally:
+                browser.close()
+        return eval_result
+
+    # ------------------------------------------------------------------
+    # Single-task runner (calls _run_task then evaluates)
+    # ------------------------------------------------------------------
+
+    async def run_agent_on_task(
+        self, task: Dict[str, Any]
+    ) -> Tuple[bool, Any, Optional[str], Optional[Dict]]:
+        """
+        Run the agent on a single task and evaluate the result.
+
+        Returns:
+            (passed, agent_result, error_message, program_html_detail)
+        """
+        eval_types = task["eval"]["eval_types"]
+
+        # ---- Step 0: pre-task state reset ----
+        if self._resetter is not None:
+            try:
+                self._resetter.reset_for_task(task)
+            except Exception as reset_exc:
+                print(f"   ⚠️  [reset] Uncaught reset error: {reset_exc}")
+            import asyncio as _asyncio2
+            await _asyncio2.sleep(8)
+
+        # ---- Step 1: run the agent ----
+        try:
+            agent_result = await self._run_task(task)
+        except Exception as exc:
+            import traceback
+            traceback.print_exc()
+            return False, None, str(exc), None
+
+        if not agent_result.get("success", True) and agent_result.get("error"):
+            return False, None, agent_result["error"], None
+
+        final_url: Optional[str] = agent_result.get("final_url")
+
+        # ---- Step 2: evaluate ----
+        if "program_html" in eval_types:
+            loop = asyncio.get_event_loop()
+            html_detail = await loop.run_in_executor(
+                None, self._run_program_html_check, task, final_url
+            )
+            html_passed = html_detail.get("passed", False)
+            url_passed = True
+            if "url_match" in eval_types:
+                url_passed = self._evaluate_url_match(task, agent_result)
+            passed = html_passed and url_passed
+            return passed, agent_result, None, html_detail
+
+        if "url_match" in eval_types:
+            passed = self._evaluate_url_match(task, agent_result)
+            return passed, agent_result, None, None
+
+        if "string_match" in eval_types:
+            passed = self._evaluate_string_match(task, agent_result)
+            return passed, agent_result, None, None
+
+        return False, None, f"Unknown eval type(s): {eval_types}", None
+
+
+class AgentRunner(BaseAgentRunner):
+    """
+    Runs tasks through the PTE ToolCallAgent (async, MCP tools) then evaluates
+    results using BaseAgentRunner's evaluation logic.
 
     For program_html tasks a fresh sync Playwright session is opened after
     agent execution to run the ProgramHtmlEvaluator checks.
     """
 
     def __init__(self, headless: bool = True, enable_reset: bool = True):
-        self.headless = headless
-        self.enable_reset = enable_reset
+        super().__init__(headless=headless, enable_reset=enable_reset)
         self.results: Dict[str, Any] = {
             "total": 0,
             "passed": 0,
@@ -221,10 +388,6 @@ class AgentRunner:
         }
         self.agent = None
         self.task_runner = None
-        self._evaluator = ProgramHtmlEvaluator()
-        self._url_match_evaluator = UrlMatchEvaluator()
-        # State resetter — shared across all tasks (reuses OAuth token)
-        self._resetter = GitLabStateReset() if enable_reset else None
 
     # ------------------------------------------------------------------
     # Agent initialisation
@@ -271,172 +434,31 @@ class AgentRunner:
             if len(parts) >= 2:
                 context["namespace"] = parts[0]
                 context["project"] = parts[1]
+        _generic_roots = {"__REDDIT__", "__GITLAB__", "__SHOPPING__", "__SHOPPING_ADMIN__"}
+        if start_url and start_url not in _generic_roots:
+            context["start_url"] = _resolve_placeholder(start_url)
         return context
 
     # ------------------------------------------------------------------
-    # Evaluation helpers for non-program_html types
+    # _run_task: implements BaseAgentRunner interface
     # ------------------------------------------------------------------
 
-    def _evaluate_url_match(self, task: Dict[str, Any], result: Dict[str, Any]) -> bool:
-        actual_url = result.get("final_url")
-        detail = self._url_match_evaluator.evaluate(task, actual_url)
-        if not detail["passed"]:
-            if detail.get("error"):
-                print(f"         error    : {detail['error']}")
-            else:
-                print(f"         expected : {detail['expected_urls']}")
-                print(f"         actual   : {actual_url}")
-        return detail["passed"]
-
-    def _evaluate_string_match(self, task: Dict[str, Any], result: Dict[str, Any]) -> bool:
-        answer = result.get("answer", "")
-        if not answer:
-            return False
-        reference_answers = task["eval"].get("reference_answers", {})
-        must_include = reference_answers.get("must_include", [])
-        must_exclude = reference_answers.get("must_exclude", [])
-        answer_lower = answer.lower()
-        for item in must_include:
-            if isinstance(item, str) and item.lower() not in answer_lower:
-                return False
-            elif isinstance(item, (int, float)) and str(item) not in answer:
-                return False
-        for item in must_exclude:
-            if isinstance(item, str) and item.lower() in answer_lower:
-                return False
-        return True
-
-    # ------------------------------------------------------------------
-    # program_html evaluation (sync Playwright in a thread)
-    # ------------------------------------------------------------------
-
-    def _run_program_html_check(
-        self,
-        task: Dict[str, Any],
-        last_url: Optional[str],
-    ) -> Dict[str, Any]:
-        """
-        Open a fresh authenticated Playwright session and run
-        ProgramHtmlEvaluator against the task's program_html entries.
-
-        Runs synchronously — call via run_in_executor from async context.
-        """
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=self.headless)
-            page = browser.new_page()
-
-            try:
-                logged_in = _login_for_task(page, task)
-                if not logged_in:
-                    return {
-                        "applicable": True,
-                        "passed": False,
-                        "checks": [],
-                        "error": "Login failed for program_html check",
-                    }
-
-                eval_result = self._evaluator.evaluate(task, page, last_url=last_url)
-            finally:
-                browser.close()
-
-        return eval_result
-
-    # ------------------------------------------------------------------
-    # Single-task runner
-    # ------------------------------------------------------------------
-
-    async def run_agent_on_task(
-        self, task: Dict[str, Any]
-    ) -> Tuple[bool, Any, Optional[str], Optional[Dict]]:
-        """
-        Run the agent on a single task and evaluate the result.
-
-        Returns:
-            (passed, agent_result, error_message, program_html_detail)
-        """
-        eval_types = task["eval"]["eval_types"]
-
-        # ---- Step 0: pre-task state reset (idempotent) ----
-        if self._resetter is not None:
-            try:
-                self._resetter.reset_for_task(task)
-            except Exception as reset_exc:
-                print(f"   ⚠️  [reset] Uncaught reset error: {reset_exc}")
-            # Pause to let GitLab finish processing any deletions/changes.
-            # GitLab can return 500 on OAuth calls for ~5-8s after heavy API activity.
-            import asyncio as _asyncio2
-            await _asyncio2.sleep(8)
-
-        # ---- Step 1: run the agent ----
-        try:
-            task_context = self._get_task_context(task)
-            agent_result = await self.task_runner.run_single_task(
-                task_intent=task["intent"],
-                task_context=task_context,
-                timeout=90,
-            )
-        except Exception as exc:
-            import traceback
-            traceback.print_exc()
-            return False, None, str(exc), None
-
-        if not agent_result["success"]:
-            return False, None, agent_result["error"], None
+    async def _run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Run the PTE ToolCallAgent on a single task and return the raw result dict."""
+        task_context = self._get_task_context(task)
+        agent_result = await self.task_runner.run_single_task(
+            task_intent=task["intent"],
+            task_context=task_context,
+            timeout=90,
+        )
 
         final_url: Optional[str] = agent_result.get("final_url")
-
         print(f"\n   DEBUG agent result:")
         print(f"     final_url        : {final_url}")
         print(f"     answer (snippet) : {str(agent_result.get('answer', ''))[:80]}")
         print(f"     exec result keys : {list(agent_result.get('execution_result', {}).keys())}")
 
-        # ---- Step 2: evaluate ----
-
-        # program_html — may coexist with url_match (both must pass)
-        if "program_html" in eval_types:
-            loop = asyncio.get_event_loop()
-            html_detail = await loop.run_in_executor(
-                None,
-                self._run_program_html_check,
-                task,
-                final_url,
-            )
-
-            html_passed = html_detail.get("passed", False)
-
-            # If the task ALSO requires url_match, check that too
-            url_passed = True
-            if "url_match" in eval_types:
-                url_passed = self._evaluate_url_match(task, agent_result)
-                print(f"     url_match        : {'PASS' if url_passed else 'FAIL'}")
-
-            print(f"     program_html     : {'PASS' if html_passed else 'FAIL'}")
-            if not html_passed and html_detail.get("error") and not html_detail.get("checks"):
-                print(f"       error    : {html_detail['error']}")
-            for i, chk in enumerate(html_detail.get("checks", []), 1):
-                status = "✅" if chk["passed"] else "❌"
-                print(f"       check {i}: {status} {chk.get('raw_url', '')[:60]}")
-                if not chk["passed"]:
-                    if chk.get("missing"):
-                        print(f"         missing  : {chk['missing']}")
-                    if chk.get("excluded_found"):
-                        print(f"         excluded : {chk['excluded_found']}")
-                    if chk.get("error"):
-                        print(f"         error    : {chk['error']}")
-
-            passed = html_passed and url_passed
-            return passed, agent_result, None, html_detail
-
-        if "url_match" in eval_types:
-            passed = self._evaluate_url_match(task, agent_result)
-            print(f"     url_match        : {'PASS' if passed else 'FAIL'}")
-            return passed, agent_result, None, None
-
-        if "string_match" in eval_types:
-            passed = self._evaluate_string_match(task, agent_result)
-            return passed, agent_result, None, None
-
-        return False, None, f"Unknown eval type(s): {eval_types}", None
+        return agent_result
 
     # ------------------------------------------------------------------
     # Batch runner

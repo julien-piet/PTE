@@ -12,8 +12,10 @@ mcp_server:
    gitlab: http://localhost:8001/
    reddit: http://localhost:8002/
 
-agent_llm_provider: openai
-agent_llm_model: gpt-4.1
+agent_llm_provider: google-gla
+agent_llm_model: gemini-2.5-flash
+# agent_llm_provider: openai
+# agent_llm_model: gpt-4.1
 # agent_llm_provider: anthropic
 # agent_llm_model: claude-3-7-sonnet-20250219
 

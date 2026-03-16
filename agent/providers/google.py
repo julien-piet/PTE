@@ -1,5 +1,5 @@
 import os
-from langchain_google_vertexai import ChatVertexAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 class GoogleProvider(object):
 
@@ -12,11 +12,14 @@ class GoogleProvider(object):
             if model.model == model_name:
                 break
         if not model:
-            raise Exception(f'{model_name} for Vertex AI provider not found in the config.yaml file')
-        
-        return ChatVertexAI(
-            project=os.environ.get("GOOGLE_CLOUD_PROJECT", "secure-agent-451919"),  # Your project ID
-            location=os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1"),        # Your region
-            model_name=model.model,
-            temperature=model.temp
+            raise Exception(f'{model_name} for Google Gemini provider not found in the config.yaml file')
+
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY environment variable must be set for Google Gemini backend.")
+
+        return ChatGoogleGenerativeAI(
+            model=model.model,
+            temperature=model.temp,
+            google_api_key=api_key,
         )

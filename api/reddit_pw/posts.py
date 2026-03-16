@@ -68,21 +68,28 @@ def create_post(
     Returns:
         CreatePostResult with success status, URL, and any error message
     """
-    # First check if a post with this title already exists
+    # First check if a post with the same title already exists (idempotency).
+    # Normalize dashes to handle EM DASH (–) vs HYPHEN (-) mismatches.
+    def _norm(s: str) -> str:
+        return s.replace("\u2013", "-").replace("\u2014", "-").lower().strip()
+
     profile_url = get_user_profile_url(username)
     page.goto(profile_url, wait_until="networkidle")
 
-    if title in page.content():
-        link = page.query_selector(f"a:has-text('{title}')")
-        if link:
-            href = link.get_attribute("href")
-            existing_url = f"{REDDIT_DOMAIN}{href}" if href else None
-            return CreatePostResult(
-                success=True,
-                post_url=existing_url,
-                already_existed=True,
-                error_message=f"A post with title '{title}' already exists"
-            )
+    title_norm = _norm(title)
+    # Check all submission links on the profile for a title match
+    for lnk in page.query_selector_all("a[href*='/f/']"):
+        link_text = lnk.inner_text().strip()
+        if link_text and _norm(link_text) == title_norm:
+            href = lnk.get_attribute("href") or ""
+            if href and "/" in href:
+                existing_url = f"{REDDIT_DOMAIN}{href}"
+                return CreatePostResult(
+                    success=True,
+                    post_url=existing_url,
+                    already_existed=True,
+                    error_message=f"A post with title '{title}' already exists"
+                )
 
     # Navigate to submit page
     page.goto(SUBMIT_URL, wait_until="networkidle")

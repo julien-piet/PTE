@@ -61,22 +61,18 @@ def create_forum(
     Returns:
         CreateForumResult with success status, URL, and any error message
     """
-    # First check if a forum with this name already exists
-    profile_url = get_user_profile_url(username)
-    page.goto(profile_url, wait_until="networkidle")
-
-    if forum_name in page.content():
-        link = page.query_selector(f"a:has-text('{forum_name}')")
-        if link:
-            href = link.get_attribute("href")
-            existing_url = f"{REDDIT_DOMAIN}{href}" if href else None
-            return CreateForumResult(
-                success=True,
-                forum_url=existing_url,
-                forum_name=forum_name,
-                already_existed=True,
-                error_message=f"Forum '{forum_name}' already exists"
-            )
+    # First check if a forum with this exact name already exists by navigating to it
+    forum_url_check = get_forum_url(forum_name)
+    page.goto(forum_url_check, wait_until="networkidle")
+    content_lower = page.content().lower()
+    if "not found" not in content_lower and "404" not in content_lower and page.url.rstrip("/") == forum_url_check.rstrip("/"):
+        return CreateForumResult(
+            success=True,
+            forum_url=forum_url_check,
+            forum_name=forum_name,
+            already_existed=True,
+            error_message=f"Forum '{forum_name}' already exists"
+        )
 
     # Navigate to create forum page
     page.goto(CREATE_FORUM_URL, wait_until="networkidle")
