@@ -9,17 +9,30 @@ mcp_server:
 #  google_mail: http://localhost:8001/mcpgmail
 #  weather: http://localhost:8002/mcpweather
 #  gdrive: http://localhost:8003/mcpgdrive
+<<<<<<< HEAD
   #  webarena: http://localhost:8000/
    gitlab: http://localhost:8001/
   #  reddit: http://localhost:8002/
+=======
+   webarena: http://localhost:8000/
+   gitlab: http://localhost:8001/
+   reddit: http://localhost:8002/
+>>>>>>> b20074fcade00dfff39c6d4c3d93334193e2640e
 
+agent_llm_provider: google-gla
+agent_llm_model: gemini-2.5-flash
 # agent_llm_provider: openai
 # agent_llm_model: gpt-4.1
+<<<<<<< HEAD
 agent_llm_provider: anthropic
 agent_llm_model: claude-opus-4-6
 
 # agent_llm_provider: google
 # agent_llm_model: gemini-2.5-flash
+=======
+# agent_llm_provider: anthropic
+# agent_llm_model: claude-3-7-sonnet-20250219
+>>>>>>> b20074fcade00dfff39c6d4c3d93334193e2640e
 
 llm_access_retry: 3
 

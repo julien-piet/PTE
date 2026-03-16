@@ -1,0 +1,355 @@
+[
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 27,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the {{forum}} forum.",
+    "instantiation_dict": {
+      "forum": "Showerthoughts"
+    },
+    "intent": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the Showerthoughts forum.",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "0"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "0"
+    },
+    "intent_template_id": 33
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 28,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the {{forum}} forum.",
+    "instantiation_dict": {
+      "forum": "Worcester"
+    },
+    "intent": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the Worcester forum.",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "0"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "0"
+    },
+    "intent_template_id": 33
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 29,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the {{forum}} forum.",
+    "instantiation_dict": {
+      "forum": "DIY"
+    },
+    "intent": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the DIY forum.",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "1"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "1"
+    },
+    "intent_template_id": 33
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 30,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the {{forum}} forum.",
+    "instantiation_dict": {
+      "forum": "space"
+    },
+    "intent": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the space forum.",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "0"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "0"
+    },
+    "intent_template_id": 33
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 31,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the {{forum}} forum.",
+    "instantiation_dict": {
+      "forum": "photoshopbattles"
+    },
+    "intent": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the photoshopbattles forum.",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "0"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "0"
+    },
+    "intent_template_id": 33
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 66,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Among the top {{number}} post in \"{{subreddit}}\" forum, {{description}}",
+    "instantiation_dict": {
+      "number": 10,
+      "subreddit": "books",
+      "description": "show me the post URLs that recommand a single book"
+    },
+    "intent": "Among the top 10 post in \"books\" forum, show me the post URLs that recommand a single book",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "http://www.reddit.com/f/books/59396/apple-books-has-a-free-audiobook-of-a-christmas-carol",
+          "http://www.reddit.com/f/books/17445/i-just-finished-reading-the-hobbit-to-my-6-year-old-daughter"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "__REDDIT__/f/books/59396/apple-books-has-a-free-audiobook-of-a-christmas-carol, __REDDIT__/f/books/17445/i-just-finished-reading-the-hobbit-to-my-6-year-old-daughter"
+    },
+    "intent_template_id": 17
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 67,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Among the top {{number}} post in \"{{subreddit}}\" forum, {{description}}",
+    "instantiation_dict": {
+      "number": 10,
+      "subreddit": "books",
+      "description": "show me the book names from posts that recommand a single book"
+    },
+    "intent": "Among the top 10 post in \"books\" forum, show me the book names from posts that recommand a single book",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "A Christmas Carol",
+          "The Hobbit"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "A Christmas Carol, The Hobbit"
+    },
+    "intent_template_id": 17
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 68,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Among the top {{number}} post in \"{{subreddit}}\" forum, {{description}}",
+    "instantiation_dict": {
+      "number": 10,
+      "subreddit": "books",
+      "description": "show me the author name and the book name from posts that recommand a single book"
+    },
+    "intent": "Among the top 10 post in \"books\" forum, show me the author name and the book name from posts that recommand a single book",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "A Christmas Carol",
+          "Levar Burton",
+          "The Hobbit",
+          "J. R. R. Tolkien"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "A Christmas Carol by Levar Burton: , The Hobbit by J. R. R. Tolkien"
+    },
+    "intent_template_id": 17
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 69,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Among the top {{number}} post in \"{{subreddit}}\" forum, {{description}}",
+    "instantiation_dict": {
+      "number": 10,
+      "subreddit": "books",
+      "description": "is there any post talks about supporting local book stores? If so, tell me the organizations involved"
+    },
+    "intent": "Among the top 10 post in \"books\" forum, is there any post talks about supporting local book stores? If so, tell me the organizations involved",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "bookshop.org"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "bookshop.org"
+    },
+    "intent_template_id": 17
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 723,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Like all submissions created by {{user}} in subreddit {{subreddit}}",
+    "instantiation_dict": {
+      "user": "FTorrez81",
+      "subreddit": "iphone13"
+    },
+    "intent": "Like all submissions created by FTorrez81 in subreddit iphone13",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "fuzzy_match": "N/A"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "reference_answer_raw_annotation": "N/A",
+      "string_note": "FTorrez81 does not have any submissions in iphone13"
+    },
+    "intent_template_id": 25,
+    "string_note": "FTorrez81 has no submissions in subreddit iphone13"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 726,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "DisLike all submissions created by {{user}} in subreddit {{subreddit}}",
+    "instantiation_dict": {
+      "subreddit": "earthporn",
+      "user": "jacyanthis"
+    },
+    "intent": "DisLike all submissions created by jacyanthis in subreddit earthporn",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "fuzzy_match": "N/A"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "jacyanthis does not have any submissions in earthporn",
+      "reference_answer_raw_annotation": "N/A"
+    },
+    "intent_template_id": 1510
+  }
+]
