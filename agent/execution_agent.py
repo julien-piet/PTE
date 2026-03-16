@@ -14,12 +14,18 @@ import json
 import re
 import subprocess
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote, quote_plus
 
+from pydantic import BaseModel
 from pydantic_ai import Agent
 
 from agent.auth import AuthProvider
+
+class _ParsedValue(BaseModel):
+    found: bool
+    value: Union[str, int, float, bool, list, dict, None] = None
+    reason: Optional[str] = None
 from agent.common.configurator import Configurator
 from agent.planner import ExecutionContext
 from agent.providers.provider import ModelProvider
@@ -70,22 +76,43 @@ class ExecutionAgent:
 
     # ── Reference resolution ────────────────────────────────────────────────
 
+    @staticmethod
+    def _follow_accessor(obj: Any, accessor: str) -> Any:
+        """Navigate a dot/bracket accessor chain into obj, e.g. '.default_branch' or '[0].id'."""
+        for dot_key, bracket_idx in re.findall(r'\.(\w+)|\[(\d+)\]', accessor):
+            if dot_key:
+                if not isinstance(obj, dict):
+                    return None
+                obj = obj.get(dot_key)
+            elif bracket_idx:
+                if not isinstance(obj, list):
+                    return None
+                obj = obj[int(bracket_idx)]
+            if obj is None:
+                return None
+        return obj
+
     def _resolve(self, value: Any, outputs: Dict[str, Any]) -> Any:
         """
         Recursively replace {step_id.result} placeholders with prior outputs.
 
-        Matches any {step_id.result...} expression regardless of accessor chain
-        (e.g. {step_1.result}, {step_1.result[0].id}, {step_1.result.path}).
-        The accessor chain is intentionally ignored because _parse_step_output
-        already extracted the correct scalar/value and stored it in outputs.
+        Follows any accessor chain after .result (e.g. {step_1.result.default_branch})
+        by navigating into the stored value. Falls back to the stored value as-is if
+        navigation fails or no accessor is present.
         """
         if isinstance(value, str):
             def _sub(m: re.Match) -> str:
-                out = outputs.get(m.group(1))
+                step_id, accessor = m.group(1), m.group(2)
+                out = outputs.get(step_id)
                 if out is None:
                     return m.group(0)  # leave unchanged if step not found
+                # Follow accessor chain if present and the stored value is navigable
+                if accessor and isinstance(out, (dict, list)):
+                    navigated = self._follow_accessor(out, accessor)
+                    if navigated is not None:
+                        out = navigated
                 return json.dumps(out) if isinstance(out, (dict, list)) else str(out)
-            return re.sub(r"\{(\w+)\.result[^}]*\}", _sub, value)
+            return re.sub(r"\{(\w+)\.result([^}]*)\}", _sub, value)
         if isinstance(value, dict):
             return {k: self._resolve(v, outputs) for k, v in value.items()}
         if isinstance(value, list):
@@ -168,7 +195,9 @@ class ExecutionAgent:
         except json.JSONDecodeError:
             body = raw
 
-        if not (200 <= status_code < 300):
+        # 304 Not Modified is treated as success: the resource is already in the
+        # desired state (e.g. project already starred), so the operation is idempotent.
+        if not (200 <= status_code < 300) and status_code != 304:
             raise RuntimeError(
                 f"HTTP {status_code}: {json.dumps(body) if isinstance(body, dict) else body}"
             )
@@ -187,14 +216,21 @@ class ExecutionAgent:
         """
         tool_name = step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
 
+        # Collect all {step_id.result...} accessor patterns used across dependent steps
+        all_accessors: list[str] = []
+        for ds in dependent_steps:
+            for a in (ds.arguments or []):
+                serialized = json.dumps(a.value) if isinstance(a.value, (dict, list)) else (a.value if isinstance(a.value, str) else "")
+                all_accessors += re.findall(r"\{" + step.step_id + r"\.result[^}]*\}", serialized)
+
         # Describe what each dependent step needs from this result
         needs = []
         for ds in dependent_steps:
             ds_tool = ds.tool_name.value if hasattr(ds.tool_name, "value") else str(ds.tool_name)
             ref_args = [
-                f"  - argument '{a.name}' (value: {a.value!r})"
+                f"  - argument '{a.name}' (value: {json.dumps(a.value) if isinstance(a.value, (dict, list)) else a.value!r})"
                 for a in (ds.arguments or [])
-                if isinstance(a.value, str) and step.step_id in a.value
+                if step.step_id in (json.dumps(a.value) if isinstance(a.value, (dict, list)) else (a.value if isinstance(a.value, str) else ""))
             ]
             hint = getattr(ds, "hints", "") or ""
             dep_desc = f"Step {ds.step_id} ({ds_tool}):"
@@ -204,33 +240,47 @@ class ExecutionAgent:
                 dep_desc += f"\n  Hint: {hint}"
             needs.append(dep_desc)
 
+        # Build accessor guidance: tell the LLM exactly which field(s) to extract
+        accessor_guidance = ""
+        unique_accessors = list(dict.fromkeys(all_accessors))
+        if unique_accessors:
+            lines = []
+            for acc in unique_accessors:
+                # Extract the field path after .result (e.g. ".default_branch" → "default_branch")
+                m = re.match(r"\{" + step.step_id + r"\.result\.?(.*)\}", acc)
+                field_path = m.group(1) if m and m.group(1) else None
+                if field_path:
+                    lines.append(f"  '{acc}' → extract the value at field '{field_path}' (must be a scalar string/number, not an object)")
+                else:
+                    lines.append(f"  '{acc}' → extract the full value")
+            accessor_guidance = "Accessor patterns used by dependent steps:\n" + "\n".join(lines) + "\n\n"
+
         prompt = (
             f"An API call just completed:\n"
             f"  {tool_name}\n\n"
             f"Raw response:\n{json.dumps(raw_output, indent=2) if isinstance(raw_output, (dict, list)) else raw_output}\n\n"
             f"The following steps depend on this result:\n" + "\n\n".join(needs) + "\n\n"
-            f"Extract the value(s) from the response that should be substituted for "
-            f"{{{step.step_id}.result}} in the dependent steps above.\n"
+            + accessor_guidance
+            + f"Extract the value(s) from the response that should be substituted for "
+            f"{{{step.step_id}.result}} in the dependent steps above.\n\n"
             f"Rules:\n"
-            f"- If a single scalar is needed (e.g. a project ID, a number), return just that value as plain text.\n"
-            f"- If the dependent step needs a structured sub-object, return it as compact JSON.\n"
-            f"- If the dependent step uses the value as a path parameter (e.g. /projects/{{id}}) and multiple values "
-            f"are needed, return a JSON array (e.g. [1, 2, 3]). The engine will call the step once per item.\n"
+            f"- Always extract the most specific, deeply-nested scalar (string, number) when that is what the dependent step needs. Never return a wrapper object when a plain value suffices.\n"
+            f"- If the dependent step needs a structured sub-object, return that object.\n"
+            f"- If the dependent step uses the value as a path parameter and multiple values are needed, return a JSON array. The engine will call the step once per item.\n"
             f"- If the response is a list and only one specific item is needed, extract only that item or field.\n"
-            f"- Do NOT return the entire raw response. Return only the extracted value.\n"
-            f"- Do NOT include any explanation."
+            f"- Set found=false only if the required value is genuinely absent from the response."
         )
         self._debug(f"Parsing output of {step.step_id}:\n{prompt}")
-        agent = Agent(self.llm, output_type=str)
+        agent = Agent(self.llm, output_type=_ParsedValue)
         result = await agent.run(prompt)
-        parsed = result.output.strip()
-        self._debug(f"Parsed value for {step.step_id}: {parsed!r}")
+        envelope = result.output
+        self._debug(f"Parsed value for {step.step_id}: found={envelope.found} value={envelope.value!r}")
 
-        # Try to parse as JSON so structured values resolve cleanly
-        try:
-            return json.loads(parsed)
-        except (json.JSONDecodeError, ValueError):
-            return parsed
+        if not envelope.found:
+            self._debug(f"No value found for {step.step_id}: {envelope.reason} — storing None")
+            return None
+
+        return envelope.value
 
     async def _execute_step(self, step, ctx: ExecutionContext, plan: list, raw_outputs: Dict[str, Any]) -> None:
         tool_name = (
@@ -241,6 +291,18 @@ class ExecutionAgent:
         print(f"[ExecutionAgent] → {step.step_id}: {tool_name}")
         try:
             loop = asyncio.get_event_loop()
+
+            # Guard: if any argument references a prior step's output that could
+            # not be extracted (stored as None), abort before making any curl call.
+            for arg in (step.arguments or []):
+                m = re.search(r"\{(\w+)\.result", str(arg.value))
+                if m:
+                    ref_id = m.group(1)
+                    if ref_id in ctx.step_outputs and ctx.step_outputs[ref_id] is None:
+                        raise RuntimeError(
+                            f"Cannot execute: argument '{arg.name}' references "
+                            f"'{{{ref_id}.result}}' but step '{ref_id}' produced no extractable value."
+                        )
 
             # Detect fan-out: if a path parameter resolves to a list, call the
             # step once per item and collect all results into a list.
@@ -261,19 +323,49 @@ class ExecutionAgent:
                         break
 
             if fan_out_values is not None:
-                print(f"[ExecutionAgent] Fan-out detected for {step.step_id}: {len(fan_out_values)} item(s)")
-                all_results = []
-                for item in fan_out_values:
+                # Detect if multiple steps share the same fan-out source.
+                # If so, distribute one item per step rather than each step
+                # iterating all items independently.
+                def _references_same_source(s) -> bool:
+                    _, pt = (s.tool_name.value if hasattr(s.tool_name, "value") else str(s.tool_name)).split(" ", 1)
+                    pp = set(re.findall(r"\{(\w+)\}", pt))
+                    return any(
+                        arg.name in pp and
+                        re.search(r"\{(\w+)\.result", str(arg.value)) and
+                        re.search(r"\{(\w+)\.result", str(arg.value)).group(1) == fan_out_ref_step
+                        for arg in (s.arguments or [])
+                    )
+
+                fan_out_group = [s for s in plan if _references_same_source(s)]
+
+                if len(fan_out_group) > 1:
+                    # Distributed mode: this step handles exactly one item.
+                    step_index = next(
+                        (i for i, s in enumerate(fan_out_group) if s.step_id == step.step_id), 0
+                    )
+                    item = fan_out_values[step_index] if step_index < len(fan_out_values) else fan_out_values[-1]
+                    print(f"[ExecutionAgent] Fan-out distributed for {step.step_id}: item {step_index + 1}/{len(fan_out_values)} (value={item})")
                     modified_outputs = dict(ctx.step_outputs)
-                    if fan_out_ref_step:
-                        modified_outputs[fan_out_ref_step] = item
+                    modified_outputs[fan_out_ref_step] = item
                     cmd = self._build_cmd(step, modified_outputs)
                     self._debug(f"{step.step_id} curl command (item={item}):\n  " + " ".join(
                         f"'{p}'" if " " in p else p for p in cmd
                     ))
-                    result = await loop.run_in_executor(None, self._run_curl, cmd)
-                    all_results.append(result)
-                raw = all_results
+                    raw = await loop.run_in_executor(None, self._run_curl, cmd)
+                else:
+                    # Single fan-out step: iterate all items and collect results.
+                    print(f"[ExecutionAgent] Fan-out detected for {step.step_id}: {len(fan_out_values)} item(s)")
+                    all_results = []
+                    for item in fan_out_values:
+                        modified_outputs = dict(ctx.step_outputs)
+                        modified_outputs[fan_out_ref_step] = item
+                        cmd = self._build_cmd(step, modified_outputs)
+                        self._debug(f"{step.step_id} curl command (item={item}):\n  " + " ".join(
+                            f"'{p}'" if " " in p else p for p in cmd
+                        ))
+                        result = await loop.run_in_executor(None, self._run_curl, cmd)
+                        all_results.append(result)
+                    raw = all_results
             else:
                 cmd = self._build_cmd(step, ctx.step_outputs)
                 self._debug(f"{step.step_id} curl command:\n  " + " ".join(
@@ -291,6 +383,8 @@ class ExecutionAgent:
             if dependent_steps:
                 print(f"[ExecutionAgent] Parsing {step.step_id} output for {len(dependent_steps)} dependent step(s)...")
                 parsed = await self._parse_step_output(step, raw, dependent_steps)
+                # Explicitly store None so the downstream guard can detect parse failure.
+                ctx.step_outputs[step.step_id] = parsed
                 ctx.mark_completed(step.step_id, parsed)
             else:
                 ctx.mark_completed(step.step_id, raw)

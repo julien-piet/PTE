@@ -68,6 +68,16 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             default="literal",
             description="Type of value: 'literal' for direct values, 'reference' for dependency references"
         )
+        # value_source: str = Field(
+        #     description=(
+        #         "Justification for why this value is valid. "
+        #         "Must be one of: 'from_task' (value comes directly from the user's request), "
+        #         "'documented_enum' (value is an explicit enum/accepted literal in the API docs), "
+        #         "'documented_literal' (value is a documented constant for this parameter), "
+        #         "'from_prior_step' (value is obtained from a prior step's output via {step_id.result}). "
+        #         "If none of these apply, the plan is invalid — add a lookup step instead."
+        #     )
+        # )
 
     class ExecutionStep(BaseModel):
         step_id: str = Field(description="Unique identifier for this step")

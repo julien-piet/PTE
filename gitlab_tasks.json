@@ -1487,10 +1487,10 @@
     "geolocation": null,
     "intent_template": "List the {{attribute}} of the top 3 contributors to {{repo}} repo, ranked by the number of commits?",
     "instantiation_dict": {
-      "repo": "prime/design",
+      "repo": "primer/design",
       "attribute": "name"
     },
-    "intent": "List the name of the top 3 contributors to prime/design repo, ranked by the number of commits?",
+    "intent": "List the name of the top 3 contributors to primer/design repo, ranked by the number of commits?",
     "require_reset": false,
     "eval": {
       "eval_types": [
