@@ -28,35 +28,3 @@ def get_mcp_logger(name = 'mcp.log'):
     logger = logging.getLogger("mcp.server.lowlevel.server")
     
     return logger
-
-def get_llm(config, model_provider = None, model_name = None):
-    provider = ModelProvider(config, model_provider, model_name)
-    llm =  provider.get_llm_model_provider()
-    return llm
-
-def get_llm_signature(config, model_provider = None, model_name = None):
-    provider = ModelProvider(config, model_provider, model_name)
-    llm = provider.llm_provider + ":" + provider.model_name
-    return llm
-
-def compare_dicts(dict1, dict2):
-    if dict1 == dict2:
-        return True
-
-    keys1 = set(dict1.keys())
-    keys2 = set(dict2.keys())
-
-    only_in_1 = keys1 - keys2
-    only_in_2 = keys2 - keys1
-    common = keys1 & keys2
-
-    if only_in_1:
-        print("Keys only in dict1:", only_in_1)
-    if only_in_2:
-        print("Keys only in dict2:", only_in_2)
-
-    for key in common:
-        if dict1[key] != dict2[key]:
-            print(f"Different value for key '{key}': dict1 has {dict1[key]}, dict2 has {dict2[key]}")
-
-    return False

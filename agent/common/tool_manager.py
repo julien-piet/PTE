@@ -24,13 +24,6 @@ class ToolDefinition(BaseModel):
         arbitrary_types_allowed = True
 
 
-def normalize_tool_name(tool_name: str) -> str:
-    """
-    Normalize the tool name by removing the server prefix.
-    """
-    return tool_name
-
-
 def build_pydantic_tools_from_mcp(
     tools_specs, 
     token_store: TokenStore, 

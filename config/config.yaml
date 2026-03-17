@@ -4,35 +4,15 @@ mcp_env_path: config/.mcpenv
 shared_env_path: config/.sharedenv
 server_env_path: config/.server_env
 
-mcp_server:
-#  slack: http://localhost:8000/mcpslack
-#  google_mail: http://localhost:8001/mcpgmail
-#  weather: http://localhost:8002/mcpweather
-#  gdrive: http://localhost:8003/mcpgdrive
-<<<<<<< HEAD
-  #  webarena: http://localhost:8000/
-   gitlab: http://localhost:8001/
-  #  reddit: http://localhost:8002/
-=======
-   webarena: http://localhost:8000/
-   gitlab: http://localhost:8001/
-   reddit: http://localhost:8002/
->>>>>>> b20074fcade00dfff39c6d4c3d93334193e2640e
-
-agent_llm_provider: google-gla
-agent_llm_model: gemini-2.5-flash
+# agent_llm_provider: google-gla
+# agent_llm_model: gemini-2.5-flash
 # agent_llm_provider: openai
 # agent_llm_model: gpt-4.1
-<<<<<<< HEAD
 agent_llm_provider: anthropic
 agent_llm_model: claude-opus-4-6
 
 # agent_llm_provider: google
 # agent_llm_model: gemini-2.5-flash
-=======
-# agent_llm_provider: anthropic
-# agent_llm_model: claude-3-7-sonnet-20250219
->>>>>>> b20074fcade00dfff39c6d4c3d93334193e2640e
 
 llm_access_retry: 3
 
@@ -88,58 +68,3 @@ llm_providers:
     temp: 1.0
   - model: gemini-2.5-flash-lite
     temp: 1.0
-
-
-# Evaluation
-
-# Synthetic requests
-eval_prompts:
-  # scope coverage benchmark
-  single_app_multi_methods: data/evaluation/single_app_multi_methods/{APP1}.json
-  single_app_single_methods: data/evaluation/single_app_single_methods/{APP1}.json
-  multi_app_multi_methods: data/evaluation/multi_app_multi_methods/{APP1}.json # misleading name, APP is actually a suite defined in suite_dict
-  # end-to-end benchmark
-  real_accounts_single: data/evaluation/real_accounts_single/{PROVIDER}/{MODEL}/{APP1}.json
-  real_accounts_multiple: data/evaluation/real_accounts_multiple/{PROVIDER}/{MODEL}/{APP1}.json
-  real_accounts_cross_app: data/evaluation/real_accounts_multiple/{PROVIDER}/{MODEL}/{APP1}_{APP2}.json
-
-
-
-# llm
-llm_solution:
-  single_app_multi_methods: data/results/{PROVIDER}/{MODEL}/{APP1}/{APP1}_llm_single_app_multi_methods_solutions.json
-  single_app_single_methods: data/results/{PROVIDER}/{MODEL}/{APP1}/{APP1}_llm_single_app_single_methods_solutions.json
-  multi_app_multi_methods: data/results/{PROVIDER}/{MODEL}/{APP1}/{APP1}_llm_multi_app_multi_methods_solutions.json
-
-miniscope_solution:
-  single_app_multi_methods: data/results/miniscope/{APP1}/{APP1}_miniscope_single_app_multi_methods_solutions.json
-  single_app_single_methods: data/results/miniscope/{APP1}/{APP1}_miniscope_single_app_single_methods_solutions.json
-  multi_app_multi_methods:  data/results/miniscope/{APP1}/{APP1}_miniscope_multi_app_multi_methods_solutions.json
-
-test_accounts:
-  gmail:
-    - name: <name1>
-      email: <email1>
-
-    - name: <name2>
-      email: <email2>
-
-  gdrive:
-    - name: <name1>
-      email: <email1>
-
-    - name: <name2>
-      email: <email2>
-
-  slack:
-     - name: <name1>
-       email: <email1>
-       user_id: <user_id1>
-
-     - name: <name2>
-       email: <email2>
-       user_id: <user_id2>
-
-  slack_gmail:
-     - example: list Slack channels → create a Gmail draft summarizing them
-     - example: a Slack channel_id can be reused only in gmail tools/args that accept a channel; a gmail draft_id only in gmail tools/args that accept a draft.
