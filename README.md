@@ -1,6 +1,6 @@
-# PTE
+<!-- # PTE -->
 
-## How to add a new API
+<!-- ## How to add a new API
 
 Go to `/api`, duplicate the template and follow the instructions at the top of the file
 Do this in a new branch, and submit a PR when you are done with a website
@@ -23,7 +23,7 @@ Use `add_to_cart_test.py` to spin up a customer cart and add a SKU through `api.
 python add_to_cart_test.py 24-MB01 --qty 1
 ```
 
-If you omit the SKU, the script prompts interactively. Provide `--quote-id` to reuse an existing cart; otherwise it creates one for you, clears any existing line items, adds the SKU, and then fetches the cart contents to ensure the product actually landed in the cart (fails loudly if it did not).
+If you omit the SKU, the script prompts interactively. Provide `--quote-id` to reuse an existing cart; otherwise it creates one for you, clears any existing line items, adds the SKU, and then fetches the cart contents to ensure the product actually landed in the cart (fails loudly if it did not). -->
 
 # PTE (Plan-Then-Execute) Agent
 

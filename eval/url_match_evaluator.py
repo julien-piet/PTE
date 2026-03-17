@@ -24,7 +24,7 @@
 #   python3 -m pytest tests/test_url_match_evaluator.py -v
 
 from typing import Any, Dict, List, Optional
-from program_html_evaluator import DEFAULT_BASE_URLS
+from eval.program_html_evaluator import DEFAULT_BASE_URLS
 
 _OR_SEPARATOR = " |OR| "
 

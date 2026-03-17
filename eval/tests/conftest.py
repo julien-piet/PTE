@@ -116,7 +116,7 @@ def agent_runner(request, session_event_loop):
     if runner_path:
         runner_cls = _load_runner_class(runner_path)
     else:
-        from run_program_html_benchmark import AgentRunner
+        from eval.run_program_html_benchmark import AgentRunner
         runner_cls = AgentRunner
 
     runner = runner_cls(headless=True, enable_reset=True)

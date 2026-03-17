@@ -76,7 +76,8 @@
 
 from typing import Any, Dict
 
-from run_program_html_benchmark import BaseAgentRunner
+from eval.run_program_html_benchmark import BaseAgentRunner
+from agent.agent import Agent
 
 
 class MyAgentRunner(BaseAgentRunner):
@@ -93,8 +94,10 @@ class MyAgentRunner(BaseAgentRunner):
             self.agent = MyAgent(api_key="...", model="my-model")
             self.client = MyAPIClient(base_url="http://...")
         """
+        self.myAgent = Agent()
+        self.myAgent.initialize(server="gitlab")
         # TODO: replace with your agent initialisation
-        raise NotImplementedError("Fill in _init_agent() with your agent setup")
+        # raise NotImplementedError("Fill in _init_agent() with your agent setup")
 
     async def _run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -112,7 +115,14 @@ class MyAgentRunner(BaseAgentRunner):
             On hard failure, return:
                 {"success": False, "error": "what went wrong"}
         """
-        intent = task["intent"]
+        intent = task.get("intent", "")
+        start_url = task.get("start_url", "")
+        repo_path = start_url.replace("__GITLAB__", "").replace("__SHOPPING__", "").replace("__REDDIT__", "").strip("/")
+        prompt = f"Project path: {repo_path}\n\nTask: {intent}" if repo_path else intent
+
+
+        result = await self.myAgent.run_task(prompt)
+        return result
 
         # TODO: replace with your agent call
         # result = await self.agent.run(intent)
@@ -121,4 +131,4 @@ class MyAgentRunner(BaseAgentRunner):
         #     "answer":    result.answer,
         # }
 
-        raise NotImplementedError("Fill in _run_task() with your agent call")
+        # raise NotImplementedError("Fill in _run_task() with your agent call")
