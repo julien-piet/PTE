@@ -1,4 +1,4 @@
-# tests/test_agent_url_match.py
+# eval/tests/test_agent_url_match.py
 #
 # Integration tests: verify the agent navigates to the correct URL for every
 # url_match task from raw_webarena_tasks_no_map.json that does NOT also
@@ -13,20 +13,20 @@
 #
 # Excluded task IDs: 118, 528-532, 585-589
 #
-# Run all url_match tasks:
-#   cd "/Users/sylvie/Desktop/API Research/PTE"
-#   python3 -m pytest tests/test_agent_url_match.py -v
+# Run all url_match tasks (71):
+#   python3 -m pytest eval/tests/test_agent_url_match.py -v
 #
-# Run with --site / --task-limit filters (same as test_agent_program_html.py):
-#   python3 -m pytest tests/test_agent_url_match.py -k "gitlab" -v
-#   python3 -m pytest tests/test_agent_url_match.py -k "shopping" -v
-#   python3 -m pytest tests/test_agent_url_match.py --task-limit 10 -v
+# Run with --site / --task-limit filters:
+#   python3 -m pytest eval/tests/test_agent_url_match.py -k "gitlab" -v
+#   python3 -m pytest eval/tests/test_agent_url_match.py -k "shopping" -v
+#   python3 -m pytest eval/tests/test_agent_url_match.py --task-limit 10 -v
 #
 # Run a single task by ID:
-#   python3 -m pytest tests/test_agent_url_match.py -k "task_44" -v
+#   python3 -m pytest eval/tests/test_agent_url_match.py -k "task_44" -v -s
 #
-# Run with a visible browser (for debugging):
-#   python3 -m pytest tests/test_agent_url_match.py -k "task_44" -v -s
+# Plug in a custom agent:
+#   python3 -m pytest eval/tests/test_agent_url_match.py \
+#       --agent-runner my_agent_runner.MyAgentRunner --task-limit 5 -v -s
 
 import asyncio
 import json

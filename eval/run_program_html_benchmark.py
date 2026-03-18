@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 """
-Program HTML Benchmark Runner
+Benchmark Runner — Core engine for the PTE evaluation harness.
 
-Variant of run_utility_benchmark.py that properly evaluates program_html tasks.
+Handles all three evaluation types: program_html, url_match, and string_match.
 
-For every task whose eval_types includes "program_html", the agent is run first
-(async, via AgentTaskRunner), then a separate sync Playwright session navigates
-to the evaluation URL(s) and runs the locator + content checks defined in the
-task using ProgramHtmlEvaluator.
+For program_html tasks the agent runs first (async), then a separate sync
+Playwright session navigates to the evaluation URL(s) and runs DOM checks
+via ProgramHtmlEvaluator. url_match and string_match tasks are evaluated
+directly from the agent's returned final_url / answer.
 
-Tasks that are NOT program_html fall back to the existing url_match /
-string_match logic unchanged.
+This file also defines BaseAgentRunner (the abstract interface teammates
+subclass to plug in a custom agent) and AgentRunner (the default PTE
+ToolCallAgent implementation).
 
-Usage:
-    python3 run_program_html_benchmark.py --tasks tests/program_html_tasks.json --limit 10
-    python3 run_program_html_benchmark.py --tasks tests/raw_webarena_tasks.json --limit 50 --output results.json
-    python3 run_program_html_benchmark.py --agent-only --tasks tests/program_html_tasks.json
+CLI usage (run from project root):
+    python3 eval/run_program_html_benchmark.py --limit 10
+    python3 eval/run_program_html_benchmark.py --limit 50 --output results.json
+    python3 eval/run_program_html_benchmark.py --agent-only --limit 5
+    python3 eval/run_program_html_benchmark.py --no-reset --limit 5
+
+The recommended way to evaluate is via pytest (see eval/tests/):
+    python3 -m pytest eval/tests/test_agent_program_html.py --task-limit 2 -v -s
 """
 
 import json
@@ -401,29 +406,11 @@ class AgentRunner(BaseAgentRunner):
     # ------------------------------------------------------------------
 
     async def _init_agent(self):
-        from agent.common.configurator import Configurator
-        from agent.common.tool_manager import initialize_tools
-        from agent.agent_replan import ToolCallAgent
-        from agent_task_runner import AgentTaskRunner
+        from agent.agent import Agent
 
         print("🔧 Initializing agent...")
-        self.config = Configurator()
-        self.config.load_client_env()
-
-        provider = self.config.get_key("agent_llm_provider")
-        model = self.config.get_key("agent_llm_model")
-        llm_signature = f"{provider}:{model}"
-
-        self.tools, self.token_store = await initialize_tools(self.config)
-        print(f"✓ Loaded {len(self.tools)} tools")
-
-        self.agent = ToolCallAgent(
-            llm=llm_signature,
-            tools=self.tools,
-            miniscope=False,
-            automated=True,
-        )
-        self.task_runner = AgentTaskRunner(self.agent)
+        self._agent = Agent()
+        self._agent.initialize(server=getattr(self, "server", "gitlab"))
         print("✓ Agent initialized\n")
 
     # ------------------------------------------------------------------
@@ -451,19 +438,28 @@ class AgentRunner(BaseAgentRunner):
     # ------------------------------------------------------------------
 
     async def _run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Run the PTE ToolCallAgent on a single task and return the raw result dict."""
-        task_context = self._get_task_context(task)
-        agent_result = await self.task_runner.run_single_task(
-            task_intent=task["intent"],
-            task_context=task_context,
-            timeout=90,
+        """Run the PTE Agent on a single task and return the raw result dict."""
+        intent = task.get("intent", "")
+        start_url = task.get("start_url", "")
+        repo_path = (
+            start_url
+            .replace("__GITLAB__", "")
+            .replace("__SHOPPING__", "")
+            .replace("__REDDIT__", "")
+            .strip("/")
         )
+        prompt = f"Project path: {repo_path}\n\nTask: {intent}" if repo_path else intent
 
-        final_url: Optional[str] = agent_result.get("final_url")
+        result = await self._agent.run_task(prompt)
+        agent_result = {
+            "success": True,
+            "final_url": None,
+            "answer": result.answer,
+            "execution_result": result.outputs,
+        }
+
         print(f"\n   DEBUG agent result:")
-        print(f"     final_url        : {final_url}")
-        print(f"     answer (snippet) : {str(agent_result.get('answer', ''))[:80]}")
-        print(f"     exec result keys : {list(agent_result.get('execution_result', {}).keys())}")
+        print(f"     answer (snippet) : {str(result.answer)[:80]}")
 
         return agent_result
 
@@ -590,8 +586,8 @@ async def main():
     )
     parser.add_argument(
         "--tasks",
-        default="tests/program_html_tasks.json",
-        help="Path to tasks JSON file (default: tests/program_html_tasks.json)",
+        default="eval/tests/raw_webarena_tasks_no_map.json",
+        help="Path to tasks JSON file (default: eval/tests/raw_webarena_tasks_no_map.json)",
     )
     parser.add_argument(
         "--limit", type=int, default=10,

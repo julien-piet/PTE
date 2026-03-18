@@ -1,4 +1,4 @@
-# tests/test_agent_program_html.py
+# eval/tests/test_agent_program_html.py
 #
 # Integration tests: verify the agent can accomplish every program_html task
 # from raw_webarena_tasks_no_map.json.
@@ -9,27 +9,27 @@
 #
 # Excluded task IDs: 118, 528-532, 585-589
 #
-# Run all program_html tasks:
-#   cd "/Users/sylvie/Desktop/API Research/PTE"
-#   python3 -m pytest tests/test_agent_program_html.py -v
+# Run all program_html tasks (~371):
+#   python3 -m pytest eval/tests/test_agent_program_html.py -v
 #
-# Run only the first N tasks (e.g. 10):
-#   python3 -m pytest tests/test_agent_program_html.py -v --task-limit 10
+# Run only the first N tasks (e.g. 2 for a smoke test):
+#   python3 -m pytest eval/tests/test_agent_program_html.py --task-limit 2 -v -s
 #
 # Run a single task by ID:
-#   python3 -m pytest tests/test_agent_program_html.py -k "task_389" -v
+#   python3 -m pytest eval/tests/test_agent_program_html.py -k "task_389" -v -s
 #
 # Run tasks for a specific site:
-#   python3 -m pytest tests/test_agent_program_html.py -k "gitlab" -v
-#   python3 -m pytest tests/test_agent_program_html.py -k "reddit" -v
-#   python3 -m pytest tests/test_agent_program_html.py -k "shopping_admin" -v
-#   python3 -m pytest tests/test_agent_program_html.py -k "shopping and not admin" -v
+#   python3 -m pytest eval/tests/test_agent_program_html.py -k "gitlab" -v
+#   python3 -m pytest eval/tests/test_agent_program_html.py -k "reddit" -v
+#   python3 -m pytest eval/tests/test_agent_program_html.py -k "shopping_admin" -v
+#   python3 -m pytest eval/tests/test_agent_program_html.py -k "shopping and not admin" -v
 #
 # Combine --site and --task-limit (first 5 reddit tasks):
-#   python3 -m pytest tests/test_agent_program_html.py --site reddit --task-limit 5 -v
+#   python3 -m pytest eval/tests/test_agent_program_html.py --site reddit --task-limit 5 -v
 #
-# Run with a visible browser (for debugging):
-#   python3 -m pytest tests/test_agent_program_html.py -k "task_389" -v -s
+# Plug in a custom agent:
+#   python3 -m pytest eval/tests/test_agent_program_html.py \
+#       --agent-runner my_agent_runner.MyAgentRunner --task-limit 5 -v -s
 
 import asyncio
 import json
