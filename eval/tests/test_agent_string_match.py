@@ -98,10 +98,10 @@ def _load_string_match_tasks() -> List[Dict[str, Any]]:
 
 
 def _get_tasks(config=None) -> List[Dict[str, Any]]:
-    """Return tasks, optionally filtered by --site then capped by --task-limit."""
+    """Return tasks, optionally filtered by --site (or --server) then capped by --task-limit."""
     tasks = _load_string_match_tasks()
     if config is not None:
-        site = config.getoption("--site", default=None)
+        site = config.getoption("--site", default=None) or config.getoption("--server", default=None)
         if site:
             tasks = [t for t in tasks if site in t.get("sites", [])]
         limit = config.getoption("--task-limit", default=None)

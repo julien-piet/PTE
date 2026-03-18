@@ -56,6 +56,16 @@ def pytest_addoption(parser):
             "of the default AgentRunner. Example: mymodule.MyAgentRunner"
         ),
     )
+    parser.addoption(
+        "--server",
+        type=str,
+        default="gitlab",
+        metavar="SERVER",
+        help=(
+            "Server the agent authenticates against. "
+            "One of: gitlab, reddit, shopping, shopping_admin. Default: gitlab."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -120,5 +130,6 @@ def agent_runner(request, session_event_loop):
         runner_cls = AgentRunner
 
     runner = runner_cls(headless=True, enable_reset=True)
+    runner.server = request.config.getoption("--server", default="gitlab")
     session_event_loop.run_until_complete(runner._init_agent())
     return runner

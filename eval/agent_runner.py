@@ -95,7 +95,7 @@ class MyAgentRunner(BaseAgentRunner):
             self.client = MyAPIClient(base_url="http://...")
         """
         self.myAgent = Agent()
-        self.myAgent.initialize(server="gitlab")
+        self.myAgent.initialize(server=getattr(self, "server", "gitlab"))
         # TODO: replace with your agent initialisation
         # raise NotImplementedError("Fill in _init_agent() with your agent setup")
 
@@ -122,7 +122,10 @@ class MyAgentRunner(BaseAgentRunner):
 
 
         result = await self.myAgent.run_task(prompt)
-        return result
+        return {
+            "final_url": None,
+            "answer": result.answer,
+        }
 
         # TODO: replace with your agent call
         # result = await self.agent.run(intent)

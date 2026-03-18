@@ -1,7 +1,6 @@
 # /api
 
 ## Overview
-`__init__.py` - loads index.json and pass to agent.
 `index.json` — read by the agent as an initial pass to determine which API file(s) contain endpoints relevant to a given task.
 
 ## Server APIs
