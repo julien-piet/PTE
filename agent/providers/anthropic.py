@@ -1,11 +1,9 @@
-
-from langchain_anthropic import ChatAnthropic
 import os
 
 class AnthropicProvider(object):
 
     def __init__(self, config):
-        pass;
+        pass
 
     def get_llm_model(self, config, model_name):
         model = None
@@ -13,8 +11,12 @@ class AnthropicProvider(object):
             if model.model == model_name:
                 break
         if not model:
-            raise (f'{model} for Anthropic provider  not found in the config.yaml file ')
+            raise Exception(f'{model_name} for Anthropic provider not found in the config.yaml file')
 
-        return ChatAnthropic(anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY"),
-                model = model.model,
-                temperature = model.temp)
+        # Validate API key exists
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise RuntimeError("ANTHROPIC_API_KEY environment variable must be set")
+
+        # Return pydantic-ai format string
+        return f"anthropic:{model.model}"

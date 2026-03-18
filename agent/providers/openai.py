@@ -1,11 +1,9 @@
-
 import os
-from langchain_openai import ChatOpenAI
 
 class OpenAIProvider(object):
 
     def __init__(self, config):
-        pass;
+        pass
 
     def get_llm_model(self, config, model_name):
         model = None
@@ -13,7 +11,12 @@ class OpenAIProvider(object):
             if model.model == model_name:
                 break
         if not model:
-            raise (f'{model_name} for openAI provider  not found in the config.yaml file ')
-        return ChatOpenAI(api_key=os.environ["OPENAI_API_KEY"],
-                  model = model.model,
-                  temperature = model.temp)
+            raise Exception(f'{model_name} for OpenAI provider not found in the config.yaml file')
+
+        # Validate API key exists
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY environment variable must be set")
+
+        # Return pydantic-ai format string
+        return f"openai:{model.model}"

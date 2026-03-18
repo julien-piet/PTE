@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SERVER="$1"
+WORKER_ID="$2"
+
+# Example worker-to-port mapping
+SHOPPING_REMOTE=$((7700 + WORKER_ID))
+ADMIN_REMOTE=$((7800 + WORKER_ID))
+FORUM_REMOTE=$((9900 + WORKER_ID))
+GITLAB_REMOTE=$((8020 + WORKER_ID))
+WIKI_REMOTE=$((8880 + WORKER_ID))
+
+SHOPPING_LOCAL=$((17700 + WORKER_ID))
+ADMIN_LOCAL=$((17800 + WORKER_ID))
+FORUM_LOCAL=$((19900 + WORKER_ID))
+GITLAB_LOCAL=$((18020 + WORKER_ID))
+WIKI_LOCAL=$((18880 + WORKER_ID))
+
+exec ssh -N \
+  # -L "${SHOPPING_LOCAL}:127.0.0.1:${SHOPPING_REMOTE}" \
+  # -L "${ADMIN_LOCAL}:127.0.0.1:${ADMIN_REMOTE}" \
+  # -L "${FORUM_LOCAL}:127.0.0.1:${FORUM_REMOTE}" \
+  -L "${GITLAB_LOCAL}:127.0.0.1:${GITLAB_REMOTE}" \
+  # -L "${WIKI_LOCAL}:127.0.0.1:${WIKI_REMOTE}" \
+  "$SERVER"
+
+
+  #ex: ./open_worker_tunnel.sh annabella@red5k 2

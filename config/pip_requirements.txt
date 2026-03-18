@@ -151,6 +151,7 @@ ormsgpack==1.10.0
 packaging==24.2
 pandas==2.3.2
 parse==1.20.2
+prance[osv]
 parso 
 pathable==0.4.4
 pathvalidate==3.3.1
@@ -240,3 +241,6 @@ xxhash==3.5.0
 yarl==1.18.3
 zipp==3.23.0
 zstandard==0.23.0
+google-generativeai==1.46.0
+pytest==9.0.2
+playwright==1.58.0

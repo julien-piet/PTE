@@ -68,6 +68,16 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             default="literal",
             description="Type of value: 'literal' for direct values, 'reference' for dependency references"
         )
+        # value_source: str = Field(
+        #     description=(
+        #         "Justification for why this value is valid. "
+        #         "Must be one of: 'from_task' (value comes directly from the user's request), "
+        #         "'documented_enum' (value is an explicit enum/accepted literal in the API docs), "
+        #         "'documented_literal' (value is a documented constant for this parameter), "
+        #         "'from_prior_step' (value is obtained from a prior step's output via {step_id.result}). "
+        #         "If none of these apply, the plan is invalid — add a lookup step instead."
+        #     )
+        # )
 
     class ExecutionStep(BaseModel):
         step_id: str = Field(description="Unique identifier for this step")
@@ -83,6 +93,14 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
         hints: str = Field(
             default="",
             description="Instructions for how to use outputs from dependent steps to fill arguments during replanning",
+        )
+        returns: str = Field(
+            default="",
+            description="Expected output/return schema of this step (e.g. field names available in {step_id.result})",
+        )
+        base_url: str = Field(
+            default="",
+            description="Base URL of the API server for this step (e.g. http://127.0.0.1:8023/api/v4)",
         )
 
     class DirectResponse(BaseModel):
@@ -251,6 +269,11 @@ def pretty_print_plan(
         else:
             lines.append("  Depends on: None (can execute immediately)")
 
+        # Returns
+        returns = getattr(step, "returns", "")
+        if returns:
+            lines.append(f"  Returns: {returns}")
+
         # Hints
         hints = getattr(step, "hints", "")
         if show_hints and hints:
@@ -299,6 +322,37 @@ def pretty_print_layers(plan: List["BaseModel"]) -> str:
             tn = _tool_name_str(getattr(by_id[sid], "tool_name", ""))
             out.append(f"  - {sid}  [{tn}]")
     return "\n".join(out)
+
+
+def pretty_print_execution(
+    plan: List["BaseModel"],
+    answer: str,
+    *,
+    header: bool = True,
+) -> str:
+    """
+    Human-friendly rendering of execution results.
+
+    Args:
+        plan:   List of ExecutionStep objects (used to show which steps ran).
+        answer: LLM-generated answer from ExecutionResult.answer.
+    """
+    if not plan:
+        return "No execution steps"
+
+    lines: List[str] = []
+    if header:
+        lines.append("\n" + "=" * 60)
+        lines.append("EXECUTION RESULTS")
+        lines.append("=" * 60)
+
+    lines.append(f"\nSteps executed: {', '.join(s.step_id for s in plan)}")
+    lines.append(f"\nAnswer:\n  {answer}")
+
+    if header:
+        lines.append("=" * 60 + "\n")
+
+    return "\n".join(lines)
 
 
 # =======================

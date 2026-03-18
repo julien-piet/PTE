@@ -56,36 +56,36 @@ async def list_tools(mcpserver: str):
                 print(f"[{mcpserver}] Error during tool listing: {e}")
     return tools
 
-async def get_all_tools(config):
+# async def get_all_tools(config):
 
-    tools = {}
-    for mcp in config.get_mcp_servers():
-        ltools = []
-        res = await list_tools(mcp['url'])
-        if res is not None:
-            ltools.append(res)
-        tools[mcp['name']] = [item for sublist in ltools for item in sublist]
-    return tools
+#     tools = {}
+#     for mcp in config.get_mcp_servers():
+#         ltools = []
+#         res = await list_tools(mcp['url'])
+#         if res is not None:
+#             ltools.append(res)
+#         tools[mcp['name']] = [item for sublist in ltools for item in sublist]
+#     return tools
 
-async def render_mcp_methods(mcp_tools_dict, app_name):
-    methods = mcp_tools_dict.get(app_name, [])
-    rendered = []
+# async def render_mcp_methods(mcp_tools_dict, app_name):
+#     methods = mcp_tools_dict.get(app_name, [])
+#     rendered = []
 
-    for tool in methods:
-        method_name = tool.name
-        description = tool.description
-        input_schema = tool.inputSchema
-        arg_keys = input_schema.get('properties', {}).keys()
-        required_args = input_schema.get('required', [])
+#     for tool in methods:
+#         method_name = tool.name
+#         description = tool.description
+#         input_schema = tool.inputSchema
+#         arg_keys = input_schema.get('properties', {}).keys()
+#         required_args = input_schema.get('required', [])
 
-        # Filter out 'ctx' from args unless you want it explicitly visible to the LLM
-        arg_keys_filtered = [arg for arg in arg_keys if arg != "ctx"]
+#         # Filter out 'ctx' from args unless you want it explicitly visible to the LLM
+#         arg_keys_filtered = [arg for arg in arg_keys if arg != "ctx"]
 
-        rendered.append(
-            f"- **{method_name}**: {description}\n"
-            f"  - Required args: {', '.join(required_args) if required_args else 'None'}\n"
-            f"  - All args: {', '.join(arg_keys_filtered)}"
-        )
+#         rendered.append(
+#             f"- **{method_name}**: {description}\n"
+#             f"  - Required args: {', '.join(required_args) if required_args else 'None'}\n"
+#             f"  - All args: {', '.join(arg_keys_filtered)}"
+#         )
 
-    return "\n\n".join(rendered)
+#     return "\n\n".join(rendered)
 

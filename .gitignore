@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+#MacOS specific files
+.DS_Store
+
 # C extensions
 *.so
 
@@ -154,6 +157,7 @@ activemq-data/
 .envrc
 .venv
 .mcpenv
+.server_env
 env/
 venv/
 ENV/
