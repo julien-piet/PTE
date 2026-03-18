@@ -3,7 +3,8 @@ import importlib
 
 MODEL_PROVIDERS = {"openai" : "OpenAIProvider",
                    "anthropic" : "AnthropicProvider",
-                   "google" : "GoogleProvider"}
+                   "google" : "GoogleProvider",
+                   "google-gla" : "GoogleProvider"}
 DEFAULT_PROVIDER  = "openai"
 
 class ModelProvider(object):
@@ -29,10 +30,13 @@ class ModelProvider(object):
             raise ValueError(
                     f"Unsupported model provider: {self.config.llm_provider.lower()}"
                 )
+        # Map provider names with hyphens to their module filename (no hyphens).
+        MODULE_NAMES = {"google-gla": "google"}
+        module_name = MODULE_NAMES.get(provider, provider)
         try:
-            module = importlib.import_module(f'agent.providers.{provider}')
+            module = importlib.import_module(f'agent.providers.{module_name}')
             provider_class = getattr(module, MODEL_PROVIDERS.get(provider, DEFAULT_PROVIDER) )
             provider_instance = provider_class(self.config)
             return provider_instance
         except ImportError as e:
-            raise (e)        
+            raise (e)

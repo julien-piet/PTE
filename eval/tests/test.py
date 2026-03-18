@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -16,5 +16,5 @@ class Test(ABC):
         """Prepare the environment for this test."""
 
     @abstractmethod
-    def check_env(self) -> bool:
+    def check_env(self, result: Optional[Any] = None) -> bool:
         """Verify the environment is correct for this test."""

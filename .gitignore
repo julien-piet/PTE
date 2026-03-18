@@ -40,6 +40,8 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+# Benchmark result dumps from tee'd pytest runs
+results_*.txt
 htmlcov/
 .tox/
 .nox/
@@ -219,4 +221,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-notebooks/*
+notebooks/*.DS_Store
+.DS_Store
+.DS_Store
