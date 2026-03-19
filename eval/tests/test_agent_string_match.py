@@ -1,4 +1,4 @@
-# tests/test_agent_string_match.py
+# eval/tests/test_agent_string_match.py
 #
 # Integration tests: verify the agent produces a correct answer for every
 # string_match task from raw_webarena_tasks_no_map.json that does NOT also
@@ -28,25 +28,24 @@
 #   shopping       : 88
 #   gitlab         : 54
 #   reddit         : 12
-#   wikipedia      :  0 (none in this eval type)
 #
 # Excluded task IDs: 118, 528-532, 585-589
 #
-# Run all string_match tasks:
-#   cd "/Users/sylvie/Desktop/API Research/PTE"
-#   python3 -m pytest tests/test_agent_string_match.py -v
+# Run all string_match tasks (241):
+#   python3 -m pytest eval/tests/test_agent_string_match.py -v
 #
 # Run with --site / --task-limit filters:
-#   python3 -m pytest tests/test_agent_string_match.py -k "gitlab" -v
-#   python3 -m pytest tests/test_agent_string_match.py -k "shopping_admin" -v
-#   python3 -m pytest tests/test_agent_string_match.py -k "reddit" -v
-#   python3 -m pytest tests/test_agent_string_match.py --task-limit 10 -v
+#   python3 -m pytest eval/tests/test_agent_string_match.py -k "gitlab" -v
+#   python3 -m pytest eval/tests/test_agent_string_match.py -k "shopping_admin" -v
+#   python3 -m pytest eval/tests/test_agent_string_match.py -k "reddit" -v
+#   python3 -m pytest eval/tests/test_agent_string_match.py --task-limit 10 -v
 #
 # Run a single task by ID:
-#   python3 -m pytest tests/test_agent_string_match.py -k "task_0" -v
+#   python3 -m pytest eval/tests/test_agent_string_match.py -k "task_0" -v -s
 #
-# Run with a visible browser (for debugging):
-#   python3 -m pytest tests/test_agent_string_match.py -k "task_0" -v -s
+# Plug in a custom agent:
+#   python3 -m pytest eval/tests/test_agent_string_match.py \
+#       --agent-runner my_agent_runner.MyAgentRunner --task-limit 5 -v -s
 
 import asyncio
 import json
