@@ -189,6 +189,7 @@ def pytest_generate_tests(metafunc):
 def test_agent_produces_correct_answer(
     agent_runner,
     session_event_loop,
+    result_log,
     task: Dict[str, Any],
 ) -> None:
     """
@@ -210,6 +211,16 @@ def test_agent_produces_correct_answer(
     passed, agent_result, error, _html_detail = session_event_loop.run_until_complete(
         agent_runner.run_agent_on_task(task)
     )
+
+    result_log.append({
+        "task_id":    task["task_id"],
+        "intent":     task.get("intent", ""),
+        "sites":      task.get("sites", []),
+        "eval_types": task.get("eval", {}).get("eval_types", []),
+        "passed":     passed and not error,
+        "answer":     agent_result.get("answer") if agent_result else None,
+        "error":      error,
+    })
 
     if error:
         pytest.fail(

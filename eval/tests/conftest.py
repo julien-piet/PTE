@@ -14,8 +14,11 @@
 
 import asyncio
 import importlib
+import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List
 
 import pytest
 
@@ -54,6 +57,17 @@ def pytest_addoption(parser):
         help=(
             "Dotted import path of a BaseAgentRunner subclass to use instead "
             "of the default AgentRunner. Example: mymodule.MyAgentRunner"
+        ),
+    )
+    parser.addoption(
+        "--output",
+        type=str,
+        default=None,
+        metavar="FILENAME",
+        help=(
+            "Write test results as JSON to tests/logs/<FILENAME>. "
+            "If omitted, no log file is written. "
+            "Example: --output run_gitlab.json"
         ),
     )
     parser.addoption(
@@ -133,3 +147,44 @@ def agent_runner(request, session_event_loop):
     runner.server = request.config.getoption("--server", default="gitlab")
     session_event_loop.run_until_complete(runner._init_agent())
     return runner
+
+
+@pytest.fixture(scope="session")
+def result_log(request):
+    """
+    Session-scoped list that accumulates per-task result dicts.
+
+    Tests append to this list; at session teardown the entries are written
+    to tests/logs/<filename> when --output is provided.
+
+    Each entry shape:
+        {
+            "task_id":    int,
+            "intent":     str,
+            "sites":      list[str],
+            "eval_types": list[str],
+            "passed":     bool,
+            "answer":     str | None,
+            "error":      str | None,
+        }
+    """
+    entries: List[Dict[str, Any]] = []
+    yield entries
+
+    output_name = request.config.getoption("--output", default=None)
+    if not output_name:
+        return
+
+    logs_dir = Path(__file__).parent / "logs"
+    logs_dir.mkdir(exist_ok=True)
+
+    out_path = logs_dir / output_name
+    summary = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "total": len(entries),
+        "passed": sum(1 for e in entries if e["passed"]),
+        "failed": sum(1 for e in entries if not e["passed"]),
+        "results": entries,
+    }
+    out_path.write_text(json.dumps(summary, indent=2))
+    print(f"\n📄 Results written to {out_path}")
