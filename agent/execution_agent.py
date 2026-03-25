@@ -170,7 +170,7 @@ class ExecutionAgent:
             url = f"{url}?{qs}"
 
         # Assemble curl command
-        cmd = ["curl", "-s", "-X", method, "-H", "Content-Type: application/json"]
+        cmd = ["curl", "-g", "-s", "-X", method, "-H", "Content-Type: application/json"]
         for hname, hval in self.auth.get_headers().items():
             cmd += ["-H", f"{hname}: {hval}"]
         if body is not None:
