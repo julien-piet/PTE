@@ -13,8 +13,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
 from agent.agent import Agent
+from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
+from eval.docker.workers import acquire_worker, release_worker
+from eval.docker.gitlab_init import get_glpat
 
 
 def _serialize_plan(plan) -> list:
@@ -31,7 +35,6 @@ def _serialize_plan(plan) -> list:
         }
         for step in plan
     ]
-
 
 class TaskBatchRunner:
     """Plans and executes tasks, saving both plan and execution results."""
@@ -71,7 +74,10 @@ class TaskBatchRunner:
             skip_execution=self.skip_execution,
             debug=self.debug,
         )
-        self.agent.initialize(server=self.server)
+        # base_url is left empty here; the real URL is supplied per-task
+        # via run_task(servers=...) once a worker is acquired.
+        self.agent.initialize({self.server: ""})
+        
         print("Agent ready\n")
 
     def load_tasks(self) -> List[Dict[str, Any]]:
@@ -97,6 +103,7 @@ class TaskBatchRunner:
 
         return tasks
 
+    
     async def run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         task_id = task.get("task_id", "unknown")
         intent = task.get("intent", "")
@@ -109,49 +116,165 @@ class TaskBatchRunner:
         print(f"Task {task_id}: {intent}")
         print(f"{'='*70}")
 
-        # ── Plan + Execute ────────────────────────────────────────────────────
+        worker_id: Optional[int] = None
+        task_result: Optional[Dict[str, Any]] = None
+
         try:
-            result = await self.agent.run_task(prompt)
+            # Acquire a clean worker from the server-side orchestrator
+            worker = acquire_worker(str(task_id))
+            worker_id = worker["worker_id"]
+            gitlab_url = worker["gitlab_url"]
+
+            print(f"  🔧 Acquired worker {worker_id}: {gitlab_url}")
+
+            # Log in to this worker's GitLab and obtain a GLPAT for API access.
+            # Run in a thread because Playwright's sync API cannot be called
+            # directly inside an asyncio event loop.
+            glpat = await asyncio.to_thread(get_glpat, gitlab_url, f"agent-task-{task_id}")
+            print(f"  🔑 GLPAT obtained for worker {worker_id}")
+
+            # Inject the worker-specific token into the execution agent.
+            if self.agent.execution_agent is not None:
+                self.agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
+
+            # Clear stale planning state before this run
+            self.agent.last_plan_response = None
+
+            # ── Plan + Execute ────────────────────────────────────────────────────
+            execution_result = await self.agent.run_task(prompt, servers={self.server: gitlab_url})
+
+            plan_response = self.agent.last_plan_response
+            plan_steps = _serialize_plan(plan_response.plan)
+            print(pretty_print_plan(plan_response.plan))
+            print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
+
+            if self.skip_execution:
+                task_result = {
+                    "task_id": task_id,
+                    "intent": intent,
+                    "status": "execution_failed",
+                    "error": "execution skipped (--skip-execution flag)",
+                    "plan": plan_steps,
+                    "plan_step_count": len(plan_steps),
+                    "execution": None,
+                    "worker_id": worker_id,
+                }
+            else:
+                print(pretty_print_execution(plan_response.plan, execution_result.answer))
+                print(f"  ✅ Execution complete ({len(execution_result.outputs)} steps)")
+                task_result = {
+                    "task_id": task_id,
+                    "intent": intent,
+                    "status": "success",
+                    "plan": plan_steps,
+                    "plan_step_count": len(plan_steps),
+                    "execution": execution_result.outputs,
+                    "answer": execution_result.answer,
+                    "worker_id": worker_id,
+                }
+
         except asyncio.TimeoutError:
             timed_out_during = "planning" if self.agent.last_plan_response is None else "execution"
             print(f"  ⏱ {timed_out_during.capitalize()} timed out")
-            status = "failed" if timed_out_during == "planning" else "execution_failed"
-            return {"task_id": task_id, "intent": intent, "status": status,
-                    "error": f"{timed_out_during} timeout", "plan": None, "execution": None}
+            task_result = {
+                "task_id": task_id,
+                "intent": intent,
+                "status": "failed" if timed_out_during == "planning" else "execution_failed",
+                "error": f"{timed_out_during} timeout",
+                "plan": None,
+                "execution": None,
+                "worker_id": worker_id,
+            }
+
         except Exception as e:
             if self.agent.last_plan_response is None:
                 print(f"  ❌ Planning failed: {e}")
-                return {"task_id": task_id, "intent": intent, "status": "failed",
-                        "error": str(e), "plan": None, "execution": None}
-            print(f"  ❌ Execution failed: {e}")
-            plan_response = self.agent.last_plan_response
-            plan_steps = _serialize_plan(plan_response.plan)
-            return {
-                "task_id": task_id, "intent": intent,
-                "status": "execution_failed", "error": str(e),
-                "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
-            }
+                task_result = {
+                    "task_id": task_id,
+                    "intent": intent,
+                    "status": "failed",
+                    "error": str(e),
+                    "plan": None,
+                    "execution": None,
+                    "worker_id": worker_id,
+                }
+            else:
+                print(f"  ❌ Execution failed: {e}")
+                plan_response = self.agent.last_plan_response
+                plan_steps = _serialize_plan(plan_response.plan)
+                task_result = {
+                    "task_id": task_id,
+                    "intent": intent,
+                    "status": "execution_failed",
+                    "error": str(e),
+                    "plan": plan_steps,
+                    "plan_step_count": len(plan_steps),
+                    "execution": None,
+                    "worker_id": worker_id,
+                }
 
-        plan_response = self.agent.last_plan_response
-        plan_steps = _serialize_plan(plan_response.plan)
-        print(pretty_print_plan(plan_response.plan))
-        print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
+        finally:
+            if worker_id is not None:
+                print(f"  🔄 Releasing worker {worker_id}")
+                release_worker(worker_id)
 
-        if self.skip_execution:
-            return {
-                "task_id": task_id, "intent": intent,
-                "status": "execution_failed",
-                "error": "execution skipped (--skip-execution flag)",
-                "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
-            }
+        return task_result
 
-        print(pretty_print_execution(plan_response.plan, result.answer))
-        print(f"  ✅ Execution complete ({len(result.outputs)} steps)")
-        return {
-            "task_id": task_id, "intent": intent, "status": "success",
-            "plan": plan_steps, "plan_step_count": len(plan_steps),
-            "execution": result.outputs, "answer": result.answer,
-        }
+    # async def run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    #     task_id = task.get("task_id", "unknown")
+    #     intent = task.get("intent", "")
+
+    #     start_url = task.get("start_url", "")
+    #     repo_path = start_url.replace("__GITLAB__", "").replace("__SHOPPING__", "").strip("/")
+    #     prompt = f"Project path: {repo_path}\n\nTask: {intent}" if repo_path else intent
+
+    #     print(f"\n{'='*70}")
+    #     print(f"Task {task_id}: {intent}")
+    #     print(f"{'='*70}")
+
+    #     # ── Plan + Execute ────────────────────────────────────────────────────
+    #     try:
+    #         result = await self.agent.run_task(prompt)
+    #     except asyncio.TimeoutError:
+    #         timed_out_during = "planning" if self.agent.last_plan_response is None else "execution"
+    #         print(f"  ⏱ {timed_out_during.capitalize()} timed out")
+    #         status = "failed" if timed_out_during == "planning" else "execution_failed"
+    #         return {"task_id": task_id, "intent": intent, "status": status,
+    #                 "error": f"{timed_out_during} timeout", "plan": None, "execution": None}
+    #     except Exception as e:
+    #         if self.agent.last_plan_response is None:
+    #             print(f"  ❌ Planning failed: {e}")
+    #             return {"task_id": task_id, "intent": intent, "status": "failed",
+    #                     "error": str(e), "plan": None, "execution": None}
+    #         print(f"  ❌ Execution failed: {e}")
+    #         plan_response = self.agent.last_plan_response
+    #         plan_steps = _serialize_plan(plan_response.plan)
+    #         return {
+    #             "task_id": task_id, "intent": intent,
+    #             "status": "execution_failed", "error": str(e),
+    #             "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
+    #         }
+
+    #     plan_response = self.agent.last_plan_response
+    #     plan_steps = _serialize_plan(plan_response.plan)
+    #     print(pretty_print_plan(plan_response.plan))
+    #     print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
+
+    #     if self.skip_execution:
+    #         return {
+    #             "task_id": task_id, "intent": intent,
+    #             "status": "execution_failed",
+    #             "error": "execution skipped (--skip-execution flag)",
+    #             "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
+    #         }
+
+    #     print(pretty_print_execution(plan_response.plan, result.answer))
+    #     print(f"  ✅ Execution complete ({len(result.outputs)} steps)")
+    #     return {
+    #         "task_id": task_id, "intent": intent, "status": "success",
+    #         "plan": plan_steps, "plan_step_count": len(plan_steps),
+    #         "execution": result.outputs, "answer": result.answer,
+    #     }
 
     async def run_all(self):
         tasks = self.load_tasks()
@@ -215,11 +338,11 @@ async def main():
         description="Plan and execute batch tasks using PlanningAgent + ExecutionAgent"
     )
     parser.add_argument(
-        "--tasks-file", default="gitlab_tasks.json",
+        "--tasks-file", default="test_files/gitlab_tasks.json",
         help="Path to tasks JSON file (default: gitlab_tasks.json)"
     )
     parser.add_argument(
-        "--output", "-o", dest="output_file", default="task_results.json",
+        "--output", "-o", dest="output_file", default="logs/task_results.json",
         help="Path to save results JSON file (default: task_results.json)"
     )
     parser.add_argument(
