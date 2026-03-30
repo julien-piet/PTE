@@ -18,7 +18,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "To-Do List"
       },
       "reference_url": "",
       "program_html": [],
@@ -45,7 +45,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "The A11Y Project / a11yproject.com / Issues"
       },
       "reference_url": "",
       "program_html": [],
@@ -72,7 +72,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Primer / design / Issues"
       },
       "reference_url": "",
       "program_html": [],
@@ -102,7 +102,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Sorry, your filter produced no results"
       },
       "reference_url": "",
       "program_html": [],
@@ -132,7 +132,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Label = ~question"
       },
       "reference_url": "",
       "program_html": [],
@@ -162,7 +162,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Label = ~flaky-test"
       },
       "reference_url": "",
       "program_html": [],
@@ -192,7 +192,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "~OpenAPI Generator CLI"
       },
       "reference_url": "",
       "program_html": [],
@@ -222,7 +222,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "~BUG"
       },
       "reference_url": "",
       "program_html": [],
@@ -249,7 +249,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Assignee = Byte Blaze"
       },
       "reference_url": "",
       "program_html": [],
@@ -278,7 +278,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "fuzzy_match": [
+          "No, it is open"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -307,7 +309,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "fuzzy_match": [
+          "No, it is open"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -336,7 +340,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "fuzzy_match": [
+          "No, it is open"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -365,7 +371,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "fuzzy_match": [
+          "No, it is open"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -394,7 +402,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "fuzzy_match": [
+          "Yes, it is closed"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -423,7 +433,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Yes"
       },
       "reference_url": "",
       "program_html": [],
@@ -452,7 +462,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Yes"
       },
       "reference_url": "",
       "program_html": [],
@@ -481,7 +491,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "No"
       },
       "reference_url": "",
       "program_html": [],
@@ -510,7 +520,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "No"
       },
       "reference_url": "",
       "program_html": [],
@@ -539,7 +549,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Yes"
       },
       "reference_url": "",
       "program_html": [],
@@ -566,7 +576,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Projects \u00b7 Explore \u00b7 GitLab"
       },
       "reference_url": "",
       "program_html": [],
@@ -595,7 +605,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Label = ~bug"
       },
       "reference_url": "",
       "program_html": [],
@@ -624,7 +634,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "~type: bug \ud83d\udc1e"
       },
       "reference_url": "",
       "program_html": [],
@@ -653,7 +663,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Label = ~enhancement"
       },
       "reference_url": "",
       "program_html": [],
@@ -682,7 +692,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Label = ~question OPT"
       },
       "reference_url": "",
       "program_html": [],
@@ -711,7 +721,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "~None"
       },
       "reference_url": "",
       "program_html": [],
@@ -738,7 +748,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "exact_match": "Reviewer = Byte Blaze"
       },
       "reference_url": "",
       "program_html": [],
