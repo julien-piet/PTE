@@ -158,8 +158,19 @@ For Project Templates. Use this json schema to search through available built-in
 
 """
 
-SHOPPING_HINTS = """
-N/A.
+SHOPPING_HINTS = f"""
+The product `{{sku}}` path or query parameter has exactly one usable form:
+- A unique string SKU, for example "B086GNDL8K"
+
+A product name (e.g., "Wireless Mouse") or a URL key (e.g., "wireless-mouse-pro") is NOT a valid directly usable `{{sku}}` value.
+
+Decision rule:
+- If the task provides an explicit string SKU, use it directly.
+- Otherwise, you MUST first resolve the product using a lookup endpoint `GET /V1/products` before calling any endpoints that require a `sku` parameter.
+
+Do not assume that the SKU can be guessed, synthesized, or partially matched based on the product name or other attributes. 
+
+You can use the 'GET /V1/products' endpoint to retrieve the list of all products and their SKUs. Given that the list of products may be large, you can use the 'searchCriteria' query parameters to filter the products based on name or URL key attributes to find the specific product and its SKU more efficiently.
+
+When using the `like` conditionType in `searchCriteria`, you must wrap the search value with wildcard characters (`%`) to perform a partial match (e.g., "contains" logic). In the URL, these characters must be URL-encoded as `%25`. For example, to find products with "guard" anywhere in the name, set the value to `%25guard%25`. Failure to include these wildcards will result in an exact match attempt, which may return no results.
 """
-
-
