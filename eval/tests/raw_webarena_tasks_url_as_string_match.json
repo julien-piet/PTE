@@ -1,0 +1,1703 @@
+[
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 44,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Check out my todos",
+    "instantiation_dict": {},
+    "intent": "Check out my todos",
+    "require_reset": false,
+    "intent_template_id": 303,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 45,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/a11yproject/a11yproject.com",
+    "geolocation": null,
+    "intent_template": "Check out the most recent open issues",
+    "instantiation_dict": {},
+    "intent": "Check out the most recent open issues",
+    "require_reset": false,
+    "intent_template_id": 300,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 46,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/primer/design",
+    "geolocation": null,
+    "intent_template": "Check out the most recent open issues",
+    "instantiation_dict": {},
+    "intent": "Check out the most recent open issues",
+    "require_reset": false,
+    "intent_template_id": 300,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 102,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Display the list of issues in the {{repo}} repository that have labels related to {{label}}",
+    "instantiation_dict": {
+      "label": "help needed",
+      "repo": "a11yproject/a11yproject.com"
+    },
+    "intent": "Display the list of issues in the a11yproject/a11yproject.com repository that have labels related to help needed",
+    "require_reset": false,
+    "intent_template_id": 349,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 103,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Display the list of issues in the {{repo}} repository that have labels related to {{label}}",
+    "instantiation_dict": {
+      "label": "questions",
+      "repo": "kkroening/ffmpeg-python"
+    },
+    "intent": "Display the list of issues in the kkroening/ffmpeg-python repository that have labels related to questions",
+    "require_reset": false,
+    "intent_template_id": 349,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 104,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Display the list of issues in the {{repo}} repository that have labels related to {{label}}",
+    "instantiation_dict": {
+      "label": "flaky-test",
+      "repo": "keycloak/keycloak"
+    },
+    "intent": "Display the list of issues in the keycloak/keycloak repository that have labels related to flaky-test",
+    "require_reset": false,
+    "intent_template_id": 349,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 105,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Display the list of issues in the {{repo}} repository that have labels related to {{label}}",
+    "instantiation_dict": {
+      "label": "OpenAPI Generator CLI",
+      "repo": "OpenAPITools/openapi-generator"
+    },
+    "intent": "Display the list of issues in the OpenAPITools/openapi-generator repository that have labels related to OpenAPI Generator CLI",
+    "require_reset": false,
+    "intent_template_id": 349,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 106,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Display the list of issues in the {{repo}} repository that have labels related to {{label}}",
+    "instantiation_dict": {
+      "label": "BUG",
+      "repo": "umano/AndroidSlidingUpPanel"
+    },
+    "intent": "Display the list of issues in the umano/AndroidSlidingUpPanel repository that have labels related to BUG",
+    "require_reset": false,
+    "intent_template_id": 349,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 156,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Checkout merge requests assigned to me",
+    "instantiation_dict": {},
+    "intent": "Checkout merge requests assigned to me",
+    "require_reset": false,
+    "intent_template_id": 290,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 173,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest updated issue that has keyword \"{{keyword}}\" in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "better"
+    },
+    "intent": "Open my latest updated issue that has keyword \"better\" in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 310,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 174,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest updated issue that has keyword \"{{keyword}}\" in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "feature"
+    },
+    "intent": "Open my latest updated issue that has keyword \"feature\" in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 310,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 175,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest updated issue that has keyword \"{{keyword}}\" in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "dependency"
+    },
+    "intent": "Open my latest updated issue that has keyword \"dependency\" in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 310,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 176,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest updated issue that has keyword \"{{keyword}}\" in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "theme editor"
+    },
+    "intent": "Open my latest updated issue that has keyword \"theme editor\" in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 310,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 177,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest updated issue that has keyword \"{{keyword}}\" in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "homepage content"
+    },
+    "intent": "Open my latest updated issue that has keyword \"homepage content\" in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 310,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 178,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest created issue that has {{keyword}} in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "better"
+    },
+    "intent": "Open my latest created issue that has better in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 500,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 179,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest created issue that has {{keyword}} in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "feature"
+    },
+    "intent": "Open my latest created issue that has feature in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 500,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 180,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest created issue that has {{keyword}} in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "dependency"
+    },
+    "intent": "Open my latest created issue that has dependency in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 500,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 181,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest created issue that has {{keyword}} in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "theme editor"
+    },
+    "intent": "Open my latest created issue that has theme editor in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 500,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 182,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open my latest created issue that has {{keyword}} in its title to check if it is closed",
+    "instantiation_dict": {
+      "keyword": "homepage content"
+    },
+    "intent": "Open my latest created issue that has homepage content in its title to check if it is closed",
+    "require_reset": false,
+    "intent_template_id": 500,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 258,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "See all public projects",
+    "instantiation_dict": {},
+    "intent": "See all public projects",
+    "require_reset": false,
+    "intent_template_id": 325,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 339,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/a11yproject/a11yproject.com",
+    "geolocation": null,
+    "intent_template": "List all opened issues {{description}}",
+    "instantiation_dict": {
+      "description": "that report bugs"
+    },
+    "intent": "List all opened issues that report bugs",
+    "require_reset": false,
+    "intent_template_id": 299,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 340,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/primer/design",
+    "geolocation": null,
+    "intent_template": "List all opened issues {{description}}",
+    "instantiation_dict": {
+      "description": "that report bugs"
+    },
+    "intent": "List all opened issues that report bugs",
+    "require_reset": false,
+    "intent_template_id": 299,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 341,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/root/metaseq",
+    "geolocation": null,
+    "intent_template": "List all opened issues {{description}}",
+    "instantiation_dict": {
+      "description": "requesting new features"
+    },
+    "intent": "List all opened issues requesting new features",
+    "require_reset": false,
+    "intent_template_id": 299,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 342,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/root/metaseq",
+    "geolocation": null,
+    "intent_template": "List all opened issues {{description}}",
+    "instantiation_dict": {
+      "description": "that ask about OPT model related questions"
+    },
+    "intent": "List all opened issues that ask about OPT model related questions",
+    "require_reset": false,
+    "intent_template_id": 299,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 343,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/root/metaseq",
+    "geolocation": null,
+    "intent_template": "List all opened issues {{description}}",
+    "instantiation_dict": {
+      "description": "that don't have any labels"
+    },
+    "intent": "List all opened issues that don't have any labels",
+    "require_reset": false,
+    "intent_template_id": 299,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 357,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Checkout merge requests requiring my review",
+    "instantiation_dict": {},
+    "intent": "Checkout merge requests requiring my review",
+    "require_reset": false,
+    "intent_template_id": 291,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 590,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/primer/design",
+    "geolocation": null,
+    "intent_template": "Create a milestone for the upcoming {{event}} starting on {{start_date}} and ending on {{end_date}}",
+    "instantiation_dict": {
+      "event": "event of product launch",
+      "start_date": "1/16/2023",
+      "end_date": "1/30/2023"
+    },
+    "intent": "Create a milestone for the upcoming event of product launch starting on 1/16/2023 and ending on 1/30/2023",
+    "require_reset": false,
+    "intent_template_id": 339,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 591,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/primer/design",
+    "geolocation": null,
+    "intent_template": "Create a milestone for the upcoming {{event}} starting on {{start_date}} and ending on {{end_date}}",
+    "instantiation_dict": {
+      "event": "practice of collective code review",
+      "start_date": "1/16/2023",
+      "end_date": "in 20 days"
+    },
+    "intent": "Create a milestone for the upcoming practice of collective code review starting on 1/16/2023 and ending on in 20 days",
+    "require_reset": false,
+    "intent_template_id": 339,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 592,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/primer/design",
+    "geolocation": null,
+    "intent_template": "Create a milestone for the upcoming {{event}} starting on {{start_date}} and ending on {{end_date}}",
+    "instantiation_dict": {
+      "event": "task of cleaning sensitive information",
+      "start_date": "2/16/2023",
+      "end_date": "in 20 days"
+    },
+    "intent": "Create a milestone for the upcoming task of cleaning sensitive information starting on 2/16/2023 and ending on in 20 days",
+    "require_reset": false,
+    "intent_template_id": 339,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 593,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/byteblaze/dotfiles",
+    "geolocation": null,
+    "intent_template": "Create a milestone for the upcoming {{event}} starting on {{start_date}} and ending on {{end_date}}",
+    "instantiation_dict": {
+      "event": "task of merging all branches to main",
+      "start_date": "March 15, 2044",
+      "end_date": "March 30, 2044"
+    },
+    "intent": "Create a milestone for the upcoming task of merging all branches to main starting on March 15, 2044 and ending on March 30, 2044",
+    "require_reset": false,
+    "intent_template_id": 339,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 594,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/byteblaze/dotfiles",
+    "geolocation": null,
+    "intent_template": "Create a milestone for the upcoming {{event}} starting on {{start_date}} and ending on {{end_date}}",
+    "instantiation_dict": {
+      "event": "task of adding a new branch for zsh comprehensive support",
+      "start_date": "5/1/2044",
+      "end_date": "in 20 days"
+    },
+    "intent": "Create a milestone for the upcoming task of adding a new branch for zsh comprehensive support starting on 5/1/2044 and ending on in 20 days",
+    "require_reset": false,
+    "intent_template_id": 339,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 658,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Create an issue in {{repo}} repo with title \"{{issue}}\". Assign the issue to {{account}}. Set due date to be {{due}}",
+    "instantiation_dict": {
+      "repo": "a11yproject",
+      "issue": "401 bad gateway",
+      "account": "Roshanjossey",
+      "due": "the end of 2030"
+    },
+    "intent": "Create an issue in a11yproject repo with title \"401 bad gateway\". Assign the issue to Roshanjossey. Set due date to be the end of 2030",
+    "require_reset": false,
+    "intent_template_id": 327,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 659,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Create an issue in {{repo}} repo with title \"{{issue}}\". Assign the issue to {{account}}. Set due date to be {{due}}",
+    "instantiation_dict": {
+      "repo": "empathy-prompts",
+      "issue": "Integrating LLMs for better prompts",
+      "account": "Roshanjossey",
+      "due": "the beginning of Q2 2033"
+    },
+    "intent": "Create an issue in empathy-prompts repo with title \"Integrating LLMs for better prompts\". Assign the issue to Roshanjossey. Set due date to be the beginning of Q2 2033",
+    "require_reset": false,
+    "intent_template_id": 327,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 660,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Create an issue in {{repo}} repo with title \"{{issue}}\". Assign the issue to {{account}}. Set due date to be {{due}}",
+    "instantiation_dict": {
+      "repo": "dotfiles",
+      "issue": "add support for oh-my-zsh",
+      "account": "Abishek",
+      "due": "July 18 2033"
+    },
+    "intent": "Create an issue in dotfiles repo with title \"add support for oh-my-zsh\". Assign the issue to Abishek. Set due date to be July 18 2033",
+    "require_reset": false,
+    "intent_template_id": 327,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 661,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open an issue to {{issue}} in {{repo}}.",
+    "instantiation_dict": {
+      "repo": "ChatGPT",
+      "issue": "report the issue of connection refused"
+    },
+    "intent": "Open an issue to report the issue of connection refused in ChatGPT.",
+    "require_reset": false,
+    "intent_template_id": 328,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 662,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open an issue to {{issue}} in {{repo}}.",
+    "instantiation_dict": {
+      "repo": "aem-hacker",
+      "issue": "report experiencing \"OSError: [Errno 98] Address already in use\" during executions"
+    },
+    "intent": "Open an issue to report experiencing \"OSError: [Errno 98] Address already in use\" during executions in aem-hacker.",
+    "require_reset": false,
+    "intent_template_id": 328,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 663,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open an issue to {{issue}} in {{repo}}.",
+    "instantiation_dict": {
+      "repo": "metaseq",
+      "issue": "ask their plan on supporting Llama and other llama family models"
+    },
+    "intent": "Open an issue to ask their plan on supporting Llama and other llama family models in metaseq.",
+    "require_reset": false,
+    "intent_template_id": 328,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 664,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open an issue to {{issue}} in {{repo}}.",
+    "instantiation_dict": {
+      "repo": "awesome-python",
+      "issue": "ask their plans on adding Python 3.11 related resources"
+    },
+    "intent": "Open an issue to ask their plans on adding Python 3.11 related resources in awesome-python.",
+    "require_reset": false,
+    "intent_template_id": 328,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 665,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Open an issue to {{issue}} in {{repo}}.",
+    "instantiation_dict": {
+      "repo": "a11y-syntax-highlighting",
+      "issue": "request adding support for MT theme editor"
+    },
+    "intent": "Open an issue to request adding support for MT theme editor in a11y-syntax-highlighting.",
+    "require_reset": false,
+    "intent_template_id": 328,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 666,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/primer/design",
+    "geolocation": null,
+    "intent_template": "Submit a request to merge {{source_branch}} branch into {{target_branch}} branch, assign {{reviewer}} as the reviewer",
+    "instantiation_dict": {
+      "source_branch": "dialog-component",
+      "target_branch": "dialog",
+      "reviewer": "Carol"
+    },
+    "intent": "Submit a request to merge dialog-component branch into dialog branch, assign Carol as the reviewer",
+    "require_reset": false,
+    "intent_template_id": 335,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 667,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/primer/design",
+    "geolocation": null,
+    "intent_template": "Submit a merge request for {{source_branch}} branch to be merged into {{target_branch}} branch, assign {{reviewer}} as the reviewer",
+    "instantiation_dict": {
+      "source_branch": "dialog-component",
+      "target_branch": "bump-doctocat",
+      "reviewer": "primer"
+    },
+    "intent": "Submit a merge request for dialog-component branch to be merged into bump-doctocat branch, assign primer as the reviewer",
+    "require_reset": false,
+    "intent_template_id": 335,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 668,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Submit a merge request for {{source_branch}} branch to be merged into {{target_branch}} branch, assign {{reviewer}} as the reviewer",
+    "instantiation_dict": {
+      "source_branch": "a11yproject.com/redesign",
+      "target_branch": "master",
+      "reviewer": "Justin Armstrong"
+    },
+    "intent": "Submit a merge request for a11yproject.com/redesign branch to be merged into master branch, assign Justin Armstrong as the reviewer",
+    "require_reset": false,
+    "intent_template_id": 335,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 669,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/byteblaze/solarized-prism-theme",
+    "geolocation": null,
+    "intent_template": "Open a new issue to discuss the implementation of {{feature}}",
+    "instantiation_dict": {
+      "feature": "dark mode"
+    },
+    "intent": "Open a new issue to discuss the implementation of dark mode",
+    "require_reset": false,
+    "intent_template_id": 337,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 670,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/byteblaze/dotfiles",
+    "geolocation": null,
+    "intent_template": "Open a new issue to discuss the implementation of {{feature}}",
+    "instantiation_dict": {
+      "feature": "default plugins for .zsh"
+    },
+    "intent": "Open a new issue to discuss the implementation of default plugins for .zsh",
+    "require_reset": false,
+    "intent_template_id": 337,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "reddit",
+      "gitlab"
+    ],
+    "task_id": 681,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab.reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Find a GitLab repository related to {{topic}} and make a Reddit post linking to it in a relevant subreddit",
+    "instantiation_dict": {
+      "topic": "gan implementation"
+    },
+    "intent": "Find a GitLab repository related to gan implementation and make a Reddit post linking to it in a relevant subreddit",
+    "require_reset": false,
+    "intent_template_id": 116,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "reddit",
+      "gitlab"
+    ],
+    "task_id": 682,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab.reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Find a GitLab repository related to {{topic}} and make a Reddit post linking to it in a relevant subreddit",
+    "instantiation_dict": {
+      "topic": "chatGPT"
+    },
+    "intent": "Find a GitLab repository related to chatGPT and make a Reddit post linking to it in a relevant subreddit",
+    "require_reset": false,
+    "intent_template_id": 116,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "reddit",
+      "gitlab"
+    ],
+    "task_id": 683,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab.reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Find a GitLab repository related to {{topic}} and make a Reddit post linking to it in a relevant subreddit",
+    "instantiation_dict": {
+      "topic": "metaseq"
+    },
+    "intent": "Find a GitLab repository related to metaseq and make a Reddit post linking to it in a relevant subreddit",
+    "require_reset": false,
+    "intent_template_id": 116,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "reddit",
+      "gitlab"
+    ],
+    "task_id": 684,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab.reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Promote {{repo}} to subreddit {{subreddit}} with the description from the repo itself.",
+    "instantiation_dict": {
+      "repo": "byteblaze/cloud-to-butt",
+      "subreddit": "LifeProTips"
+    },
+    "intent": "Promote byteblaze/cloud-to-butt to subreddit LifeProTips with the description from the repo itself.",
+    "require_reset": false,
+    "intent_template_id": 117,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "reddit",
+      "gitlab"
+    ],
+    "task_id": 685,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab.reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Promote {{repo}} to subreddit {{subreddit}} with the description from the repo itself.",
+    "instantiation_dict": {
+      "repo": "byteblaze/dotfiles",
+      "subreddit": "aww"
+    },
+    "intent": "Promote byteblaze/dotfiles to subreddit aww with the description from the repo itself.",
+    "require_reset": false,
+    "intent_template_id": 117,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "reddit",
+      "gitlab"
+    ],
+    "task_id": 686,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab.reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Promote {{repo}} to subreddit {{subreddit}} with the description from the repo itself.",
+    "instantiation_dict": {
+      "repo": "auth0/angular-storage",
+      "subreddit": "technology"
+    },
+    "intent": "Promote auth0/angular-storage to subreddit technology with the description from the repo itself.",
+    "require_reset": false,
+    "intent_template_id": 117,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "reddit",
+      "gitlab"
+    ],
+    "task_id": 687,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab.reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Promote {{repo}} to subreddit {{subreddit}} with the description from the repo itself.",
+    "instantiation_dict": {
+      "repo": "koush/AndroidAsync",
+      "subreddit": "funny"
+    },
+    "intent": "Promote koush/AndroidAsync to subreddit funny with the description from the repo itself.",
+    "require_reset": false,
+    "intent_template_id": 117,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "reddit",
+      "gitlab"
+    ],
+    "task_id": 688,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab.reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Promote {{repo}} to subreddit {{subreddit}} with the description from the repo itself.",
+    "instantiation_dict": {
+      "repo": "lahwaacz/arch-wiki-docs",
+      "subreddit": "science"
+    },
+    "intent": "Promote lahwaacz/arch-wiki-docs to subreddit science with the description from the repo itself.",
+    "require_reset": false,
+    "intent_template_id": 117,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 805,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/a11yproject/a11yproject.com",
+    "geolocation": null,
+    "intent_template": "Submit a merge request for {{source_branch}} to be merged into {{target_branch}} branch, assign {{reviewer}} as the reviewer",
+    "instantiation_dict": {
+      "source_branch": "the branch that implements the support of template strings",
+      "target_branch": "master",
+      "reviewer": "myself and Roshan"
+    },
+    "intent": "Submit a merge request for the branch that implements the support of template strings to be merged into master branch, assign myself and Roshan as the reviewer",
+    "require_reset": false,
+    "intent_template_id": 335,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 806,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Submit a merge request for {{source_branch}} branch to be merged into {{target_branch}} branch, assign {{reviewer}} as the reviewer",
+    "instantiation_dict": {
+      "source_branch": "a11yproject.com/redesign",
+      "target_branch": "markdown-figure-block",
+      "reviewer": "myself"
+    },
+    "intent": "Submit a merge request for a11yproject.com/redesign branch to be merged into markdown-figure-block branch, assign myself as the reviewer",
+    "require_reset": false,
+    "intent_template_id": 335,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 807,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__/primer/design",
+    "geolocation": null,
+    "intent_template": "Submit a merge request for {{source_branch}} branch to be merged into {{target_branch}} branch, assign {{reviewer}} as the reviewer",
+    "instantiation_dict": {
+      "source_branch": "build time debug",
+      "target_branch": "main",
+      "reviewer": "myself"
+    },
+    "intent": "Submit a merge request for build time debug branch to be merged into main branch, assign myself as the reviewer",
+    "require_reset": false,
+    "intent_template_id": 335,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 808,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Create an issue in {{repo}} repo with title \"{{issue}}\". Assign the issue to {{account}}. Set due date to be {{due}}",
+    "instantiation_dict": {
+      "repo": "cloud-to-butt",
+      "issue": "Let's keep the project alive",
+      "account": "myself",
+      "due": "the end of Q1 2033"
+    },
+    "intent": "Create an issue in cloud-to-butt repo with title \"Let's keep the project alive\". Assign the issue to myself. Set due date to be the end of Q1 2033",
+    "require_reset": false,
+    "intent_template_id": 327,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
+    "task_id": 809,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Create an issue in {{repo}} repo with title \"{{issue}}\". Assign the issue to {{account}}. Set due date to be {{due}}",
+    "instantiation_dict": {
+      "repo": "a11yproject",
+      "issue": "404 for many URLs",
+      "account": "myself",
+      "due": "2030-1-3"
+    },
+    "intent": "Create an issue in a11yproject repo with title \"404 for many URLs\". Assign the issue to myself. Set due date to be 2030-1-3",
+    "require_reset": false,
+    "intent_template_id": 327,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": ""
+    }
+  }
+]
