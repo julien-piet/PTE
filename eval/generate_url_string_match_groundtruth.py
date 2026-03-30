@@ -59,6 +59,7 @@ from playwright.sync_api import sync_playwright, Page
 from api import gitlab_pw
 from eval.program_html_evaluator import DEFAULT_BASE_URLS
 from eval.gitlab_state_reset import GitLabStateReset
+from eval.url_match_evaluator import UrlMatchEvaluator
 
 # Load API keys from config/.env (same pattern as run_program_html_benchmark.py)
 _env_path = PROJECT_ROOT / "config" / ".env"
@@ -73,6 +74,10 @@ SOURCE_FILE = EVAL_DIR / "tests" / "raw_webarena_tasks_no_map.json"
 
 PLACEHOLDER = "PLACEHOLDER_NEW_GROUND_TRUTH"
 
+# Shared evaluator instance — used for URL parsing (|OR| splits, placeholder
+# resolution) so navigation uses the same logic as the url_match eval itself.
+_url_evaluator = UrlMatchEvaluator()
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -82,6 +87,31 @@ def _resolve(url: str) -> str:
     for token, base in DEFAULT_BASE_URLS.items():
         url = url.replace(token, base)
     return url
+
+
+def _resolve_nav_url(source_task: Dict) -> Optional[str]:
+    """
+    Return the best single URL to navigate to for ground truth capture.
+
+    Uses UrlMatchEvaluator's own placeholder resolution and |OR| parsing so
+    the URL we visit is always valid and consistent with how the evaluator
+    interprets reference_url.
+
+    For tasks with multiple |OR| alternatives, the first resolvable URL is
+    used (they all lead to equivalent pages for content capture purposes).
+
+    Returns None if no reference_url is set.
+    """
+    raw = source_task.get("eval", {}).get("reference_url", "") or ""
+    if not raw:
+        return None
+    # Split on |OR| the same way UrlMatchEvaluator does
+    alternatives = [
+        _url_evaluator._resolve_placeholder(alt.strip())
+        for alt in raw.split(" |OR| ")
+        if alt.strip()
+    ]
+    return alternatives[0] if alternatives else None
 
 
 def _load_data() -> Tuple[List[Dict], Dict[int, Dict]]:
@@ -379,8 +409,7 @@ def process(
             tid = task["task_id"]
             intent = task["intent"]
             src = source_by_id.get(tid, {})
-            ref_url_raw = src.get("eval", {}).get("reference_url", "")
-            ref_url = _resolve(ref_url_raw)
+            ref_url = _resolve_nav_url(src)
 
             print(f"[{i}/{len(eligible)}] Task {tid}: {intent[:70]}")
             print(f"   ref_url : {ref_url}")

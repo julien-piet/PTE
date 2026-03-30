@@ -23,7 +23,9 @@ The recommended way to evaluate is via pytest (see eval/tests/):
     python3 -m pytest eval/tests/test_agent_program_html.py --task-limit 2 -v -s
 """
 
+import difflib
 import json
+import re
 import sys
 import asyncio
 import os
@@ -279,6 +281,24 @@ class BaseAgentRunner:
                 print(f"         actual   : {actual_url}")
         return detail["passed"]
 
+    @staticmethod
+    def _fuzzy_contains(answer: str, ref: str, threshold: float = 0.8) -> bool:
+        """Return True if *ref* appears in *answer* exactly or fuzzily (>= threshold)."""
+        answer_l = answer.lower()
+        ref_l = ref.lower()
+        if ref_l in answer_l:
+            return True
+        ref_len = len(ref_l)
+        if ref_len == 0:
+            return True
+        # Sliding-window fuzzy search over the answer
+        for i in range(len(answer_l) - ref_len + 1):
+            window = answer_l[i : i + ref_len]
+            if difflib.SequenceMatcher(None, ref_l, window).ratio() >= threshold:
+                return True
+        # Fallback: full-string comparison (handles short answers)
+        return difflib.SequenceMatcher(None, ref_l, answer_l).ratio() >= threshold
+
     def _evaluate_string_match(self, task: Dict[str, Any], result: Dict[str, Any]) -> bool:
         answer = result.get("answer", "")
         if not answer:
@@ -286,7 +306,11 @@ class BaseAgentRunner:
         reference_answers = task["eval"].get("reference_answers", {})
         must_include = reference_answers.get("must_include", [])
         must_exclude = reference_answers.get("must_exclude", [])
+        exact_match  = reference_answers.get("exact_match")
+        fuzzy_match  = reference_answers.get("fuzzy_match")
+
         answer_lower = answer.lower()
+
         for item in must_include:
             if isinstance(item, str) and item.lower() not in answer_lower:
                 return False
@@ -295,6 +319,18 @@ class BaseAgentRunner:
         for item in must_exclude:
             if isinstance(item, str) and item.lower() in answer_lower:
                 return False
+
+        if exact_match is not None:
+            normalize = lambda s: re.sub(r"\s+", " ", s).strip().lower()
+            if normalize(answer) != normalize(str(exact_match)):
+                return False
+
+        if fuzzy_match is not None:
+            items = fuzzy_match if isinstance(fuzzy_match, list) else [fuzzy_match]
+            for ref_item in items:
+                if not self._fuzzy_contains(answer, str(ref_item)):
+                    return False
+
         return True
 
     def _run_program_html_check(

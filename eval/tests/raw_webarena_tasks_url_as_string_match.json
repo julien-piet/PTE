@@ -45,7 +45,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "The A11Y Project / a11yproject.com / Issues"
+        "must_include": [
+          "a11yproject.com / Issues",
+          "Created date"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -72,7 +75,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Primer / design / Issues"
+        "must_include": [
+          "Primer / design / Issues",
+          "Created date"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -102,7 +108,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Sorry, your filter produced no results"
+        "exact_match": "~help wanted"
       },
       "reference_url": "",
       "program_html": [],
@@ -433,7 +439,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "yes",
+          "closed"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -462,7 +471,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "yes",
+          "closed"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -491,7 +503,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "No"
+        "must_include": [
+          "no",
+          "open"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -520,7 +535,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "No"
+        "must_include": [
+          "no",
+          "open"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -549,7 +567,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "yes",
+          "closed"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -779,7 +800,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "product launch",
+          "Jan 16, 2030",
+          "Jan 30, 2030"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -810,7 +835,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "code review",
+          "Jan 16, 2030",
+          "Feb 5, 2030"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -841,7 +870,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "sensitive information",
+          "Feb 16, 2030",
+          "Mar 8, 2030"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -872,7 +905,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "all branches to main",
+          "Mar 15, 2044",
+          "Mar 30, 2044"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -903,7 +940,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "zsh comprehensive support",
+          "May 1, 2044",
+          "May 21, 2044"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -935,7 +976,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "401 bad gateway",
+          "Dec 31, 2030",
+          "Roshan Jossey"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -967,7 +1012,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "Integrating LLMs for better prompts",
+          "Apr 1, 2033",
+          "Roshan Jossey"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -999,7 +1048,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "add support for oh-my-zsh",
+          "Jul 18, 2033",
+          "Abishek S"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1029,7 +1082,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "connection refused"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1059,7 +1114,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "OSError: [Errno 98] Address already in use"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1089,7 +1146,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "llama"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1119,7 +1178,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "Python 3.11"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1149,7 +1210,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "MT theme editor"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1180,7 +1243,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "dialog",
+          "dialog-component",
+          "Caroline Stewart"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1211,7 +1278,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "bump-doctocat",
+          "dialog-component",
+          "Primer"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1242,7 +1313,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "redesign",
+          "main",
+          "Justin Armstrong"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1271,7 +1346,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "implementation",
+          "dark mode"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1300,7 +1378,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "implementation",
+          "default plugins",
+          "zsh"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1330,7 +1412,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "gan implementation",
+          "eriklindernoren/PyTorch-GAN"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1360,7 +1445,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "chatgpt",
+          "convexegg/chatgpt"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1390,7 +1478,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "metaseq",
+          "root/metaseq"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1421,7 +1512,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "Chrome extension that replaces occurrences of 'the cloud' with 'my butt'",
+          "byteblaze/cloud-to-butt"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1452,7 +1546,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "Computer setup",
+          "byteblaze/dotfiles"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1483,7 +1580,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "A storage library for AngularJS done right",
+          "auth0/angular-storage"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1514,7 +1614,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "Asynchronous socket, http(s) (client+server) and websocket library for android. Based on nio, not threads.",
+          "koush/AndroidAsync"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1545,7 +1648,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "A script to download pages from Arch Wiki for offline browsing",
+          "lahwaacz/arch-wiki-docs"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1576,7 +1682,12 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "feature/replace-gulp",
+          "main",
+          "Byte Blaze",
+          "Roshan Jossy"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1607,7 +1718,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "redesign",
+          "feature/markdown-figure-block",
+          "Byte Blaze"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1638,7 +1753,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "main",
+          "debug-build-time",
+          "Byte Blaze"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1670,7 +1789,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "Let's keep the project alive",
+          "Mar 31, 2033",
+          "Byte Blaze"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1702,7 +1825,11 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "PLACEHOLDER_NEW_GROUND_TRUTH"
+        "must_include": [
+          "404 for many URLs",
+          "Jan 3, 2030",
+          "Byte Blaze"
+        ]
       },
       "reference_url": "",
       "program_html": [],
