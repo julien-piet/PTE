@@ -172,5 +172,7 @@ Do not assume that the SKU can be guessed, synthesized, or partially matched bas
 
 You can use the 'GET /V1/products' endpoint to retrieve the list of all products and their SKUs. Given that the list of products may be large, you can use the 'searchCriteria' query parameters to filter the products based on name or URL key attributes to find the specific product and its SKU more efficiently.
 
-When using the `like` conditionType in `searchCriteria`, you must wrap the search value with wildcard characters (`%`) to perform a partial match (e.g., "contains" logic). In the URL, these characters must be URL-encoded as `%25`. For example, to find products with "guard" anywhere in the name, set the value to `%25guard%25`. Failure to include these wildcards will result in an exact match attempt, which may return no results.
+When using the `like` conditionType in `searchCriteria`, you MUST wrap the search value with literal wildcard characters (`%`) to perform a partial match (e.g., `%guard%`). 
+- Do NOT omit the `%` wildcards (e.g., do not send just `guard`), as this will result in an exact match attempt and return no results. 
+- Do NOT manually URL-encode the `%` to `%25` (e.g., do not send `%25guard%25`), because the underlying HTTP client will automatically handle URL encoding for you. Double-encoding will break the query.
 """
