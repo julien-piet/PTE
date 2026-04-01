@@ -43,6 +43,15 @@ class DeleteResult:
     error_message: Optional[str] = None
 
 
+@dataclass
+class CreateAccessTokenResult:
+    """Result of creating a personal access token."""
+
+    success: bool
+    token: Optional[str] = None
+    error_message: Optional[str] = None
+
+
 def toggle_private_profile(
     page: Page,
     make_private: bool,
@@ -332,6 +341,79 @@ def delete_ssh_key(page: Page) -> DeleteResult:
             success=True,
             error_message="No SSH key found (may already be deleted)"
         )
+
+
+def create_access_token(
+    page: Page,
+    name: str = "benchmark-runner",
+    scopes: Optional[list] = None,
+) -> CreateAccessTokenResult:
+    """
+    Create a personal access token for the currently logged-in user.
+
+    Args:
+        page: Playwright Page instance (must already be logged in)
+        name: Name for the new token
+        scopes: List of scope strings (default: ["api"])
+
+    Returns:
+        CreateAccessTokenResult with the new token value on success
+    """
+    if scopes is None:
+        scopes = ["api"]
+
+    page.goto(ACCESS_TOKENS_URL, wait_until="networkidle")
+
+    # Fill token name
+    name_input = page.locator("#personal_access_token_name")
+    if name_input.count() == 0:
+        return CreateAccessTokenResult(
+            success=False,
+            error_message="Token name input not found",
+        )
+    name_input.fill(name)
+
+    # Check each requested scope — click the label (not the hidden checkbox)
+    for scope in scopes:
+        label = page.locator(f"label[for='personal_access_token_scopes_{scope}']")
+        if label.count() > 0:
+            label.click()
+        else:
+            # Fallback: force-click the checkbox
+            page.locator(f"#personal_access_token_scopes_{scope}").click(force=True)
+
+    # Submit — GitLab renders this as <button type="submit"> on the PAT page
+    submit = page.locator("button:has-text('Create personal access token'), input[name='commit']").first
+    if submit.count() == 0:
+        return CreateAccessTokenResult(
+            success=False,
+            error_message="Submit button not found",
+        )
+    submit.click()
+    page.wait_for_load_state("networkidle")
+
+    # GitLab renders the token via Vue into a copy button's data-clipboard-text.
+    # Wait up to 5 s for the copy button to appear.
+    try:
+        page.wait_for_selector(
+            "[data-clipboard-text^='glpat-']",
+            timeout=5000,
+            state="attached",
+        )
+    except TimeoutError:
+        # Fallback: older GitLab versions use a plain input with a specific id
+        token_el = page.locator("#created-personal-access-token")
+        if token_el.count() > 0:
+            token = token_el.get_attribute("value") or token_el.inner_text()
+            return CreateAccessTokenResult(success=True, token=token.strip())
+        return CreateAccessTokenResult(
+            success=False,
+            error_message="Token output element not found after submit",
+        )
+
+    clip = page.locator("[data-clipboard-text^='glpat-']").first
+    token = clip.get_attribute("data-clipboard-text") or ""
+    return CreateAccessTokenResult(success=True, token=token.strip())
 
 
 def delete_all_access_tokens(page: Page) -> DeleteResult:
