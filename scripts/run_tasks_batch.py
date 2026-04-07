@@ -9,33 +9,14 @@ Use --skip-execution to plan only (same as run_planning_batch.py).
 import asyncio
 import json
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import requests
-
 from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
-from eval.docker.workers import acquire_worker, release_worker
-from eval.docker.gitlab_init import get_glpat
-
-
-def _wait_for_gitlab(gitlab_url: str, timeout: int = 120, interval: int = 5) -> None:
-    """Poll GitLab sign-in page until it returns HTTP 200 or timeout is reached."""
-    url = f"{gitlab_url}/users/sign_in"
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        try:
-            resp = requests.get(url, timeout=5)
-            if resp.status_code == 200:
-                return
-        except Exception:
-            pass
-        time.sleep(interval)
-    raise RuntimeError(f"GitLab at {gitlab_url} did not become ready within {timeout}s")
+from eval.docker.workers import worker_session
 
 
 def _serialize_plan(plan) -> list:
@@ -134,78 +115,50 @@ class TaskBatchRunner:
         )
         agent.initialize({self.server: ""})
 
-        worker_id: Optional[int] = None
         task_result: Optional[Dict[str, Any]] = None
 
         try:
-            # Serialize worker acquisition so concurrent tasks don't race the
-            # orchestrator (which can't handle simultaneous acquire requests).
-            # Retry with backoff in case the orchestrator transiently has no
-            # free worker (e.g. previous task state not yet fully released).
-            for attempt in range(10):
-                try:
-                    async with self._acquire_lock:
-                        worker = await asyncio.to_thread(acquire_worker, str(task_id))
-                    break
-                except Exception as e:
-                    wait = 15
-                    print(f"  ⏳ Task {task_id} acquire failed (attempt {attempt + 1}/10, retry in {wait}s): {e}")
-                    await asyncio.sleep(wait)
-            else:
-                raise RuntimeError(f"Could not acquire a worker for task {task_id} after 10 attempts")
+            async with worker_session(str(task_id), acquire_lock=self._acquire_lock) as w:
+                worker_id = w["worker_id"]
+                gitlab_url = w["gitlab_url"]
+                glpat = w["glpat"]
 
-            worker_id = worker["worker_id"]
-            gitlab_url = worker["gitlab_url"]
+                # Inject the worker-specific token into the execution agent.
+                if agent.execution_agent is not None:
+                    agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
 
-            print(f"  🔧 Acquired worker {worker_id}: {gitlab_url}")
+                # ── Plan + Execute ────────────────────────────────────────────
+                execution_result = await agent.run_task(prompt, servers={self.server: gitlab_url})
 
-            # Wait for the GitLab instance to be fully up before logging in.
-            print(f"  ⏳ Waiting for GitLab on worker {worker_id} to be ready...")
-            await asyncio.to_thread(_wait_for_gitlab, gitlab_url)
-            print(f"  ✅ GitLab on worker {worker_id} is ready")
+                plan_response = agent.last_plan_response
+                plan_steps = _serialize_plan(plan_response.plan)
+                print(pretty_print_plan(plan_response.plan))
+                print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
 
-            # Log in to this worker's GitLab and obtain a GLPAT for API access.
-            # Run in a thread because Playwright's sync API cannot be called
-            # directly inside an asyncio event loop.
-            glpat = await asyncio.to_thread(get_glpat, gitlab_url, f"agent-task-{task_id}")
-            print(f"  🔑 GLPAT obtained for worker {worker_id}")
-
-            # Inject the worker-specific token into the execution agent.
-            if agent.execution_agent is not None:
-                agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
-
-            # ── Plan + Execute ────────────────────────────────────────────────────
-            execution_result = await agent.run_task(prompt, servers={self.server: gitlab_url})
-
-            plan_response = agent.last_plan_response
-            plan_steps = _serialize_plan(plan_response.plan)
-            print(pretty_print_plan(plan_response.plan))
-            print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
-
-            if self.skip_execution:
-                task_result = {
-                    "task_id": task_id,
-                    "intent": intent,
-                    "status": "execution_failed",
-                    "error": "execution skipped (--skip-execution flag)",
-                    "plan": plan_steps,
-                    "plan_step_count": len(plan_steps),
-                    "execution": None,
-                    "worker_id": worker_id,
-                }
-            else:
-                print(pretty_print_execution(plan_response.plan, execution_result.answer))
-                print(f"  ✅ Execution complete ({len(execution_result.outputs)} steps)")
-                task_result = {
-                    "task_id": task_id,
-                    "intent": intent,
-                    "status": "success",
-                    "plan": plan_steps,
-                    "plan_step_count": len(plan_steps),
-                    "execution": execution_result.outputs,
-                    "answer": execution_result.answer,
-                    "worker_id": worker_id,
-                }
+                if self.skip_execution:
+                    task_result = {
+                        "task_id": task_id,
+                        "intent": intent,
+                        "status": "execution_failed",
+                        "error": "execution skipped (--skip-execution flag)",
+                        "plan": plan_steps,
+                        "plan_step_count": len(plan_steps),
+                        "execution": None,
+                        "worker_id": worker_id,
+                    }
+                else:
+                    print(pretty_print_execution(plan_response.plan, execution_result.answer))
+                    print(f"  ✅ Execution complete ({len(execution_result.outputs)} steps)")
+                    task_result = {
+                        "task_id": task_id,
+                        "intent": intent,
+                        "status": "success",
+                        "plan": plan_steps,
+                        "plan_step_count": len(plan_steps),
+                        "execution": execution_result.outputs,
+                        "answer": execution_result.answer,
+                        "worker_id": worker_id,
+                    }
 
         except asyncio.TimeoutError:
             timed_out_during = "planning" if agent.last_plan_response is None else "execution"
@@ -217,7 +170,7 @@ class TaskBatchRunner:
                 "error": f"{timed_out_during} timeout",
                 "plan": None,
                 "execution": None,
-                "worker_id": worker_id,
+                "worker_id": None,
             }
 
         except Exception as e:
@@ -230,7 +183,7 @@ class TaskBatchRunner:
                     "error": str(e),
                     "plan": None,
                     "execution": None,
-                    "worker_id": worker_id,
+                    "worker_id": None,
                 }
             else:
                 print(f"  ❌ Execution failed: {e}")
@@ -244,13 +197,8 @@ class TaskBatchRunner:
                     "plan": plan_steps,
                     "plan_step_count": len(plan_steps),
                     "execution": None,
-                    "worker_id": worker_id,
+                    "worker_id": None,
                 }
-
-        finally:
-            if worker_id is not None:
-                print(f"  🔄 Releasing worker {worker_id}")
-                await asyncio.to_thread(release_worker, worker_id)
 
         return task_result
 
