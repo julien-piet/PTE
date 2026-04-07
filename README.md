@@ -1,119 +1,138 @@
 # PTE (Plan-Then-Execute) Agent
 
-A LangGraph-based agent that plans and executes tasks using MCP (Model Context Protocol) servers for website automation.
+A LangGraph-based agent that plans and executes tasks using direct HTTP API calls against WebArena benchmark websites (GitLab, Reddit, Shopping).
 
 ## Prerequisites
 
-1. **Python 3.12+** (recommended)
-2. **Virtual Environment** (already set up in `venv/`)
-3. **Dependencies** - Install from `config/pip_requirements.txt`:
+1. **Python 3.12+**
+2. **Virtual Environment** — already set up in `venv/`; activate it before running anything:
+   ```bash
+   source venv/bin/activate  # macOS/Linux
+   ```
+3. **Dependencies**:
    ```bash
    pip install -r config/pip_requirements.txt
    ```
 
+---
+
 ## Configuration
 
-1. **Environment Variables**: Set up your configuration files in the `config/` directory:
-   - `config/.env` - Client environment variables (LLM API keys, etc.)
-   - `config/.mcpenv` - MCP server environment variables
-   - `config/.sharedenv` - Shared environment variables
+### 1. LLM provider — `config/config.yaml`
 
-2. **LLM Provider Setup**: Configure your LLM provider in `config/config.yaml`:
-   - Set `agent_llm_provider` (options: `openai`, `anthropic`, `google`)
-   - Set `agent_llm_model` to your preferred model
-   - Add your API keys to the appropriate `.env` file
+Set the provider and model you want the agent to use:
 
-3. **MCP Server Configuration**: In `config/config.yaml`, configure your MCP servers:
-   ```yaml
-   mcp_server:
-     webarena: http://localhost:8000/
-   ```
+```yaml
+agent_llm_provider: openai        # Options: openai, anthropic, google, google-gla
+agent_llm_model: gpt-4.1          # Must match a model listed under the provider
+```
+
+### 2. API keys — `config/.env`
+
+Copy the example file and fill in the key for your active provider:
+
+```bash
+cp config/.env.example config/.env
+```
+
+```
+OPENAI_API_KEY=sk-proj-...       # if using openai
+ANTHROPIC_API_KEY=sk-ant-...     # if using anthropic
+GEMINI_API_KEY=AIza...           # if using google-gla
+```
+
+### 3. Server auth tokens — `config/.server_env`
+
+Required for the agent to make authenticated API calls to the benchmark servers. This file is **not committed** — create it once locally:
+
+```
+GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
+CUSTOMER_AUTH_TOKEN=<customer JWT>
+ADMIN_AUTH_TOKEN=<admin JWT>
+```
+
+To get a GitLab token: go to `http://localhost:8023/-/user_settings/personal_access_tokens`, log in as `byteblaze` / `hello1234`, and create a token with the `api` scope.
+
+> Note: if the GitLab Docker container is reset, you will need to create a new token.
+
+---
 
 ## Running the Agent
 
-### Step 1: Start MCP Servers
-
-First, you need to start the MCP servers that provide the tools the agent will use. Each server runs on a separate port.
-
-**Start the shopping server:**
-```bash
-python3 -m servers.shopping_server 
-```
-
-This will start the WebArena MCP server on `http://localhost:8000/` (as configured in `config.yaml`).
-
-> **Note**: Keep this terminal window open while using the agent. The server must be running for the agent to access tools.
-
-### Step 2: Run the Agent
-
-In a **new terminal window**, activate the virtual environment and run the agent:
+The agent makes direct HTTP/REST calls — no MCP servers needed.
 
 ```bash
-# Activate virtual environment (if not already active)
-source venv/bin/activate  # On macOS/Linux
-# or
-venv\Scripts\activate  # On Windows
-
-# Run the agent
-python3 python3 -m agent.agent_replan
+python3 -m agent.agent
 ```
 
-The agent will:
-1. Load configuration and connect to MCP servers
-2. Initialize available tools
-3. Start an interactive session where you can type your tasks
-
-### Optional: Authentication Setup
-
-Before running the agent for the first time, authenticate and save tokens:
+Or run a batch of tasks:
 
 ```bash
-python3 authenticate.py
+python3 scripts/run_tasks_batch.py
 ```
 
-Options:
-- `--customer-only` - Only authenticate customer account
-- `--admin-only` - Only authenticate admin account
-- `--customer-username USERNAME` - Provide customer username
-- `--customer-password PASSWORD` - Provide customer password
-- `--admin-username USERNAME` - Provide admin username
-- `--admin-password PASSWORD` - Provide admin password
-- `--no-save` - Don't save tokens to .env file
-
-## Usage Example
-
-1. **Terminal 1** - Start the MCP server:
-   ```bash
-   python servers/shopping_server.py
-   ```
-
-2. **Terminal 2** - Run the agent:
-   ```bash
-   python agent/agent_replan.py
-   ```
-
-3. **In the agent terminal**, type your task:
-   ```
-   You: Search for products with "laptop" in the name
-   ```
-
-The agent will:
-- Route to appropriate website APIs
-- Create an execution plan
-- Analyze requirements
-- Execute the plan using available tools
-- Provide a response
-
-Type `exit`, `quit`, or press `Ctrl+C` to stop the agent.
+---
 
 ## Project Structure
 
-- `agent/agent_replan.py` - Main agent implementation (LangGraph-based)
-- `servers/` - MCP server implementations
-- `api/` - API module definitions
-- `config/` - Configuration files and environment variables
-- `authenticate.py` - Authentication script for setting up tokens
+```
+PTE/
+├── agent/                      # Plan → execute pipeline (see agent/README.md)
+│   ├── agent.py                # Top-level entry point: wires PlanningAgent + ExecutionAgent
+│   ├── planning_agent.py       # Selects API endpoints via LLM and builds execution plan
+│   ├── execution_agent.py      # Runs each plan step as a curl HTTP request
+│   ├── planner.py              # Pydantic models for execution steps and plan validation
+│   ├── auth.py                 # Auth providers (header, cookie, token) and AuthRegistry
+│   ├── prompts.py              # LLM system prompts
+│   ├── common/                 # Shared utilities (config loader, types, token manager, etc.)
+│   └── providers/              # LLM backends: openai.py, anthropic.py, google.py
+│
+├── api/                        # API schemas and server-specific prompts (see api/README.md)
+│   ├── index.json              # Agent's initial lookup to find relevant API files
+│   ├── gitlab_api_schema.json  # Swagger 2.0 schema for GitLab
+│   ├── shopping_api_schema.json
+│   ├── api_server_prompts.py   # Per-server planning hints
+│   ├── gitlab_pw/              # Playwright-style API definitions (used by eval)
+│   ├── reddit_pw/
+│   └── shopping_pw/
+│
+├── backend/                    # Standalone LLM backend wrappers
+│   ├── anthropic_backend.py
+│   ├── gemini_backend.py
+│   └── openai_backend.py
+│
+├── config/                     # All configuration files (see config/README.md)
+│   ├── config.yaml             # LLM provider/model selection
+│   ├── .env.example            # Template — copy to .env and fill in keys
+│   ├── .env                    # LLM API keys (not committed)
+│   └── .server_env             # Server auth tokens (not committed)
+│
+├── eval/                       # Benchmark evaluation harness (see eval/README.md)
+│   ├── run_program_html_benchmark.py
+│   ├── agent_runner.py / agent_runner_template.py
+│   ├── docker/                 # Worker management for parallel Docker eval runs
+│   └── tests/                  # pytest test files for all three eval types
+│
+└── scripts/                    # Utility scripts
+    ├── run_tasks_batch.py       # Run a batch of tasks with plan + execute
+    ├── run_planning_batch.py    # Planning only (no execution)
+    └── docker_parallel/         # Multi-Docker setup guide (see docker_parallel/README.md)
+```
+
+---
 
 ## How to Add a New API
 
-Go to `/api`, duplicate the template (`api/template.py`) and follow the instructions at the top of the file. Do this in a new branch, and submit a PR when you are done with a website.
+Go to `api/`, duplicate `api/template.py`, and follow the instructions at the top of the file. Do this in a new branch and submit a PR when done.
+
+---
+
+## Documentation
+
+| README | What it covers |
+|--------|---------------|
+| [agent/README.md](agent/README.md) | How the plan → execute pipeline works; descriptions of every file in `agent/` |
+| [config/README.md](config/README.md) | `config.yaml` options, LLM API key setup, and server auth token setup |
+| [api/README.md](api/README.md) | API schema files, server-specific prompts, and Playwright API directories |
+| [eval/README.md](eval/README.md) | Full benchmark evaluation guide: running tests, filtering, custom agents, scoring, and common failures |
+| [scripts/docker_parallel/README.md](scripts/docker_parallel/README.md) | Running multiple Docker instances: VS Code port config, managing workers, and port forwarding |
