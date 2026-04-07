@@ -172,7 +172,43 @@ Do not assume that the SKU can be guessed, synthesized, or partially matched bas
 
 You can use the 'GET /V1/products' endpoint to retrieve the list of all products and their SKUs. Given that the list of products may be large, you can use the 'searchCriteria' query parameters to filter the products based on name or URL key attributes to find the specific product and its SKU more efficiently.
 
-When using the `like` conditionType in `searchCriteria`, you MUST wrap the search value with literal wildcard characters (`%`) to perform a partial match (e.g., `%guard%`). 
-- Do NOT omit the `%` wildcards (e.g., do not send just `guard`), as this will result in an exact match attempt and return no results. 
-- Do NOT manually URL-encode the `%` to `%25` (e.g., do not send `%25guard%25`), because the underlying HTTP client will automatically handle URL encoding for you. Double-encoding will break the query.
+When using the `like` conditionType in `searchCriteria`, you MUST wrap the search value in literal wildcard characters (`%`) to perform a partial match.
+- CRITICAL: Do NOT chain multiple words together with wildcards (e.g., do NOT use `%Amazon%Echo%Dot%`). The search engine tokenizes product names, and a single chained multi-word wildcard query will fail to match and return 0 results.
+- To search for multiple words, you MUST use a logical AND operation by placing each individual word into a separate `filterGroups` index (e.g., 0, 1, 2). 
+- Example format for searching "Switch Card Case": 
+  `searchCriteria[filterGroups][0][filters][0][field]=name&searchCriteria[filterGroups][0][filters][0][value]=%Switch%&searchCriteria[filterGroups][0][filters][0][conditionType]=like&searchCriteria[filterGroups][1][filters][0][field]=name&searchCriteria[filterGroups][1][filters][0][value]=%Card%&searchCriteria[filterGroups][1][filters][0][conditionType]=like&searchCriteria[filterGroups][2][filters][0][field]=name&searchCriteria[filterGroups][2][filters][0][value]=%Case%&searchCriteria[filterGroups][2][filters][0][conditionType]=like`
+- Do NOT manually URL-encode the `%` to `%25`. The underlying code handles URL encoding automatically. Double-encoding will break the query.
+- Do NOT omit the wildcards entirely around your terms, as this will result in an exact string match attempt and likely return no results.
+
+CRITICAL — POST/PUT request body structure:
+The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsMineItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
+
+For example, POST /V1/carts/mine/items has a body parameter named "PostV1CartsMineItemsBody" whose schema requires a "cartItem" property. The correct request body is:
+  {{"cartItem": {{"sku": "...", "qty": 1, "quote_id": "..."}}}}
+NOT:
+  {{"PostV1CartsMineItemsBody": {{"sku": "...", "qty": 1}}}}
+
+Common body wrapper keys by endpoint:
+- POST /V1/carts/mine/items → {{"cartItem": {{...}}}}
+- POST /V1/reviews → {{"review": {{...}}}}
+- POST /V1/cmsPage → {{"page": {{...}}}}
+- POST /V1/cmsBlock → {{"block": {{...}}}}
+- PUT /V1/orders/{{parent_id}} → {{"entity": {{...}}}}
+- POST /V1/orders → {{"entity": {{...}}}}
+- PUT /V1/customers/me → {{"customer": {{...}}}}
+
+Always consult the schema's `required` field inside the body parameter definition to determine the correct JSON wrapper key.
+
+CRITICAL — searchCriteria is REQUIRED for list endpoints:
+Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpoints REQUIRE the `searchCriteria` query parameter. Calling these endpoints with no query parameters at all will return HTTP 400 with "searchCriteria is required".
+- If you want ALL results (no filtering), you MUST still pass at least an empty searchCriteria, for example: `?searchCriteria=all` or `?searchCriteria[pageSize]=20`.
+- Always include at least one `searchCriteria` parameter, even if you do not need any specific filters.
+
+CRITICAL — Adding items to cart requires a quote_id:
+To add items to the shopping cart via `POST /V1/carts/mine/items`, you MUST first create/retrieve a cart by calling `POST /V1/carts/mine` (which returns an integer cart/quote ID). Then include that ID as `quote_id` in the `cartItem` object:
+  Step 1: POST /V1/carts/mine → returns quote_id (e.g., 12345)
+  Step 2: POST /V1/carts/mine/items with body {{"cartItem": {{"sku": "B086GNDL8K", "qty": 1, "quote_id": "12345"}}}}
+
+CRITICAL — `/V1/customers/me` endpoint:
+The `GET /V1/customers/me` and `PUT /V1/customers/me` endpoints ONLY work with customer-scoped authentication tokens. If you are using an admin token, these endpoints will fail with "customerId is required". With an admin token, you must use `GET /V1/customers/{{customerId}}` or `PUT /V1/customers/{{customerId}}` instead, and you must first look up the customer ID (e.g., via `GET /V1/customers/search` with searchCriteria filters).
 """
