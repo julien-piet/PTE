@@ -390,8 +390,8 @@ def create_access_token(
         print(f"  [DEBUG] Token name input found: {Selectors.ACCESS_TOKEN_NAME_INPUT}")
     except TimeoutError:
         print(f"  [DEBUG] Token name input NOT found. Page title: {page.title()}")
-        print(f"  [DEBUG] Page URL: {page.url}")
-        print(f"  [DEBUG] Page content (first 2000 chars):\n{page.content()[:2000]}")
+        # print(f"  [DEBUG] Page URL: {page.url}")
+        # print(f"  [DEBUG] Page content (first 2000 chars):\n{page.content()[:2000]}")
         return CreateAccessTokenResult(
             success=False,
             error_message="Access token form not found"
@@ -412,7 +412,7 @@ def create_access_token(
             checked: el.checked,
         }))
     """)
-    print(f"  [DEBUG] All checkboxes on page ({len(all_checkboxes)} total):")
+    # print(f"  [DEBUG] All checkboxes on page ({len(all_checkboxes)} total):")
     for cb in all_checkboxes:
         print(f"    id={cb['id']!r:50s}  name={cb['name']!r:55s}  value={cb['value']!r}")
 
@@ -444,7 +444,7 @@ def create_access_token(
                 print(f"  [DEBUG] {scope}: pattern {i} timed out ({sel})")
                 continue
         if not checked:
-            print(f"  [DEBUG] All 3 patterns failed for scope '{scope}'. Full page HTML:")
+            # print(f"  [DEBUG] All 3 patterns failed for scope '{scope}'. Full page HTML:")
             print(page.content())
             return CreateAccessTokenResult(
                 success=False,

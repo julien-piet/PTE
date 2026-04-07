@@ -1,12 +1,18 @@
 # In order to get the GLPAT token for a new gitlab instance, we need to use
 # playwright to log in and create that token, then pass it into agent.
 
+import threading
+
 from playwright.sync_api import sync_playwright
 
 from api.gitlab_pw import login_user, create_access_token
 from api.gitlab_pw.config import get_default_gitlab_credentials
 import api.gitlab_pw.login as _glab_login
 import api.gitlab_pw.settings as _glab_settings
+
+# Serialize get_glpat calls: the function patches module-level URL globals, so
+# concurrent calls from different threads would overwrite each other's values.
+_get_glpat_lock = threading.Lock()
 
 
 def get_glpat(gitlab_url: str, token_name: str = "agent-token") -> str:
@@ -24,6 +30,11 @@ def get_glpat(gitlab_url: str, token_name: str = "agent-token") -> str:
     Raises:
         RuntimeError: if login or token creation fails.
     """
+    with _get_glpat_lock:
+        return _get_glpat_locked(gitlab_url, token_name)
+
+
+def _get_glpat_locked(gitlab_url: str, token_name: str) -> str:
     # Patch module-level URL constants so login_user and create_access_token
     # navigate to this worker's instance instead of the import-time default.
     _glab_login.LOGIN_URL = f"{gitlab_url}/users/sign_in"

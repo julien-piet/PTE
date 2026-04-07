@@ -9,16 +9,33 @@ Use --skip-execution to plan only (same as run_planning_batch.py).
 import asyncio
 import json
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import requests
 
 from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker.workers import acquire_worker, release_worker
 from eval.docker.gitlab_init import get_glpat
+
+
+def _wait_for_gitlab(gitlab_url: str, timeout: int = 120, interval: int = 5) -> None:
+    """Poll GitLab sign-in page until it returns HTTP 200 or timeout is reached."""
+    url = f"{gitlab_url}/users/sign_in"
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                return
+        except Exception:
+            pass
+        time.sleep(interval)
+    raise RuntimeError(f"GitLab at {gitlab_url} did not become ready within {timeout}s")
 
 
 def _serialize_plan(plan) -> list:
@@ -51,6 +68,7 @@ class TaskBatchRunner:
         task_ids: Optional[List[int]] = None,
         skip_execution: bool = False,
         debug: bool = False,
+        num_workers: int = 3,
     ):
         self.tasks_file = Path(tasks_file)
         self.output_file = Path(output_file)
@@ -62,22 +80,13 @@ class TaskBatchRunner:
         self.task_ids = task_ids
         self.skip_execution = skip_execution
         self.debug = debug
+        self.num_workers = num_workers
 
-        self.agent: Optional[Agent] = None
         self.results: List[Dict[str, Any]] = []
+        self._acquire_lock: asyncio.Lock = asyncio.Lock()
 
     def initialize(self):
-        print(f"Initializing Agent (server={self.server!r})...")
-        self.agent = Agent(
-            env_file=self.env_file,
-            api_dir=self.api_dir,
-            skip_execution=self.skip_execution,
-            debug=self.debug,
-        )
-        # base_url is left empty here; the real URL is supplied per-task
-        # via run_task(servers=...) once a worker is acquired.
-        self.agent.initialize({self.server: ""})
-        
+        print(f"Config: server={self.server!r}, workers={self.num_workers}")
         print("Agent ready\n")
 
     def load_tasks(self) -> List[Dict[str, Any]]:
@@ -116,16 +125,44 @@ class TaskBatchRunner:
         print(f"Task {task_id}: {intent}")
         print(f"{'='*70}")
 
+        # Each task gets its own agent to avoid shared mutable state.
+        agent = Agent(
+            env_file=self.env_file,
+            api_dir=self.api_dir,
+            skip_execution=self.skip_execution,
+            debug=self.debug,
+        )
+        agent.initialize({self.server: ""})
+
         worker_id: Optional[int] = None
         task_result: Optional[Dict[str, Any]] = None
 
         try:
-            # Acquire a clean worker from the server-side orchestrator
-            worker = acquire_worker(str(task_id))
+            # Serialize worker acquisition so concurrent tasks don't race the
+            # orchestrator (which can't handle simultaneous acquire requests).
+            # Retry with backoff in case the orchestrator transiently has no
+            # free worker (e.g. previous task state not yet fully released).
+            for attempt in range(10):
+                try:
+                    async with self._acquire_lock:
+                        worker = await asyncio.to_thread(acquire_worker, str(task_id))
+                    break
+                except Exception as e:
+                    wait = 15
+                    print(f"  ⏳ Task {task_id} acquire failed (attempt {attempt + 1}/10, retry in {wait}s): {e}")
+                    await asyncio.sleep(wait)
+            else:
+                raise RuntimeError(f"Could not acquire a worker for task {task_id} after 10 attempts")
+
             worker_id = worker["worker_id"]
             gitlab_url = worker["gitlab_url"]
 
             print(f"  🔧 Acquired worker {worker_id}: {gitlab_url}")
+
+            # Wait for the GitLab instance to be fully up before logging in.
+            print(f"  ⏳ Waiting for GitLab on worker {worker_id} to be ready...")
+            await asyncio.to_thread(_wait_for_gitlab, gitlab_url)
+            print(f"  ✅ GitLab on worker {worker_id} is ready")
 
             # Log in to this worker's GitLab and obtain a GLPAT for API access.
             # Run in a thread because Playwright's sync API cannot be called
@@ -134,16 +171,13 @@ class TaskBatchRunner:
             print(f"  🔑 GLPAT obtained for worker {worker_id}")
 
             # Inject the worker-specific token into the execution agent.
-            if self.agent.execution_agent is not None:
-                self.agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
-
-            # Clear stale planning state before this run
-            self.agent.last_plan_response = None
+            if agent.execution_agent is not None:
+                agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
 
             # ── Plan + Execute ────────────────────────────────────────────────────
-            execution_result = await self.agent.run_task(prompt, servers={self.server: gitlab_url})
+            execution_result = await agent.run_task(prompt, servers={self.server: gitlab_url})
 
-            plan_response = self.agent.last_plan_response
+            plan_response = agent.last_plan_response
             plan_steps = _serialize_plan(plan_response.plan)
             print(pretty_print_plan(plan_response.plan))
             print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
@@ -174,7 +208,7 @@ class TaskBatchRunner:
                 }
 
         except asyncio.TimeoutError:
-            timed_out_during = "planning" if self.agent.last_plan_response is None else "execution"
+            timed_out_during = "planning" if agent.last_plan_response is None else "execution"
             print(f"  ⏱ {timed_out_during.capitalize()} timed out")
             task_result = {
                 "task_id": task_id,
@@ -187,7 +221,7 @@ class TaskBatchRunner:
             }
 
         except Exception as e:
-            if self.agent.last_plan_response is None:
+            if agent.last_plan_response is None:
                 print(f"  ❌ Planning failed: {e}")
                 task_result = {
                     "task_id": task_id,
@@ -200,7 +234,7 @@ class TaskBatchRunner:
                 }
             else:
                 print(f"  ❌ Execution failed: {e}")
-                plan_response = self.agent.last_plan_response
+                plan_response = agent.last_plan_response
                 plan_steps = _serialize_plan(plan_response.plan)
                 task_result = {
                     "task_id": task_id,
@@ -216,74 +250,30 @@ class TaskBatchRunner:
         finally:
             if worker_id is not None:
                 print(f"  🔄 Releasing worker {worker_id}")
-                release_worker(worker_id)
+                await asyncio.to_thread(release_worker, worker_id)
 
         return task_result
 
-    # async def run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-    #     task_id = task.get("task_id", "unknown")
-    #     intent = task.get("intent", "")
-
-    #     start_url = task.get("start_url", "")
-    #     repo_path = start_url.replace("__GITLAB__", "").replace("__SHOPPING__", "").strip("/")
-    #     prompt = f"Project path: {repo_path}\n\nTask: {intent}" if repo_path else intent
-
-    #     print(f"\n{'='*70}")
-    #     print(f"Task {task_id}: {intent}")
-    #     print(f"{'='*70}")
-
-    #     # ── Plan + Execute ────────────────────────────────────────────────────
-    #     try:
-    #         result = await self.agent.run_task(prompt)
-    #     except asyncio.TimeoutError:
-    #         timed_out_during = "planning" if self.agent.last_plan_response is None else "execution"
-    #         print(f"  ⏱ {timed_out_during.capitalize()} timed out")
-    #         status = "failed" if timed_out_during == "planning" else "execution_failed"
-    #         return {"task_id": task_id, "intent": intent, "status": status,
-    #                 "error": f"{timed_out_during} timeout", "plan": None, "execution": None}
-    #     except Exception as e:
-    #         if self.agent.last_plan_response is None:
-    #             print(f"  ❌ Planning failed: {e}")
-    #             return {"task_id": task_id, "intent": intent, "status": "failed",
-    #                     "error": str(e), "plan": None, "execution": None}
-    #         print(f"  ❌ Execution failed: {e}")
-    #         plan_response = self.agent.last_plan_response
-    #         plan_steps = _serialize_plan(plan_response.plan)
-    #         return {
-    #             "task_id": task_id, "intent": intent,
-    #             "status": "execution_failed", "error": str(e),
-    #             "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
-    #         }
-
-    #     plan_response = self.agent.last_plan_response
-    #     plan_steps = _serialize_plan(plan_response.plan)
-    #     print(pretty_print_plan(plan_response.plan))
-    #     print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
-
-    #     if self.skip_execution:
-    #         return {
-    #             "task_id": task_id, "intent": intent,
-    #             "status": "execution_failed",
-    #             "error": "execution skipped (--skip-execution flag)",
-    #             "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
-    #         }
-
-    #     print(pretty_print_execution(plan_response.plan, result.answer))
-    #     print(f"  ✅ Execution complete ({len(result.outputs)} steps)")
-    #     return {
-    #         "task_id": task_id, "intent": intent, "status": "success",
-    #         "plan": plan_steps, "plan_step_count": len(plan_steps),
-    #         "execution": result.outputs, "answer": result.answer,
-    #     }
-
     async def run_all(self):
         tasks = self.load_tasks()
-        print(f"\nStarting batch run of {len(tasks)} tasks\n" + "=" * 70)
+        print(f"\nStarting batch run of {len(tasks)} tasks ({self.num_workers} workers)\n" + "=" * 70)
 
-        for i, task in enumerate(tasks, 1):
-            print(f"\n[{i}/{len(tasks)}]", end=" ")
-            result = await self.run_task(task)
-            self.results.append(result)
+        sem = asyncio.Semaphore(self.num_workers)
+
+        async def run_with_sem(task):
+            async with sem:
+                return await self.run_task(task)
+
+        futures = [asyncio.ensure_future(run_with_sem(t)) for t in tasks]
+        try:
+            self.results = list(await asyncio.gather(*futures))
+        except BaseException:
+            # Cancel all outstanding tasks so their finally blocks fire and
+            # release any acquired workers before we propagate the exception.
+            for f in futures:
+                f.cancel()
+            await asyncio.gather(*futures, return_exceptions=True)
+            raise
 
         print("\n" + "=" * 70)
 
@@ -377,6 +367,10 @@ async def main():
         "--debug", action="store_true",
         help="Print curl commands and raw responses for each step"
     )
+    parser.add_argument(
+        "--workers", type=int, default=3,
+        help="Number of tasks to run in parallel (default: 3)"
+    )
 
     args = parser.parse_args()
 
@@ -392,6 +386,7 @@ async def main():
             task_ids=args.task_ids,
             skip_execution=args.skip_execution,
             debug=args.debug,
+            num_workers=args.workers,
         )
         runner.initialize()
         await runner.run_all()
@@ -400,7 +395,7 @@ async def main():
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user")
-        sys.exit(1)
+        raise
     except Exception as e:
         print(f"\n❌ Batch run failed: {e}")
         import traceback
