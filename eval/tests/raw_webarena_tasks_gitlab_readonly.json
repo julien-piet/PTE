@@ -712,7 +712,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Outdated dependencies",
+          "Remove Gulp as a dependency",
           "open"
         ]
       },
@@ -808,7 +808,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Better Event page UX",
+          "Add better form validation for our newsletter and contact pages",
           "closed"
         ]
       },
@@ -840,8 +840,8 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Deprecate GitHub Discussions",
-          "closed"
+          "[Feature suggestion] Support linking to an accessibility statement",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/1517",
@@ -872,7 +872,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Outdated dependencies",
+          "Remove Gulp as a dependency",
           "open"
         ]
       },

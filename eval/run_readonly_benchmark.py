@@ -230,9 +230,10 @@ async def run_parallel(
             worker = pool.get_worker(wid)
             runner = AgentRunner(
                 headless=True,
-                enable_reset=False,   # Docker reset handled by pool below
+                enable_reset=False,        # Docker reset handled by pool below
                 api_dir=worker.api_dir,
                 env_file=worker.env_file,  # per-worker PAT
+                gitlab_base_url=worker.gitlab_base_url,  # for program_html Playwright checks
             )
             runner.server = server
             print(f"🔧 Initializing agent for worker {wid} (port {worker.port})...")

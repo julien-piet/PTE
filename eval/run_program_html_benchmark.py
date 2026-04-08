@@ -65,12 +65,20 @@ def _resolve_placeholder(url: str) -> str:
     return url
 
 
-def _login_for_task(page, task: Dict[str, Any]) -> bool:
+def _login_for_task(
+    page,
+    task: Dict[str, Any],
+    gitlab_base_url: str = "http://localhost:8023",
+) -> bool:
     """
     Log in to the appropriate site for the given task.
 
     Returns True on success, False on failure.
     Supports: gitlab, reddit, shopping (customer + admin).
+
+    gitlab_base_url: base URL of the GitLab instance to log into.
+        Defaults to localhost:8023.  Pass the worker's URL when running
+        against a Docker worker on a different port.
     """
     sites = task.get("sites", [])
 
@@ -78,6 +86,26 @@ def _login_for_task(page, task: Dict[str, Any]) -> bool:
         from api import gitlab_pw
         import time as _login_time
         username, password = gitlab_pw.get_default_gitlab_credentials()
+
+        if gitlab_base_url != "http://localhost:8023":
+            # Non-default port: navigate directly instead of relying on the
+            # module-level LOGIN_URL constant (which is baked in as 8023).
+            login_url = f"{gitlab_base_url}/users/sign_in"
+            for _login_attempt in range(3):
+                try:
+                    page.goto(login_url, wait_until="networkidle")
+                    page.fill("#user_login", username)
+                    page.fill("#user_password", password)
+                    page.locator('button[type="submit"]').click()
+                    page.wait_for_load_state("networkidle")
+                    if "/users/sign_in" not in page.url:
+                        return True
+                except Exception:
+                    pass
+                _login_time.sleep(2 ** _login_attempt)
+            return False
+
+        # Default localhost:8023 — use the library function.
         # Retry login up to 3 times — GitLab can be slow to respond after
         # state-reset API operations (returns networkidle timeout or 500).
         for _login_attempt in range(3):
@@ -254,6 +282,7 @@ class BaseAgentRunner:
         headless: bool = True,
         enable_reset: bool = True,
         force_reset: bool = False,
+        gitlab_base_url: str = "http://localhost:8023",
     ):
         self.headless = headless
         self.enable_reset = enable_reset
@@ -262,6 +291,10 @@ class BaseAgentRunner:
         # clean re-run after a previous run left state (duplicate milestones,
         # issues, MRs, etc.) without having to modify any task file.
         self.force_reset = force_reset
+        # gitlab_base_url: the GitLab instance Playwright should log into and
+        # check DOM against after agent execution.  Defaults to localhost:8023.
+        # Multi-worker runs override this per-worker (e.g. localhost:8024).
+        self.gitlab_base_url = gitlab_base_url
         self._evaluator = ProgramHtmlEvaluator()
         self._url_match_evaluator = UrlMatchEvaluator()
         self._resetter = GitLabStateReset() if enable_reset else None
@@ -356,7 +389,9 @@ class BaseAgentRunner:
             browser = p.chromium.launch(headless=self.headless)
             page = browser.new_page()
             try:
-                logged_in = _login_for_task(page, task)
+                logged_in = _login_for_task(
+                    page, task, gitlab_base_url=self.gitlab_base_url
+                )
                 if not logged_in:
                     return {
                         "applicable": True,
@@ -364,7 +399,13 @@ class BaseAgentRunner:
                         "checks": [],
                         "error": "Login failed for program_html check",
                     }
-                eval_result = self._evaluator.evaluate(task, page, last_url=last_url)
+                # Build a per-check evaluator that resolves __GITLAB__ to this
+                # worker's URL rather than the module-level default (8023).
+                evaluator = ProgramHtmlEvaluator(base_urls={
+                    **DEFAULT_BASE_URLS,
+                    "__GITLAB__": self.gitlab_base_url,
+                })
+                eval_result = evaluator.evaluate(task, page, last_url=last_url)
             finally:
                 browser.close()
         return eval_result
@@ -468,8 +509,14 @@ class AgentRunner(BaseAgentRunner):
         force_reset: bool = False,
         api_dir: str = "api",
         env_file: str = "config/.server_env",
+        gitlab_base_url: str = "http://localhost:8023",
     ):
-        super().__init__(headless=headless, enable_reset=enable_reset, force_reset=force_reset)
+        super().__init__(
+            headless=headless,
+            enable_reset=enable_reset,
+            force_reset=force_reset,
+            gitlab_base_url=gitlab_base_url,
+        )
         # api_dir lets parallel workers point at per-worker copies of the API
         # schema (with the correct GitLab port patched in).  Defaults to the
         # canonical "api/" directory for single-worker / non-orchestrator runs.

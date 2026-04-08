@@ -325,12 +325,14 @@ class DockerWorkerPool:
 
         while loop.time() < deadline:
             try:
-                resp = await loop.run_in_executor(
+                await loop.run_in_executor(
                     None,
                     lambda: urllib.request.urlopen(url, timeout=5),
                 )
-                if resp.status == 200:
-                    return
+                return  # 200 OK
+            except urllib.error.HTTPError as e:
+                if e.code in (401, 403):
+                    return  # auth-gated = server is up
             except Exception:
                 pass
             await asyncio.sleep(self.health_interval)
