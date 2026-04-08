@@ -1,186 +1,71 @@
-# eval/
+# PTE Evaluation
 
-Benchmark evaluation harness for the PTE agent. Runs the agent on tasks from the [WebArena](https://webarena.dev/) benchmark across four simulated websites: GitLab, Reddit, Shopping, and Shopping Admin.
+Evaluates an agent on WebArena tasks using two evaluation types:
 
-All commands below should be run from the **project root** (`PTE/`).
-
----
-
-## How it works
-
-Each benchmark task is a natural-language instruction (e.g. *"Post 'lgtm' on the merge request related to the semantic HTML post"*). The agent attempts to complete it, and the harness checks whether it succeeded.
-
-There are three ways success is measured, depending on the task type:
-
-| Eval type | How it is checked | Example task |
-|---|---|---|
-| `program_html` (~371 tasks) | A Playwright browser navigates to a verification URL and checks the actual page content after the agent runs | Post a comment, create an issue, fill a form |
-| `url_match` (71 tasks) | The agent's reported `final_url` is compared against a reference URL | Navigate to a specific settings page |
-| `string_match` (241 tasks) | The agent's text answer is checked for required and forbidden substrings | "What is the top-selling product?" |
+- **`string_match`** — agent returns a text answer, compared against a reference answer
+- **`program_html`** — after the agent finishes, Playwright navigates to a URL and checks the page content
 
 ---
 
-## Directory layout
+## Task files
 
-```
-eval/
-├── run_program_html_benchmark.py   # Core engine. Orchestrates task execution and
-│                                   # evaluation for all three eval types.
-│                                   # Also defines BaseAgentRunner (the abstract
-│                                   # interface any agent must implement) and
-│                                   # AgentRunner (the default PTE implementation).
-│
-├── program_html_evaluator.py       # Used by the engine for program_html tasks.
-│                                   # Opens a Playwright browser, logs in, navigates
-│                                   # to the eval URL, and checks DOM content.
-│
-├── url_match_evaluator.py          # Used by the engine for url_match tasks.
-│                                   # Compares the agent's final URL against the
-│                                   # reference URL (exact, prefix, or substring match).
-│
-├── gitlab_state_reset.py           # Used by the engine before each GitLab task.
-│                                   # Deletes comments/forks left by previous runs
-│                                   # so each task starts from a clean state.
-│
-├── agent_runner_template.py        # Copy this to plug in a custom agent.
-│                                   # Subclass BaseAgentRunner and fill in two methods:
-│                                   # _init_agent() and _run_task(). See below.
-│
-└── tests/
-    ├── conftest.py                  # Shared pytest setup. Provides the agent_runner
-    │                                # fixture (initialised once per session) and
-    │                                # CLI options: --task-limit, --site, --agent-runner,
-    │                                # --server.
-    │
-    ├── test_agent_program_html.py   # 371 integration tests, one per program_html task.
-    │                                # Runs the agent, then opens a fresh browser to
-    │                                # verify the result on the actual page.
-    │
-    ├── test_agent_url_match.py      # 71 integration tests, one per url_match task.
-    │                                # Checks that the agent's final_url matches
-    │                                # the expected URL.
-    │
-    ├── test_agent_string_match.py   # 241 integration tests, one per string_match task.
-    │                                # Checks that the agent's answer contains all
-    │                                # required substrings and none of the forbidden ones.
-    │
-    └── raw_webarena_tasks_no_map.json   # Master task file. 683 tasks from the WebArena
-                                         # benchmark. All three test files load from this
-                                         # single source and filter by eval type at runtime.
-                                         # Do not delete or rename this file.
-```
+| File | Tasks | Description |
+|------|-------|-------------|
+| `tests/raw_webarena_tasks_all_gitlab.json` | 186 | All GitLab tasks (string_match + program_html) |
+| `tests/raw_webarena_tasks_no_map.json` | 684 | All WebArena tasks across all sites |
 
 ---
 
-## Prerequisites
+## Running the evaluation
 
-Before running any tests, you need three things set up:
-
-### 1. WebArena containers running
-
-The agent connects to local instances of the benchmark websites:
-
-| Site | URL |
-|---|---|
-| GitLab | `http://localhost:8023` |
-| Reddit | `http://localhost:9999` |
-| Shopping | `http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082` |
-| Shopping Admin | `http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082/admin` |
-
-### 2. LLM API key in `config/.env`
-
-Set the key for whichever provider is configured in `config/config.yaml`:
-
-```
-OPENAI_API_KEY=sk-proj-...
-```
-
-See `config/README.md` for other providers (Anthropic, Google).
-
-### 3. GitLab server token in `config/.server_env`
-
-The agent makes direct REST API calls to GitLab using a Personal Access Token (PAT).
-This file is **not committed** — each person creates it once locally.
-
-```
-GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
-```
-
-To create a token: go to `http://localhost:8023/-/user_settings/personal_access_tokens`,
-log in as `byteblaze` / `hello1234`, create a token with the `api` scope, and copy the `glpat-...` value.
-
-> Note: if the GitLab Docker container is wiped and reset, you will need to create a new token.
-
----
-
-## Running tests
-
-### Default: use the PTE agent
+### GitLab tasks only (recommended starting point)
 
 ```bash
-# Smoke test — 2 tasks, verbose output
-python3 -m pytest eval/tests/test_agent_program_html.py --task-limit 2 -v -s
+# Run all 186 GitLab tasks
+python3 -m pytest eval/tests/test_agent_all_gitlab.py -v
 
-# Run all program_html tasks (~371)
+# Save results to a JSON log
+python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --output gitlab_results.json
+
+# Smoke test — first 5 tasks only
+python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-limit 5 -v -s
+
+# Single task by ID
+python3 -m pytest eval/tests/test_agent_all_gitlab.py -k "task_389" -v -s
+
+# Force-reset GitLab state before every task (use after a partial run leaves dirty state)
+python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --force-reset
+```
+
+### All WebArena tasks
+
+```bash
+# program_html tasks (~371 tasks across all sites)
 python3 -m pytest eval/tests/test_agent_program_html.py -v
 
-# Run all url_match tasks (71)
-python3 -m pytest eval/tests/test_agent_url_match.py -v
-
-# Run all string_match tasks (241)
+# string_match tasks (~241 tasks across all sites)
 python3 -m pytest eval/tests/test_agent_string_match.py -v
 
-# Run everything (683 tasks total)
+# Both together
 python3 -m pytest eval/tests/ -v
-```
 
-### Filter by site
-
-```bash
-python3 -m pytest eval/tests/ -k "gitlab" -v
-python3 -m pytest eval/tests/ -k "reddit" -v
-python3 -m pytest eval/tests/ -k "shopping_admin" -v
-python3 -m pytest eval/tests/ -k "shopping and not admin" -v
-```
-
-### Run a single task by ID
-
-```bash
-python3 -m pytest eval/tests/ -k "task_389" -v -s
-```
-
-### Limit to the first N tasks
-
-```bash
-python3 -m pytest eval/tests/test_agent_program_html.py --task-limit 10 -v
-```
-
-### Combine filters
-
-```bash
-# First 5 reddit tasks
-python3 -m pytest eval/tests/test_agent_program_html.py --site reddit --task-limit 5 -v -s
-```
-
-### Save output to a file
-
-```bash
-python3 -m pytest eval/tests/ -v 2>&1 | tee my_results.txt
+# Filter by site
+python3 -m pytest eval/tests/test_agent_program_html.py -k "gitlab" -v
+python3 -m pytest eval/tests/test_agent_program_html.py -k "shopping_admin" -v
 ```
 
 ---
 
 ## Plugging in a custom agent
 
-Any agent can be evaluated using `--agent-runner`. You implement two methods and the harness handles the rest.
-
-### Step 1 — Copy the template
+The default agent is `AgentRunner` (PTE ToolCallAgent + MCP tools) defined in `agent_runner.py`. To use a different agent, subclass `BaseAgentRunner` from `run_program_html_benchmark.py` and pass the class via `--agent-runner`:
 
 ```bash
-cp eval/agent_runner_template.py my_agent_runner.py
+python3 -m pytest eval/tests/test_agent_all_gitlab.py \
+    --agent-runner my_module.MyAgentRunner -v -s
 ```
 
-### Step 2 — Fill in two methods
+Your subclass must implement two methods:
 
 ```python
 from eval.run_program_html_benchmark import BaseAgentRunner
@@ -188,89 +73,81 @@ from eval.run_program_html_benchmark import BaseAgentRunner
 class MyAgentRunner(BaseAgentRunner):
 
     async def _init_agent(self) -> None:
-        # Called once at the start of the test session.
-        # Set up your agent, load models, connect to APIs, etc.
-        self.agent = MyAgent(api_key="...")
+        # Called once at the start of the session.
+        # Initialise your agent, API clients, etc.
+        self.agent = MyAgent(...)
 
     async def _run_task(self, task: dict) -> dict:
-        # Called once per task. Run your agent and return its result.
+        # Called once per task. Run your agent on task["intent"].
+        # Return:
+        #   {"final_url": str | None, "answer": str | None}  on success
+        #   {"success": False, "error": "description"}        on failure
         result = await self.agent.run(task["intent"])
-        return {
-            "final_url": result.url,    # str | None  (needed for url_match tasks)
-            "answer":    result.answer, # str | None  (needed for string_match tasks)
-        }
-        # To signal a hard failure: return {"success": False, "error": "what went wrong"}
+        return {"final_url": result.url, "answer": result.answer}
 ```
 
-The `task` dict has these fields if your agent needs context beyond the instruction:
-
-| Field | Example value | Description |
-|---|---|---|
-| `task["intent"]` | `"Post 'lgtm' on the MR..."` | The natural-language instruction to your agent |
-| `task["task_id"]` | `389` | Unique integer ID |
-| `task["sites"]` | `["gitlab"]` | Which website(s) are involved |
-| `task["start_url"]` | `"__GITLAB__/primer/design/-/merge_requests"` | Starting page (`__GITLAB__` etc. are placeholder tokens) |
-| `task["eval"]` | `{...}` | Evaluation config — you can ignore this |
-
-Base URLs for the placeholder tokens:
-
-| Token | URL |
-|---|---|
-| `__GITLAB__` | `http://localhost:8023` |
-| `__REDDIT__` | `http://localhost:9999` |
-| `__SHOPPING__` | `http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082` |
-| `__SHOPPING_ADMIN__` | `http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082/admin` |
-
-### Step 3 — Smoke test
-
-```bash
-python3 -m pytest eval/tests/test_agent_program_html.py \
-    --agent-runner my_agent_runner.MyAgentRunner \
-    --task-limit 2 -v -s
-```
-
-### Step 4 — Full run
-
-```bash
-python3 -m pytest eval/tests/ \
-    --agent-runner my_agent_runner.MyAgentRunner -v \
-    2>&1 | tee my_results.txt
-```
+- `answer` is required for `string_match` tasks
+- `final_url` is required for `program_html` tasks where `url` is `"last"` and there is no `reference_url` fallback
 
 ---
 
-## Scoring
+## CLI options reference
 
-```
-Overall score          = total passed / 683
-program_html accuracy  = passed / 371
-url_match accuracy     = passed / 71
-string_match accuracy  = passed / 241
-```
-
-Excluded task IDs (unsupported by benchmark): `118`, `528–532`, `585–589`
-
----
-
-## GitLab state reset
-
-Before each GitLab task, the harness automatically resets relevant state:
-- Deletes any MR comments posted by `byteblaze` in previous runs (so the agent's comment will appear as the most recent one when evaluated)
-- Deletes any forks created by `byteblaze` (so the agent can re-create them cleanly)
-
-This is always on when running via `pytest`. The state reset uses the GitLab REST API — it is fast, quiet, and will not abort a task if it fails.
+| Option | Description |
+|--------|-------------|
+| `--task-limit N` | Only run the first N tasks |
+| `--output FILENAME` | Write results JSON to `tests/logs/<FILENAME>` |
+| `--force-reset` | Reset GitLab state before every task (ignores `require_reset` field) |
+| `--agent-runner MODULE.CLASS` | Use a custom agent runner instead of the default |
+| `--server SERVER` | Site the agent authenticates against (`gitlab`, `reddit`, `shopping`). Default: `gitlab` |
 
 ---
 
-## Common failures
+## Eval logic
 
-| Error | Cause |
-|---|---|
-| `Server 'gitlab' not found in auth registry` | `config/.server_env` is missing or `GITLAB_TOKEN` is not set. Create a PAT at `http://localhost:8023/-/user_settings/personal_access_tokens`. |
-| `step_N produced no extractable value` | The agent's execution plan failed to chain API call results. Agent bug in `execution_agent.py`. |
-| `HTTP 404` on an API call | The agent resolved the wrong project ID or MR IID. Agent planning/execution bug. |
-| `Task timed out` | Agent is too slow or stuck in a loop. |
-| `actual_url is None or empty` | `_run_task()` did not populate `"final_url"`. Required for url_match tasks. |
-| `missing: ['some text']` | Agent completed the task but got a detail wrong (wrong wording, wrong item). |
-| `Login failed` | Site credentials are wrong or the WebArena container is not running. |
-| `answer: (empty)` | `_run_task()` returned `None` or `""` for `"answer"`. Required for string_match tasks. |
+### `string_match`
+
+The agent's `answer` is checked against `reference_answers` in the task:
+
+| Key | Check |
+|-----|-------|
+| `must_include` | Every item must appear in the answer (case-insensitive) |
+| `must_exclude` | No item may appear in the answer (case-insensitive) |
+| `exact_match` | Answer must equal the reference after whitespace normalisation |
+| `fuzzy_match` | Each item must appear approximately (SequenceMatcher ratio ≥ 0.8) |
+| `fuzzy_match: "N/A"` | Task is impossible — always passes |
+
+A `must_include` item that is itself a list `["A", "B"]` means **at least one** of the alternatives must be present (OR logic).
+
+### `program_html`
+
+After the agent finishes, for each entry in `program_html`:
+
+1. **Navigate** to the entry's `url`:
+   - A literal URL (e.g. `__GITLAB__/byteblaze/dotfiles/-/project_members`) → navigate there directly
+   - `"last"` → use the agent's `final_url`; falls back to `reference_url` if `final_url` is `None`
+2. **Extract** content using the `locator` (a JS expression evaluated in the page context). Empty locator falls back to `document.body.outerText`.
+3. **Check** the extracted content against `required_contents` (`must_include`, `exact_match`, `must_exclude`).
+
+All entries must pass for the task to pass.
+
+---
+
+## File structure
+
+```
+eval/
+├── agent_runner.py              # Default AgentRunner implementation (PTE agent)
+├── docker_worker_pool.py        # Parallel worker pool for multi-worker runs
+├── gitlab_state_reset.py        # Resets GitLab to a known state before write tasks
+├── program_html_evaluator.py    # ProgramHtmlEvaluator — Playwright-based checker
+├── run_program_html_benchmark.py# BaseAgentRunner, AgentRunner, BaselineRunner
+├── url_match_evaluator.py       # UrlMatchEvaluator — used internally by the runner
+└── tests/
+    ├── conftest.py                          # Shared pytest fixtures and CLI options
+    ├── raw_webarena_tasks_all_gitlab.json   # 186 GitLab tasks
+    ├── raw_webarena_tasks_no_map.json       # 684 all-site WebArena tasks
+    ├── test_agent_all_gitlab.py             # Runs all 186 GitLab tasks
+    ├── test_agent_program_html.py           # Runs all program_html tasks (all sites)
+    └── test_agent_string_match.py           # Runs all string_match tasks (all sites)
+```

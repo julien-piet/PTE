@@ -489,11 +489,20 @@ class ProgramHtmlEvaluator:
             if content.strip().lower() != str(exact).strip().lower():
                 missing.append(f"exact_match: {exact!r}")
 
-        # must_include: all items must appear somewhere in content
+        # must_include: all items must appear somewhere in content.
+        # A nested list item means OR — at least one alternative must match.
         for item in required_contents.get("must_include", []):
-            resolved_item = self._resolve_placeholder(str(item))
-            if resolved_item.lower() not in content_lower:
-                missing.append(item)
+            if isinstance(item, list):
+                # OR group: at least one alternative must be present
+                if not any(
+                    self._resolve_placeholder(str(alt)).lower() in content_lower
+                    for alt in item
+                ):
+                    missing.append(item)
+            else:
+                resolved_item = self._resolve_placeholder(str(item))
+                if resolved_item.lower() not in content_lower:
+                    missing.append(item)
 
         # must_exclude: none of these may appear in content
         for item in required_contents.get("must_exclude", []):
