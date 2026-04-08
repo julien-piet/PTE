@@ -5,9 +5,11 @@
 # require a program_html check (those are already covered by
 # test_agent_program_html.py).
 #
-# Eval-type breakdown covered here (241 total tasks):
-#   - string_match only                — 231 tasks
-#   - string_match + url_match         —  10 tasks (both checks must pass)
+# Eval-type breakdown covered here (241 total tasks, all now pure string_match):
+#   - string_match only (always)       — 241 tasks
+#   Tasks 173–182 were previously string_match + url_match; url_match has been
+#   dropped and their reference_answers now use must_include with the correct
+#   issue title + open/closed status keyword.
 #
 # Tasks that carry program_html (with or without string_match) are handled
 # inside test_agent_program_html.py and are therefore excluded here.

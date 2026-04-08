@@ -1,12 +1,14 @@
 # eval/tests/test_agent_url_as_html_match.py
 #
 # Integration tests: verify the agent can accomplish every GitLab url_match task
-# that has been converted to program_html (html_match) format.
+# that has been converted to a scoreable evaluation format.
 #
 # Source file: raw_webarena_tasks_url_as_html_match.json (49 tasks, GitLab only)
-#   - Phase 1 (16 tasks): navigation tasks — BODY locator + must_include
-#   - Phase 2 (10 tasks): issue-status tasks — TITLE + STATUS locators
-#   - Phase 3 (23 tasks): action tasks — locators copied from source benchmark
+#   - Phase 1 (16 tasks): navigation tasks — converted to string_match
+#       * All 16 tasks use must_include with real content from the reset docker state
+#       * Reference answers derived by navigating each URL in the seeded environment
+#   - Phase 2 (10 tasks): issue-status tasks — program_html (TITLE + STATUS locators)
+#   - Phase 3 (23 tasks): action tasks — program_html (locators from source benchmark)
 #
 # Run all 49 tasks:
 #   python3 -m pytest eval/tests/test_agent_url_as_html_match.py -v
@@ -44,7 +46,10 @@ TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_url_as_html_match.json"
 # ---------------------------------------------------------------------------
 
 def _load_tasks() -> List[Dict[str, Any]]:
-    """Load all tasks from the html_match file (all are already program_html)."""
+    """Load all tasks from the converted task file.
+
+    Phase 1 tasks use string_match eval; Phase 2 and 3 use program_html.
+    """
     with open(TASK_FILE) as f:
         return json.load(f)
 
@@ -77,16 +82,45 @@ URL_AS_HTML_TASKS: List[Dict[str, Any]] = _load_tasks()
 
 def _make_failure_message(
     task: Dict[str, Any],
+    agent_result: Optional[Dict[str, Any]],
     html_detail: Optional[Dict[str, Any]],
 ) -> str:
-    """Build a multi-line failure message with per-check details."""
+    """Build a multi-line failure message for either string_match or program_html."""
+    eval_types = task.get("eval", {}).get("eval_types", [])
     lines = [
         f"Task {task['task_id']} FAILED",
-        f"  intent : {task['intent']}",
-        f"  sites  : {task.get('sites', [])}",
-        f"  start  : {task.get('start_url', '')}",
+        f"  intent     : {task['intent']}",
+        f"  eval_types : {eval_types}",
+        f"  sites      : {task.get('sites', [])}",
     ]
 
+    # --- string_match branch ---
+    if "string_match" in eval_types:
+        ev = task.get("eval", {})
+        ra = ev.get("reference_answers", {})
+        if ra.get("must_include"):
+            lines.append(f"  must_include : {ra['must_include']}")
+        if ra.get("must_exclude"):
+            lines.append(f"  must_exclude : {ra['must_exclude']}")
+        if ra.get("exact_match") is not None:
+            lines.append(f"  exact_match  : {ra['exact_match']!r}")
+        if ra.get("fuzzy_match") is not None:
+            lines.append(f"  fuzzy_match  : {ra['fuzzy_match']!r}")
+        if agent_result is not None:
+            answer = agent_result.get("answer", "")
+            snippet = str(answer)[:400] if answer else "(empty)"
+            lines.append(f"  agent_answer : {snippet!r}")
+            must_include = ra.get("must_include", [])
+            if must_include and answer:
+                answer_lower = str(answer).lower()
+                missing = [item for item in must_include
+                           if isinstance(item, str) and item.lower() not in answer_lower]
+                if missing:
+                    lines.append(f"  missing items: {missing}")
+        return "\n".join(lines)
+
+    # --- program_html branch ---
+    lines.append(f"  start      : {task.get('start_url', '')}")
     if not html_detail:
         return "\n".join(lines)
 
@@ -140,17 +174,19 @@ def test_agent_accomplishes_url_as_html_match_task(
     Assert the agent correctly accomplishes a single converted url_match task.
 
     These tasks were originally evaluated by url_match (which was broken because
-    AgentRunner always returns final_url=None). They have been converted to
-    program_html (html_match) format with DOM-based locators that fire on the
-    final page after the agent completes its action.
+    AgentRunner always returns final_url=None for API-based agents). They have
+    been converted to scoreable formats:
+
+    - Phase 1 (16 tasks): string_match — the agent calls GitLab APIs and returns
+      a text answer that is checked against reference_answers. Navigation-only
+      tasks use fuzzy_match="N/A" (always pass / unscoreable).
+    - Phase 2 (10 tasks): program_html — DOM locators check issue title and status.
+    - Phase 3 (23 tasks): program_html — DOM locators from the source benchmark.
 
     The agent runs through the full plan-then-execute pipeline
-    (``automated=True``, no re-planning). After execution,
-    ``ProgramHtmlEvaluator`` opens a fresh authenticated Playwright
-    session, navigates to the task's evaluation URL(s), and checks the
-    required page content.
+    (``automated=True``, no re-planning).
     """
-    passed, _agent_result, error, html_detail = session_event_loop.run_until_complete(
+    passed, agent_result, error, html_detail = session_event_loop.run_until_complete(
         agent_runner.run_agent_on_task(task)
     )
 
@@ -159,4 +195,4 @@ def test_agent_accomplishes_url_as_html_match_task(
             f"Task {task['task_id']}: agent returned an error: {error}"
         )
 
-    assert passed, _make_failure_message(task, html_detail)
+    assert passed, _make_failure_message(task, agent_result, html_detail)

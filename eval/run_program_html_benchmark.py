@@ -336,6 +336,10 @@ class BaseAgentRunner:
                 return False
 
         if fuzzy_match is not None:
+            # "N/A" is a sentinel meaning "unscoreable" — treat as pass so
+            # the task does not penalise the agent when no ground truth exists.
+            if fuzzy_match == "N/A":
+                return True
             items = fuzzy_match if isinstance(fuzzy_match, list) else [fuzzy_match]
             for ref_item in items:
                 if not self._fuzzy_contains(answer, str(ref_item)):
@@ -457,8 +461,22 @@ class AgentRunner(BaseAgentRunner):
     agent execution to run the ProgramHtmlEvaluator checks.
     """
 
-    def __init__(self, headless: bool = True, enable_reset: bool = True, force_reset: bool = False):
+    def __init__(
+        self,
+        headless: bool = True,
+        enable_reset: bool = True,
+        force_reset: bool = False,
+        api_dir: str = "api",
+        env_file: str = "config/.server_env",
+    ):
         super().__init__(headless=headless, enable_reset=enable_reset, force_reset=force_reset)
+        # api_dir lets parallel workers point at per-worker copies of the API
+        # schema (with the correct GitLab port patched in).  Defaults to the
+        # canonical "api/" directory for single-worker / non-orchestrator runs.
+        self.api_dir = api_dir
+        # env_file lets parallel workers use a per-worker .server_env with the
+        # correct GITLAB_TOKEN for that container.  Defaults to the shared env.
+        self.env_file = env_file
         self.results: Dict[str, Any] = {
             "total": 0,
             "passed": 0,
@@ -477,7 +495,7 @@ class AgentRunner(BaseAgentRunner):
         from agent.agent import Agent
 
         print("🔧 Initializing agent...")
-        self._agent = Agent()
+        self._agent = Agent(api_dir=self.api_dir, env_file=self.env_file)
         self._agent.initialize(server=getattr(self, "server", "gitlab"))
         print("✓ Agent initialized\n")
 

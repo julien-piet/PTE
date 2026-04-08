@@ -15,21 +15,16 @@
     "intent_template_id": 303,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "feat: add WCAG levels",
+          "update or remove 404 links"
+        ]
+      },
       "reference_url": "__GITLAB__/dashboard/todos",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "To-Do List"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -51,21 +46,16 @@
     "intent_template_id": 300,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "List of Post Ideas",
+          "Article translations"
+        ]
+      },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/?sort=created_asc&state=opened",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "Created date"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -87,21 +77,16 @@
     "intent_template_id": 300,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "css-utilities",
+          "Spinners"
+        ]
+      },
       "reference_url": "__GITLAB__/primer/design/-/issues/?sort=created_date&state=opened",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "Created date"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -126,21 +111,15 @@
     "intent_template_id": 349,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "help wanted"
+        ]
+      },
       "reference_url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues/?label_name%5B%5D=help%20wanted",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "help wanted"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -165,21 +144,15 @@
     "intent_template_id": 349,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "question"
+        ]
+      },
       "reference_url": "__GITLAB__/kkroening/ffmpeg-python/-/issues/?label_name%5B%5D=question",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~question"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -204,21 +177,15 @@
     "intent_template_id": 349,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "flaky-test"
+        ]
+      },
       "reference_url": "__GITLAB__/keycloak/keycloak/-/issues/?label_name%5B%5D=flaky-test",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~flaky-test"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -243,21 +210,15 @@
     "intent_template_id": 349,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "OpenAPI Generator CLI"
+        ]
+      },
       "reference_url": "__GITLAB__/OpenAPITools/openapi-generator/-/issues/?label_name%5B%5D=OpenAPI%20Generator%20CLI",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~OpenAPI Generator CLI"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -282,21 +243,15 @@
     "intent_template_id": 349,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "BUG"
+        ]
+      },
       "reference_url": "__GITLAB__/umano/AndroidSlidingUpPanel/-/issues/?label_name%5B%5D=BUG",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~BUG"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -318,22 +273,16 @@
     "intent_template_id": 290,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "Add verification functions",
+          "feat: add WCAG levels"
+        ]
+      },
       "reference_url": "__GITLAB__/dashboard/merge_requests?assignee_username=byteblaze",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "Assignee",
-              "Byte Blaze"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -825,22 +774,16 @@
     "intent_template_id": 325,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "a11yproject.com",
+          "primer/design"
+        ]
+      },
       "reference_url": "__GITLAB__/explore",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "Projects",
-              "Explore"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -864,21 +807,15 @@
     "intent_template_id": 299,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "bug"
+        ]
+      },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/?label_name%5B%5D=bug",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~bug"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -902,21 +839,15 @@
     "intent_template_id": 299,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "type: bug"
+        ]
+      },
       "reference_url": "__GITLAB__/primer/design/-/issues/?label_name%5B%5D=type%3A%20bug%20%F0%9F%90%9E",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~type: bug"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -940,21 +871,15 @@
     "intent_template_id": 299,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "enhancement"
+        ]
+      },
       "reference_url": "__GITLAB__/root/metaseq/-/issues/?label_name%5B%5D=enhancement",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~enhancement"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -978,22 +903,16 @@
     "intent_template_id": 299,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "question",
+          "OPT"
+        ]
+      },
       "reference_url": "__GITLAB__/root/metaseq/-/issues/?search=OPT&label_name%5B%5D=question",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~question",
-              "OPT"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -1017,21 +936,16 @@
     "intent_template_id": 299,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "Release Planning",
+          "Data processing details in pretraining"
+        ]
+      },
       "reference_url": "__GITLAB__/root/metaseq/-/issues/?label_name%5B%5D=None",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "~None"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
@@ -1053,22 +967,16 @@
     "intent_template_id": 291,
     "eval": {
       "eval_types": [
-        "program_html"
+        "string_match"
       ],
-      "reference_answers": null,
+      "reference_answers": {
+        "must_include": [
+          "WIP - Post: Pitfalls of accessible components",
+          "feat: add WCAG levels"
+        ]
+      },
       "reference_url": "__GITLAB__/dashboard/merge_requests?reviewer_username=byteblaze",
-      "program_html": [
-        {
-          "url": "last",
-          "locator": "document.querySelector('#content-body').outerText",
-          "required_contents": {
-            "must_include": [
-              "Reviewer",
-              "Byte Blaze"
-            ]
-          }
-        }
-      ],
+      "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
       "reference_answer_raw_annotation": ""
