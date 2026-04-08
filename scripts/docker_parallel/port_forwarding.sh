@@ -2,7 +2,8 @@
 set -euo pipefail
 
 SERVER="$1"
-TOTAL_WORKERS="$2"
+ORCH="/scr2/webagent/webarena_orchestrator/orchestrator.py"
+TOTAL_WORKERS=$(ssh "$SERVER" python3 "$ORCH" num_workers)
 
 
 FORWARD_SHOPPING=false
@@ -55,4 +56,4 @@ exec "${CMD[@]}"
   # "$SERVER"
 
 
-  #ex: ./port_forwarding.sh annabella@red5k.cs.berkeley.edu 3
+  #ex: ./port_forwarding.sh annabella@red5k.cs.berkeley.edu

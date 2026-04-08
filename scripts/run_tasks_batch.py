@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
-from eval.docker.workers import worker_session
+from eval.docker.workers import num_workers, worker_session
 
 
 def _serialize_plan(plan) -> list:
@@ -49,7 +49,6 @@ class TaskBatchRunner:
         task_ids: Optional[List[int]] = None,
         skip_execution: bool = False,
         debug: bool = False,
-        num_workers: int = 3,
     ):
         self.tasks_file = Path(tasks_file)
         self.output_file = Path(output_file)
@@ -61,7 +60,7 @@ class TaskBatchRunner:
         self.task_ids = task_ids
         self.skip_execution = skip_execution
         self.debug = debug
-        self.num_workers = num_workers
+        self.num_workers = num_workers()
 
         self.results: List[Dict[str, Any]] = []
         self._acquire_lock: asyncio.Lock = asyncio.Lock()
@@ -315,11 +314,6 @@ async def main():
         "--debug", action="store_true",
         help="Print curl commands and raw responses for each step"
     )
-    parser.add_argument(
-        "--workers", type=int, default=3,
-        help="Number of tasks to run in parallel (default: 3)"
-    )
-
     args = parser.parse_args()
 
     try:
@@ -334,7 +328,6 @@ async def main():
             task_ids=args.task_ids,
             skip_execution=args.skip_execution,
             debug=args.debug,
-            num_workers=args.workers,
         )
         runner.initialize()
         await runner.run_all()
