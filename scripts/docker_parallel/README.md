@@ -2,7 +2,8 @@
 
 ## Prerequisites: VS Code Port Configuration
 
-To avoid conflicts with the port forwarding script, add one of the following to your `settings.local.json`:
+To avoid conflicts with the port forwarding script, the server side VS Code should have this enabled (Open User Settings in SSH side): 
+This is currently set up, so it shouldn't be a problem...
 
 **Option A — Ignore auto-forward for the port range:**
 ```json
@@ -38,5 +39,5 @@ To avoid conflicts with the port forwarding script, add one of the following to 
 Run from the `PTE/scripts/docker_parallel` directory:
 
 ```bash
-./port_forwarding.sh annabella@red5k.cs.berkeley.edu <#ofworkers>
+./port_forwarding.sh annabella@red5k.cs.berkeley.edu
 ```

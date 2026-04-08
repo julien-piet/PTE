@@ -12,6 +12,20 @@ SERVER = "annabella@red5k.cs.berkeley.edu"
 ORCH = "/scr2/webagent/webarena_orchestrator/orchestrator.py"
 
 
+def num_workers() -> int:
+    result = subprocess.run(
+        ["ssh", SERVER, f"python3 {ORCH} num_workers"],
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"num_workers exited {result.returncode}: "
+            f"stdout={result.stdout.strip()!r} stderr={result.stderr.strip()!r}"
+        )
+    return int(result.stdout.strip())
+
+
 def acquire_worker(task_id: str) -> dict:
     result = subprocess.run(
         ["ssh", SERVER, f"python3 {ORCH} acquire --task-id {task_id}"],
