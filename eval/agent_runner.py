@@ -95,7 +95,7 @@ class MyAgentRunner(BaseAgentRunner):
             self.client = MyAPIClient(base_url="http://...")
         """
         self.myAgent = Agent()
-        self.myAgent.initialize(server=getattr(self, "server", "gitlab"))
+        self.myAgent.initialize({getattr(self, "server", "gitlab"): getattr(self, "base_url", "")})
         # TODO: replace with your agent initialisation
         # raise NotImplementedError("Fill in _init_agent() with your agent setup")
 

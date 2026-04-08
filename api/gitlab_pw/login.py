@@ -41,7 +41,7 @@ def login_user(page: Page, username: str, password: str) -> LoginResult:
     Returns:
         LoginResult with success status, redirect URL, and any error message
     """
-    page.goto(LOGIN_URL, wait_until="networkidle")
+    page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
     page.set_viewport_size({"width": 1280, "height": 1500})
 
     # Wait for login form

@@ -27,7 +27,7 @@ class EndpointInfo(BaseModel):
     description: str
     parameters: list    # raw swagger parameter dicts
     response_schema: str = ""  # human-readable description of the 200 response shape
-    base_url: str = ""  # e.g. http://127.0.0.1:8023/api/v4
+    base_path: str = ""  # swagger basePath (e.g. /api/v4) — path prefix, NOT host
 
 
 class PlanningAgent:
@@ -223,10 +223,7 @@ class PlanningAgent:
         return description if description.lower().rstrip(".") not in _GENERIC else ""
 
     def _extract_endpoints(self, spec: dict, api_name: str) -> List[EndpointInfo]:
-        scheme = (spec.get("schemes") or ["http"])[0]
-        host = spec.get("host", "localhost")
         base_path = spec.get("basePath", "").rstrip("/")
-        base_url = f"{scheme}://{host}{base_path}"
 
         endpoints: List[EndpointInfo] = []
         for path, path_item in spec.get("paths", {}).items():
@@ -248,7 +245,7 @@ class PlanningAgent:
                     description=operation.get("description", ""),
                     parameters=params,
                     response_schema=self._extract_response_schema(spec, operation),
-                    base_url=base_url,
+                    base_path=base_path,
                 ))
         return endpoints
 
@@ -431,19 +428,28 @@ class PlanningAgent:
         if not validate_plan(plan_result.plan):
             raise ValueError(f"LLM produced an invalid plan. Raw response:\n{response}")
 
-        # Inject response_schema and base_url into each step using the
-        # tool_name → EndpointInfo mapping we already have from the swagger spec.
+        # Inject response_schema and api source (used at runtime for base_url routing)
+        # into each step using the tool_name → EndpointInfo mapping from the swagger spec.
+        # base_url is NOT baked from swagger here — it is injected at runtime by Agent
+        # from the servers dict passed to initialize() / run_task().
         endpoint_map = {f"{ep.method} {ep.path}": ep for ep in selected}
+        _fallback = EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
         annotated_steps = [
             step.model_copy(update={
                 "returns": endpoint_map.get(
                     step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                    EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
+                    _fallback,
                 ).response_schema,
-                "base_url": endpoint_map.get(
-                    step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                    EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
-                ).base_url,
+                "base_url": "|".join([
+                    endpoint_map.get(
+                        step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
+                        _fallback,
+                    ).api,
+                    endpoint_map.get(
+                        step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
+                        _fallback,
+                    ).base_path,
+                ]),  # "api_filename|/base/path" routing tag; replaced with real URL by Agent
             })
             for step in plan_result.plan
         ]

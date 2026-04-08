@@ -410,7 +410,7 @@ class AgentRunner(BaseAgentRunner):
 
         print("🔧 Initializing agent...")
         self._agent = Agent()
-        self._agent.initialize(server=getattr(self, "server", "gitlab"))
+        self._agent.initialize({getattr(self, "server", "gitlab"): getattr(self, "base_url", "")})
         print("✓ Agent initialized\n")
 
     # ------------------------------------------------------------------

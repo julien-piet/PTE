@@ -224,3 +224,7 @@ __marimo__/
 notebooks/*.DS_Store
 .DS_Store
 .DS_Store
+
+#logs
+logs/
+eval/tests/logs/

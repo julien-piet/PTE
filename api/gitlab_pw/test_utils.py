@@ -164,6 +164,9 @@ class FakeLocator:
     def wait_for(self, **kwargs: Any) -> None:
         self.actions.append(("wait_for", kwargs))
 
+    def scroll_into_view_if_needed(self) -> None:
+        self.actions.append(("scroll_into_view_if_needed", None))
+
 
 class FakePage:
     """Simple fake for Playwright's Page to drive the helpers."""
@@ -245,6 +248,13 @@ class FakePage:
 
     def input_value(self, selector: str) -> str:
         return self._input_values.get(selector, "")
+
+    def title(self) -> str:
+        return self.url
+
+    def evaluate(self, script: str) -> Any:
+        """Return an empty list — debug-only JS evaluation, not needed in unit tests."""
+        return []
 
     def select_option(self, selector: str, value: str) -> None:
         loc = self.locators.setdefault(selector, FakeLocator())

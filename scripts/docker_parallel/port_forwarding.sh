@@ -16,33 +16,28 @@ CMD=(ssh -N)
 for WORKER_ID in $(seq 1 "$TOTAL_WORKERS"); do
   SHOPPING_REMOTE=$((7700 + WORKER_ID))
   ADMIN_REMOTE=$((7800 + WORKER_ID))
-  FORUM_REMOTE=$((9900 + WORKER_ID))
+  FORUM_REMOTE=$((9999 + WORKER_ID))
   GITLAB_REMOTE=$((8023 + WORKER_ID))
   WIKI_REMOTE=$((8880 + WORKER_ID))
-  SHOPPING_LOCAL=$((17700 + WORKER_ID))
-  ADMIN_LOCAL=$((17800 + WORKER_ID))
-  FORUM_LOCAL=$((19900 + WORKER_ID))
-  GITLAB_LOCAL=$((18020 + WORKER_ID))
-  WIKI_LOCAL=$((18880 + WORKER_ID))
 
   if $FORWARD_SHOPPING; then
-    CMD+=(-L "${SHOPPING_LOCAL}:127.0.0.1:${SHOPPING_REMOTE}")
+    CMD+=(-L "${SHOPPING_REMOTE}:127.0.0.1:${SHOPPING_REMOTE}")
   fi
 
   if $FORWARD_ADMIN; then
-    CMD+=(-L "${ADMIN_LOCAL}:127.0.0.1:${ADMIN_REMOTE}")
+    CMD+=(-L "${ADMIN_REMOTE}:127.0.0.1:${ADMIN_REMOTE}")
   fi
 
   if $FORWARD_FORUM; then
-    CMD+=(-L "${FORUM_LOCAL}:127.0.0.1:${FORUM_REMOTE}")
+    CMD+=(-L "${FORUM_REMOTE}:127.0.0.1:${FORUM_REMOTE}")
   fi
 
   if $FORWARD_GITLAB; then
-    CMD+=(-L "${GITLAB_LOCAL}:127.0.0.1:${GITLAB_REMOTE}")
+    CMD+=(-L "${GITLAB_REMOTE}:127.0.0.1:${GITLAB_REMOTE}")
   fi
 
   if $FORWARD_WIKI; then
-    CMD+=(-L "${WIKI_LOCAL}:127.0.0.1:${WIKI_REMOTE}")
+    CMD+=(-L "${WIKI_REMOTE}:127.0.0.1:${WIKI_REMOTE}")
   fi
 done
 
@@ -52,12 +47,12 @@ exec "${CMD[@]}"
 
 
 # exec ssh -N \
-  # -L "${SHOPPING_LOCAL}:127.0.0.1:${SHOPPING_REMOTE}" \
-  # -L "${ADMIN_LOCAL}:127.0.0.1:${ADMIN_REMOTE}" \
-  # -L "${FORUM_LOCAL}:127.0.0.1:${FORUM_REMOTE}" \
-  # -L "${GITLAB_LOCAL}:127.0.0.1:${GITLAB_REMOTE}" \
-  # -L "${WIKI_LOCAL}:127.0.0.1:${WIKI_REMOTE}" \
+  # -L "${SHOPPING_REMOTE}:127.0.0.1:${SHOPPING_REMOTE}" \
+  # -L "${ADMIN_REMOTE}:127.0.0.1:${ADMIN_REMOTE}" \
+  # -L "${FORUM_REMOTE}:127.0.0.1:${FORUM_REMOTE}" \
+  # -L "${GITLAB_REMOTE}:127.0.0.1:${GITLAB_REMOTE}" \
+  # -L "${WIKI_REMOTE}:127.0.0.1:${WIKI_REMOTE}" \
   # "$SERVER"
 
 
-  #ex: ./port_forwarding.sh annabella@red5k 5
+  #ex: ./port_forwarding.sh annabella@red5k.cs.berkeley.edu 3

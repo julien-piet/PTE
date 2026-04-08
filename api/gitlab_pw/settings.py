@@ -1,7 +1,7 @@
 """GitLab settings management helpers (deploy keys, tokens, webhooks, profile)."""
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 from playwright.sync_api import Page, TimeoutError
 
@@ -15,6 +15,14 @@ from .constants import (
     get_deploy_keys_url,
     get_deploy_tokens_url,
     get_webhooks_url,
+)
+
+ALL_SCOPES: tuple[str, ...] = (
+    "api",
+    "read_api",
+    "read_user",
+    "read_repository",
+    "write_repository",
 )
 
 
@@ -57,7 +65,7 @@ def toggle_private_profile(
     Returns:
         ProfileUpdateResult with success status
     """
-    page.goto(PROFILE_URL, wait_until="networkidle")
+    page.goto(PROFILE_URL, wait_until="domcontentloaded", timeout=60000)
 
     checkbox = page.locator(Selectors.PRIVATE_PROFILE_CHECKBOX)
     if checkbox.count() == 0:
@@ -118,7 +126,7 @@ def change_username(
     Returns:
         UsernameChangeResult with success status
     """
-    page.goto(ACCOUNT_URL, wait_until="networkidle")
+    page.goto(ACCOUNT_URL, wait_until="domcontentloaded", timeout=60000)
 
     # Get current username
     username_input = page.locator(Selectors.USERNAME_INPUT)
@@ -193,7 +201,7 @@ def delete_deploy_key(
         DeleteResult with success status
     """
     url = get_deploy_keys_url(namespace, project)
-    page.goto(url, wait_until="networkidle")
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn_selector = "#js-deploy-keys-settings > div.settings-content > div > div.deploy-keys-panel.table-holder > div.gl-responsive-table-row.deploy-key > div.table-section.section-15.table-button-footer.deploy-key-actions > div > button"
     confirm_btn_selector = "#confirm-remove-deploy-key___BV_modal_footer_ > button.btn.js-modal-action-primary.btn-danger.btn-md.gl-button"
@@ -232,7 +240,7 @@ def delete_deploy_token(
         DeleteResult with success status
     """
     url = get_deploy_tokens_url(namespace, project)
-    page.goto(url, wait_until="networkidle")
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
     expand_selector = "#js-deploy-tokens > div.settings-header > button"
     delete_btn_selector = "#js-deploy-tokens > div.settings-content > div.table-responsive.deploy-tokens > table > tbody > tr > td:nth-child(6) > div > button"
@@ -276,7 +284,7 @@ def delete_all_webhooks(
         DeleteResult with success status
     """
     url = get_webhooks_url(namespace, project)
-    page.goto(url, wait_until="networkidle")
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn_selector = "a >> text=Delete"
     confirm_btn_selector = "#confirmationModal___BV_modal_footer_ > button.btn.js-modal-action-primary.btn-danger.btn-md.gl-button"
@@ -312,7 +320,7 @@ def delete_ssh_key(page: Page) -> DeleteResult:
     Returns:
         DeleteResult with success status
     """
-    page.goto(SSH_KEYS_URL, wait_until="networkidle")
+    page.goto(SSH_KEYS_URL, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn_selector = "#content-body > div.row.gl-mt-3.js-search-settings-section > div.col-lg-8 > div.gl-mb-3 > ul > li > div > span > div > div > button"
     confirm_btn_selector = "#confirm-modal-1___BV_modal_footer_ > button.btn.btn-danger"
@@ -334,6 +342,211 @@ def delete_ssh_key(page: Page) -> DeleteResult:
         )
 
 
+@dataclass
+class CreateAccessTokenResult:
+    """Result of attempting to create a personal access token."""
+
+    success: bool
+    token: Optional[str] = None
+    token_name: Optional[str] = None
+    error_message: Optional[str] = None
+
+
+def create_access_token(
+    page: Page,
+    token_name: str,
+    scopes: Optional[List[str]] = None,
+    expires_at: Optional[str] = None,
+) -> CreateAccessTokenResult:
+    """
+    Create a personal access token (GLPAT) for the currently logged-in user.
+
+    Navigates to /-/profile/personal_access_tokens, fills in the token name,
+    checks the requested scope checkboxes, optionally sets an expiry date,
+    submits the form, and captures the token value shown on the confirmation page.
+
+    The token value is only shown once by GitLab — it is returned in the result.
+
+    Args:
+        page: Playwright Page instance (must be logged in)
+        token_name: Name for the token
+        scopes: List of scopes to enable. Defaults to all scopes:
+                ["api", "read_api", "read_user", "read_repository", "write_repository"]
+        expires_at: Optional expiry date in "YYYY-MM-DD" format. If None, no expiry is set.
+
+    Returns:
+        CreateAccessTokenResult with success status, the token value, and any error message
+    """
+    if scopes is None:
+        scopes = list(ALL_SCOPES)
+
+    print(f"  [DEBUG] Navigating to access tokens URL: {ACCESS_TOKENS_URL}")
+    page.goto(ACCESS_TOKENS_URL, wait_until="domcontentloaded", timeout=60000)
+    print(f"  [DEBUG] Page URL after navigation: {page.url}")
+
+    # Fill token name
+    try:
+        page.wait_for_selector(Selectors.ACCESS_TOKEN_NAME_INPUT, timeout=10000)
+        print(f"  [DEBUG] Token name input found: {Selectors.ACCESS_TOKEN_NAME_INPUT}")
+    except TimeoutError:
+        print(f"  [DEBUG] Token name input NOT found. Page title: {page.title()}")
+        # print(f"  [DEBUG] Page URL: {page.url}")
+        # print(f"  [DEBUG] Page content (first 2000 chars):\n{page.content()[:2000]}")
+        return CreateAccessTokenResult(
+            success=False,
+            error_message="Access token form not found"
+        )
+
+    page.fill(Selectors.ACCESS_TOKEN_NAME_INPUT, token_name)
+
+    # Set expiry date if provided
+    if expires_at:
+        page.fill(Selectors.ACCESS_TOKEN_EXPIRES_INPUT, expires_at)
+
+    # Dump all checkboxes on the page so we can see what selectors are actually present.
+    all_checkboxes = page.evaluate("""
+        () => Array.from(document.querySelectorAll('input[type="checkbox"]')).map(el => ({
+            id: el.id,
+            name: el.name,
+            value: el.value,
+            checked: el.checked,
+        }))
+    """)
+    # print(f"  [DEBUG] All checkboxes on page ({len(all_checkboxes)} total):")
+    for cb in all_checkboxes:
+        print(f"    id={cb['id']!r:50s}  name={cb['name']!r:55s}  value={cb['value']!r}")
+
+    # Check each requested scope.
+    # The scope checkboxes use Bootstrap's custom-control pattern: the real
+    # <input> is visually hidden and its <label> sits on top. Playwright's
+    # .check() tries to click the input directly but the label intercepts it.
+    # Fix: click the label (which toggles the checkbox) instead of the input.
+    # Try label selectors first, then fall back to clicking the input directly.
+    for scope in scopes:
+        candidates = [
+            # Label click (Bootstrap custom-control — label intercepts input clicks)
+            f"label[for='personal_access_token_scopes_{scope}']",
+            f"label[data-qa-selector='{scope}_label']",
+            # Direct input fallback (non-Bootstrap GitLab versions)
+            f"#personal_access_token_scopes_{scope}",
+            f"input[name='personal_access_token[scopes][]'][value='{scope}']",
+            f"input[type='checkbox'][value='{scope}']",
+        ]
+        checked = False
+        for i, sel in enumerate(candidates, 1):
+            try:
+                page.wait_for_selector(sel, timeout=3000, state="attached")
+                page.locator(sel).click()
+                print(f"  [scope] {scope}: matched pattern {i} ({sel})")
+                checked = True
+                break
+            except Exception:
+                print(f"  [DEBUG] {scope}: pattern {i} timed out ({sel})")
+                continue
+        if not checked:
+            # print(f"  [DEBUG] All 3 patterns failed for scope '{scope}'. Full page HTML:")
+            print(page.content())
+            return CreateAccessTokenResult(
+                success=False,
+                error_message=f"Scope checkbox not found: {scope}"
+            )
+
+    # Submit the form — try several selectors since GitLab versions differ
+    submit_candidates = [
+        'input[type="submit"][name="commit"]',
+        'button[type="submit"]',
+        'input[type="submit"]',
+        'button:has-text("Create personal access token")',
+        'button:has-text("Create")',
+    ]
+    submitted = False
+    for submit_sel in submit_candidates:
+        try:
+            page.wait_for_selector(submit_sel, timeout=3000)
+            print(f"  [DEBUG] Submit button found: {submit_sel}")
+            page.click(submit_sel)
+            page.wait_for_load_state("networkidle")
+            print(f"  [DEBUG] Clicked submit. Page URL: {page.url}")
+            submitted = True
+            break
+        except Exception:
+            print(f"  [DEBUG] Submit selector timed out: {submit_sel}")
+            continue
+    if not submitted:
+        # Dump all buttons to find what's available
+        btns = page.evaluate("""
+            () => Array.from(document.querySelectorAll('input[type="submit"], button[type="submit"], button')).map(el => ({
+                tag: el.tagName, type: el.type, name: el.name, value: el.value, text: el.innerText?.trim().slice(0,60)
+            }))
+        """)
+        print(f"  [DEBUG] All submit/button elements ({len(btns)}):")
+        for b in btns:
+            print(f"    {b}")
+        return CreateAccessTokenResult(success=False, error_message="Token submit button not found")
+    # Capture the token value — wait up to 10s for it to appear (AJAX/Vue may update DOM)
+    # Try multiple selectors since GitLab versions differ
+    token_candidates = [
+        "#new-access-token",                              # newer GitLab (Vue component)
+        "#created-personal-access-token",                 # older GitLab
+        "[data-testid='access-token-section'] input",    # testid-based
+        "[name='new-access-token']",
+        "[name='created-personal-access-token']",
+    ]
+    token_value = None
+    for tok_sel in token_candidates:
+        try:
+            page.wait_for_selector(tok_sel, timeout=10000)
+            val = page.input_value(tok_sel)
+            # If value looks masked (all asterisks), click reveal then re-read
+            if val and set(val) == {"*"}:
+                print(f"  [DEBUG] Token field {tok_sel} is masked, clicking reveal...")
+                try:
+                    page.locator("[data-testid='toggle-visibility-button']").first.click()
+                    val = page.input_value(tok_sel)
+                except Exception:
+                    pass
+            if val and set(val) != {"*"}:
+                token_value = val
+                print(f"  [DEBUG] Token field found: {tok_sel} => {token_value[:12]}...")
+                break
+            else:
+                print(f"  [DEBUG] Token field {tok_sel} still masked after reveal attempt")
+        except Exception:
+            print(f"  [DEBUG] Token selector timed out: {tok_sel}")
+            continue
+
+    if not token_value:
+        # Check for a form validation error
+        error_loc = page.locator("#error_explanation")
+        if error_loc.count() > 0:
+            errors = error_loc.locator("ul li").all_inner_texts()
+            msg = "; ".join(errors) if errors else "Token creation failed"
+            print(f"  [DEBUG] Form error: {msg}")
+        else:
+            msg = "Created token field not found after submit"
+        # Dump all inputs + testid elements to find where the token actually appears
+        inputs = page.evaluate("""
+            () => Array.from(document.querySelectorAll('input')).map(el => ({
+                id: el.id, name: el.name, type: el.type, value: el.value?.slice(0,30)
+            }))
+        """)
+        print(f"  [DEBUG] All inputs after submit ({len(inputs)} total):")
+        for inp in inputs:
+            print(f"    {inp}")
+        testids = page.evaluate("""
+            () => Array.from(document.querySelectorAll('[data-testid]')).map(el => ({
+                testid: el.getAttribute('data-testid'), tag: el.tagName,
+                text: el.innerText?.trim().slice(0,80)
+            }))
+        """)
+        print(f"  [DEBUG] data-testid elements ({len(testids)} total):")
+        for t in testids:
+            print(f"    {t}")
+        return CreateAccessTokenResult(success=False, error_message=msg)
+
+    return CreateAccessTokenResult(success=True, token=token_value, token_name=token_name)
+
+
 def delete_all_access_tokens(page: Page) -> DeleteResult:
     """
     Delete all personal access tokens from the current user's profile.
@@ -344,7 +557,7 @@ def delete_all_access_tokens(page: Page) -> DeleteResult:
     Returns:
         DeleteResult with success status
     """
-    page.goto(ACCESS_TOKENS_URL, wait_until="networkidle")
+    page.goto(ACCESS_TOKENS_URL, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn_selector = "a[aria-label='Revoke']"
     confirm_btn_selector = "#confirmationModal___BV_modal_footer_ > button.btn.js-modal-action-primary.btn-danger.btn-md.gl-button"
@@ -383,7 +596,7 @@ def delete_account(page: Page, password: str) -> DeleteResult:
     Returns:
         DeleteResult with success status
     """
-    page.goto(ACCOUNT_URL, wait_until="networkidle")
+    page.goto(ACCOUNT_URL, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn = page.locator(Selectors.DELETE_ACCOUNT_BUTTON)
     if delete_btn.count() == 0:
