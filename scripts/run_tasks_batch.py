@@ -117,7 +117,7 @@ class TaskBatchRunner:
         task_result: Optional[Dict[str, Any]] = None
 
         try:
-            async with worker_session(str(task_id), acquire_lock=self._acquire_lock) as w:
+            async with worker_session(str(task_id), acquire_lock=self._acquire_lock, read_only=task.get("read_only", False)) as w:
                 worker_id = w["worker_id"]
                 gitlab_url = w["gitlab_url"]
                 glpat = w["glpat"]
