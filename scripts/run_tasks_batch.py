@@ -148,6 +148,11 @@ class TaskBatchRunner:
                 else:
                     print(pretty_print_execution(plan_response.plan, execution_result.answer))
                     print(f"  ✅ Execution complete ({len(execution_result.outputs)} steps)")
+                    parsed_outputs = (
+                        agent.execution_agent.last_ctx.step_outputs
+                        if agent.execution_agent is not None
+                        else None
+                    )
                     task_result = {
                         "task_id": task_id,
                         "intent": intent,
@@ -155,6 +160,7 @@ class TaskBatchRunner:
                         "plan": plan_steps,
                         "plan_step_count": len(plan_steps),
                         "execution": execution_result.outputs,
+                        "parsed_outputs": parsed_outputs,
                         "answer": execution_result.answer,
                         "worker_id": worker_id,
                     }
@@ -162,13 +168,20 @@ class TaskBatchRunner:
         except asyncio.TimeoutError:
             timed_out_during = "planning" if agent.last_plan_response is None else "execution"
             print(f"  ⏱ {timed_out_during.capitalize()} timed out")
+            ea = agent.execution_agent
+            plan_steps = _serialize_plan(agent.last_plan_response.plan) if agent.last_plan_response else None
+            partial_outputs = ea.last_raw_outputs if ea is not None and hasattr(ea, "last_raw_outputs") else None
+            partial_parsed = ea.last_ctx.step_outputs if ea is not None and hasattr(ea, "last_ctx") else None
             task_result = {
                 "task_id": task_id,
                 "intent": intent,
                 "status": "failed" if timed_out_during == "planning" else "execution_failed",
                 "error": f"{timed_out_during} timeout",
-                "plan": None,
-                "execution": None,
+                "plan": plan_steps,
+                "plan_step_count": len(plan_steps) if plan_steps else None,
+                "execution": partial_outputs or None,
+                "parsed_outputs": partial_parsed or None,
+                "answer": None,
                 "worker_id": None,
             }
 
@@ -188,6 +201,10 @@ class TaskBatchRunner:
                 print(f"  ❌ Execution failed: {e}")
                 plan_response = agent.last_plan_response
                 plan_steps = _serialize_plan(plan_response.plan)
+                ea = agent.execution_agent
+                partial_outputs = ea.last_raw_outputs if ea is not None else None
+                partial_parsed = ea.last_ctx.step_outputs if ea is not None and hasattr(ea, "last_ctx") else None
+                partial_answer = ea.last_answer if ea is not None and hasattr(ea, "last_answer") and ea.last_answer else None
                 task_result = {
                     "task_id": task_id,
                     "intent": intent,
@@ -195,7 +212,9 @@ class TaskBatchRunner:
                     "error": str(e),
                     "plan": plan_steps,
                     "plan_step_count": len(plan_steps),
-                    "execution": None,
+                    "execution": partial_outputs or None,
+                    "parsed_outputs": partial_parsed or None,
+                    "answer": partial_answer,
                     "worker_id": None,
                 }
 

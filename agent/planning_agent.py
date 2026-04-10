@@ -386,7 +386,9 @@ class PlanningAgent:
             "- tool_call_required must be true\n"
             '- response must be empty string ""\n'
             '- Each step needs a unique step_id (e.g. "step_1", "step_2")\n'
-            f"- tool_name must be one of: {json.dumps(tool_names)}\n"
+            f"- tool_name must be EXACTLY one of: {json.dumps(tool_names)}\n"
+            "  Do NOT substitute actual IDs or path values into tool_name — keep template placeholders like {{id}} as-is.\n"
+            "  Path parameters (e.g. id='a11yproject/myrepo') go in the arguments list, NOT in tool_name.\n"
             "- arguments is a list of {name, value, value_type} objects\n"
             '- value_type is "literal" for known values, "reference" for {step_id.result} placeholders\n'
             "- CRITICAL: argument names must ONLY be parameter names explicitly listed in the endpoint's schema above. "
