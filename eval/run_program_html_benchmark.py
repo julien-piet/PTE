@@ -297,7 +297,7 @@ class BaseAgentRunner:
         self.gitlab_base_url = gitlab_base_url
         self._evaluator = ProgramHtmlEvaluator()
         self._url_match_evaluator = UrlMatchEvaluator()
-        self._resetter = GitLabStateReset() if enable_reset else None
+        self._resetter = GitLabStateReset(gitlab_base=gitlab_base_url) if enable_reset else None
 
     # ------------------------------------------------------------------
     # Subclasses must implement these two methods
@@ -543,7 +543,7 @@ class AgentRunner(BaseAgentRunner):
 
         print("🔧 Initializing agent...")
         self._agent = Agent(api_dir=self.api_dir, env_file=self.env_file)
-        self._agent.initialize(server=getattr(self, "server", "gitlab"))
+        self._agent.initialize({getattr(self, "server", "gitlab"): getattr(self, "base_url", "")})
         print("✓ Agent initialized\n")
 
     # ------------------------------------------------------------------

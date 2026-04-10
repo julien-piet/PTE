@@ -81,6 +81,16 @@ def pytest_addoption(parser):
         ),
     )
     parser.addoption(
+        "--base-url",
+        type=str,
+        default="http://localhost:8023",
+        metavar="URL",
+        help=(
+            "Base URL of the GitLab instance the agent talks to. "
+            "Default: http://localhost:8023"
+        ),
+    )
+    parser.addoption(
         "--force-reset",
         action="store_true",
         default=False,
@@ -155,10 +165,22 @@ def agent_runner(request, session_event_loop):
         runner_cls = AgentRunner
 
     force_reset = request.config.getoption("--force-reset", default=False)
-    runner = runner_cls(headless=True, enable_reset=True, force_reset=force_reset)
+    base_url = request.config.getoption("--base-url", default="http://localhost:8023")
+    runner = runner_cls(headless=True, enable_reset=True, force_reset=force_reset,
+                        gitlab_base_url=base_url)
     runner.server = request.config.getoption("--server", default="gitlab")
+    runner.base_url = base_url
     session_event_loop.run_until_complete(runner._init_agent())
     return runner
+
+
+@pytest.fixture(scope="session")
+def acquire_lock():
+    """
+    Session-scoped asyncio.Lock used to serialize concurrent worker acquire
+    calls when multiple coroutines run in the same event loop.
+    """
+    return asyncio.Lock()
 
 
 @pytest.fixture(scope="session")

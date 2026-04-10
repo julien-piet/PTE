@@ -389,18 +389,13 @@ def create_access_token(
     if scopes is None:
         scopes = list(ALL_SCOPES)
 
-    print(f"  [DEBUG] Navigating to access tokens URL: {ACCESS_TOKENS_URL}")
     page.goto(ACCESS_TOKENS_URL, wait_until="domcontentloaded", timeout=60000)
-    print(f"  [DEBUG] Page URL after navigation: {page.url}")
 
     # Fill token name
     try:
         page.wait_for_selector(Selectors.ACCESS_TOKEN_NAME_INPUT, timeout=10000)
-        print(f"  [DEBUG] Token name input found: {Selectors.ACCESS_TOKEN_NAME_INPUT}")
     except TimeoutError:
-        print(f"  [DEBUG] Token name input NOT found. Page title: {page.title()}")
-        # print(f"  [DEBUG] Page URL: {page.url}")
-        # print(f"  [DEBUG] Page content (first 2000 chars):\n{page.content()[:2000]}")
+        print(f"  [DEBUG] Token name input not found. Page title: {page.title()}, URL: {page.url}")
         return CreateAccessTokenResult(
             success=False,
             error_message="Access token form not found"
@@ -412,146 +407,50 @@ def create_access_token(
     if expires_at:
         page.fill(Selectors.ACCESS_TOKEN_EXPIRES_INPUT, expires_at)
 
-    # Dump all checkboxes on the page so we can see what selectors are actually present.
-    all_checkboxes = page.evaluate("""
-        () => Array.from(document.querySelectorAll('input[type="checkbox"]')).map(el => ({
-            id: el.id,
-            name: el.name,
-            value: el.value,
-            checked: el.checked,
-        }))
-    """)
-    # print(f"  [DEBUG] All checkboxes on page ({len(all_checkboxes)} total):")
-    for cb in all_checkboxes:
-        print(f"    id={cb['id']!r:50s}  name={cb['name']!r:55s}  value={cb['value']!r}")
-
-    # Check each requested scope.
-    # The scope checkboxes use Bootstrap's custom-control pattern: the real
-    # <input> is visually hidden and its <label> sits on top. Playwright's
-    # .check() tries to click the input directly but the label intercepts it.
-    # Fix: click the label (which toggles the checkbox) instead of the input.
-    # Try label selectors first, then fall back to clicking the input directly.
+    # Check each requested scope via label click (Bootstrap custom-control pattern:
+    # the real <input> is visually hidden, the <label> sits on top and intercepts clicks).
     for scope in scopes:
-        candidates = [
-            # Label click (Bootstrap custom-control — label intercepts input clicks)
-            f"label[for='personal_access_token_scopes_{scope}']",
-            f"label[data-qa-selector='{scope}_label']",
-            # Direct input fallback (non-Bootstrap GitLab versions)
-            f"#personal_access_token_scopes_{scope}",
-            f"input[name='personal_access_token[scopes][]'][value='{scope}']",
-            f"input[type='checkbox'][value='{scope}']",
-        ]
-        checked = False
-        for i, sel in enumerate(candidates, 1):
-            try:
-                page.wait_for_selector(sel, timeout=3000, state="attached")
-                page.locator(sel).click()
-                print(f"  [scope] {scope}: matched pattern {i} ({sel})")
-                checked = True
-                break
-            except Exception:
-                print(f"  [DEBUG] {scope}: pattern {i} timed out ({sel})")
-                continue
-        if not checked:
-            # print(f"  [DEBUG] All 3 patterns failed for scope '{scope}'. Full page HTML:")
-            print(page.content())
+        sel = f"label[for='personal_access_token_scopes_{scope}']"
+        try:
+            page.wait_for_selector(sel, timeout=3000, state="attached")
+            page.locator(sel).click()
+        except Exception:
+            print(f"  [DEBUG] Scope checkbox not found: {scope} ({sel})")
             return CreateAccessTokenResult(
                 success=False,
-                error_message=f"Scope checkbox not found: {scope}"
+                error_message=f"Scope checkbox not found: {scope}",
             )
 
-    # Submit the form — try several selectors since GitLab versions differ
-    submit_candidates = [
-        'input[type="submit"][name="commit"]',
-        'button[type="submit"]',
-        'input[type="submit"]',
-        'button:has-text("Create personal access token")',
-        'button:has-text("Create")',
-    ]
-    submitted = False
-    for submit_sel in submit_candidates:
-        try:
-            page.wait_for_selector(submit_sel, timeout=3000)
-            print(f"  [DEBUG] Submit button found: {submit_sel}")
-            page.click(submit_sel)
-            page.wait_for_load_state("networkidle")
-            print(f"  [DEBUG] Clicked submit. Page URL: {page.url}")
-            submitted = True
-            break
-        except Exception:
-            print(f"  [DEBUG] Submit selector timed out: {submit_sel}")
-            continue
-    if not submitted:
-        # Dump all buttons to find what's available
-        btns = page.evaluate("""
-            () => Array.from(document.querySelectorAll('input[type="submit"], button[type="submit"], button')).map(el => ({
-                tag: el.tagName, type: el.type, name: el.name, value: el.value, text: el.innerText?.trim().slice(0,60)
-            }))
-        """)
-        print(f"  [DEBUG] All submit/button elements ({len(btns)}):")
-        for b in btns:
-            print(f"    {b}")
+    # Submit the form
+    try:
+        page.wait_for_selector('button[type="submit"]', timeout=3000)
+        page.click('button[type="submit"]')
+        page.wait_for_load_state("networkidle")
+    except Exception:
+        print(f"  [DEBUG] Token submit button not found")
         return CreateAccessTokenResult(success=False, error_message="Token submit button not found")
-    # Capture the token value — wait up to 10s for it to appear (AJAX/Vue may update DOM)
-    # Try multiple selectors since GitLab versions differ
-    token_candidates = [
-        "#new-access-token",                              # newer GitLab (Vue component)
-        "#created-personal-access-token",                 # older GitLab
-        "[data-testid='access-token-section'] input",    # testid-based
-        "[name='new-access-token']",
-        "[name='created-personal-access-token']",
-    ]
-    token_value = None
-    for tok_sel in token_candidates:
-        try:
-            page.wait_for_selector(tok_sel, timeout=10000)
-            val = page.input_value(tok_sel)
-            # If value looks masked (all asterisks), click reveal then re-read
-            if val and set(val) == {"*"}:
-                print(f"  [DEBUG] Token field {tok_sel} is masked, clicking reveal...")
-                try:
-                    page.locator("[data-testid='toggle-visibility-button']").first.click()
-                    val = page.input_value(tok_sel)
-                except Exception:
-                    pass
-            if val and set(val) != {"*"}:
-                token_value = val
-                print(f"  [DEBUG] Token field found: {tok_sel} => {token_value[:12]}...")
-                break
-            else:
-                print(f"  [DEBUG] Token field {tok_sel} still masked after reveal attempt")
-        except Exception:
-            print(f"  [DEBUG] Token selector timed out: {tok_sel}")
-            continue
 
-    if not token_value:
-        # Check for a form validation error
+    # Capture the token — field is initially masked, click reveal then read
+    try:
+        page.wait_for_selector("#new-access-token", timeout=10000)
+        val = page.input_value("#new-access-token")
+        if val and set(val) == {"*"}:
+            page.locator("[data-testid='toggle-visibility-button']").first.click()
+            val = page.input_value("#new-access-token")
+    except Exception:
+        val = None
+
+    if not val or set(val) == {"*"}:
         error_loc = page.locator("#error_explanation")
         if error_loc.count() > 0:
             errors = error_loc.locator("ul li").all_inner_texts()
             msg = "; ".join(errors) if errors else "Token creation failed"
-            print(f"  [DEBUG] Form error: {msg}")
         else:
-            msg = "Created token field not found after submit"
-        # Dump all inputs + testid elements to find where the token actually appears
-        inputs = page.evaluate("""
-            () => Array.from(document.querySelectorAll('input')).map(el => ({
-                id: el.id, name: el.name, type: el.type, value: el.value?.slice(0,30)
-            }))
-        """)
-        print(f"  [DEBUG] All inputs after submit ({len(inputs)} total):")
-        for inp in inputs:
-            print(f"    {inp}")
-        testids = page.evaluate("""
-            () => Array.from(document.querySelectorAll('[data-testid]')).map(el => ({
-                testid: el.getAttribute('data-testid'), tag: el.tagName,
-                text: el.innerText?.trim().slice(0,80)
-            }))
-        """)
-        print(f"  [DEBUG] data-testid elements ({len(testids)} total):")
-        for t in testids:
-            print(f"    {t}")
+            msg = "Token field (#new-access-token) not found or still masked after submit"
+        print(f"  [DEBUG] GLPAT creation failed: {msg}")
         return CreateAccessTokenResult(success=False, error_message=msg)
+
+    token_value = val
 
     return CreateAccessTokenResult(success=True, token=token_value, token_name=token_name)
 
