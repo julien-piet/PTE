@@ -113,6 +113,7 @@ from .settings import (
     delete_deploy_token,
     delete_all_webhooks,
     delete_ssh_key,
+    create_access_token,
     delete_all_access_tokens,
     delete_account,
 )
@@ -223,6 +224,7 @@ __all__ = [
     "delete_deploy_token",
     "delete_all_webhooks",
     "delete_ssh_key",
+    "create_access_token",
     "delete_all_access_tokens",
     "delete_account",
 ]

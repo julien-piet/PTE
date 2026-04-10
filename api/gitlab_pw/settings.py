@@ -51,6 +51,15 @@ class DeleteResult:
     error_message: Optional[str] = None
 
 
+@dataclass
+class CreateAccessTokenResult:
+    """Result of creating a personal access token."""
+
+    success: bool
+    token: Optional[str] = None
+    error_message: Optional[str] = None
+
+
 def toggle_private_profile(
     page: Page,
     make_private: bool,

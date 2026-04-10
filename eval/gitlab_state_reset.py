@@ -27,6 +27,15 @@ Supported reset scenarios
    created by the agent.  For task 398 specifically, forks of nvidia-patch and
    viewgrades-scraper must NOT exist (the eval expects 404 on those pages).
 
+3. **Milestone cleanup** (tasks 590-594):
+   Delete any pre-existing milestone whose title contains a given keyword so
+   the agent can create it fresh (GitLab rejects duplicate titles).
+
+4. **MR close-by-source-branch** (tasks 666-668, 805-807):
+   Close any open merge request from the specified source branch (optionally
+   filtered by target branch) so the agent can open a new one without hitting
+   the "MR already exists" HTTP 409.
+
 Usage
 -----
     from gitlab_state_reset import GitLabStateReset
@@ -61,6 +70,30 @@ BYTEBLAZE_PASSWORD = "hello1234"
 # ---------------------------------------------------------------------------
 
 TASK_RESET_CONFIG: Dict[int, List[Dict[str, Any]]] = {
+    # -----------------------------------------------------------------------
+    # Milestone creation tasks (590-594)
+    # Delete any pre-existing milestone whose title contains the keyword so
+    # GitLab doesn't reject the agent's creation with HTTP 400.
+    # -----------------------------------------------------------------------
+    590: [{"type": "delete_milestone", "project": "primer/design",       "title_keyword": "product launch"}],
+    591: [{"type": "delete_milestone", "project": "primer/design",       "title_keyword": "code review"}],
+    592: [{"type": "delete_milestone", "project": "primer/design",       "title_keyword": "sensitive information"}],
+    593: [{"type": "delete_milestone", "project": "byteblaze/dotfiles",  "title_keyword": "all branches to main"}],
+    594: [{"type": "delete_milestone", "project": "byteblaze/dotfiles",  "title_keyword": "zsh comprehensive support"}],
+    # -----------------------------------------------------------------------
+    # MR creation tasks (666-668, 805-807)
+    # Close any open MR from the same source→target pair so the agent can
+    # open a fresh one without hitting HTTP 409 "MR already exists".
+    # -----------------------------------------------------------------------
+    666: [{"type": "close_mr_by_source_branch", "project": "primer/design",                    "source_branch": "dialog-component",       "target_branch": "dialog"}],
+    667: [{"type": "close_mr_by_source_branch", "project": "primer/design",                    "source_branch": "dialog-component",       "target_branch": "bump-doctocat"}],
+    668: [{"type": "close_mr_by_source_branch", "project": "a11yproject/a11yproject.com",      "source_branch": "redesign",               "target_branch": "master"}],
+    805: [{"type": "close_mr_by_source_branch", "project": "a11yproject/a11yproject.com",      "source_branch": "feature/replace-gulp",   "target_branch": "master"}],
+    806: [{"type": "close_mr_by_source_branch", "project": "a11yproject/a11yproject.com",      "source_branch": "redesign",               "target_branch": "markdown-figure-block"}],
+    807: [{"type": "close_mr_by_source_branch", "project": "primer/design",                    "source_branch": "debug-build-time",       "target_branch": "main"}],
+    # -----------------------------------------------------------------------
+    # MR comment cleanup (389-393)
+    # -----------------------------------------------------------------------
     # Task 389 — Post comment on primer/design MR 450
     # Uses must_include (no lastElementChild), but cleaning ensures a clean page.
     389: [
@@ -172,6 +205,13 @@ class GitLabStateReset:
                     self._reset_mr_comments(token, op["project"], op["mr_iid"])
                 elif op_type == "fork_delete":
                     self._delete_fork(token, op["fork_path"])
+                elif op_type == "delete_milestone":
+                    self._delete_milestones_by_title(token, op["project"], op["title_keyword"])
+                elif op_type == "close_mr_by_source_branch":
+                    self._close_mrs_by_source_branch(
+                        token, op["project"], op["source_branch"],
+                        target_branch=op.get("target_branch"),
+                    )
                 else:
                     print(f"   ⚠️  [reset] Unknown op type: {op_type!r}")
             except Exception as exc:
@@ -390,6 +430,131 @@ class GitLabStateReset:
             pass  # Already gone
         else:
             print(f"   ⚠️  [reset] Unexpected status {del_status} when deleting {fork_path}")
+
+    # ------------------------------------------------------------------
+    # Milestone cleanup
+    # ------------------------------------------------------------------
+
+    def _delete_milestones_by_title(
+        self, token: str, project_path: str, title_keyword: str
+    ) -> None:
+        """
+        Delete all milestones in a project whose title contains title_keyword
+        (case-insensitive).  Uses the GitLab search API to narrow the list,
+        then filters locally and issues DELETE for each match.
+
+        This is idempotent: if no matching milestone exists the call is a no-op.
+        """
+        encoded_project = urllib.parse.quote(project_path, safe="")
+
+        proj_data, status = self._api("GET", f"/projects/{encoded_project}", token=token)
+        if not proj_data or "id" not in proj_data:
+            print(f"   ⚠️  [reset] Project {project_path!r} not found (HTTP {status})")
+            return
+        project_id = proj_data["id"]
+
+        encoded_keyword = urllib.parse.quote(title_keyword)
+        milestones, _ = self._api(
+            "GET",
+            f"/projects/{project_id}/milestones?search={encoded_keyword}&per_page=100",
+            token=token,
+        )
+        if not isinstance(milestones, list):
+            print(f"   ✓  [reset] No milestones matching {title_keyword!r} in {project_path}")
+            return
+
+        deleted_count = 0
+        for ms in milestones:
+            ms_title = ms.get("title", "")
+            if title_keyword.lower() in ms_title.lower():
+                ms_id = ms["id"]
+                _, del_status = self._api(
+                    "DELETE",
+                    f"/projects/{project_id}/milestones/{ms_id}",
+                    token=token,
+                    expected_statuses=(200, 204, 404),
+                )
+                if del_status in (200, 204):
+                    deleted_count += 1
+                    print(f"   ✅ [reset] Deleted milestone {ms_title!r} from {project_path}")
+
+        if deleted_count == 0:
+            print(f"   ✓  [reset] No milestones matching {title_keyword!r} in {project_path}")
+
+    # ------------------------------------------------------------------
+    # MR cleanup
+    # ------------------------------------------------------------------
+
+    def _close_mrs_by_source_branch(
+        self,
+        token: str,
+        project_path: str,
+        source_branch: str,
+        target_branch: Optional[str] = None,
+    ) -> None:
+        """
+        Close any open merge requests from source_branch in the given project.
+        When target_branch is provided only MRs whose target matches are closed,
+        allowing multiple open MRs from the same source to different targets to
+        coexist without interference.
+
+        This is idempotent: if no matching open MR exists the call is a no-op.
+        """
+        encoded_project = urllib.parse.quote(project_path, safe="")
+
+        proj_data, status = self._api("GET", f"/projects/{encoded_project}", token=token)
+        if not proj_data or "id" not in proj_data:
+            print(f"   ⚠️  [reset] Project {project_path!r} not found (HTTP {status})")
+            return
+        project_id = proj_data["id"]
+
+        # Fetch ALL open MRs and filter client-side by source_branch.
+        # Using the source_branch query parameter is unreliable for branches that
+        # contain '/' or '.' (e.g. 'a11yproject.com/redesign') — GitLab's filter
+        # doesn't consistently match them regardless of URL encoding. Client-side
+        # filtering on the 'source_branch' field in the response is always exact.
+        page = 1
+        all_mrs = []
+        while True:
+            page_mrs, _ = self._api(
+                "GET",
+                f"/projects/{project_id}/merge_requests?state=opened&scope=all&per_page=100&page={page}",
+                token=token,
+            )
+            if not isinstance(page_mrs, list) or not page_mrs:
+                break
+            all_mrs.extend(page_mrs)
+            if len(page_mrs) < 100:
+                break
+            page += 1
+
+        mrs = [mr for mr in all_mrs if mr.get("source_branch") == source_branch]
+
+        if not mrs:
+            print(f"   ✓  [reset] No open MRs from {source_branch!r} in {project_path}")
+            return
+
+        closed_count = 0
+        for mr in mrs:
+            if target_branch and mr.get("target_branch") != target_branch:
+                continue
+            mr_iid = mr["iid"]
+            _, upd_status = self._api(
+                "PUT",
+                f"/projects/{project_id}/merge_requests/{mr_iid}",
+                body={"state_event": "close"},
+                token=token,
+                expected_statuses=(200, 201, 404),
+            )
+            if upd_status in (200, 201):
+                closed_count += 1
+                print(
+                    f"   ✅ [reset] Closed MR!{mr_iid} "
+                    f"({source_branch} → {mr.get('target_branch')}) in {project_path}"
+                )
+
+        if closed_count == 0:
+            print(f"   ✓  [reset] No open MRs from {source_branch!r} in {project_path}")
 
     def _find_owned_project_by_slug(self, token: str, slug: str) -> Optional[Dict]:
         """

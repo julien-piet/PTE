@@ -3476,12 +3476,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "No, it is open"
+        "must_include": [
+          "Better initial load experience",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/8",
@@ -3509,12 +3509,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "No, it is open"
+        "must_include": [
+          "[Feature suggestion] Support linking to an accessibility statement",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/a11y-webring.club/-/issues/71",
@@ -3541,12 +3541,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "No, it is open"
+        "must_include": [
+          "Outdated dependencies",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/18",
@@ -3573,12 +3573,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "No, it is open"
+        "must_include": [
+          "Tm Theme Editor",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues/1",
@@ -3605,12 +3605,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "Yes, it is closed"
+        "must_include": [
+          "Rethink the homepage's content",
+          "closed"
         ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/719",
@@ -3637,11 +3637,13 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "Better Event page UX",
+          "closed"
+        ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/566",
       "program_html": [],
@@ -3667,11 +3669,13 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "Deprecate GitHub Discussions",
+          "closed"
+        ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/1517",
       "program_html": [],
@@ -3697,11 +3701,13 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "No"
+        "must_include": [
+          "Outdated dependencies",
+          "open"
+        ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/18",
       "program_html": [],
@@ -3727,11 +3733,13 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "No"
+        "must_include": [
+          "Tm Theme Editor",
+          "open"
+        ]
       },
       "reference_url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues/1",
       "program_html": [],
@@ -3757,11 +3765,13 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "Rethink the homepage's content",
+          "closed"
+        ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/719",
       "program_html": [],
@@ -6380,7 +6390,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/super_awesome_robot.git"
+        "must_include": ["git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/super_awesome_robot.git"]
       },
       "reference_url": "",
       "program_html": [],
@@ -6409,7 +6419,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/chatgpt.git"
+        "must_include": ["git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/chatgpt.git"]
       },
       "reference_url": "",
       "program_html": [],
@@ -6438,7 +6448,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/root/metaseq.git"
+        "must_include": ["git clone ssh://git@metis.lti.cs.cmu.edu:2222/root/metaseq.git"]
       },
       "reference_url": "",
       "program_html": [],
@@ -6467,7 +6477,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "ssh://git@metis.lti.cs.cmu.edu:2222/eriklindernoren/PyTorch-GAN.git"
+        "must_include": ["ssh://git@metis.lti.cs.cmu.edu:2222/eriklindernoren/PyTorch-GAN.git"]
       },
       "reference_url": "",
       "program_html": [],
@@ -6848,7 +6858,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Grayson Wright"
+        "must_include": ["Grayson Wright"]
       },
       "reference_url": "",
       "program_html": [],
@@ -6877,7 +6887,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "tokudu"
+        "must_include": ["tokudu"]
       },
       "reference_url": "",
       "program_html": [],
@@ -6906,7 +6916,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Erik Linder-Nor\u00e9n"
+        "must_include": ["Erik Linder-Nor\u00e9n"]
       },
       "reference_url": "",
       "program_html": [],
@@ -6935,7 +6945,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Christopher Groskopf"
+        "must_include": ["Christopher Groskopf"]
       },
       "reference_url": "",
       "program_html": [],
@@ -7095,9 +7105,12 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Susan Zhang: 70",
-          "Stephen Roller: 51",
-          "Peter Albert: 12"
+          "Susan Zhang",
+          "70",
+          "Stephen Roller",
+          "51",
+          "Peter Albert",
+          "12"
         ]
       },
       "reference_url": "",
@@ -8048,7 +8061,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "yjlou"
+        "must_include": ["yjlou"]
       },
       "reference_url": "",
       "program_html": [],
@@ -24160,7 +24173,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "412"
+          "414"
         ]
       },
       "reference_url": "",

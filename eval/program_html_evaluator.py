@@ -98,17 +98,37 @@ class ProgramHtmlEvaluator:
                 "error": None,
             }
 
-        # Fall back to reference_url when last_url is unknown
+        # Fall back to reference_url when last_url is unknown.
+        # reference_url may carry |OR| alternatives (e.g. Reddit tasks that
+        # accept several subreddits).  Resolve each alternative separately so
+        # we never try to navigate to a URL containing the literal " |OR| ".
         reference_url = eval_section.get("reference_url") or ""
-        resolved_last = last_url or self._resolve_placeholder(reference_url)
+        if last_url:
+            resolved_last_alternatives = [last_url]
+        else:
+            resolved_last_alternatives = [
+                self._resolve_placeholder(alt.strip())
+                for alt in reference_url.split(" |OR| ")
+                if alt.strip()
+            ] or [""]
 
         checks: List[Dict[str, Any]] = []
         all_passed = True
 
         for entry in entries:
-            check = self._evaluate_entry(entry, page, resolved_last)
-            checks.append(check)
-            if not check["passed"]:
+            # For entries whose url resolves to multiple |OR| alternatives, try
+            # each one and accept the first that passes (or keep the last
+            # failure for diagnostics if none passes).
+            best_check: Optional[Dict[str, Any]] = None
+            for resolved_last in resolved_last_alternatives:
+                check = self._evaluate_entry(entry, page, resolved_last)
+                if check["passed"]:
+                    best_check = check
+                    break
+                if best_check is None:
+                    best_check = check
+            checks.append(best_check)  # type: ignore[arg-type]
+            if not best_check["passed"]:
                 all_passed = False
 
         return {
@@ -451,6 +471,11 @@ class ProgramHtmlEvaluator:
         """
         Check extracted content against required_contents spec.
 
+        Placeholder tokens like __GITLAB__ and __REDDIT__ in required_contents
+        values are expanded to their real base URLs before comparison, so ground
+        truth entries such as ``"__GITLAB__/user/repo"`` correctly match the
+        actual URL that appears on the page.
+
         Returns:
             (passed: bool, missing: list, excluded_found: list)
         """
@@ -464,14 +489,25 @@ class ProgramHtmlEvaluator:
             if content.strip().lower() != str(exact).strip().lower():
                 missing.append(f"exact_match: {exact!r}")
 
-        # must_include: all items must appear somewhere in content
+        # must_include: all items must appear somewhere in content.
+        # A nested list item means OR — at least one alternative must match.
         for item in required_contents.get("must_include", []):
-            if str(item).lower() not in content_lower:
-                missing.append(item)
+            if isinstance(item, list):
+                # OR group: at least one alternative must be present
+                if not any(
+                    self._resolve_placeholder(str(alt)).lower() in content_lower
+                    for alt in item
+                ):
+                    missing.append(item)
+            else:
+                resolved_item = self._resolve_placeholder(str(item))
+                if resolved_item.lower() not in content_lower:
+                    missing.append(item)
 
         # must_exclude: none of these may appear in content
         for item in required_contents.get("must_exclude", []):
-            if str(item).lower() in content_lower:
+            resolved_item = self._resolve_placeholder(str(item))
+            if resolved_item.lower() in content_lower:
                 excluded_found.append(item)
 
         passed = not missing and not excluded_found

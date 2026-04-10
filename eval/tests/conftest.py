@@ -80,6 +80,17 @@ def pytest_addoption(parser):
             "One of: gitlab, reddit, shopping, shopping_admin. Default: gitlab."
         ),
     )
+    parser.addoption(
+        "--force-reset",
+        action="store_true",
+        default=False,
+        help=(
+            "Override require_reset to True for every task, regardless of the "
+            "value in the task JSON. Useful for re-runs where prior runs may "
+            "have left state (e.g. duplicate milestones, issues, or MRs) that "
+            "would cause tasks to fail. Has no effect when --no-reset is set."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -143,7 +154,8 @@ def agent_runner(request, session_event_loop):
         from eval.run_program_html_benchmark import AgentRunner
         runner_cls = AgentRunner
 
-    runner = runner_cls(headless=True, enable_reset=True)
+    force_reset = request.config.getoption("--force-reset", default=False)
+    runner = runner_cls(headless=True, enable_reset=True, force_reset=force_reset)
     runner.server = request.config.getoption("--server", default="gitlab")
     session_event_loop.run_until_complete(runner._init_agent())
     return runner
