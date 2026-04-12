@@ -161,24 +161,26 @@ For Project Templates. Use this json schema to search through available built-in
 SHOPPING_HINTS = f"""
 The product `{{sku}}` path or query parameter has exactly one usable form:
 - A unique string SKU, for example "B086GNDL8K"
+- A product name (e.g., "Wireless Mouse") or a URL key (e.g., "wireless-mouse-pro") is NOT a valid directly usable `{{sku}}` value.
+- If you plan on using an endpoint that requires a `sku` parameter, you can first resolve the product's SKU using a lookup endpoint such as `GET /V1/products`.
+- Do not assume that the SKU can be guessed, synthesized, or partially matched based on the product name or other attributes. 
 
-A product name (e.g., "Wireless Mouse") or a URL key (e.g., "wireless-mouse-pro") is NOT a valid directly usable `{{sku}}` value.
-
-Decision rule:
-- If the task provides an explicit string SKU, use it directly.
-- Otherwise, you MUST first resolve the product using a lookup endpoint `GET /V1/products` before calling any endpoints that require a `sku` parameter.
-
-Do not assume that the SKU can be guessed, synthesized, or partially matched based on the product name or other attributes. 
-
-You can use the 'GET /V1/products' endpoint to retrieve the list of all products and their SKUs. Given that the list of products may be large, you can use the 'searchCriteria' query parameters to filter the products based on name or URL key attributes to find the specific product and its SKU more efficiently.
-
-When using the `like` conditionType in `searchCriteria`, you MUST wrap the search value in literal wildcard characters (`%`) to perform a partial match.
-- CRITICAL: Do NOT chain multiple words together with wildcards (e.g., do NOT use `%Amazon%Echo%Dot%`). The search engine tokenizes product names, and a single chained multi-word wildcard query will fail to match and return 0 results.
-- To search for multiple words, you MUST use a logical AND operation by placing each individual word into a separate `filterGroups` index (e.g., 0, 1, 2). 
-- Example format for searching "Switch Card Case": 
-  `searchCriteria[filterGroups][0][filters][0][field]=name&searchCriteria[filterGroups][0][filters][0][value]=%Switch%&searchCriteria[filterGroups][0][filters][0][conditionType]=like&searchCriteria[filterGroups][1][filters][0][field]=name&searchCriteria[filterGroups][1][filters][0][value]=%Card%&searchCriteria[filterGroups][1][filters][0][conditionType]=like&searchCriteria[filterGroups][2][filters][0][field]=name&searchCriteria[filterGroups][2][filters][0][value]=%Case%&searchCriteria[filterGroups][2][filters][0][conditionType]=like`
-- Do NOT manually URL-encode the `%` to `%25`. The underlying code handles URL encoding automatically. Double-encoding will break the query.
-- Do NOT omit the wildcards entirely around your terms, as this will result in an exact string match attempt and likely return no results.
+Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1/orders`, `GET /V1/customers/search`). To find specific items efficiently across any of these list endpoints, use the `searchCriteria` API to filter, sort, and paginate your requests:
+- Filtering Logic (AND/OR):
+  - OR Logic: Filters placed inside the SAME `filterGroups` index act as a logical OR. 
+    * Example (SKU is "A1" OR "B2"): 
+      `searchCriteria[filterGroups][0][filters][0][field]=sku&searchCriteria[filterGroups][0][filters][0][value]=A1&searchCriteria[filterGroups][0][filters][1][field]=sku&searchCriteria[filterGroups][0][filters][1][value]=B2`
+  - AND Logic: Filters placed in DIFFERENT `filterGroups` indices act as a logical AND.
+    * Example (Name contains "Bag" AND Price > 50): 
+      `searchCriteria[filterGroups][0][filters][0][field]=name&searchCriteria[filterGroups][0][filters][0][value]=%Bag%&searchCriteria[filterGroups][0][filters][0][conditionType]=like&searchCriteria[filterGroups][1][filters][0][field]=price&searchCriteria[filterGroups][1][filters][0][value]=50&searchCriteria[filterGroups][1][filters][0][conditionType]=gt`
+- Condition Types: Define how to match data using `conditionType` (e.g., `eq`, `gt`, `like`, `in`). 
+  - When using `like`, wrap the value in literal wildcard characters (e.g., `%keyword%`). Do NOT manually URL-encode the `%` to `%25`. 
+- CRITICAL Search Strategy for Product Names:
+  - Database titles may omit certain words (e.g., "Amazon" might not be in the title for "Echo Dot 3rd Gen"). If you use a strict AND query for every single word in a long phrase, you will likely get 0 results. 
+  - Be strategic: Select 1 to 3 CORE identifying keywords from the target product name (e.g., "Echo" and "Dot"). Place each of these core words into a separate `filterGroups` index to perform a logical AND.
+  - Do NOT chain multiple words together with wildcards (e.g., do NOT use `%Amazon%Echo%`).
+  - Fallback Strategy: If your initial AND search returns 0 items, broaden your search by dropping the least unique word (like a brand name) or switching to an OR logic for related terms.
+- Sorting: Dictate order using `searchCriteria[sortOrders][<index>][field]` and `searchCriteria[sortOrders][<index>][direction]` (ASC or DESC).
 
 CRITICAL — POST/PUT request body structure:
 The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsMineItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
@@ -201,14 +203,8 @@ Always consult the schema's `required` field inside the body parameter definitio
 
 CRITICAL — searchCriteria is REQUIRED for list endpoints:
 Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpoints REQUIRE the `searchCriteria` query parameter. Calling these endpoints with no query parameters at all will return HTTP 400 with "searchCriteria is required".
-- If you want ALL results (no filtering), you MUST still pass at least an empty searchCriteria, for example: `?searchCriteria=all` or `?searchCriteria[pageSize]=20`.
+- If you want ALL results (no filtering), you MUST still pass at least an empty searchCriteria, for example: `?searchCriteria=all` or `?searchCriteria[pageSize]=10`.
 - Always include at least one `searchCriteria` parameter, even if you do not need any specific filters.
 
-CRITICAL — Adding items to cart requires a quote_id:
-To add items to the shopping cart via `POST /V1/carts/mine/items`, you MUST first create/retrieve a cart by calling `POST /V1/carts/mine` (which returns an integer cart/quote ID). Then include that ID as `quote_id` in the `cartItem` object:
-  Step 1: POST /V1/carts/mine → returns quote_id (e.g., 12345)
-  Step 2: POST /V1/carts/mine/items with body {{"cartItem": {{"sku": "B086GNDL8K", "qty": 1, "quote_id": "12345"}}}}
-
-CRITICAL — `/V1/customers/me` endpoint:
-The `GET /V1/customers/me` and `PUT /V1/customers/me` endpoints ONLY work with customer-scoped authentication tokens. If you are using an admin token, these endpoints will fail with "customerId is required". With an admin token, you must use `GET /V1/customers/{{customerId}}` or `PUT /V1/customers/{{customerId}}` instead, and you must first look up the customer ID (e.g., via `GET /V1/customers/search` with searchCriteria filters).
+CRITICAL — For tasks that require a specific customer operation (e.g., "add this item to my cart", "update my account info"), your customer name is "Emma Lopez" and you MUST first look up her customer ID using `GET /V1/customers/search` with appropriate filters (e.g., `searchCriteria[filterGroups][0][filters][0][field]=firstname&searchCriteria[filterGroups][0][filters][0][value]=Emma&searchCriteria[filterGroups][0][filters][1][field]=lastname&searchCriteria[filterGroups][0][filters][1][value]=Lopez`). You cannot assume or guess the customer ID, and you cannot use "self", "me", or any other alias in place of the actual customer ID.
 """
