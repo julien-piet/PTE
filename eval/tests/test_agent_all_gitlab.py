@@ -4,6 +4,9 @@
 # raw_webarena_tasks_all_gitlab.json (186 tasks, both string_match and
 # program_html eval types).
 #
+# Each test acquires a dedicated Docker worker, runs the agent against that
+# worker's GitLab instance, evaluates the result, then releases the worker.
+#
 # Run all 186 tasks:
 #   python3 -m pytest eval/tests/test_agent_all_gitlab.py -v
 #
@@ -29,6 +32,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pytest
+
+from agent.auth import StaticAuth
+from eval.docker.workers import worker_session
+from eval.run_program_html_benchmark import AgentRunner
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -124,14 +131,40 @@ def _make_failure_message(
 # ---------------------------------------------------------------------------
 
 def test_agent_accomplishes_gitlab_task(
-    agent_runner,
     session_event_loop,
+    acquire_lock,
     result_log,
+    request,
     task: Dict[str, Any],
 ) -> None:
-    passed, agent_result, error, html_detail = session_event_loop.run_until_complete(
-        agent_runner.run_agent_on_task(task)
-    )
+    force_reset = request.config.getoption("--force-reset", default=False)
+    read_only = task.get("read_only", False)
+
+    async def _run():
+        async with worker_session(
+            str(task["task_id"]),
+            acquire_lock=acquire_lock,
+            read_only=read_only,
+        ) as w:
+            runner = AgentRunner(
+                headless=True,
+                enable_reset=True,
+                force_reset=force_reset,
+                gitlab_base_url=w["gitlab_url"],
+            )
+            runner.server = "gitlab"
+            runner.base_url = w["gitlab_url"]
+
+            await runner._init_agent()
+
+            if runner._agent.execution_agent is not None:
+                runner._agent.execution_agent.auth = StaticAuth(
+                    {"PRIVATE-TOKEN": w["glpat"]}
+                )
+
+            return await runner.run_agent_on_task(task)
+
+    passed, agent_result, error, html_detail = session_event_loop.run_until_complete(_run())
 
     result_log.append({
         "task_id":    task["task_id"],

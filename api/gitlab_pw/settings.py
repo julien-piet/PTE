@@ -1,7 +1,7 @@
 """GitLab settings management helpers (deploy keys, tokens, webhooks, profile)."""
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 from playwright.sync_api import Page, TimeoutError
 
@@ -15,6 +15,14 @@ from .constants import (
     get_deploy_keys_url,
     get_deploy_tokens_url,
     get_webhooks_url,
+)
+
+ALL_SCOPES: tuple[str, ...] = (
+    "api",
+    "read_api",
+    "read_user",
+    "read_repository",
+    "write_repository",
 )
 
 
@@ -66,7 +74,7 @@ def toggle_private_profile(
     Returns:
         ProfileUpdateResult with success status
     """
-    page.goto(PROFILE_URL, wait_until="networkidle")
+    page.goto(PROFILE_URL, wait_until="domcontentloaded", timeout=60000)
 
     checkbox = page.locator(Selectors.PRIVATE_PROFILE_CHECKBOX)
     if checkbox.count() == 0:
@@ -127,7 +135,7 @@ def change_username(
     Returns:
         UsernameChangeResult with success status
     """
-    page.goto(ACCOUNT_URL, wait_until="networkidle")
+    page.goto(ACCOUNT_URL, wait_until="domcontentloaded", timeout=60000)
 
     # Get current username
     username_input = page.locator(Selectors.USERNAME_INPUT)
@@ -202,7 +210,7 @@ def delete_deploy_key(
         DeleteResult with success status
     """
     url = get_deploy_keys_url(namespace, project)
-    page.goto(url, wait_until="networkidle")
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn_selector = "#js-deploy-keys-settings > div.settings-content > div > div.deploy-keys-panel.table-holder > div.gl-responsive-table-row.deploy-key > div.table-section.section-15.table-button-footer.deploy-key-actions > div > button"
     confirm_btn_selector = "#confirm-remove-deploy-key___BV_modal_footer_ > button.btn.js-modal-action-primary.btn-danger.btn-md.gl-button"
@@ -241,7 +249,7 @@ def delete_deploy_token(
         DeleteResult with success status
     """
     url = get_deploy_tokens_url(namespace, project)
-    page.goto(url, wait_until="networkidle")
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
     expand_selector = "#js-deploy-tokens > div.settings-header > button"
     delete_btn_selector = "#js-deploy-tokens > div.settings-content > div.table-responsive.deploy-tokens > table > tbody > tr > td:nth-child(6) > div > button"
@@ -285,7 +293,7 @@ def delete_all_webhooks(
         DeleteResult with success status
     """
     url = get_webhooks_url(namespace, project)
-    page.goto(url, wait_until="networkidle")
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn_selector = "a >> text=Delete"
     confirm_btn_selector = "#confirmationModal___BV_modal_footer_ > button.btn.js-modal-action-primary.btn-danger.btn-md.gl-button"
@@ -321,7 +329,7 @@ def delete_ssh_key(page: Page) -> DeleteResult:
     Returns:
         DeleteResult with success status
     """
-    page.goto(SSH_KEYS_URL, wait_until="networkidle")
+    page.goto(SSH_KEYS_URL, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn_selector = "#content-body > div.row.gl-mt-3.js-search-settings-section > div.col-lg-8 > div.gl-mb-3 > ul > li > div > span > div > div > button"
     confirm_btn_selector = "#confirm-modal-1___BV_modal_footer_ > button.btn.btn-danger"
@@ -343,77 +351,108 @@ def delete_ssh_key(page: Page) -> DeleteResult:
         )
 
 
+@dataclass
+class CreateAccessTokenResult:
+    """Result of attempting to create a personal access token."""
+
+    success: bool
+    token: Optional[str] = None
+    token_name: Optional[str] = None
+    error_message: Optional[str] = None
+
+
 def create_access_token(
     page: Page,
-    name: str = "benchmark-runner",
-    scopes: Optional[list] = None,
+    token_name: str,
+    scopes: Optional[List[str]] = None,
+    expires_at: Optional[str] = None,
 ) -> CreateAccessTokenResult:
     """
-    Create a personal access token for the currently logged-in user.
+    Create a personal access token (GLPAT) for the currently logged-in user.
+
+    Navigates to /-/profile/personal_access_tokens, fills in the token name,
+    checks the requested scope checkboxes, optionally sets an expiry date,
+    submits the form, and captures the token value shown on the confirmation page.
+
+    The token value is only shown once by GitLab — it is returned in the result.
 
     Args:
-        page: Playwright Page instance (must already be logged in)
-        name: Name for the new token
-        scopes: List of scope strings (default: ["api"])
+        page: Playwright Page instance (must be logged in)
+        token_name: Name for the token
+        scopes: List of scopes to enable. Defaults to all scopes:
+                ["api", "read_api", "read_user", "read_repository", "write_repository"]
+        expires_at: Optional expiry date in "YYYY-MM-DD" format. If None, no expiry is set.
 
     Returns:
-        CreateAccessTokenResult with the new token value on success
+        CreateAccessTokenResult with success status, the token value, and any error message
     """
     if scopes is None:
-        scopes = ["api"]
+        scopes = list(ALL_SCOPES)
 
-    page.goto(ACCESS_TOKENS_URL, wait_until="networkidle")
+    page.goto(ACCESS_TOKENS_URL, wait_until="domcontentloaded", timeout=60000)
 
     # Fill token name
-    name_input = page.locator("#personal_access_token_name")
-    if name_input.count() == 0:
-        return CreateAccessTokenResult(
-            success=False,
-            error_message="Token name input not found",
-        )
-    name_input.fill(name)
-
-    # Check each requested scope — click the label (not the hidden checkbox)
-    for scope in scopes:
-        label = page.locator(f"label[for='personal_access_token_scopes_{scope}']")
-        if label.count() > 0:
-            label.click()
-        else:
-            # Fallback: force-click the checkbox
-            page.locator(f"#personal_access_token_scopes_{scope}").click(force=True)
-
-    # Submit — GitLab renders this as <button type="submit"> on the PAT page
-    submit = page.locator("button:has-text('Create personal access token'), input[name='commit']").first
-    if submit.count() == 0:
-        return CreateAccessTokenResult(
-            success=False,
-            error_message="Submit button not found",
-        )
-    submit.click()
-    page.wait_for_load_state("networkidle")
-
-    # GitLab renders the token via Vue into a copy button's data-clipboard-text.
-    # Wait up to 5 s for the copy button to appear.
     try:
-        page.wait_for_selector(
-            "[data-clipboard-text^='glpat-']",
-            timeout=5000,
-            state="attached",
-        )
+        page.wait_for_selector(Selectors.ACCESS_TOKEN_NAME_INPUT, timeout=10000)
     except TimeoutError:
-        # Fallback: older GitLab versions use a plain input with a specific id
-        token_el = page.locator("#created-personal-access-token")
-        if token_el.count() > 0:
-            token = token_el.get_attribute("value") or token_el.inner_text()
-            return CreateAccessTokenResult(success=True, token=token.strip())
+        print(f"  [DEBUG] Token name input not found. Page title: {page.title()}, URL: {page.url}")
         return CreateAccessTokenResult(
             success=False,
-            error_message="Token output element not found after submit",
+            error_message="Access token form not found"
         )
 
-    clip = page.locator("[data-clipboard-text^='glpat-']").first
-    token = clip.get_attribute("data-clipboard-text") or ""
-    return CreateAccessTokenResult(success=True, token=token.strip())
+    page.fill(Selectors.ACCESS_TOKEN_NAME_INPUT, token_name)
+
+    # Set expiry date if provided
+    if expires_at:
+        page.fill(Selectors.ACCESS_TOKEN_EXPIRES_INPUT, expires_at)
+
+    # Check each requested scope via label click (Bootstrap custom-control pattern:
+    # the real <input> is visually hidden, the <label> sits on top and intercepts clicks).
+    for scope in scopes:
+        sel = f"label[for='personal_access_token_scopes_{scope}']"
+        try:
+            page.wait_for_selector(sel, timeout=3000, state="attached")
+            page.locator(sel).click()
+        except Exception:
+            print(f"  [DEBUG] Scope checkbox not found: {scope} ({sel})")
+            return CreateAccessTokenResult(
+                success=False,
+                error_message=f"Scope checkbox not found: {scope}",
+            )
+
+    # Submit the form
+    try:
+        page.wait_for_selector('button[type="submit"]', timeout=3000)
+        page.click('button[type="submit"]')
+        page.wait_for_load_state("networkidle")
+    except Exception:
+        print(f"  [DEBUG] Token submit button not found")
+        return CreateAccessTokenResult(success=False, error_message="Token submit button not found")
+
+    # Capture the token — field is initially masked, click reveal then read
+    try:
+        page.wait_for_selector("#new-access-token", timeout=10000)
+        val = page.input_value("#new-access-token")
+        if val and set(val) == {"*"}:
+            page.locator("[data-testid='toggle-visibility-button']").first.click()
+            val = page.input_value("#new-access-token")
+    except Exception:
+        val = None
+
+    if not val or set(val) == {"*"}:
+        error_loc = page.locator("#error_explanation")
+        if error_loc.count() > 0:
+            errors = error_loc.locator("ul li").all_inner_texts()
+            msg = "; ".join(errors) if errors else "Token creation failed"
+        else:
+            msg = "Token field (#new-access-token) not found or still masked after submit"
+        print(f"  [DEBUG] GLPAT creation failed: {msg}")
+        return CreateAccessTokenResult(success=False, error_message=msg)
+
+    token_value = val
+
+    return CreateAccessTokenResult(success=True, token=token_value, token_name=token_name)
 
 
 def delete_all_access_tokens(page: Page) -> DeleteResult:
@@ -426,7 +465,7 @@ def delete_all_access_tokens(page: Page) -> DeleteResult:
     Returns:
         DeleteResult with success status
     """
-    page.goto(ACCESS_TOKENS_URL, wait_until="networkidle")
+    page.goto(ACCESS_TOKENS_URL, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn_selector = "a[aria-label='Revoke']"
     confirm_btn_selector = "#confirmationModal___BV_modal_footer_ > button.btn.js-modal-action-primary.btn-danger.btn-md.gl-button"
@@ -465,7 +504,7 @@ def delete_account(page: Page, password: str) -> DeleteResult:
     Returns:
         DeleteResult with success status
     """
-    page.goto(ACCOUNT_URL, wait_until="networkidle")
+    page.goto(ACCOUNT_URL, wait_until="domcontentloaded", timeout=60000)
 
     delete_btn = page.locator(Selectors.DELETE_ACCOUNT_BUTTON)
     if delete_btn.count() == 0:

@@ -441,7 +441,10 @@ class ExecutionAgent:
         """
         plan = plan_response.plan
         ctx = ExecutionContext(plan)
-        raw_outputs: Dict[str, Any] = {}  # unmodified curl responses, used for final answer
+        self.last_ctx = ctx
+        self.last_raw_outputs: Dict[str, Any] = {}  # unmodified curl responses, used for final answer
+        self.last_answer: str = ""
+        raw_outputs = self.last_raw_outputs
 
         while not ctx.is_complete():
             ready = ctx.get_ready_steps()
@@ -463,4 +466,5 @@ class ExecutionAgent:
 
         print("[ExecutionAgent] Generating answer...")
         answer = await self._generate_answer(task, plan, raw_outputs)
+        self.last_answer = answer
         return ExecutionResult(outputs=raw_outputs, answer=answer)
