@@ -159,11 +159,9 @@ For Project Templates. Use this json schema to search through available built-in
 """
 
 SHOPPING_HINTS = f"""
-The product `{{sku}}` path or query parameter has exactly one usable form:
-- A unique string SKU, for example "B086GNDL8K"
-- A product name (e.g., "Wireless Mouse") or a URL key (e.g., "wireless-mouse-pro") is NOT a valid directly usable `{{sku}}` value.
-- If you plan on using an endpoint that requires a `sku` parameter, you can first resolve the product's SKU using a lookup endpoint such as `GET /V1/products`.
-- Do not assume that the SKU can be guessed, synthesized, or partially matched based on the product name or other attributes. 
+Some endpoints require an `{{sku}}` parameter. The product `{{sku}}` path is a unique string identifier for each product in the Magento database (e.g., "B086GNDL8K").
+- To look up a product by its name: filter the `GET /V1/products` endpoint using the `name` field and `like` conditionType.
+- To look up a product by its URL: extract the slug from the URL (e.g., "wireless-mouse-pro" from "website.com/wireless-mouse-pro.html") and filter the `GET /V1/products` endpoint using the `url_key` field and `eq` conditionType.
 
 Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1/orders`, `GET /V1/customers/search`). To find specific items efficiently across any of these list endpoints, use the `searchCriteria` API to filter, sort, and paginate your requests:
 - Filtering Logic (AND/OR):
@@ -173,14 +171,24 @@ Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1
   - AND Logic: Filters placed in DIFFERENT `filterGroups` indices act as a logical AND.
     * Example (Name contains "Bag" AND Price > 50): 
       `searchCriteria[filterGroups][0][filters][0][field]=name&searchCriteria[filterGroups][0][filters][0][value]=%Bag%&searchCriteria[filterGroups][0][filters][0][conditionType]=like&searchCriteria[filterGroups][1][filters][0][field]=price&searchCriteria[filterGroups][1][filters][0][value]=50&searchCriteria[filterGroups][1][filters][0][conditionType]=gt`
-- Condition Types: Define how to match data using `conditionType` (e.g., `eq`, `gt`, `like`, `in`). 
+- Condition Types: Define how to match data using `conditionType`. Available types:
+  - `eq` (equals), `neq` (not equals)
+  - `gt` (greater than), `gteq` (greater than or equal), `lt` (less than), `lteq` (less than or equal)
+  - `like` (SQL LIKE — wrap value in `%` wildcards, e.g., `%keyword%`), `nlike` (not like)
+  - `in` (value is in a comma-separated list), `nin` (not in list). Example for `in`: `searchCriteria[filterGroups][0][filters][0][field]=sku&searchCriteria[filterGroups][0][filters][0][value]=SKU1,SKU2,SKU3&searchCriteria[filterGroups][0][filters][0][conditionType]=in`
+  - `null` (field is null), `notnull` (field is not null)
+  - `finset` (value exists within a comma-separated database field)
+  - `from`, `to` (range boundaries)
   - When using `like`, wrap the value in literal wildcard characters (e.g., `%keyword%`). Do NOT manually URL-encode the `%` to `%25`. 
-- CRITICAL Search Strategy for Product Names:
+- Sorting: Dictate order using `searchCriteria[sortOrders][<index>][field]` and `searchCriteria[sortOrders][<index>][direction]` (ASC or DESC).
+- Pagination: Control result pages using `searchCriteria[pageSize]` (number of items per page) and `searchCriteria[currentPage]` (1-indexed page number). Example: `searchCriteria[pageSize]=20&searchCriteria[currentPage]=1`.
+- Getting all items: To fetch all items with no filters, you MUST still pass at least an empty searchCriteria: `?searchCriteria=all` or `?searchCriteria[pageSize]=50`.
+
+CRITICAL — Search Strategy for Product Names:
   - Database titles may omit certain words (e.g., "Amazon" might not be in the title for "Echo Dot 3rd Gen"). If you use a strict AND query for every single word in a long phrase, you will likely get 0 results. 
   - Be strategic: Select 1 to 3 CORE identifying keywords from the target product name (e.g., "Echo" and "Dot"). Place each of these core words into a separate `filterGroups` index to perform a logical AND.
   - Do NOT chain multiple words together with wildcards (e.g., do NOT use `%Amazon%Echo%`).
   - Fallback Strategy: If your initial AND search returns 0 items, broaden your search by dropping the least unique word (like a brand name) or switching to an OR logic for related terms.
-- Sorting: Dictate order using `searchCriteria[sortOrders][<index>][field]` and `searchCriteria[sortOrders][<index>][direction]` (ASC or DESC).
 
 CRITICAL — POST/PUT request body structure:
 The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsMineItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
@@ -203,8 +211,8 @@ Always consult the schema's `required` field inside the body parameter definitio
 
 CRITICAL — searchCriteria is REQUIRED for list endpoints:
 Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpoints REQUIRE the `searchCriteria` query parameter. Calling these endpoints with no query parameters at all will return HTTP 400 with "searchCriteria is required".
-- If you want ALL results (no filtering), you MUST still pass at least an empty searchCriteria, for example: `?searchCriteria=all` or `?searchCriteria[pageSize]=10`.
-- Always include at least one `searchCriteria` parameter, even if you do not need any specific filters.
+- Always include at least one `searchCriteria` parameter, even if you do not need any specific filters (see "Getting all items" above).
 
-CRITICAL — For tasks that require a specific customer operation (e.g., "add this item to my cart", "update my account info"), your customer name is "Emma Lopez" and you MUST first look up her customer ID using `GET /V1/customers/search` with appropriate filters (e.g., `searchCriteria[filterGroups][0][filters][0][field]=firstname&searchCriteria[filterGroups][0][filters][0][value]=Emma&searchCriteria[filterGroups][0][filters][1][field]=lastname&searchCriteria[filterGroups][0][filters][1][value]=Lopez`). You cannot assume or guess the customer ID, and you cannot use "self", "me", or any other alias in place of the actual customer ID.
+CRITICAL — For tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), your customer email is "emma.lopez@gmail.com" and you MUST first look up her customer ID using `GET /V1/customers/search` with appropriate filters (e.g., `searchCriteria[filterGroups][0][filters][0][field]=email&searchCriteria[filterGroups][0][filters][0][value]=emma.lopez@example.com`). You cannot assume or guess the customer ID, and you cannot use "self", "me", or any other alias in place of the actual customer ID.
+CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
 """
