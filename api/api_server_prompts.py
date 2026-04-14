@@ -132,6 +132,10 @@ Decision rule:
 - If the task provides a namespace-qualified path matching `namespace/project`, use it directly.
 - Otherwise, you MUST first resolve the project using a lookup endpoint such as `GET /projects?search=...` before calling endpoints that require `/projects/{{id}}/...`.
 
+When using `GET /projects?search=...`:
+- The `search` value must be the project name only (e.g. `design`), NOT a `namespace/project` path (e.g. `primer/design`).
+- If you already have a `namespace/project` path, that IS the valid `{{id}}` — use it directly and skip the search step.
+
 Do not assume that a single project name can be used directly as `{{id}}`.
 Do not assume that a parameter named `{{id}}` can be guessed or partially matched.
 

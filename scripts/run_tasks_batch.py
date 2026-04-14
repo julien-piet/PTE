@@ -125,6 +125,7 @@ class TaskBatchRunner:
                 # Inject the worker-specific token into the execution agent.
                 if agent.execution_agent is not None:
                     agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
+                    agent.execution_agent.task_id = str(task_id)
 
                 # ── Plan + Execute ────────────────────────────────────────────
                 execution_result = await agent.run_task(prompt, servers={self.server: gitlab_url})

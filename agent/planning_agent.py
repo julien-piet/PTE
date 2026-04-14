@@ -5,6 +5,7 @@ plan in the planner.py ToolBasedResponse format.
 """
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import List
@@ -317,6 +318,50 @@ class PlanningAgent:
         return selected, capabilities
 
     # ------------------------------------------------------------------
+    # Step 5c: Read current-user context from env vars for the APIs in use
+    # ------------------------------------------------------------------
+    def _get_user_context(self, api_files: set) -> str:
+        """
+        Return a prompt section describing the current user's identity for each
+        API that is in scope.  Values come from env vars already loaded by
+        load_all_env() in __init__.
+        """
+        # Maps a schema filename fragment → (label, list of (var_name, human_label))
+        API_ENV_MAP = {
+            "gitlab": ("GitLab", [
+                # ("GITLAB_DOMAIN",   "server URL"),
+                ("GITLAB_USERNAME", "username"),
+            ]),
+            "reddit": ("Reddit", [
+                # ("REDDIT_DOMAIN",   "server URL"),
+                ("REDDIT_USERNAME", "username"),
+            ]),
+            "shopping": ("Shopping", [
+            #     ("WEBARENA_BASE_URL", "server URL"),
+                ("SHOPPING_USERNAME", "username"),
+            ]),
+        }
+
+        lines = []
+        for fragment, (label, var_defs) in API_ENV_MAP.items():
+            if not any(fragment in f.lower() for f in api_files):
+                continue
+            entries = []
+            for var_name, human_label in var_defs:
+                val = os.environ.get(var_name)
+                if val:
+                    entries.append(f"  - {human_label}: {val}")
+            if entries:
+                lines.append(f"{label}:\n" + "\n".join(entries))
+
+        if not lines:
+            return ""
+        return (
+            "\nCurrent user context (use these values directly if needed for current user context):\n"
+            + "\n".join(lines) + "\n"
+        )
+
+    # ------------------------------------------------------------------
     # Step 6: LLM builds a full execution plan
     # ------------------------------------------------------------------
     async def _build_plan(self, task: str, selected: List[EndpointInfo], capabilities: List[str] = None):
@@ -374,10 +419,13 @@ class PlanningAgent:
             )
             capabilities_section = f"\nEndpoint roles in the plan:\n{cap_lines}\n"
 
+        user_context_section = self._get_user_context(api_files_used)
+
         prompt = (
             f"Task: {task}\n\n"
             f"Available API endpoints:\n{endpoint_details}\n\n"
             + capabilities_section
+            + user_context_section
             + api_hints_section + "\n"
             "Build a step-by-step execution plan to complete this task.\n"
             "Steps can depend on each other using depends_on and reference prior outputs with '{step_id.result}'.\n\n"

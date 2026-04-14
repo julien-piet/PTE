@@ -141,7 +141,7 @@ async def worker_session(
     gitlab_url = worker["gitlab_url"]
 
     try:
-        print(f"  Acquired worker {worker_id}: {gitlab_url}")
+        print(f" Acquired worker {worker_id} → task {task_id} ({gitlab_url})")
 
         print(f"  Waiting for GitLab on worker {worker_id} to be ready...")
         await asyncio.to_thread(wait_for_gitlab, gitlab_url)

@@ -26,6 +26,13 @@ class _ParsedValue(BaseModel):
     found: bool
     value: Union[str, int, float, bool, list, dict, None] = None
     reason: Optional[str] = None
+
+
+class _MissingDependency(Exception):
+    """Raised when a step cannot run because a dependency produced no extractable value."""
+
+class _HttpError(Exception):
+    """Raised when a curl call returns a non-2xx HTTP status."""
 from agent.common.configurator import Configurator
 from agent.planner import ExecutionContext
 from agent.providers.provider import ModelProvider
@@ -64,6 +71,7 @@ class ExecutionAgent:
         self.base_url = base_url.rstrip("/")  # fallback if step has no base_url
         self.auth = auth
         self.debug = debug
+        self.task_id: str = ""
 
         config = Configurator()
         config.load_all_env()
@@ -198,7 +206,7 @@ class ExecutionAgent:
         # 304 Not Modified is treated as success: the resource is already in the
         # desired state (e.g. project already starred), so the operation is idempotent.
         if not (200 <= status_code < 300) and status_code != 304:
-            raise RuntimeError(
+            raise _HttpError(
                 f"HTTP {status_code}: {json.dumps(body) if isinstance(body, dict) else body}"
             )
         return body
@@ -272,7 +280,11 @@ class ExecutionAgent:
         )
         self._debug(f"Parsing output of {step.step_id}:\n{prompt}")
         agent = Agent(self.llm, output_type=_ParsedValue)
-        result = await agent.run(prompt)
+        try:
+            result = await agent.run(prompt)
+        except Exception as e:
+            print(f"[ExecutionAgent] ✗ _parse_step_output LLM call failed for {step.step_id}: {type(e).__name__}: {e}")
+            raise
         envelope = result.output
         self._debug(f"Parsed value for {step.step_id}: found={envelope.found} value={envelope.value!r}")
 
@@ -288,7 +300,8 @@ class ExecutionAgent:
             if hasattr(step.tool_name, "value")
             else str(step.tool_name)
         )
-        print(f"[ExecutionAgent] → {step.step_id}: {tool_name}")
+        prefix = f"[task {self.task_id}]" if self.task_id else "[ExecutionAgent]"
+        print(f"{prefix} → {step.step_id}: {tool_name}")
         try:
             loop = asyncio.get_event_loop()
 
@@ -299,9 +312,8 @@ class ExecutionAgent:
                 if m:
                     ref_id = m.group(1)
                     if ref_id in ctx.step_outputs and ctx.step_outputs[ref_id] is None:
-                        raise RuntimeError(
-                            f"Cannot execute: argument '{arg.name}' references "
-                            f"'{{{ref_id}.result}}' but step '{ref_id}' produced no extractable value."
+                        raise _MissingDependency(
+                            f"step '{ref_id}' produced no extractable value for argument '{arg.name}'"
                         )
 
             # Detect fan-out: if a path parameter resolves to a list, call the
@@ -381,7 +393,7 @@ class ExecutionAgent:
             # If downstream steps reference this result, parse it down to what they need
             dependent_steps = [s for s in plan if step.step_id in (getattr(s, "depends_on", []) or [])]
             if dependent_steps:
-                print(f"[ExecutionAgent] Parsing {step.step_id} output for {len(dependent_steps)} dependent step(s)...")
+                print(f"{prefix} Parsing {step.step_id} output for {len(dependent_steps)} dependent step(s)...")
                 parsed = await self._parse_step_output(step, raw, dependent_steps)
                 # Explicitly store None so the downstream guard can detect parse failure.
                 ctx.step_outputs[step.step_id] = parsed
@@ -389,10 +401,19 @@ class ExecutionAgent:
             else:
                 ctx.mark_completed(step.step_id, raw)
 
-            print(f"[ExecutionAgent] ✓ {step.step_id} done")
+            print(f"{prefix} ✓ {step.step_id} done")
+        except _MissingDependency as e:
+            ctx.mark_failed(step.step_id, str(e))
+            print(f"{prefix} ✗ {step.step_id} skipped: {e}")
+            raise
+        except _HttpError as e:
+            ctx.mark_failed(step.step_id, str(e))
+            raw_outputs[step.step_id] = str(e)
+            print(f"{prefix} ✗ {step.step_id} failed: {e}")
+            raise
         except Exception as e:
             ctx.mark_failed(step.step_id, str(e))
-            print(f"[ExecutionAgent] ✗ {step.step_id} failed: {e}")
+            print(f"{prefix} ✗ {step.step_id} failed: {e}")
             raise
 
     # ── LLM answer generation ────────────────────────────────────────────────
@@ -402,20 +423,33 @@ class ExecutionAgent:
         Ask the LLM to answer the original task based on what was executed and returned.
         """
         steps_summary = []
+        skipped_steps = []
         for step in plan:
             sid = step.step_id
             tool_name = step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
-            output = outputs.get(sid, "no output")
-            steps_summary.append(
-                f"Step {sid} ({tool_name}):\n{json.dumps(output, indent=2) if isinstance(output, (dict, list)) else output}"
+            if sid not in outputs:
+                skipped_steps.append(f"Step {sid} ({tool_name}): skipped — earlier step failed")
+            else:
+                output = outputs[sid]
+                steps_summary.append(
+                    f"Step {sid} ({tool_name}):\n{json.dumps(output, indent=2) if isinstance(output, (dict, list)) else output}"
+                )
+
+        skipped_note = ""
+        if skipped_steps:
+            skipped_note = (
+                "\n\nThe following steps did not complete (API error, missing resource, or unextractable upstream value):\n"
+                + "\n".join(skipped_steps)
+                + "\n"
             )
 
         prompt = (
             f"The user asked: {task}\n\n"
             f"The following API calls were made to fulfill this request:\n\n"
-            + "\n\n".join(steps_summary)
-            + "\n\nBased on the API responses above, provide a concise answer to the user's original request. "
-            "Focus on what was accomplished or what information was retrieved. "
+            + "\n\n".join(steps_summary or ["(no steps completed)"])
+            + skipped_note
+            + "\n\nBased on the above, provide a concise answer to the user's original request. "
+            "If some steps were skipped, explain what could not be completed and why. "
             "Do not repeat raw JSON — describe the result in plain language."
         )
         self._debug(f"Answer generation prompt:\n{prompt}")
@@ -460,11 +494,22 @@ class ExecutionAgent:
                 ctx.mark_executing(step_id)
 
             steps_to_run = [s for s in plan if s.step_id in ready]
-            await asyncio.gather(*[
-                self._execute_step(s, ctx, plan, raw_outputs) for s in steps_to_run
-            ])
+            try:
+                await asyncio.gather(*[
+                    self._execute_step(s, ctx, plan, raw_outputs) for s in steps_to_run
+                ])
+            except (_MissingDependency, _HttpError):
+                # A step couldn't run (missing dependency or HTTP error).
+                # Mark all remaining unstarted steps as skipped and stop here.
+                tag = f"[task {self.task_id}]" if self.task_id else "[ExecutionAgent]"
+                for s in plan:
+                    if s.step_id not in ctx.completed_steps and s.step_id not in ctx.failed_steps:
+                        ctx.mark_failed(s.step_id, "skipped due to earlier step failure")
+                        print(f"{tag} ✗ {s.step_id} skipped (earlier step failed)")
+                break
 
-        print("[ExecutionAgent] Generating answer...")
+        tag = f"[task {self.task_id}]" if self.task_id else "[ExecutionAgent]"
+        print(f"{tag} Generating answer...")
         answer = await self._generate_answer(task, plan, raw_outputs)
         self.last_answer = answer
         return ExecutionResult(outputs=raw_outputs, answer=answer)
