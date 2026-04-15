@@ -10347,7 +10347,20 @@
             "required": false,
             "description": "Include only events of a particular action type",
             "type": "string",
-            "enum": ["created", "updated", "closed", "reopened", "pushed", "commented", "merged", "joined", "left", "destroyed", "expired", "approved"]
+            "enum": [
+              "created",
+              "updated",
+              "closed",
+              "reopened",
+              "pushed",
+              "commented",
+              "merged",
+              "joined",
+              "left",
+              "destroyed",
+              "expired",
+              "approved"
+            ]
           },
           {
             "name": "target_type",
@@ -10355,7 +10368,17 @@
             "required": false,
             "description": "Include only events of a particular target type",
             "type": "string",
-            "enum": ["issue", "milestone", "merge_request", "note", "project", "snippet", "user", "wiki", "design"]
+            "enum": [
+              "issue",
+              "milestone",
+              "merge_request",
+              "note",
+              "project",
+              "snippet",
+              "user",
+              "wiki",
+              "design"
+            ]
           },
           {
             "name": "before",
@@ -19658,7 +19681,7 @@
               "properties": {
                 "webhook": {
                   "type": "string",
-                  "description": "Discord webhook. For example, https://discord.com/api/webhooks/…"
+                  "description": "Discord webhook. For example, https://discord.com/api/webhooks/\u2026"
                 }
               },
               "required": [
@@ -23913,6 +23936,48 @@
             "description": "",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "description": "Return all issues or just those that are opened or closed. Options: opened, closed. Default is all.",
+            "type": "string"
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "required": false,
+            "description": "Return issues ordered by created_at, due_date, label_priority, milestone_due, popularity, priority, title, or updated_at fields. Default is created_at.",
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "description": "Return issues sorted in asc or desc order. Default is desc.",
+            "type": "string"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Search issues against their title and description. Use with in parameter to scope the search to title only or description only.",
+            "type": "string"
+          },
+          {
+            "name": "in",
+            "in": "query",
+            "required": false,
+            "description": "Modify the scope of the search attribute. title, description, or a string joining them with comma. Default is title,description.",
+            "type": "string"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "description": "Return issues for the given scope: created_by_me, assigned_to_me, or all. Defaults to created_by_me for authenticated users.",
+            "type": "string"
           }
         ],
         "responses": {
@@ -24121,6 +24186,48 @@
             "description": "",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "description": "Return all issues or just those that are opened or closed. Options: opened, closed. Default is all.",
+            "type": "string"
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "required": false,
+            "description": "Return issues ordered by created_at, due_date, label_priority, milestone_due, popularity, priority, title, or updated_at fields. Default is created_at.",
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "description": "Return issues sorted in asc or desc order. Default is desc.",
+            "type": "string"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Search issues against their title and description. Use with in parameter to scope the search to title only or description only.",
+            "type": "string"
+          },
+          {
+            "name": "in",
+            "in": "query",
+            "required": false,
+            "description": "Modify the scope of the search attribute. title, description, or a string joining them with comma. Default is title,description.",
+            "type": "string"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "description": "Return issues for the given scope: created_by_me, assigned_to_me, or all. Defaults to created_by_me for authenticated users.",
+            "type": "string"
           }
         ],
         "responses": {

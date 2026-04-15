@@ -288,5 +288,10 @@ def test_agent_accomplishes_gitlab_tasks(
             print(f"\n📄 Partial results ({len(result_log)} tasks) written to {out_path}")
         pytest.exit("Interrupted by user", returncode=1)
 
+    total = len(results)
+    passed_count = sum(1 for r in results if r["passed"] and not r["error"])
+    failed_count = total - passed_count
+    print(f"\nResults: {passed_count}/{total} passed, {failed_count}/{total} failed")
+
     if failures:
         pytest.fail("\n\n".join(failures))

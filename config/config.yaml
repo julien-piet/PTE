@@ -9,7 +9,7 @@ server_env_path: config/.server_env
 agent_llm_provider: anthropic
 agent_llm_model: claude-opus-4-6
 # agent_llm_provider: openai
-# agent_llm_model: gpt-5-mini
+# agent_llm_model: gpt-5.4-mini
 
 # agent_llm_provider: google
 # agent_llm_model: gemini-2.5-flash
@@ -20,7 +20,7 @@ llm_access_retry: 3
 
 llm_providers:
  openai:
-  - model: gpt-5
+  - model: gpt-5.4-mini
     temp: 0.0
 
   - model: gpt-5-mini
@@ -30,9 +30,6 @@ llm_providers:
     temp: 0.0
 
   - model: gpt-4.1
-    temp: 0.0
-
-  - model: gpt-4o
     temp: 0.0
 
  anthropic:
