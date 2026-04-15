@@ -5,9 +5,11 @@
 # require a program_html check (those are already covered by
 # test_agent_program_html.py).
 #
-# Eval-type breakdown covered here (241 total tasks):
-#   - string_match only                — 231 tasks
-#   - string_match + url_match         —  10 tasks (both checks must pass)
+# Eval-type breakdown covered here (241 total tasks, all now pure string_match):
+#   - string_match only (always)       — 241 tasks
+#   Tasks 173–182 were previously string_match + url_match; url_match has been
+#   dropped and their reference_answers now use must_include with the correct
+#   issue title + open/closed status keyword.
 #
 # Tasks that carry program_html (with or without string_match) are handled
 # inside test_agent_program_html.py and are therefore excluded here.
@@ -16,12 +18,10 @@
 # ───────────────────────
 #   must_include  : agent answer must contain every listed substring (case-insensitive)
 #   must_exclude  : agent answer must NOT contain any listed substring (case-insensitive)
-#   exact_match   : NOTE — AgentRunner._evaluate_string_match does not currently enforce
-#                   exact_match; it only checks must_include/must_exclude. Tasks that
-#                   carry only exact_match will pass as long as the agent returns any
-#                   non-empty answer. This is a known evaluator limitation.
-#   fuzzy_match   : Not enforced by AgentRunner._evaluate_string_match; tasks pass as
-#                   long as the agent returns any non-empty answer.
+#   exact_match   : agent answer must match the reference string exactly after
+#                   whitespace normalisation and case-folding.
+#   fuzzy_match   : agent answer must contain each reference item (str or list of str)
+#                   approximately (sliding-window SequenceMatcher ratio >= 0.8).
 #
 # Site distribution:
 #   shopping_admin : 88
@@ -141,9 +141,9 @@ def _make_failure_message(
     if ra.get("must_exclude"):
         lines.append(f"  must_exclude : {ra['must_exclude']}")
     if ra.get("exact_match"):
-        lines.append(f"  exact_match  : {ra['exact_match']!r}  (note: not enforced by evaluator)")
+        lines.append(f"  exact_match  : {ra['exact_match']!r}")
     if ra.get("fuzzy_match"):
-        lines.append(f"  fuzzy_match  : {ra['fuzzy_match']!r}  (note: not enforced by evaluator)")
+        lines.append(f"  fuzzy_match  : {ra['fuzzy_match']!r}")
     if ev.get("string_note"):
         lines.append(f"  string_note  : {ev['string_note']}")
 
@@ -200,9 +200,10 @@ def test_agent_produces_correct_answer(
 
     - ``must_include`` items must all appear in the answer (case-insensitive).
     - ``must_exclude`` items must not appear in the answer (case-insensitive).
-    - ``exact_match`` / ``fuzzy_match`` fields are recorded in the failure
-      message for human review but are not currently enforced by the
-      evaluator (see AgentRunner._evaluate_string_match).
+    - ``exact_match`` must equal the reference string after whitespace
+      normalisation and case-folding.
+    - ``fuzzy_match`` items (str or list) must appear approximately in the
+      answer (sliding-window SequenceMatcher ratio >= 0.8).
 
     For tasks that also carry a ``url_match`` eval type, the agent's
     ``final_url`` is additionally checked against the reference URL.

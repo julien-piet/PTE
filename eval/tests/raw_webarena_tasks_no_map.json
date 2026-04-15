@@ -837,7 +837,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 303
+    "intent_template_id": 303,
+    "read_only": true
   },
   {
     "sites": [
@@ -861,7 +862,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 300
+    "intent_template_id": 300,
+    "read_only": true
   },
   {
     "sites": [
@@ -885,7 +887,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 300
+    "intent_template_id": 300,
+    "read_only": true
   },
   {
     "sites": [
@@ -1523,7 +1526,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 349
+    "intent_template_id": 349,
+    "read_only": true
   },
   {
     "sites": [
@@ -1550,7 +1554,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 349
+    "intent_template_id": 349,
+    "read_only": true
   },
   {
     "sites": [
@@ -1577,7 +1582,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 349
+    "intent_template_id": 349,
+    "read_only": true
   },
   {
     "sites": [
@@ -1604,7 +1610,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 349
+    "intent_template_id": 349,
+    "read_only": true
   },
   {
     "sites": [
@@ -1631,7 +1638,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 349
+    "intent_template_id": 349,
+    "read_only": true
   },
   {
     "sites": [
@@ -2490,7 +2498,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "1"
     },
-    "intent_template_id": 322
+    "intent_template_id": 322,
+    "read_only": true
   },
   {
     "sites": [
@@ -2523,7 +2532,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "2"
     },
-    "intent_template_id": 322
+    "intent_template_id": 322,
+    "read_only": true
   },
   {
     "sites": [
@@ -2556,7 +2566,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "0"
     },
-    "intent_template_id": 322
+    "intent_template_id": 322,
+    "read_only": true
   },
   {
     "sites": [
@@ -2589,7 +2600,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "1"
     },
-    "intent_template_id": 322
+    "intent_template_id": 322,
+    "read_only": true
   },
   {
     "sites": [
@@ -2622,7 +2634,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "5"
     },
-    "intent_template_id": 322
+    "intent_template_id": 322,
+    "read_only": true
   },
   {
     "sites": [
@@ -2971,7 +2984,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 290
+    "intent_template_id": 290,
+    "read_only": true
   },
   {
     "sites": [
@@ -3313,7 +3327,8 @@
       "string_note": "No repo found",
       "reference_answer_raw_annotation": "No repo found"
     },
-    "intent_template_id": 289
+    "intent_template_id": 289,
+    "read_only": true
   },
   {
     "sites": [
@@ -3345,7 +3360,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "a11yproject.com, Primer/design"
     },
-    "intent_template_id": 289
+    "intent_template_id": 289,
+    "read_only": true
   },
   {
     "sites": [
@@ -3381,7 +3397,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "cloud-to-butt, dotfiles, timeit, solarized-prism-theme,  gimmiethat.space, remove-board-movement-events-from-the-github-issue-timeline"
     },
-    "intent_template_id": 289
+    "intent_template_id": 289,
+    "read_only": true
   },
   {
     "sites": [
@@ -3421,7 +3438,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "a11y-syntax-highlighting, a11y-webring.club, accessible-html-content-patterns, ericwbailey.website, cloud-to-butt, dotfiles, timeit, solarized-prism-theme,  gimmiethat.space, remove-board-movement-events-from-the-github-issue-timeline"
     },
-    "intent_template_id": 289
+    "intent_template_id": 289,
+    "read_only": true
   },
   {
     "sites": [
@@ -3457,7 +3475,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "cloud-to-butt, dotfiles, timeit, solarized-prism-theme,  gimmiethat.space, remove-board-movement-events-from-the-github-issue-timeline"
     },
-    "intent_template_id": 289
+    "intent_template_id": 289,
+    "read_only": true
   },
   {
     "sites": [
@@ -3476,12 +3495,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "No, it is open"
+        "must_include": [
+          "Better initial load experience",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/8",
@@ -3490,7 +3509,8 @@
       "string_note": "",
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 310
+    "intent_template_id": 310,
+    "read_only": true
   },
   {
     "sites": [
@@ -3509,12 +3529,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "No, it is open"
+        "must_include": [
+          "[Feature suggestion] Support linking to an accessibility statement",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/a11y-webring.club/-/issues/71",
@@ -3522,7 +3542,8 @@
       "reference_answer_raw_annotation": "Not closed",
       "string_note": ""
     },
-    "intent_template_id": 310
+    "intent_template_id": 310,
+    "read_only": true
   },
   {
     "sites": [
@@ -3541,12 +3562,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "No, it is open"
+        "must_include": [
+          "Outdated dependencies",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/18",
@@ -3554,7 +3575,8 @@
       "reference_answer_raw_annotation": "Not closed",
       "string_note": ""
     },
-    "intent_template_id": 310
+    "intent_template_id": 310,
+    "read_only": true
   },
   {
     "sites": [
@@ -3573,12 +3595,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "No, it is open"
+        "must_include": [
+          "Tm Theme Editor",
+          "open"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues/1",
@@ -3586,7 +3608,8 @@
       "reference_answer_raw_annotation": "Not closed",
       "string_note": ""
     },
-    "intent_template_id": 310
+    "intent_template_id": 310,
+    "read_only": true
   },
   {
     "sites": [
@@ -3605,12 +3628,12 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "Yes, it is closed"
+        "must_include": [
+          "Rethink the homepage's content",
+          "closed"
         ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/719",
@@ -3618,7 +3641,8 @@
       "reference_answer_raw_annotation": "closed",
       "string_note": ""
     },
-    "intent_template_id": 310
+    "intent_template_id": 310,
+    "read_only": true
   },
   {
     "sites": [
@@ -3637,18 +3661,21 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "Better Event page UX",
+          "closed"
+        ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/566",
       "program_html": [],
       "reference_answer_raw_annotation": "Closed",
       "string_note": ""
     },
-    "intent_template_id": 500
+    "intent_template_id": 500,
+    "read_only": true
   },
   {
     "sites": [
@@ -3667,18 +3694,21 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "Deprecate GitHub Discussions",
+          "closed"
+        ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/1517",
       "program_html": [],
       "reference_answer_raw_annotation": "Closed",
       "string_note": ""
     },
-    "intent_template_id": 500
+    "intent_template_id": 500,
+    "read_only": true
   },
   {
     "sites": [
@@ -3697,18 +3727,21 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "No"
+        "must_include": [
+          "Outdated dependencies",
+          "open"
+        ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/18",
       "program_html": [],
       "reference_answer_raw_annotation": "Not closed",
       "string_note": ""
     },
-    "intent_template_id": 500
+    "intent_template_id": 500,
+    "read_only": true
   },
   {
     "sites": [
@@ -3727,18 +3760,21 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "No"
+        "must_include": [
+          "Tm Theme Editor",
+          "open"
+        ]
       },
       "reference_url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues/1",
       "program_html": [],
       "reference_answer_raw_annotation": "Not closed",
       "string_note": ""
     },
-    "intent_template_id": 500
+    "intent_template_id": 500,
+    "read_only": true
   },
   {
     "sites": [
@@ -3757,18 +3793,21 @@
     "require_reset": false,
     "eval": {
       "eval_types": [
-        "string_match",
-        "url_match"
+        "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Yes"
+        "must_include": [
+          "Rethink the homepage's content",
+          "closed"
+        ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/719",
       "program_html": [],
       "reference_answer_raw_annotation": "closed",
       "string_note": ""
     },
-    "intent_template_id": 500
+    "intent_template_id": 500,
+    "read_only": true
   },
   {
     "sites": [
@@ -4495,7 +4534,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "1"
     },
-    "intent_template_id": 320
+    "intent_template_id": 320,
+    "read_only": true
   },
   {
     "sites": [
@@ -4527,7 +4567,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "2"
     },
-    "intent_template_id": 320
+    "intent_template_id": 320,
+    "read_only": true
   },
   {
     "sites": [
@@ -4559,7 +4600,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "1"
     },
-    "intent_template_id": 320
+    "intent_template_id": 320,
+    "read_only": true
   },
   {
     "sites": [
@@ -5518,7 +5560,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 325
+    "intent_template_id": 325,
+    "read_only": true
   },
   {
     "sites": [
@@ -5545,7 +5588,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "TMN_bBn9Z48qVbUFZV45"
     },
-    "intent_template_id": 312
+    "intent_template_id": 312,
+    "read_only": true
   },
   {
     "sites": [
@@ -6380,14 +6424,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/super_awesome_robot.git"
+        "must_include": [
+          "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/super_awesome_robot.git"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/super_awesome_robot.git"
     },
-    "intent_template_id": 329
+    "intent_template_id": 329,
+    "read_only": true
   },
   {
     "sites": [
@@ -6409,14 +6456,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/chatgpt.git"
+        "must_include": [
+          "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/chatgpt.git"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/chatgpt.git"
     },
-    "intent_template_id": 329
+    "intent_template_id": 329,
+    "read_only": true
   },
   {
     "sites": [
@@ -6438,14 +6488,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/root/metaseq.git"
+        "must_include": [
+          "git clone ssh://git@metis.lti.cs.cmu.edu:2222/root/metaseq.git"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/root/metaseq.git"
     },
-    "intent_template_id": 329
+    "intent_template_id": 329,
+    "read_only": true
   },
   {
     "sites": [
@@ -6467,14 +6520,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "ssh://git@metis.lti.cs.cmu.edu:2222/eriklindernoren/PyTorch-GAN.git"
+        "must_include": [
+          "ssh://git@metis.lti.cs.cmu.edu:2222/eriklindernoren/PyTorch-GAN.git"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "ssh://git@metis.lti.cs.cmu.edu:2222/eriklindernoren/PyTorch-GAN.git"
     },
-    "intent_template_id": 329
+    "intent_template_id": 329,
+    "read_only": true
   },
   {
     "sites": [
@@ -6503,7 +6559,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "ssh://git@metis.lti.cs.cmu.edu:2222/yjlou/2019-nCov.git"
     },
-    "intent_template_id": 329
+    "intent_template_id": 329,
+    "read_only": true
   },
   {
     "sites": [
@@ -6669,7 +6726,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "1"
     },
-    "intent_template_id": 321
+    "intent_template_id": 321,
+    "read_only": true
   },
   {
     "sites": [
@@ -6701,7 +6759,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "14"
     },
-    "intent_template_id": 321
+    "intent_template_id": 321,
+    "read_only": true
   },
   {
     "sites": [
@@ -6733,7 +6792,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "0"
     },
-    "intent_template_id": 321
+    "intent_template_id": 321,
+    "read_only": true
   },
   {
     "sites": [
@@ -6765,7 +6825,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "0"
     },
-    "intent_template_id": 321
+    "intent_template_id": 321,
+    "read_only": true
   },
   {
     "sites": [
@@ -6797,7 +6858,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "16"
     },
-    "intent_template_id": 321
+    "intent_template_id": 321,
+    "read_only": true
   },
   {
     "sites": [
@@ -6826,7 +6888,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "Shawn Allen"
     },
-    "intent_template_id": 323
+    "intent_template_id": 323,
+    "read_only": true
   },
   {
     "sites": [
@@ -6848,14 +6911,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Grayson Wright"
+        "must_include": [
+          "Grayson Wright"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "Grayson Wright"
     },
-    "intent_template_id": 323
+    "intent_template_id": 323,
+    "read_only": true
   },
   {
     "sites": [
@@ -6877,14 +6943,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "tokudu"
+        "must_include": [
+          "tokudu"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "tokudu"
     },
-    "intent_template_id": 323
+    "intent_template_id": 323,
+    "read_only": true
   },
   {
     "sites": [
@@ -6906,14 +6975,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Erik Linder-Nor\u00e9n"
+        "must_include": [
+          "Erik Linder-Nor\u00e9n"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "Erik Linder-Nor\u00e9n"
     },
-    "intent_template_id": 323
+    "intent_template_id": 323,
+    "read_only": true
   },
   {
     "sites": [
@@ -6935,14 +7007,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Christopher Groskopf"
+        "must_include": [
+          "Christopher Groskopf"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "Christopher Groskopf"
     },
-    "intent_template_id": 323
+    "intent_template_id": 323,
+    "read_only": true
   },
   {
     "sites": [
@@ -7003,7 +7078,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "Shawn Allen, Inayaili Le\u00f3n, Aurora Pleguezuelo"
     },
-    "intent_template_id": 324
+    "intent_template_id": 324,
+    "read_only": true
   },
   {
     "sites": [
@@ -7037,7 +7113,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "eriklindernoren@live.se, eriklindernoren@gmail.com, pinnacle.chen@qq.com"
     },
-    "intent_template_id": 324
+    "intent_template_id": 324,
+    "read_only": true
   },
   {
     "sites": [
@@ -7071,7 +7148,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "Ian Sutherland, Joe Hadda, Dan Abramov"
     },
-    "intent_template_id": 324
+    "intent_template_id": 324,
+    "read_only": true
   },
   {
     "sites": [
@@ -7095,9 +7173,12 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Susan Zhang: 70",
-          "Stephen Roller: 51",
-          "Peter Albert: 12"
+          "Susan Zhang",
+          "70",
+          "Stephen Roller",
+          "51",
+          "Peter Albert",
+          "12"
         ]
       },
       "reference_url": "",
@@ -7105,7 +7186,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "Susan Zhang: 70, Stephen Roller: 51, Peter Albert: 12"
     },
-    "intent_template_id": 324
+    "intent_template_id": 324,
+    "read_only": true
   },
   {
     "sites": [
@@ -7139,7 +7221,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "Lo, Chen, Chu"
     },
-    "intent_template_id": 324
+    "intent_template_id": 324,
+    "read_only": true
   },
   {
     "sites": [
@@ -7767,7 +7850,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 299
+    "intent_template_id": 299,
+    "read_only": true
   },
   {
     "sites": [
@@ -7793,7 +7877,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 299
+    "intent_template_id": 299,
+    "read_only": true
   },
   {
     "sites": [
@@ -7819,7 +7904,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 299
+    "intent_template_id": 299,
+    "read_only": true
   },
   {
     "sites": [
@@ -7845,7 +7931,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 299
+    "intent_template_id": 299,
+    "read_only": true
   },
   {
     "sites": [
@@ -7871,7 +7958,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 299
+    "intent_template_id": 299,
+    "read_only": true
   },
   {
     "sites": [
@@ -8048,14 +8136,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "yjlou"
+        "must_include": [
+          "yjlou"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
       "reference_answer_raw_annotation": "yjlou"
     },
-    "intent_template_id": 298
+    "intent_template_id": 298,
+    "read_only": true
   },
   {
     "sites": [
@@ -8086,7 +8177,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "Abishek S, abisubramanya27"
     },
-    "intent_template_id": 298
+    "intent_template_id": 298,
+    "read_only": true
   },
   {
     "sites": [
@@ -8245,7 +8337,8 @@
       "program_html": [],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 291
+    "intent_template_id": 291,
+    "read_only": true
   },
   {
     "sites": [
@@ -8723,7 +8816,8 @@
         }
       ]
     },
-    "intent_template_id": 348
+    "intent_template_id": 348,
+    "read_only": false
   },
   {
     "sites": [
@@ -8758,7 +8852,8 @@
         }
       ]
     },
-    "intent_template_id": 348
+    "intent_template_id": 348,
+    "read_only": false
   },
   {
     "sites": [
@@ -8793,7 +8888,8 @@
         }
       ]
     },
-    "intent_template_id": 348
+    "intent_template_id": 348,
+    "read_only": false
   },
   {
     "sites": [
@@ -8828,7 +8924,8 @@
         }
       ]
     },
-    "intent_template_id": 348
+    "intent_template_id": 348,
+    "read_only": false
   },
   {
     "sites": [
@@ -8863,7 +8960,8 @@
         }
       ]
     },
-    "intent_template_id": 348
+    "intent_template_id": 348,
+    "read_only": false
   },
   {
     "sites": [
@@ -8898,7 +8996,8 @@
         }
       ]
     },
-    "intent_template_id": 352
+    "intent_template_id": 352,
+    "read_only": false
   },
   {
     "sites": [
@@ -8933,7 +9032,8 @@
         }
       ]
     },
-    "intent_template_id": 352
+    "intent_template_id": 352,
+    "read_only": false
   },
   {
     "sites": [
@@ -8968,7 +9068,8 @@
         }
       ]
     },
-    "intent_template_id": 352
+    "intent_template_id": 352,
+    "read_only": false
   },
   {
     "sites": [
@@ -9003,7 +9104,8 @@
         }
       ]
     },
-    "intent_template_id": 352
+    "intent_template_id": 352,
+    "read_only": false
   },
   {
     "sites": [
@@ -9074,7 +9176,8 @@
         }
       ]
     },
-    "intent_template_id": 352
+    "intent_template_id": 352,
+    "read_only": false
   },
   {
     "sites": [
@@ -9521,7 +9624,8 @@
         }
       ]
     },
-    "intent_template_id": 355
+    "intent_template_id": 355,
+    "read_only": false
   },
   {
     "sites": [
@@ -9557,7 +9661,8 @@
         }
       ]
     },
-    "intent_template_id": 355
+    "intent_template_id": 355,
+    "read_only": false
   },
   {
     "sites": [
@@ -9592,7 +9697,8 @@
         }
       ]
     },
-    "intent_template_id": 355
+    "intent_template_id": 355,
+    "read_only": false
   },
   {
     "sites": [
@@ -9628,7 +9734,8 @@
         }
       ]
     },
-    "intent_template_id": 355
+    "intent_template_id": 355,
+    "read_only": false
   },
   {
     "sites": [
@@ -9661,7 +9768,8 @@
         }
       ]
     },
-    "intent_template_id": 360
+    "intent_template_id": 360,
+    "read_only": false
   },
   {
     "sites": [
@@ -9694,7 +9802,8 @@
         }
       ]
     },
-    "intent_template_id": 360
+    "intent_template_id": 360,
+    "read_only": false
   },
   {
     "sites": [
@@ -9727,7 +9836,8 @@
         }
       ]
     },
-    "intent_template_id": 360
+    "intent_template_id": 360,
+    "read_only": false
   },
   {
     "sites": [
@@ -9760,7 +9870,8 @@
         }
       ]
     },
-    "intent_template_id": 361
+    "intent_template_id": 361,
+    "read_only": false
   },
   {
     "sites": [
@@ -9793,7 +9904,8 @@
         }
       ]
     },
-    "intent_template_id": 361
+    "intent_template_id": 361,
+    "read_only": false
   },
   {
     "sites": [
@@ -9826,7 +9938,8 @@
         }
       ]
     },
-    "intent_template_id": 361
+    "intent_template_id": 361,
+    "read_only": false
   },
   {
     "sites": [
@@ -9859,7 +9972,8 @@
         }
       ]
     },
-    "intent_template_id": 361
+    "intent_template_id": 361,
+    "read_only": false
   },
   {
     "sites": [
@@ -9892,7 +10006,8 @@
         }
       ]
     },
-    "intent_template_id": 361
+    "intent_template_id": 361,
+    "read_only": false
   },
   {
     "sites": [
@@ -10305,7 +10420,8 @@
         }
       ]
     },
-    "intent_template_id": 308
+    "intent_template_id": 308,
+    "read_only": false
   },
   {
     "sites": [
@@ -10340,7 +10456,8 @@
         }
       ]
     },
-    "intent_template_id": 308
+    "intent_template_id": 308,
+    "read_only": false
   },
   {
     "sites": [
@@ -10375,7 +10492,8 @@
         }
       ]
     },
-    "intent_template_id": 308
+    "intent_template_id": 308,
+    "read_only": false
   },
   {
     "sites": [
@@ -10410,7 +10528,8 @@
         }
       ]
     },
-    "intent_template_id": 308
+    "intent_template_id": 308,
+    "read_only": false
   },
   {
     "sites": [
@@ -10445,7 +10564,8 @@
         }
       ]
     },
-    "intent_template_id": 308
+    "intent_template_id": 308,
+    "read_only": false
   },
   {
     "sites": [
@@ -10482,7 +10602,8 @@
         }
       ]
     },
-    "intent_template_id": 999
+    "intent_template_id": 999,
+    "read_only": false
   },
   {
     "sites": [
@@ -10519,7 +10640,8 @@
         }
       ]
     },
-    "intent_template_id": 999
+    "intent_template_id": 999,
+    "read_only": false
   },
   {
     "sites": [
@@ -10552,7 +10674,8 @@
         }
       ]
     },
-    "intent_template_id": 331
+    "intent_template_id": 331,
+    "read_only": false
   },
   {
     "sites": [
@@ -10585,7 +10708,8 @@
         }
       ]
     },
-    "intent_template_id": 331
+    "intent_template_id": 331,
+    "read_only": false
   },
   {
     "sites": [
@@ -10618,7 +10742,8 @@
         }
       ]
     },
-    "intent_template_id": 331
+    "intent_template_id": 331,
+    "read_only": false
   },
   {
     "sites": [
@@ -10651,7 +10776,8 @@
         }
       ]
     },
-    "intent_template_id": 331
+    "intent_template_id": 331,
+    "read_only": false
   },
   {
     "sites": [
@@ -10684,7 +10810,8 @@
         }
       ]
     },
-    "intent_template_id": 331
+    "intent_template_id": 331,
+    "read_only": false
   },
   {
     "sites": [
@@ -11465,7 +11592,8 @@
         }
       ]
     },
-    "intent_template_id": 292
+    "intent_template_id": 292,
+    "read_only": false
   },
   {
     "sites": [
@@ -11500,7 +11628,8 @@
         }
       ]
     },
-    "intent_template_id": 292
+    "intent_template_id": 292,
+    "read_only": false
   },
   {
     "sites": [
@@ -11535,7 +11664,8 @@
         }
       ]
     },
-    "intent_template_id": 292
+    "intent_template_id": 292,
+    "read_only": false
   },
   {
     "sites": [
@@ -11570,7 +11700,8 @@
         }
       ]
     },
-    "intent_template_id": 292
+    "intent_template_id": 292,
+    "read_only": false
   },
   {
     "sites": [
@@ -11605,7 +11736,8 @@
         }
       ]
     },
-    "intent_template_id": 292
+    "intent_template_id": 292,
+    "read_only": false
   },
   {
     "sites": [
@@ -11641,7 +11773,8 @@
         }
       ]
     },
-    "intent_template_id": 293
+    "intent_template_id": 293,
+    "read_only": false
   },
   {
     "sites": [
@@ -11676,7 +11809,8 @@
         }
       ]
     },
-    "intent_template_id": 294
+    "intent_template_id": 294,
+    "read_only": false
   },
   {
     "sites": [
@@ -11711,7 +11845,8 @@
         }
       ]
     },
-    "intent_template_id": 294
+    "intent_template_id": 294,
+    "read_only": false
   },
   {
     "sites": [
@@ -11746,7 +11881,8 @@
         }
       ]
     },
-    "intent_template_id": 294
+    "intent_template_id": 294,
+    "read_only": false
   },
   {
     "sites": [
@@ -11781,7 +11917,8 @@
         }
       ]
     },
-    "intent_template_id": 294
+    "intent_template_id": 294,
+    "read_only": false
   },
   {
     "sites": [
@@ -11816,7 +11953,8 @@
         }
       ]
     },
-    "intent_template_id": 294
+    "intent_template_id": 294,
+    "read_only": false
   },
   {
     "sites": [
@@ -13090,7 +13228,8 @@
         }
       ]
     },
-    "intent_template_id": 352
+    "intent_template_id": 352,
+    "read_only": false
   },
   {
     "sites": [
@@ -13129,7 +13268,8 @@
         }
       ]
     },
-    "intent_template_id": 354
+    "intent_template_id": 354,
+    "read_only": false
   },
   {
     "sites": [
@@ -13171,7 +13311,8 @@
         }
       ]
     },
-    "intent_template_id": 354
+    "intent_template_id": 354,
+    "read_only": false
   },
   {
     "sites": [
@@ -13209,7 +13350,8 @@
         }
       ]
     },
-    "intent_template_id": 354
+    "intent_template_id": 354,
+    "read_only": false
   },
   {
     "sites": [
@@ -13246,7 +13388,8 @@
         }
       ]
     },
-    "intent_template_id": 354
+    "intent_template_id": 354,
+    "read_only": false
   },
   {
     "sites": [
@@ -13281,7 +13424,8 @@
         }
       ]
     },
-    "intent_template_id": 354
+    "intent_template_id": 354,
+    "read_only": false
   },
   {
     "sites": [
@@ -13515,7 +13659,8 @@
         }
       ]
     },
-    "intent_template_id": 330
+    "intent_template_id": 330,
+    "read_only": false
   },
   {
     "sites": [
@@ -13556,7 +13701,8 @@
         }
       ]
     },
-    "intent_template_id": 330
+    "intent_template_id": 330,
+    "read_only": false
   },
   {
     "sites": [
@@ -13597,7 +13743,8 @@
         }
       ]
     },
-    "intent_template_id": 330
+    "intent_template_id": 330,
+    "read_only": false
   },
   {
     "sites": [
@@ -13638,7 +13785,8 @@
         }
       ]
     },
-    "intent_template_id": 330
+    "intent_template_id": 330,
+    "read_only": false
   },
   {
     "sites": [
@@ -13683,7 +13831,8 @@
         }
       ]
     },
-    "intent_template_id": 330
+    "intent_template_id": 330,
+    "read_only": false
   },
   {
     "sites": [
@@ -14271,7 +14420,8 @@
         }
       ]
     },
-    "intent_template_id": 84
+    "intent_template_id": 84,
+    "read_only": false
   },
   {
     "sites": [
@@ -14313,7 +14463,8 @@
         }
       ]
     },
-    "intent_template_id": 84
+    "intent_template_id": 84,
+    "read_only": false
   },
   {
     "sites": [
@@ -14355,7 +14506,8 @@
         }
       ]
     },
-    "intent_template_id": 84
+    "intent_template_id": 84,
+    "read_only": false
   },
   {
     "sites": [
@@ -14397,7 +14549,8 @@
         }
       ]
     },
-    "intent_template_id": 84
+    "intent_template_id": 84,
+    "read_only": false
   },
   {
     "sites": [
@@ -14445,7 +14598,8 @@
         }
       ]
     },
-    "intent_template_id": 87
+    "intent_template_id": 87,
+    "read_only": false
   },
   {
     "sites": [
@@ -14487,7 +14641,8 @@
         }
       ]
     },
-    "intent_template_id": 87
+    "intent_template_id": 87,
+    "read_only": false
   },
   {
     "sites": [
@@ -14529,7 +14684,8 @@
         }
       ]
     },
-    "intent_template_id": 87
+    "intent_template_id": 87,
+    "read_only": false
   },
   {
     "sites": [
@@ -14569,7 +14725,8 @@
         }
       ]
     },
-    "intent_template_id": 87
+    "intent_template_id": 87,
+    "read_only": false
   },
   {
     "sites": [
@@ -14610,7 +14767,8 @@
         }
       ]
     },
-    "intent_template_id": 87
+    "intent_template_id": 87,
+    "read_only": false
   },
   {
     "sites": [
@@ -14653,7 +14811,8 @@
         }
       ]
     },
-    "intent_template_id": 87
+    "intent_template_id": 87,
+    "read_only": false
   },
   {
     "sites": [
@@ -14695,7 +14854,8 @@
         }
       ]
     },
-    "intent_template_id": 88
+    "intent_template_id": 88,
+    "read_only": false
   },
   {
     "sites": [
@@ -14736,7 +14896,8 @@
         }
       ]
     },
-    "intent_template_id": 88
+    "intent_template_id": 88,
+    "read_only": false
   },
   {
     "sites": [
@@ -14775,7 +14936,8 @@
         }
       ]
     },
-    "intent_template_id": 88
+    "intent_template_id": 88,
+    "read_only": false
   },
   {
     "sites": [
@@ -14821,7 +14983,8 @@
         }
       ]
     },
-    "intent_template_id": 88
+    "intent_template_id": 88,
+    "read_only": false
   },
   {
     "sites": [
@@ -14865,7 +15028,8 @@
         }
       ]
     },
-    "intent_template_id": 88
+    "intent_template_id": 88,
+    "read_only": false
   },
   {
     "sites": [
@@ -14902,7 +15066,8 @@
         }
       ]
     },
-    "intent_template_id": 293
+    "intent_template_id": 293,
+    "read_only": false
   },
   {
     "sites": [
@@ -14939,7 +15104,8 @@
         }
       ]
     },
-    "intent_template_id": 293
+    "intent_template_id": 293,
+    "read_only": false
   },
   {
     "sites": [
@@ -14976,7 +15142,8 @@
         }
       ]
     },
-    "intent_template_id": 293
+    "intent_template_id": 293,
+    "read_only": false
   },
   {
     "sites": [
@@ -15015,7 +15182,8 @@
         }
       ]
     },
-    "intent_template_id": 293
+    "intent_template_id": 293,
+    "read_only": false
   },
   {
     "sites": [
@@ -15300,7 +15468,8 @@
         }
       ]
     },
-    "intent_template_id": 351
+    "intent_template_id": 351,
+    "read_only": false
   },
   {
     "sites": [
@@ -15349,7 +15518,8 @@
         }
       ]
     },
-    "intent_template_id": 351
+    "intent_template_id": 351,
+    "read_only": false
   },
   {
     "sites": [
@@ -15398,7 +15568,8 @@
         }
       ]
     },
-    "intent_template_id": 351
+    "intent_template_id": 351,
+    "read_only": false
   },
   {
     "sites": [
@@ -15437,7 +15608,8 @@
         }
       ]
     },
-    "intent_template_id": 351
+    "intent_template_id": 351,
+    "read_only": false
   },
   {
     "sites": [
@@ -15990,7 +16162,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 339
+    "intent_template_id": 339,
+    "read_only": false
   },
   {
     "sites": [
@@ -16047,7 +16220,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 339
+    "intent_template_id": 339,
+    "read_only": false
   },
   {
     "sites": [
@@ -16104,7 +16278,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 339
+    "intent_template_id": 339,
+    "read_only": false
   },
   {
     "sites": [
@@ -16161,7 +16336,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 339
+    "intent_template_id": 339,
+    "read_only": false
   },
   {
     "sites": [
@@ -16218,7 +16394,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 339
+    "intent_template_id": 339,
+    "read_only": false
   },
   {
     "sites": [
@@ -18755,7 +18932,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 327
+    "intent_template_id": 327,
+    "read_only": false
   },
   {
     "sites": [
@@ -18811,7 +18989,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 327
+    "intent_template_id": 327,
+    "read_only": false
   },
   {
     "sites": [
@@ -18867,7 +19046,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 327
+    "intent_template_id": 327,
+    "read_only": false
   },
   {
     "sites": [
@@ -18905,7 +19085,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 328
+    "intent_template_id": 328,
+    "read_only": false
   },
   {
     "sites": [
@@ -18943,7 +19124,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 328
+    "intent_template_id": 328,
+    "read_only": false
   },
   {
     "sites": [
@@ -18981,7 +19163,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 328
+    "intent_template_id": 328,
+    "read_only": false
   },
   {
     "sites": [
@@ -19019,7 +19202,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 328
+    "intent_template_id": 328,
+    "read_only": false
   },
   {
     "sites": [
@@ -19057,7 +19241,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 328
+    "intent_template_id": 328,
+    "read_only": false
   },
   {
     "sites": [
@@ -19110,7 +19295,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 335
+    "intent_template_id": 335,
+    "read_only": false
   },
   {
     "sites": [
@@ -19163,7 +19349,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 335
+    "intent_template_id": 335,
+    "read_only": false
   },
   {
     "sites": [
@@ -19216,7 +19403,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 335
+    "intent_template_id": 335,
+    "read_only": false
   },
   {
     "sites": [
@@ -19254,7 +19442,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 337
+    "intent_template_id": 337,
+    "read_only": false
   },
   {
     "sites": [
@@ -19293,7 +19482,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 337
+    "intent_template_id": 337,
+    "read_only": false
   },
   {
     "sites": [
@@ -19762,7 +19952,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 116
+    "intent_template_id": 116,
+    "read_only": false
   },
   {
     "sites": [
@@ -19801,7 +19992,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 116
+    "intent_template_id": 116,
+    "read_only": false
   },
   {
     "sites": [
@@ -19840,7 +20032,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 116
+    "intent_template_id": 116,
+    "read_only": false
   },
   {
     "sites": [
@@ -19880,7 +20073,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 117
+    "intent_template_id": 117,
+    "read_only": false
   },
   {
     "sites": [
@@ -19920,7 +20114,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 117
+    "intent_template_id": 117,
+    "read_only": false
   },
   {
     "sites": [
@@ -19960,7 +20155,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 117
+    "intent_template_id": 117,
+    "read_only": false
   },
   {
     "sites": [
@@ -20000,7 +20196,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 117
+    "intent_template_id": 117,
+    "read_only": false
   },
   {
     "sites": [
@@ -20040,7 +20237,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 117
+    "intent_template_id": 117,
+    "read_only": false
   },
   {
     "sites": [
@@ -22608,7 +22806,8 @@
         }
       ]
     },
-    "intent_template_id": 355
+    "intent_template_id": 355,
+    "read_only": false
   },
   {
     "sites": [
@@ -22654,7 +22853,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -22700,7 +22900,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -22745,7 +22946,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -22792,7 +22994,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -22839,7 +23042,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -22895,7 +23099,8 @@
         }
       ]
     },
-    "intent_template_id": 2100
+    "intent_template_id": 2100,
+    "read_only": false
   },
   {
     "sites": [
@@ -22952,7 +23157,8 @@
         }
       ]
     },
-    "intent_template_id": 2100
+    "intent_template_id": 2100,
+    "read_only": false
   },
   {
     "sites": [
@@ -23009,7 +23215,8 @@
         }
       ]
     },
-    "intent_template_id": 2100
+    "intent_template_id": 2100,
+    "read_only": false
   },
   {
     "sites": [
@@ -23064,7 +23271,8 @@
         }
       ]
     },
-    "intent_template_id": 2100
+    "intent_template_id": 2100,
+    "read_only": false
   },
   {
     "sites": [
@@ -23120,7 +23328,8 @@
         }
       ]
     },
-    "intent_template_id": 2100
+    "intent_template_id": 2100,
+    "read_only": false
   },
   {
     "sites": [
@@ -23165,7 +23374,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -23210,7 +23420,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -23255,7 +23466,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -23300,7 +23512,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -23345,7 +23558,8 @@
         }
       ]
     },
-    "intent_template_id": 332
+    "intent_template_id": 332,
+    "read_only": false
   },
   {
     "sites": [
@@ -24072,7 +24286,8 @@
       "string_note": "not the owner of the repo so cannot add maintainer",
       "reference_answer_raw_annotation": "N/A"
     },
-    "intent_template_id": 351
+    "intent_template_id": 351,
+    "read_only": false
   },
   {
     "sites": [
@@ -24104,7 +24319,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "secupwn@users.noreply.github.com"
     },
-    "intent_template_id": 316
+    "intent_template_id": 316,
+    "read_only": false
   },
   {
     "sites": [
@@ -24136,7 +24352,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "secupwn@users.noreply.github.com"
     },
-    "intent_template_id": 316
+    "intent_template_id": 316,
+    "read_only": true
   },
   {
     "sites": [
@@ -24160,7 +24377,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "412"
+          "414"
         ]
       },
       "reference_url": "",
@@ -24168,7 +24385,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "412"
     },
-    "intent_template_id": 316
+    "intent_template_id": 316,
+    "read_only": true
   },
   {
     "sites": [
@@ -24200,7 +24418,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "0"
     },
-    "intent_template_id": 316
+    "intent_template_id": 316,
+    "read_only": true
   },
   {
     "sites": [
@@ -24235,7 +24454,8 @@
       "string_note": "",
       "reference_answer_raw_annotation": "Andrew M. Whalen, amwhalen, Massachusetts, github@amwhalen.com"
     },
-    "intent_template_id": 316
+    "intent_template_id": 316,
+    "read_only": true
   },
   {
     "sites": [
@@ -24265,7 +24485,8 @@
       "string_note": "huggingface repo does not exist",
       "reference_answer_raw_annotation": "N/A"
     },
-    "intent_template_id": 328
+    "intent_template_id": 328,
+    "read_only": false
   },
   {
     "sites": [
@@ -24326,7 +24547,8 @@
       "string_note": "the subreddit does not exist",
       "reference_answer_raw_annotation": "N/A"
     },
-    "intent_template_id": 84
+    "intent_template_id": 84,
+    "read_only": false
   },
   {
     "sites": [
@@ -24570,7 +24792,8 @@
         }
       ]
     },
-    "intent_template_id": 600
+    "intent_template_id": 600,
+    "read_only": false
   },
   {
     "sites": [
@@ -24610,7 +24833,8 @@
         }
       ]
     },
-    "intent_template_id": 600
+    "intent_template_id": 600,
+    "read_only": false
   },
   {
     "sites": [
@@ -24649,7 +24873,8 @@
         }
       ]
     },
-    "intent_template_id": 600
+    "intent_template_id": 600,
+    "read_only": false
   },
   {
     "sites": [
@@ -24686,7 +24911,8 @@
         }
       ]
     },
-    "intent_template_id": 600
+    "intent_template_id": 600,
+    "read_only": false
   },
   {
     "sites": [
@@ -24723,7 +24949,8 @@
         }
       ]
     },
-    "intent_template_id": 600
+    "intent_template_id": 600,
+    "read_only": false
   },
   {
     "sites": [
@@ -24770,7 +24997,8 @@
         }
       ]
     },
-    "intent_template_id": 999
+    "intent_template_id": 999,
+    "read_only": false
   },
   {
     "sites": [
@@ -24824,7 +25052,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 335
+    "intent_template_id": 335,
+    "read_only": false
   },
   {
     "sites": [
@@ -24877,7 +25106,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 335
+    "intent_template_id": 335,
+    "read_only": false
   },
   {
     "sites": [
@@ -24930,7 +25160,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 335
+    "intent_template_id": 335,
+    "read_only": false
   },
   {
     "sites": [
@@ -24986,7 +25217,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 327
+    "intent_template_id": 327,
+    "read_only": false
   },
   {
     "sites": [
@@ -25042,7 +25274,8 @@
       ],
       "url_note": "GOLD in PRED"
     },
-    "intent_template_id": 327
+    "intent_template_id": 327,
+    "read_only": false
   },
   {
     "sites": [
@@ -25080,7 +25313,8 @@
         }
       ]
     },
-    "intent_template_id": 999
+    "intent_template_id": 999,
+    "read_only": false
   },
   {
     "sites": [
@@ -25117,6 +25351,7 @@
         }
       ]
     },
-    "intent_template_id": 999
+    "intent_template_id": 999,
+    "read_only": false
   }
 ]

@@ -43,11 +43,11 @@ def acquire_worker(task_id: str) -> dict:
     return data
 
 
-def release_worker(worker_id: int):
-    subprocess.run(
-        ["ssh", SERVER, f"python3 {ORCH} release --worker-id {worker_id}"],
-        check=False
-    )
+def release_worker(worker_id: int, read_only: bool = False):
+    cmd = f"python3 {ORCH} release --worker-id {worker_id}"
+    if read_only:
+        cmd += " --read-only"
+    subprocess.run(["ssh", SERVER, cmd], check=False)
 
 
 def wait_for_gitlab(gitlab_url: str, timeout: int = 120, interval: int = 5) -> None:
@@ -106,6 +106,7 @@ async def worker_session(
     max_attempts: int = 10,
     wait: int = 15,
     acquire_lock: Optional[asyncio.Lock] = None,
+    read_only: bool = False,
 ):
     """
     Async context manager that handles the full worker lifecycle:
@@ -128,6 +129,7 @@ async def worker_session(
         max_attempts: Passed to acquire_worker_with_retry.
         wait:         Seconds between retry attempts.
         acquire_lock: Optional asyncio.Lock passed to acquire_worker_with_retry.
+        read_only:    If True, passes --read-only to the orchestrator on release. #prevents restart of docker if no write into server
     """
     # Import here to avoid a circular import at module load time.
     from eval.docker.gitlab_init import get_glpat
@@ -139,7 +141,7 @@ async def worker_session(
     gitlab_url = worker["gitlab_url"]
 
     try:
-        print(f"  Acquired worker {worker_id}: {gitlab_url}")
+        print(f" Acquired worker {worker_id} → task {task_id} ({gitlab_url})")
 
         print(f"  Waiting for GitLab on worker {worker_id} to be ready...")
         await asyncio.to_thread(wait_for_gitlab, gitlab_url)
@@ -152,4 +154,4 @@ async def worker_session(
 
     finally:
         print(f"  Releasing worker {worker_id}")
-        release_worker(worker_id)
+        release_worker(worker_id, read_only=read_only)
