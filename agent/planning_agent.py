@@ -357,7 +357,7 @@ class PlanningAgent:
         if not lines:
             return ""
         return (
-            "\nCurrent user context (use these values directly if needed for current user context):\n"
+            "\nCurrent user context (use these values directly (if needed) for tasks that contain me/mine/my etc.):\n"
             + "\n".join(lines) + "\n"
         )
 

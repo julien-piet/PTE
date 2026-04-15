@@ -101,6 +101,12 @@ def pytest_addoption(parser):
             "would cause tasks to fail. Has no effect when --no-reset is set."
         ),
     )
+    parser.addoption(
+        "--task-id",
+        type=int,
+        default=None,
+        help="Run only the task with this numeric task_id (e.g. --task-id 136).",
+    )
 
 
 # ---------------------------------------------------------------------------
