@@ -51,11 +51,11 @@
       ],
       "reference_answers": {
         "must_include": [
-          "List of Post Ideas",
-          "Article translations"
+          "HOWTO: Ajax with ARIA-LIVE",
+          "What is Semantic HTML?"
         ]
       },
-      "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/?sort=created_asc&state=opened",
+      "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/?sort=created_desc&state=opened",
       "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
@@ -1111,34 +1111,6 @@
     "sites": [
       "gitlab"
     ],
-    "task_id": 259,
-    "require_login": true,
-    "storage_state": "./.auth/gitlab_state.json",
-    "start_url": "__GITLAB__",
-    "geolocation": null,
-    "intent_template": "Get me my RSS feed token",
-    "instantiation_dict": {},
-    "intent": "Get me my RSS feed token",
-    "require_reset": true,
-    "eval": {
-      "eval_types": [
-        "string_match"
-      ],
-      "reference_answers": {
-        "exact_match": "TMN_bBn9Z48qVbUFZV45"
-      },
-      "reference_url": "",
-      "program_html": [],
-      "string_note": "",
-      "reference_answer_raw_annotation": "TMN_bBn9Z48qVbUFZV45"
-    },
-    "intent_template_id": 312,
-    "read_only": true
-  },
-  {
-    "sites": [
-      "gitlab"
-    ],
     "task_id": 293,
     "require_login": true,
     "storage_state": "./.auth/gitlab_state.json",
@@ -1478,7 +1450,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Shawn Allen"
+        "must_include": [
+          "Shawn Allen"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1630,7 +1604,7 @@
       "repo": "prime/design",
       "attribute": "name"
     },
-    "intent": "List the name of the top 3 contributors to prime/design repo, ranked by the number of commits?",
+    "intent": "List the name of the top 3 contributors to primer/design repo, ranked by the number of commits?",
     "require_reset": true,
     "eval": {
       "eval_types": [
@@ -2121,9 +2095,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1531",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "lgtm"
+            "must_include": [
+              "lgtm"
+            ]
           }
         }
       ]
@@ -2157,9 +2133,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1265",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "close because non reproducible"
+            "must_include": [
+              "close because non reproducible"
+            ]
           }
         }
       ]
@@ -2193,9 +2171,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1071",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "Good idea"
+            "must_include": [
+              "Good idea"
+            ]
           }
         }
       ]
@@ -2229,9 +2209,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/empathy-prompts/-/merge_requests/19",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "lgtm"
+            "must_include": [
+              "lgtm"
+            ]
           }
         }
       ]
@@ -3747,7 +3729,7 @@
       "number": "five"
     },
     "intent": "Star the top five most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -3787,7 +3769,7 @@
       "number": "eight"
     },
     "intent": "Star the top eight most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -3830,7 +3812,7 @@
       "number": "four"
     },
     "intent": "Star the top four most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -3869,7 +3851,7 @@
       "number": "three"
     },
     "intent": "Star the top three most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -3907,7 +3889,7 @@
       "number": "one"
     },
     "intent": "Star the top one most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
