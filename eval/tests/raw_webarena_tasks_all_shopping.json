@@ -2190,9 +2190,9 @@
     "intent_template": "Show me products under ${{price}} in \"{{product_category}}\" category",
     "instantiation_dict": {
       "price": "199",
-      "product_category": "furtiture with accent"
+      "product_category": "furniture with accent"
     },
-    "intent": "Show me products under $199 in \"furtiture with accent\" category",
+    "intent": "Show me products under $199 in \"furniture with accent\" category",
     "require_reset": false,
     "eval": {
       "eval_types": [
