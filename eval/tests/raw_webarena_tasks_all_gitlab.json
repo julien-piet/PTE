@@ -1096,7 +1096,7 @@
       "reference_answers": {
         "must_include": [
           "a11yproject.com",
-          "primer/design"
+          ["primer/design", "design"]
         ]
       },
       "reference_url": "__GITLAB__/explore",
@@ -1409,9 +1409,9 @@
     "intent_template": "How many commits did {{user}} make {{period}}?",
     "instantiation_dict": {
       "user": "Nic",
-      "period": "in April 2021"
+      "period": "in April 2022"
     },
-    "intent": "How many commits did Nic make in April 2021?",
+    "intent": "How many commits did Nic make in April 2022?",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2569,12 +2569,12 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__GITLAB__/byteblaze/dotfiles/-/blob/main/LICENSE",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/raw/main/LICENSE",
           "locator": "",
           "required_contents": {
             "must_include": [
-              "MIT license",
-              "The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software."
+              "MIT",
+              "Permission is hereby granted"
             ]
           }
         }
@@ -5051,7 +5051,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -7035,7 +7035,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [

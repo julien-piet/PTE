@@ -411,53 +411,57 @@ class ProgramHtmlEvaluator:
 
     def _gitlab_get_project_member_role(self, page: Page, username: str) -> str:
         """
-        Extract the role of a project member from the GitLab members page.
+        Extract the role of a project member using the GitLab REST API.
 
-        Expects the page to already be on the project members URL
-        (i.e. the url field in the same entry navigated there first).
+        Called after navigating to the project members page, so the browser
+        session is already authenticated. Uses fetch() in page context to call
+        the members API — this avoids DOM/pagination fragility entirely.
+
+        Access level → role name mapping (GitLab standard):
+          10 → Guest, 20 → Reporter, 30 → Developer,
+          40 → Maintainer, 50 → Owner
         """
-        # The members page lists rows with username and role cells.
-        # Try to find the row for the given username.
-        role_text = page.evaluate(
-            """
-            (username) => {
-                const rows = document.querySelectorAll('tr');
-                for (const row of rows) {
-                    const cells = row.querySelectorAll('td');
-                    for (const cell of cells) {
-                        if (cell.textContent.trim().toLowerCase() === username.toLowerCase()) {
-                            // Role is typically in the last or second-to-last cell
-                            const allCells = Array.from(cells);
-                            const lastCell = allCells[allCells.length - 1];
-                            if (lastCell) return lastCell.textContent.trim();
-                        }
-                    }
-                }
-                return null;
-            }
-            """,
-            username,
-        )
-        if role_text:
-            return role_text
+        ACCESS_LEVEL_NAMES = {
+            10: "Guest",
+            20: "Reporter",
+            30: "Developer",
+            40: "Maintainer",
+            50: "Owner",
+        }
 
-        # Fallback: search for a select or badge element near the username
-        fallback = page.evaluate(
+        # Extract project path from the current URL.
+        # URL pattern: /namespace/project/-/project_members
+        current_url = page.url
+        path = current_url.split("//", 1)[-1].split("/", 1)[-1]  # strip origin
+        # Drop everything from "/-/" onward
+        project_path = path.split("/-/")[0].strip("/")
+
+        encoded_path = project_path.replace("/", "%2F")
+        api_url = f"/api/v4/projects/{encoded_path}/members/all?query={username}&per_page=100"
+
+        result = page.evaluate(
             """
-            (username) => {
-                const el = Array.from(document.querySelectorAll('*')).find(
-                    e => e.textContent.trim() === username && e.tagName !== 'SCRIPT'
-                );
-                if (!el) return null;
-                const row = el.closest('tr');
-                if (!row) return null;
-                const badge = row.querySelector('.badge, .role, [data-role], select option[selected]');
-                return badge ? badge.textContent.trim() : null;
+            async (apiUrl) => {
+                try {
+                    const r = await fetch(apiUrl, {credentials: 'include'});
+                    if (!r.ok) return null;
+                    const members = await r.json();
+                    return members;
+                } catch (e) {
+                    return null;
+                }
             }
             """,
-            username,
+            api_url,
         )
-        return fallback or ""
+
+        if result and isinstance(result, list):
+            for member in result:
+                if member.get("username", "").lower() == username.lower():
+                    level = member.get("access_level")
+                    return ACCESS_LEVEL_NAMES.get(level, str(level))
+
+        return ""
 
     # ------------------------------------------------------------------
     # Content checking
