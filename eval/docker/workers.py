@@ -43,9 +43,22 @@ def acquire_worker(task_id: str) -> dict:
     return data
 
 
-def release_worker(worker_id: int, read_only: bool = False):
+def release_worker(worker_id: int, read_only: bool = False, force_restart: Optional[bool] = None):
+    """
+    Release a worker back to the orchestrator.
+
+    Args:
+        worker_id:     The worker to release.
+        read_only:     If True, passes --read-only so the instance is not restarted.
+        force_restart: If set, overrides read_only logic entirely.
+                       True  → always restart the instance on release.
+                       False → never restart the instance on release (same as read_only=True).
+    """
     cmd = f"python3 {ORCH} release --worker-id {worker_id}"
-    if read_only:
+    if force_restart is not None:
+        if not force_restart:
+            cmd += " --read-only"
+    elif read_only:
         cmd += " --read-only"
     subprocess.run(["ssh", SERVER, cmd], check=False)
 
@@ -107,6 +120,7 @@ async def worker_session(
     wait: int = 15,
     acquire_lock: Optional[asyncio.Lock] = None,
     read_only: bool = False,
+    force_restart: Optional[bool] = None,
 ):
     """
     Async context manager that handles the full worker lifecycle:
@@ -125,11 +139,14 @@ async def worker_session(
             ...
 
     Args:
-        task_id:      Task identifier passed to the orchestrator.
-        max_attempts: Passed to acquire_worker_with_retry.
-        wait:         Seconds between retry attempts.
-        acquire_lock: Optional asyncio.Lock passed to acquire_worker_with_retry.
-        read_only:    If True, passes --read-only to the orchestrator on release. #prevents restart of docker if no write into server
+        task_id:       Task identifier passed to the orchestrator.
+        max_attempts:  Passed to acquire_worker_with_retry.
+        wait:          Seconds between retry attempts.
+        acquire_lock:  Optional asyncio.Lock passed to acquire_worker_with_retry.
+        read_only:     If True, passes --read-only so the instance is not restarted on release.
+        force_restart: If set, overrides read_only entirely.
+                       True  → always restart on release.
+                       False → never restart on release.
     """
     # Import here to avoid a circular import at module load time.
     from eval.docker.gitlab_init import get_glpat
@@ -154,4 +171,4 @@ async def worker_session(
 
     finally:
         print(f"  Releasing worker {worker_id}")
-        release_worker(worker_id, read_only=read_only)
+        release_worker(worker_id, read_only=read_only, force_restart=force_restart)

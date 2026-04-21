@@ -103,9 +103,9 @@ def pytest_addoption(parser):
     )
     parser.addoption(
         "--task-id",
-        type=int,
+        type=str,
         default=None,
-        help="Run only the task with this numeric task_id (e.g. --task-id 136).",
+        help="Run only the task(s) with these numeric task_ids, comma-separated (e.g. --task-id 136 or --task-id 136,389,412).",
     )
 
 

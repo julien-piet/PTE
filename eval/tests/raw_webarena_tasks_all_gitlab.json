@@ -51,11 +51,11 @@
       ],
       "reference_answers": {
         "must_include": [
-          "List of Post Ideas",
-          "Article translations"
+          "HOWTO: Ajax with ARIA-LIVE",
+          "What is Semantic HTML?"
         ]
       },
-      "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/?sort=created_asc&state=opened",
+      "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/?sort=created_desc&state=opened",
       "program_html": [],
       "url_note": "GOLD in PRED",
       "string_note": "",
@@ -1096,7 +1096,10 @@
       "reference_answers": {
         "must_include": [
           "a11yproject.com",
-          "primer/design"
+          [
+            "primer/design",
+            "design"
+          ]
         ]
       },
       "reference_url": "__GITLAB__/explore",
@@ -1105,34 +1108,6 @@
       "string_note": "",
       "reference_answer_raw_annotation": ""
     },
-    "read_only": true
-  },
-  {
-    "sites": [
-      "gitlab"
-    ],
-    "task_id": 259,
-    "require_login": true,
-    "storage_state": "./.auth/gitlab_state.json",
-    "start_url": "__GITLAB__",
-    "geolocation": null,
-    "intent_template": "Get me my RSS feed token",
-    "instantiation_dict": {},
-    "intent": "Get me my RSS feed token",
-    "require_reset": true,
-    "eval": {
-      "eval_types": [
-        "string_match"
-      ],
-      "reference_answers": {
-        "exact_match": "TMN_bBn9Z48qVbUFZV45"
-      },
-      "reference_url": "",
-      "program_html": [],
-      "string_note": "",
-      "reference_answer_raw_annotation": "TMN_bBn9Z48qVbUFZV45"
-    },
-    "intent_template_id": 312,
     "read_only": true
   },
   {
@@ -1437,9 +1412,9 @@
     "intent_template": "How many commits did {{user}} make {{period}}?",
     "instantiation_dict": {
       "user": "Nic",
-      "period": "in April 2021"
+      "period": "in April 2022"
     },
-    "intent": "How many commits did Nic make in April 2021?",
+    "intent": "How many commits did Nic make in April 2022?",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -1478,7 +1453,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Shawn Allen"
+        "must_include": [
+          "Shawn Allen"
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1627,10 +1604,10 @@
     "geolocation": null,
     "intent_template": "List the {{attribute}} of the top 3 contributors to {{repo}} repo, ranked by the number of commits?",
     "instantiation_dict": {
-      "repo": "prime/design",
+      "repo": "primer/design",
       "attribute": "name"
     },
-    "intent": "List the name of the top 3 contributors to prime/design repo, ranked by the number of commits?",
+    "intent": "List the name of the top 3 contributors to primer/design repo, ranked by the number of commits?",
     "require_reset": true,
     "eval": {
       "eval_types": [
@@ -2121,9 +2098,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1531",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "lgtm"
+            "must_include": [
+              "lgtm"
+            ]
           }
         }
       ]
@@ -2157,9 +2136,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1265",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "close because non reproducible"
+            "must_include": [
+              "close because non reproducible"
+            ]
           }
         }
       ]
@@ -2193,9 +2174,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1071",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "Good idea"
+            "must_include": [
+              "Good idea"
+            ]
           }
         }
       ]
@@ -2229,9 +2212,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/empathy-prompts/-/merge_requests/19",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "lgtm"
+            "must_include": [
+              "lgtm"
+            ]
           }
         }
       ]
@@ -2587,12 +2572,12 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__GITLAB__/byteblaze/dotfiles/-/blob/main/LICENSE",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/raw/main/LICENSE",
           "locator": "",
           "required_contents": {
             "must_include": [
-              "MIT license",
-              "The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software."
+              "MIT",
+              "Permission is hereby granted"
             ]
           }
         }
@@ -3747,7 +3732,7 @@
       "number": "five"
     },
     "intent": "Star the top five most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -3787,7 +3772,7 @@
       "number": "eight"
     },
     "intent": "Star the top eight most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -3830,7 +3815,7 @@
       "number": "four"
     },
     "intent": "Star the top four most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -3869,7 +3854,7 @@
       "number": "three"
     },
     "intent": "Star the top three most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -3907,7 +3892,7 @@
       "number": "one"
     },
     "intent": "Star the top one most stared repos in Gitlab",
-    "require_reset": false,
+    "require_reset": true,
     "eval": {
       "eval_types": [
         "program_html"
@@ -4773,7 +4758,7 @@
       "reference_url": "__GITLAB__/primer/design/-/milestones",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector(\"#content-body\").outerText",
           "required_contents": {
             "must_include": [
@@ -4782,7 +4767,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -4791,7 +4776,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -4832,7 +4817,7 @@
       "reference_url": "__GITLAB__/primer/design/-/milestones",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector(\"#content-body\").outerText",
           "required_contents": {
             "must_include": [
@@ -4841,7 +4826,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -4850,7 +4835,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -4891,7 +4876,7 @@
       "reference_url": "__GITLAB__/primer/design/-/milestones",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector(\"#content-body\").outerText",
           "required_contents": {
             "must_include": [
@@ -4900,7 +4885,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -4909,7 +4894,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -4950,7 +4935,7 @@
       "reference_url": "__GITLAB__/byteblaze/dotfiles/-/milestones",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/milestones",
           "locator": "document.querySelector(\"#content-body\").outerText",
           "required_contents": {
             "must_include": [
@@ -4959,7 +4944,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -4968,7 +4953,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5009,7 +4994,7 @@
       "reference_url": "__GITLAB__/byteblaze/dotfiles/-/milestones",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/milestones",
           "locator": "document.querySelector(\"#content-body\").outerText",
           "required_contents": {
             "must_include": [
@@ -5018,7 +5003,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5027,7 +5012,7 @@
           }
         },
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/milestones",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5069,7 +5054,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5111,7 +5096,7 @@
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/empathy-prompts/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5153,7 +5138,7 @@
       "reference_url": "__GITLAB__/byteblaze/dotfiles/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5193,7 +5178,7 @@
       "reference_url": "__GITLAB__/convexegg/chatgpt/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/convexegg/chatgpt/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5233,7 +5218,7 @@
       "reference_url": "__GITLAB__/0ang3el/aem-hacker/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/0ang3el/aem-hacker/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5273,7 +5258,7 @@
       "reference_url": "__GITLAB__/root/metaseq/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/root/metaseq/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5313,7 +5298,7 @@
       "reference_url": "__GITLAB__/vinta/awesome-python/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/vinta/awesome-python/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5353,7 +5338,7 @@
       "reference_url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5394,7 +5379,7 @@
       "reference_url": "__GITLAB__/primer/design/-/merge_requests",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/merge_requests",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5435,7 +5420,7 @@
       "reference_url": "__GITLAB__/primer/design/-/merge_requests",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/merge_requests",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5476,7 +5461,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5515,7 +5500,7 @@
       "reference_url": "__GITLAB__/byteblaze/solarized-prism-theme/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/solarized-prism-theme/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -5555,7 +5540,7 @@
       "reference_url": "__GITLAB__/byteblaze/dotfiles/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/dotfiles/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -6887,7 +6872,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -6928,7 +6913,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -6969,7 +6954,7 @@
       "reference_url": "__GITLAB__/primer/design/-/merge_requests",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/primer/design/-/merge_requests",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -7011,7 +6996,7 @@
       "reference_url": "__GITLAB__/byteblaze/cloud-to-butt/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/byteblaze/cloud-to-butt/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -7053,7 +7038,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
       "program_html": [
         {
-          "url": "last",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [

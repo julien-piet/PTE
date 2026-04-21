@@ -160,6 +160,13 @@ For Project Templates. Use this json schema to search through available built-in
 
 {json.dumps(project_templates, indent=2)}
 
+When finding repositories a user contributed to:                                                                                                                   
+- "Contributions" include commits pushed to projects the user does NOT own or have membership in (e.g. forks, external repos they pushed to).                      
+- `GET /events` only returns recent activity and may miss older or less-active contributions.                                                                      
+- `GET /users/{{user_id}}/projects` and `GET /projects?membership=true` only return repos the user owns or is a member of — these WILL miss                          
+contributed-but-not-joined repos.                                                                                                                                  
+- To find all contributed repos, use `GET /projects/{{id}}/repository/contributors` on candidate projects, or check `GET /users/{{user_id}}/contributed_projects` which
+returns projects the user has pushed commits to regardless of membership.                                                                                         
 """
 
 SHOPPING_HINTS = """

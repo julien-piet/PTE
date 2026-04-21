@@ -16,6 +16,9 @@
 # Single task by ID:
 #   python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-id 389 -v -s
 #
+# Multiple tasks by ID:
+#   python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-id 389,412,500 -v -s
+#
 # Save results to a JSON log:
 #   python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --output gitlab_results.json
 #
@@ -71,7 +74,8 @@ def _load_tasks(config=None) -> List[Dict[str, Any]]:
     if config is not None:
         task_id = config.getoption("--task-id", default=None)
         if task_id is not None:
-            tasks = [t for t in tasks if t.get("task_id") == task_id]
+            ids = {int(x.strip()) for x in task_id.split(",")}
+            tasks = [t for t in tasks if t.get("task_id") in ids]
         else:
             limit = config.getoption("--task-limit", default=None)
             if limit is not None:
@@ -146,6 +150,8 @@ def test_agent_accomplishes_gitlab_tasks(
 
     async def run_all() -> tuple:
         sem = asyncio.Semaphore(n_workers)
+        remaining = len(tasks)
+        remaining_lock = asyncio.Lock()
 
         async def run_one(task: Dict[str, Any]) -> Dict[str, Any]:
             async with sem:
@@ -154,6 +160,7 @@ def test_agent_accomplishes_gitlab_tasks(
                         str(task["task_id"]),
                         acquire_lock=acquire_lock,
                         read_only=task.get("read_only", False),
+                        force_restart=False ##try so no cold container
                     ) as w:
                         runner = AgentRunner(
                             headless=True,
@@ -173,6 +180,11 @@ def test_agent_accomplishes_gitlab_tasks(
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 
                         passed, agent_result, error, html_detail = await runner.run_agent_on_task(task)
+
+                        async with remaining_lock:
+                            nonlocal remaining
+                            remaining -= 1
+                            print(f"\n[{remaining} tasks remaining] Task {task['task_id']} done ({'PASS' if passed and not error else 'FAIL'})")
 
                         # Capture execution details for structured logging, even on failure.
                         plan_steps = None
@@ -238,7 +250,15 @@ def test_agent_accomplishes_gitlab_tasks(
     try:
         results, interrupted = session_event_loop.run_until_complete(run_all())
     except KeyboardInterrupt:
-        results, interrupted = [], True
+        # Cancel all pending tasks and collect whatever already completed.
+        print("\nKeyboardInterrupt — collecting partial results...")
+        for task in asyncio.all_tasks(session_event_loop):
+            task.cancel()
+        all_done = session_event_loop.run_until_complete(
+            asyncio.gather(*asyncio.all_tasks(session_event_loop), return_exceptions=True)
+        )
+        results = [r for r in all_done if isinstance(r, dict)]
+        interrupted = True
 
     failures = []
     for r in results:
@@ -287,6 +307,11 @@ def test_agent_accomplishes_gitlab_tasks(
             out_path.write_text(_json.dumps(summary, indent=2))
             print(f"\n📄 Partial results ({len(result_log)} tasks) written to {out_path}")
         pytest.exit("Interrupted by user", returncode=1)
+
+    total = len(results)
+    passed_count = sum(1 for r in results if r["passed"] and not r["error"])
+    failed_count = total - passed_count
+    print(f"\nResults: {passed_count}/{total} passed, {failed_count}/{total} failed")
 
     if failures:
         pytest.fail("\n\n".join(failures))

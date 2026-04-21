@@ -5,11 +5,12 @@ shared_env_path: config/.sharedenv
 server_env_path: config/.server_env
 
 # agent_llm_provider: google-gla
-# agent_llm_model: gemini-2.5-flash
+# agent_llm_model: gemini-3-pro-preview
 agent_llm_provider: anthropic
-agent_llm_model: claude-opus-4-6
+agent_llm_model: claude-sonnet-4-6
+# agent_llm_model: claude-opus-4-6
 # agent_llm_provider: openai
-# agent_llm_model: gpt-5-mini
+# agent_llm_model: gpt-5.4
 
 # agent_llm_provider: google
 # agent_llm_model: gemini-2.5-flash
@@ -20,19 +21,16 @@ llm_access_retry: 3
 
 llm_providers:
  openai:
-  - model: gpt-5
+  - model: gpt-5.4-mini
     temp: 0.0
 
   - model: gpt-5-mini
     temp: 0.0
 
-  - model: gpt-5-nano
+  - model: gpt-5.4
     temp: 0.0
 
-  - model: gpt-4.1
-    temp: 0.0
-
-  - model: gpt-4o
+  - model: gpt-5.3-codex
     temp: 0.0
 
  anthropic:
@@ -60,13 +58,5 @@ llm_providers:
     temp: 0.0
   - model: gemini-1.5-pro
     temp: 0.0
-  - model: gemini-0.0-pro
-    temp: 0.0
-  - model: text-bison
-    temp: 0.0
-  - model: chat-bison
-    temp: 0.0
-  - model: gemini-2.5-flash
-    temp: 0.0
-  - model: gemini-2.5-flash-lite
-    temp: 0.0
+
+
