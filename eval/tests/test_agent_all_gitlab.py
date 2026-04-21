@@ -16,6 +16,9 @@
 # Single task by ID:
 #   python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-id 389 -v -s
 #
+# Multiple tasks by ID:
+#   python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-id 389,412,500 -v -s
+#
 # Save results to a JSON log:
 #   python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --output gitlab_results.json
 #
@@ -71,7 +74,8 @@ def _load_tasks(config=None) -> List[Dict[str, Any]]:
     if config is not None:
         task_id = config.getoption("--task-id", default=None)
         if task_id is not None:
-            tasks = [t for t in tasks if t.get("task_id") == task_id]
+            ids = {int(x.strip()) for x in task_id.split(",")}
+            tasks = [t for t in tasks if t.get("task_id") in ids]
         else:
             limit = config.getoption("--task-limit", default=None)
             if limit is not None:

@@ -4158,9 +4158,40 @@
                 "actions[]": {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "description": "The action to perform. Must be one of: 'create' (create a new file), 'delete' (delete an existing file), 'move' (move/rename a file), 'update' (update the content of an existing file), 'chmod' (change file permissions)."
+                      },
+                      "file_path": {
+                        "type": "string",
+                        "description": "Full path to the file, e.g. 'LICENSE.txt' or 'src/main.py'."
+                      },
+                      "previous_path": {
+                        "type": "string",
+                        "description": "Original file path. Only required for 'move' action."
+                      },
+                      "content": {
+                        "type": "string",
+                        "description": "File content. Required for 'create' and 'update' actions."
+                      },
+                      "encoding": {
+                        "type": "string",
+                        "description": "Encoding of the content. Either 'text' (default) or 'base64'."
+                      },
+                      "last_commit_id": {
+                        "type": "string",
+                        "description": "Last known file commit ID. Optional for 'update', 'move', and 'delete' actions."
+                      },
+                      "execute_filemode": {
+                        "type": "boolean",
+                        "description": "When true sets the file as executable. Only used for 'chmod' action."
+                      }
+                    },
+                    "required": ["action", "file_path"]
                   },
-                  "description": "An array of action hashes to commit as a batch. See the next table for what attributes it can take."
+                  "description": "An array of action objects to commit as a batch. Each object must have 'action' (one of: create, delete, move, update, chmod) and 'file_path'. Use 'update' when the file already exists, 'create' when it does not."
                 },
                 "author_email": {
                   "type": "string",
@@ -24228,6 +24259,13 @@
             "required": false,
             "description": "Return issues for the given scope: created_by_me, assigned_to_me, or all. Defaults to created_by_me for authenticated users.",
             "type": "string"
+          },
+          {
+            "name": "labels",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated list of label names to filter issues by. Label names must match exactly as defined in the project, including case, spaces, and emojis.",
+            "type": "string"
           }
         ],
         "responses": {
@@ -26931,7 +26969,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project (e.g., 42 or namespace/project-name)."
           },
           {
             "name": "with_counts",
@@ -40016,7 +40054,7 @@
     },
     "/users/{user_id}/projects": {
       "get": {
-        "summary": "List user projects",
+        "summary": "List user's owned projects",
         "operationId": "get_users_user_id_projects",
         "tags": [
           "Projects"
@@ -49465,7 +49503,29 @@
         "tags": [
           "Users"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Search for users by name, username, or email"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "description": "Number of results per page (max 100)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "description": "Page number"
+          }
+        ],
         "responses": {
           "401": {
             "description": "Unauthorized"
@@ -49738,14 +49798,19 @@
               "properties": {
                 "emoji": {
                   "type": "string",
-                  "description": "Name of the emoji to use as status. If omitted speech_balloon is used. Emoji name can be one of the specified names in the Gemojione index."
+                  "description": "Name of the emoji to use as status. If omitted, speech_balloon is used. Emoji name can be one of the specified names in the Gemojione index."
                 },
                 "message": {
                   "type": "string",
                   "description": "Message to set as a status. It can also contain emoji codes. Cannot exceed 100 characters."
                 },
+                "availability": {
+                  "type": "string",
+                  "description": "User availability. Only two values are accepted: 'busy' (marks user as busy/unavailable) or empty string/null to unset."
+                },
                 "clear_status_after": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Automatically clear the status after a specified time. Accepted values: '30_minutes', '3_hours', '8_hours', '1_day', '3_days', '7_days', '30_days'."
                 }
               }
             }
@@ -51515,6 +51580,7 @@
     "/users/{id}/memberships": {
       "get": {
         "summary": "User memberships",
+        "description": "REQUIRES ADMIN TOKEN: This endpoint returns 403 Forbidden when called with a regular user token. Only accessible with an admin-level personal access token.",
         "operationId": "get_users_id_memberships",
         "tags": [
           "Users"
@@ -51540,7 +51606,7 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden - returned when called with a non-admin token"
           },
           "404": {
             "description": "Not Found"
