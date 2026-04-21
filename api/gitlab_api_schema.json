@@ -23378,16 +23378,16 @@
               "properties": {
                 "email": {
                   "type": "string",
-                  "description": "The email of the new member or multiple emails separated by commas."
+                  "description": "The email of the new member or multiple emails separated by commas. Required if user_id is not provided."
                 },
                 "user_id": {
                   "type": "string",
-                  "description": "The ID of the new member or multiple IDs separated by commas. Introduced in GitLab 14.10."
+                  "description": "The numeric GitLab user ID of the new member, as a string. Required if email is not provided. Must be passed as a string type."
                 },
                 "access_level": {
                   "type": "integer",
                   "format": "int64",
-                  "description": "A valid access level"
+                  "description": "A valid access level: 10 = Guest, 20 = Reporter, 30 = Developer, 40 = Maintainer, 50 = Owner"
                 },
                 "expires_at": {
                   "type": "string",
@@ -23395,24 +23395,22 @@
                 },
                 "invite_source": {
                   "type": "string",
-                  "description": "The source of the invitation that starts the member creation process. See this issue."
+                  "description": "The source of the invitation that starts the member creation process."
                 },
                 "tasks_to_be_done": {
                   "type": "array",
                   "items": {
                     "type": "string"
                   },
-                  "description": "Tasks the inviter wants the member to focus on. The tasks are added as issues to a specified project. The possible values are: ci, code and issues. If specified, requires tasks_project_id. Introduced in GitLab 14.6"
+                  "description": "Tasks the inviter wants the member to focus on. The possible values are: ci, code and issues. If specified, requires tasks_project_id."
                 },
                 "tasks_project_id": {
                   "type": "integer",
                   "format": "int64",
-                  "description": "The project ID in which to create the task issues. If specified, requires tasks_to_be_done. Introduced in GitLab 14.6"
+                  "description": "The project ID in which to create the task issues. If specified, requires tasks_to_be_done."
                 }
               },
               "required": [
-                "email",
-                "user_id",
                 "access_level"
               ]
             }
@@ -28332,12 +28330,12 @@
               "properties": {
                 "user_id": {
                   "type": "string",
-                  "description": "The user ID of the new member or multiple IDs separated by commas"
+                  "description": "The numeric GitLab user ID of the new member, or multiple IDs separated by commas."
                 },
                 "access_level": {
                   "type": "integer",
                   "format": "int64",
-                  "description": "A valid access level"
+                  "description": "A valid access level: 10 = Guest, 20 = Reporter, 30 = Developer, 40 = Maintainer, 50 = Owner"
                 },
                 "expires_at": {
                   "type": "string",
@@ -49499,6 +49497,7 @@
     "/users": {
       "get": {
         "summary": "For normal users",
+        "description": "Returns a list of users. The response includes only public profile fields: id, username, name, state, avatar_url, web_url.",
         "operationId": "get_users",
         "tags": [
           "Users"
@@ -49614,6 +49613,7 @@
       },
       "put": {
         "summary": "User modification",
+        "description": "REQUIRES ADMIN TOKEN: This endpoint modifies another user's account and returns 403 Forbidden when called with a regular user token. Only accessible with an admin-level personal access token.",
         "operationId": "put_users_id",
         "tags": [
           "Users"
@@ -49645,7 +49645,7 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden - Regular user tokens cannot use this endpoint. Use PUT /user to update your own profile."
           },
           "404": {
             "description": "Not Found"
