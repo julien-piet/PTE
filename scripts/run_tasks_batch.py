@@ -14,7 +14,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from agent.agent import Agent
+from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
+from eval.docker.workers import num_workers, worker_session
 
 
 def _serialize_plan(plan) -> list:
@@ -31,7 +33,6 @@ def _serialize_plan(plan) -> list:
         }
         for step in plan
     ]
-
 
 class TaskBatchRunner:
     """Plans and executes tasks, saving both plan and execution results."""
@@ -59,19 +60,13 @@ class TaskBatchRunner:
         self.task_ids = task_ids
         self.skip_execution = skip_execution
         self.debug = debug
+        self.num_workers = num_workers()
 
-        self.agent: Optional[Agent] = None
         self.results: List[Dict[str, Any]] = []
+        self._acquire_lock: asyncio.Lock = asyncio.Lock()
 
     def initialize(self):
-        print(f"Initializing Agent (server={self.server!r})...")
-        self.agent = Agent(
-            env_file=self.env_file,
-            api_dir=self.api_dir,
-            skip_execution=self.skip_execution,
-            debug=self.debug,
-        )
-        self.agent.initialize(server=self.server)
+        print(f"Config: server={self.server!r}, workers={self.num_workers}")
         print("Agent ready\n")
 
     def load_tasks(self) -> List[Dict[str, Any]]:
@@ -97,6 +92,7 @@ class TaskBatchRunner:
 
         return tasks
 
+    
     async def run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         task_id = task.get("task_id", "unknown")
         intent = task.get("intent", "")
@@ -109,58 +105,142 @@ class TaskBatchRunner:
         print(f"Task {task_id}: {intent}")
         print(f"{'='*70}")
 
-        # ── Plan + Execute ────────────────────────────────────────────────────
+        # Each task gets its own agent to avoid shared mutable state.
+        agent = Agent(
+            env_file=self.env_file,
+            api_dir=self.api_dir,
+            skip_execution=self.skip_execution,
+            debug=self.debug,
+        )
+        agent.initialize({self.server: ""})
+
+        task_result: Optional[Dict[str, Any]] = None
+
         try:
-            result = await self.agent.run_task(prompt)
+            async with worker_session(str(task_id), acquire_lock=self._acquire_lock, read_only=task.get("read_only", False)) as w:
+                worker_id = w["worker_id"]
+                gitlab_url = w["gitlab_url"]
+                glpat = w["glpat"]
+
+                # Inject the worker-specific token into the execution agent.
+                if agent.execution_agent is not None:
+                    agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
+                    agent.execution_agent.task_id = str(task_id)
+
+                # ── Plan + Execute ────────────────────────────────────────────
+                execution_result = await agent.run_task(prompt, servers={self.server: gitlab_url})
+
+                plan_response = agent.last_plan_response
+                plan_steps = _serialize_plan(plan_response.plan)
+                print(pretty_print_plan(plan_response.plan))
+                print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
+
+                if self.skip_execution:
+                    task_result = {
+                        "task_id": task_id,
+                        "intent": intent,
+                        "status": "execution_failed",
+                        "error": "execution skipped (--skip-execution flag)",
+                        "plan": plan_steps,
+                        "plan_step_count": len(plan_steps),
+                        "execution": None,
+                        "worker_id": worker_id,
+                    }
+                else:
+                    print(pretty_print_execution(plan_response.plan, execution_result.answer))
+                    print(f"  ✅ Execution complete ({len(execution_result.outputs)} steps)")
+                    parsed_outputs = (
+                        agent.execution_agent.last_ctx.step_outputs
+                        if agent.execution_agent is not None
+                        else None
+                    )
+                    task_result = {
+                        "task_id": task_id,
+                        "intent": intent,
+                        "status": "success",
+                        "plan": plan_steps,
+                        "plan_step_count": len(plan_steps),
+                        "execution": execution_result.outputs,
+                        "parsed_outputs": parsed_outputs,
+                        "answer": execution_result.answer,
+                        "worker_id": worker_id,
+                    }
+
         except asyncio.TimeoutError:
-            timed_out_during = "planning" if self.agent.last_plan_response is None else "execution"
+            timed_out_during = "planning" if agent.last_plan_response is None else "execution"
             print(f"  ⏱ {timed_out_during.capitalize()} timed out")
-            status = "failed" if timed_out_during == "planning" else "execution_failed"
-            return {"task_id": task_id, "intent": intent, "status": status,
-                    "error": f"{timed_out_during} timeout", "plan": None, "execution": None}
+            ea = agent.execution_agent
+            plan_steps = _serialize_plan(agent.last_plan_response.plan) if agent.last_plan_response else None
+            partial_outputs = ea.last_raw_outputs if ea is not None and hasattr(ea, "last_raw_outputs") else None
+            partial_parsed = ea.last_ctx.step_outputs if ea is not None and hasattr(ea, "last_ctx") else None
+            task_result = {
+                "task_id": task_id,
+                "intent": intent,
+                "status": "failed" if timed_out_during == "planning" else "execution_failed",
+                "error": f"{timed_out_during} timeout",
+                "plan": plan_steps,
+                "plan_step_count": len(plan_steps) if plan_steps else None,
+                "execution": partial_outputs or None,
+                "parsed_outputs": partial_parsed or None,
+                "answer": None,
+                "worker_id": None,
+            }
+
         except Exception as e:
-            if self.agent.last_plan_response is None:
+            if agent.last_plan_response is None:
                 print(f"  ❌ Planning failed: {e}")
-                return {"task_id": task_id, "intent": intent, "status": "failed",
-                        "error": str(e), "plan": None, "execution": None}
-            print(f"  ❌ Execution failed: {e}")
-            plan_response = self.agent.last_plan_response
-            plan_steps = _serialize_plan(plan_response.plan)
-            return {
-                "task_id": task_id, "intent": intent,
-                "status": "execution_failed", "error": str(e),
-                "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
-            }
+                task_result = {
+                    "task_id": task_id,
+                    "intent": intent,
+                    "status": "failed",
+                    "error": str(e),
+                    "plan": None,
+                    "execution": None,
+                    "worker_id": None,
+                }
+            else:
+                print(f"  ❌ Execution failed: {e}")
+                plan_response = agent.last_plan_response
+                plan_steps = _serialize_plan(plan_response.plan)
+                ea = agent.execution_agent
+                partial_outputs = ea.last_raw_outputs if ea is not None else None
+                partial_parsed = ea.last_ctx.step_outputs if ea is not None and hasattr(ea, "last_ctx") else None
+                partial_answer = ea.last_answer if ea is not None and hasattr(ea, "last_answer") and ea.last_answer else None
+                task_result = {
+                    "task_id": task_id,
+                    "intent": intent,
+                    "status": "execution_failed",
+                    "error": str(e),
+                    "plan": plan_steps,
+                    "plan_step_count": len(plan_steps),
+                    "execution": partial_outputs or None,
+                    "parsed_outputs": partial_parsed or None,
+                    "answer": partial_answer,
+                    "worker_id": None,
+                }
 
-        plan_response = self.agent.last_plan_response
-        plan_steps = _serialize_plan(plan_response.plan)
-        print(pretty_print_plan(plan_response.plan))
-        print(f"  ✅ Plan ready ({len(plan_steps)} steps)")
-
-        if self.skip_execution:
-            return {
-                "task_id": task_id, "intent": intent,
-                "status": "execution_failed",
-                "error": "execution skipped (--skip-execution flag)",
-                "plan": plan_steps, "plan_step_count": len(plan_steps), "execution": None,
-            }
-
-        print(pretty_print_execution(plan_response.plan, result.answer))
-        print(f"  ✅ Execution complete ({len(result.outputs)} steps)")
-        return {
-            "task_id": task_id, "intent": intent, "status": "success",
-            "plan": plan_steps, "plan_step_count": len(plan_steps),
-            "execution": result.outputs, "answer": result.answer,
-        }
+        return task_result
 
     async def run_all(self):
         tasks = self.load_tasks()
-        print(f"\nStarting batch run of {len(tasks)} tasks\n" + "=" * 70)
+        print(f"\nStarting batch run of {len(tasks)} tasks ({self.num_workers} workers)\n" + "=" * 70)
 
-        for i, task in enumerate(tasks, 1):
-            print(f"\n[{i}/{len(tasks)}]", end=" ")
-            result = await self.run_task(task)
-            self.results.append(result)
+        sem = asyncio.Semaphore(self.num_workers)
+
+        async def run_with_sem(task):
+            async with sem:
+                return await self.run_task(task)
+
+        futures = [asyncio.ensure_future(run_with_sem(t)) for t in tasks]
+        try:
+            self.results = list(await asyncio.gather(*futures))
+        except BaseException:
+            # Cancel all outstanding tasks so their finally blocks fire and
+            # release any acquired workers before we propagate the exception.
+            for f in futures:
+                f.cancel()
+            await asyncio.gather(*futures, return_exceptions=True)
+            raise
 
         print("\n" + "=" * 70)
 
@@ -215,11 +295,11 @@ async def main():
         description="Plan and execute batch tasks using PlanningAgent + ExecutionAgent"
     )
     parser.add_argument(
-        "--tasks-file", default="gitlab_tasks.json",
+        "--tasks-file", default="test_files/gitlab_tasks.json",
         help="Path to tasks JSON file (default: gitlab_tasks.json)"
     )
     parser.add_argument(
-        "--output", "-o", dest="output_file", default="task_results.json",
+        "--output", "-o", dest="output_file", default="logs/task_results.json",
         help="Path to save results JSON file (default: task_results.json)"
     )
     parser.add_argument(
@@ -254,7 +334,6 @@ async def main():
         "--debug", action="store_true",
         help="Print curl commands and raw responses for each step"
     )
-
     args = parser.parse_args()
 
     try:
@@ -277,7 +356,7 @@ async def main():
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user")
-        sys.exit(1)
+        raise
     except Exception as e:
         print(f"\n❌ Batch run failed: {e}")
         import traceback

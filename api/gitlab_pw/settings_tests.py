@@ -21,7 +21,7 @@ sys.modules["playwright"] = playwright_stub
 sys.modules["playwright.sync_api"] = playwright_stub.sync_api
 
 from api.gitlab_pw import settings  # noqa:E402
-from api.gitlab_pw.constants import Selectors, GITLAB_DOMAIN, PROFILE_URL, ACCOUNT_URL  # noqa:E402
+from api.gitlab_pw.constants import Selectors, GITLAB_DOMAIN, PROFILE_URL, ACCOUNT_URL, ACCESS_TOKENS_URL  # noqa:E402
 from api.gitlab_pw.test_utils import FakeLocator, FakePage  # noqa:E402
 
 
@@ -155,6 +155,146 @@ class DeleteAccessTokensTests(unittest.TestCase):
         self.assertIn("No tokens", result.error_message or "")
 
 
+class CreateAccessTokenTests(unittest.TestCase):
+    # The real GitLab uses Bootstrap custom-control: the <input> is hidden and
+    # a <label for="..."> sits on top.  We click the label, not the input.
+    # Candidates in order (settings.py):
+    #   1. label[for='personal_access_token_scopes_{scope}']   ← Bootstrap label (real GitLab)
+    #   2. label[data-qa-selector='{scope}_label']             ← qa-selector label
+    #   3. #personal_access_token_scopes_{scope}               ← direct input (non-Bootstrap)
+    #   4. input[name='personal_access_token[scopes][]'][value='{scope}']
+    #   5. input[type='checkbox'][value='{scope}']
+
+    def _base_locators(self) -> dict:
+        return {
+            Selectors.ACCESS_TOKEN_NAME_INPUT: FakeLocator(count_value=1),
+            Selectors.ACCESS_TOKEN_EXPIRES_INPUT: FakeLocator(count_value=1),
+            Selectors.ACCESS_TOKEN_SUBMIT: FakeLocator(count_value=1),
+            Selectors.ACCESS_TOKEN_CREATED_VALUE: FakeLocator(count_value=1),
+        }
+
+    def _make_page(self, token_value: str = "glpat-abc123") -> FakePage:
+        """Bootstrap label pattern — matches real GitLab (pattern 1)."""
+        locators = self._base_locators()
+        for scope in settings.ALL_SCOPES:
+            locators[f"label[for='personal_access_token_scopes_{scope}']"] = FakeLocator(count_value=1)
+        page = FakePage(locators=locators, url=ACCESS_TOKENS_URL)
+        page._input_values[Selectors.ACCESS_TOKEN_CREATED_VALUE] = token_value
+        return page
+
+    def _make_page_skip_to(self, first_hit: int, token_value: str) -> FakePage:
+        """
+        Build a page where patterns 1..(first_hit-1) time out and pattern
+        first_hit is present.  first_hit is 1-indexed matching the candidate list.
+        """
+        all_patterns = [
+            lambda s: f"label[for='personal_access_token_scopes_{s}']",
+            lambda s: f"label[data-qa-selector='{s}_label']",
+            lambda s: f"#personal_access_token_scopes_{s}",
+            lambda s: f"input[name='personal_access_token[scopes][]'][value='{s}']",
+            lambda s: f"input[type='checkbox'][value='{s}']",
+        ]
+        locators = self._base_locators()
+        page = FakePage(locators=locators, url=ACCESS_TOKENS_URL)
+        for scope in settings.ALL_SCOPES:
+            for i, fn in enumerate(all_patterns, 1):
+                sel = fn(scope)
+                if i < first_hit:
+                    page._wait_for_selector_raises[sel] = True
+                elif i == first_hit:
+                    locators[sel] = FakeLocator(count_value=1)
+        page._input_values[Selectors.ACCESS_TOKEN_CREATED_VALUE] = token_value
+        return page
+
+    def test_create_access_token_success_all_scopes(self) -> None:
+        """Successful creation with default (all) scopes returns the token value."""
+        page = self._make_page("glpat-abc123")
+        result = settings.create_access_token(page, token_name="my-token")
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.token, "glpat-abc123")
+        self.assertEqual(result.token_name, "my-token")
+        self.assertIsNone(result.error_message)
+
+    def test_create_access_token_custom_scopes(self) -> None:
+        """Only the requested scope is clicked; others are untouched."""
+        page = self._make_page("glpat-xyz")
+        result = settings.create_access_token(
+            page, token_name="read-only", scopes=["read_repository"]
+        )
+        self.assertTrue(result.success)
+        self.assertEqual(result.token, "glpat-xyz")
+        untouched = page.locators.get("label[for='personal_access_token_scopes_api']")
+        if untouched:
+            self.assertEqual(len(untouched.actions), 0)
+
+    def test_scope_selector_pattern1_label_for(self) -> None:
+        """Pattern 1: Bootstrap label[for='personal_access_token_scopes_<scope>'] — real GitLab."""
+        page = self._make_page_skip_to(1, "glpat-p1")
+        result = settings.create_access_token(page, token_name="tok", scopes=["api"])
+        self.assertTrue(result.success, result.error_message)
+        self.assertEqual(result.token, "glpat-p1")
+        actions = page.locators["label[for='personal_access_token_scopes_api']"].actions
+        self.assertIn(("click", None), actions)
+
+    def test_scope_selector_pattern2_label_qa(self) -> None:
+        """Pattern 2: label[data-qa-selector='{scope}_label']."""
+        page = self._make_page_skip_to(2, "glpat-p2")
+        result = settings.create_access_token(page, token_name="tok", scopes=["api"])
+        self.assertTrue(result.success, result.error_message)
+        self.assertEqual(result.token, "glpat-p2")
+        actions = page.locators["label[data-qa-selector='api_label']"].actions
+        self.assertIn(("click", None), actions)
+
+    def test_scope_selector_pattern3_input_id(self) -> None:
+        """Pattern 3: #personal_access_token_scopes_<scope> direct input."""
+        page = self._make_page_skip_to(3, "glpat-p3")
+        result = settings.create_access_token(page, token_name="tok", scopes=["api"])
+        self.assertTrue(result.success, result.error_message)
+        self.assertEqual(result.token, "glpat-p3")
+        actions = page.locators["#personal_access_token_scopes_api"].actions
+        self.assertIn(("click", None), actions)
+
+    def test_scope_selector_pattern4_name_value(self) -> None:
+        """Pattern 4: input[name='personal_access_token[scopes][]'][value='<scope>']."""
+        page = self._make_page_skip_to(4, "glpat-p4")
+        result = settings.create_access_token(page, token_name="tok", scopes=["api"])
+        self.assertTrue(result.success, result.error_message)
+        self.assertEqual(result.token, "glpat-p4")
+        actions = page.locators["input[name='personal_access_token[scopes][]'][value='api']"].actions
+        self.assertIn(("click", None), actions)
+
+    def test_scope_selector_pattern5_generic_checkbox(self) -> None:
+        """Pattern 5: input[type='checkbox'][value='<scope>']."""
+        page = self._make_page_skip_to(5, "glpat-p5")
+        result = settings.create_access_token(page, token_name="tok", scopes=["api"])
+        self.assertTrue(result.success, result.error_message)
+        self.assertEqual(result.token, "glpat-p5")
+        actions = page.locators["input[type='checkbox'][value='api']"].actions
+        self.assertIn(("click", None), actions)
+
+    def test_create_access_token_form_not_found(self) -> None:
+        """Returns failure when the token form is absent."""
+        page = FakePage(url=ACCESS_TOKENS_URL)
+        page._wait_for_selector_raises[Selectors.ACCESS_TOKEN_NAME_INPUT] = True
+        result = settings.create_access_token(page, token_name="bad")
+
+        self.assertFalse(result.success)
+        self.assertIn("not found", (result.error_message or "").lower())
+
+    def test_create_access_token_result_dataclass(self) -> None:
+        """CreateAccessTokenResult dataclass fields are accessible."""
+        result = settings.CreateAccessTokenResult(
+            success=True,
+            token="glpat-test",
+            token_name="ci-token",
+        )
+        self.assertTrue(result.success)
+        self.assertEqual(result.token, "glpat-test")
+        self.assertEqual(result.token_name, "ci-token")
+        self.assertIsNone(result.error_message)
+
+
 class DeleteAccountTests(unittest.TestCase):
     def test_delete_account_button_not_found(self) -> None:
         """Test account deletion when button is missing."""
@@ -169,6 +309,37 @@ class DeleteAccountTests(unittest.TestCase):
 
         self.assertFalse(result.success)
         self.assertIn("not found", (result.error_message or "").lower())
+
+
+class IntegrationGetGlpatTest(unittest.TestCase):
+    """
+    Live integration test — calls get_glpat against a real GitLab instance.
+    Run with:
+        python3 api/gitlab_pw/settings_tests.py IntegrationGetGlpatTest
+    or set GITLAB_DOMAIN env var to point at the worker, e.g.:
+        GITLAB_DOMAIN=http://127.0.0.1:8025 python3 api/gitlab_pw/settings_tests.py IntegrationGetGlpatTest
+    """
+
+    def test_get_glpat_live(self) -> None:
+        import os
+
+        # Un-stub playwright so the real library is used.
+        for mod in ["playwright", "playwright.sync_api"]:
+            sys.modules.pop(mod, None)
+
+        gitlab_url = os.getenv("GITLAB_DOMAIN", "http://127.0.0.1:8025")
+        print(f"\n  [INTEGRATION] Targeting GitLab at: {gitlab_url}")
+
+        # Import get_glpat AFTER removing the stub so it gets real playwright.
+        from eval.docker.gitlab_init import get_glpat  # noqa: PLC0415
+
+        try:
+            token = get_glpat(gitlab_url, token_name="integration-test-token")
+            print(f"  [INTEGRATION] SUCCESS — token: {token[:12]}...")
+            self.assertTrue(token.startswith("glpat-") or len(token) > 10,
+                            f"Unexpected token format: {token!r}")
+        except Exception as e:
+            self.fail(f"get_glpat raised: {e}")
 
 
 if __name__ == "__main__":

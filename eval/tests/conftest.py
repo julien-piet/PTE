@@ -80,6 +80,33 @@ def pytest_addoption(parser):
             "One of: gitlab, reddit, shopping, shopping_admin. Default: gitlab."
         ),
     )
+    parser.addoption(
+        "--base-url",
+        type=str,
+        default="http://localhost:8023",
+        metavar="URL",
+        help=(
+            "Base URL of the GitLab instance the agent talks to. "
+            "Default: http://localhost:8023"
+        ),
+    )
+    parser.addoption(
+        "--force-reset",
+        action="store_true",
+        default=False,
+        help=(
+            "Override require_reset to True for every task, regardless of the "
+            "value in the task JSON. Useful for re-runs where prior runs may "
+            "have left state (e.g. duplicate milestones, issues, or MRs) that "
+            "would cause tasks to fail. Has no effect when --no-reset is set."
+        ),
+    )
+    parser.addoption(
+        "--task-id",
+        type=int,
+        default=None,
+        help="Run only the task with this numeric task_id (e.g. --task-id 136).",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -143,10 +170,23 @@ def agent_runner(request, session_event_loop):
         from eval.run_program_html_benchmark import AgentRunner
         runner_cls = AgentRunner
 
-    runner = runner_cls(headless=True, enable_reset=True)
+    force_reset = request.config.getoption("--force-reset", default=False)
+    base_url = request.config.getoption("--base-url", default="http://localhost:8023")
+    runner = runner_cls(headless=True, enable_reset=True, force_reset=force_reset,
+                        gitlab_base_url=base_url)
     runner.server = request.config.getoption("--server", default="gitlab")
+    runner.base_url = base_url
     session_event_loop.run_until_complete(runner._init_agent())
     return runner
+
+
+@pytest.fixture(scope="session")
+def acquire_lock():
+    """
+    Session-scoped asyncio.Lock used to serialize concurrent worker acquire
+    calls when multiple coroutines run in the same event loop.
+    """
+    return asyncio.Lock()
 
 
 @pytest.fixture(scope="session")

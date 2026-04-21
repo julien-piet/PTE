@@ -205,6 +205,12 @@ class Selectors:
     INVITE_CONFIRM_BUTTON = '#invite-members-modal-2___BV_modal_content_ button:has-text("Invite")'
     MEMBERS_TABLE = "table[data-testid='members-table']"
 
+    # Personal access token creation
+    ACCESS_TOKEN_NAME_INPUT = "#personal_access_token_name"
+    ACCESS_TOKEN_EXPIRES_INPUT = "#personal_access_token_expires_at"
+    ACCESS_TOKEN_SUBMIT = 'input[type="submit"][name="commit"]'
+    ACCESS_TOKEN_CREATED_VALUE = "#new-access-token"
+
     # Error and success messages
     ERROR_CONTAINER = "div#error_explanation"
     PROJECT_ERROR_CONTAINER = "div.project-edit-errors"

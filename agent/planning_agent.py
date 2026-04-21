@@ -5,6 +5,7 @@ plan in the planner.py ToolBasedResponse format.
 """
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import List
@@ -27,7 +28,7 @@ class EndpointInfo(BaseModel):
     description: str
     parameters: list    # raw swagger parameter dicts
     response_schema: str = ""  # human-readable description of the 200 response shape
-    base_url: str = ""  # e.g. http://127.0.0.1:8023/api/v4
+    base_path: str = ""  # swagger basePath (e.g. /api/v4) — path prefix, NOT host
 
 
 class PlanningAgent:
@@ -223,10 +224,7 @@ class PlanningAgent:
         return description if description.lower().rstrip(".") not in _GENERIC else ""
 
     def _extract_endpoints(self, spec: dict, api_name: str) -> List[EndpointInfo]:
-        scheme = (spec.get("schemes") or ["http"])[0]
-        host = spec.get("host", "localhost")
         base_path = spec.get("basePath", "").rstrip("/")
-        base_url = f"{scheme}://{host}{base_path}"
 
         endpoints: List[EndpointInfo] = []
         for path, path_item in spec.get("paths", {}).items():
@@ -248,7 +246,7 @@ class PlanningAgent:
                     description=operation.get("description", ""),
                     parameters=params,
                     response_schema=self._extract_response_schema(spec, operation),
-                    base_url=base_url,
+                    base_path=base_path,
                 ))
         return endpoints
 
@@ -320,6 +318,50 @@ class PlanningAgent:
         return selected, capabilities
 
     # ------------------------------------------------------------------
+    # Step 5c: Read current-user context from env vars for the APIs in use
+    # ------------------------------------------------------------------
+    def _get_user_context(self, api_files: set) -> str:
+        """
+        Return a prompt section describing the current user's identity for each
+        API that is in scope.  Values come from env vars already loaded by
+        load_all_env() in __init__.
+        """
+        # Maps a schema filename fragment → (label, list of (var_name, human_label))
+        API_ENV_MAP = {
+            "gitlab": ("GitLab", [
+                # ("GITLAB_DOMAIN",   "server URL"),
+                ("GITLAB_USERNAME", "username"),
+            ]),
+            "reddit": ("Reddit", [
+                # ("REDDIT_DOMAIN",   "server URL"),
+                ("REDDIT_USERNAME", "username"),
+            ]),
+            "shopping": ("Shopping", [
+            #     ("WEBARENA_BASE_URL", "server URL"),
+                ("SHOPPING_USERNAME", "username"),
+            ]),
+        }
+
+        lines = []
+        for fragment, (label, var_defs) in API_ENV_MAP.items():
+            if not any(fragment in f.lower() for f in api_files):
+                continue
+            entries = []
+            for var_name, human_label in var_defs:
+                val = os.environ.get(var_name)
+                if val:
+                    entries.append(f"  - {human_label}: {val}")
+            if entries:
+                lines.append(f"{label}:\n" + "\n".join(entries))
+
+        if not lines:
+            return ""
+        return (
+            "\nCurrent user context (use these values directly (if needed) for tasks that contain me/mine/my etc.):\n"
+            + "\n".join(lines) + "\n"
+        )
+
+    # ------------------------------------------------------------------
     # Step 6: LLM builds a full execution plan
     # ------------------------------------------------------------------
     async def _build_plan(self, task: str, selected: List[EndpointInfo], capabilities: List[str] = None):
@@ -377,10 +419,13 @@ class PlanningAgent:
             )
             capabilities_section = f"\nEndpoint roles in the plan:\n{cap_lines}\n"
 
+        user_context_section = self._get_user_context(api_files_used)
+
         prompt = (
             f"Task: {task}\n\n"
             f"Available API endpoints:\n{endpoint_details}\n\n"
             + capabilities_section
+            + user_context_section
             + api_hints_section + "\n"
             "Build a step-by-step execution plan to complete this task.\n"
             "Steps can depend on each other using depends_on and reference prior outputs with '{step_id.result}'.\n\n"
@@ -389,7 +434,9 @@ class PlanningAgent:
             "- tool_call_required must be true\n"
             '- response must be empty string ""\n'
             '- Each step needs a unique step_id (e.g. "step_1", "step_2")\n'
-            f"- tool_name must be one of: {json.dumps(tool_names)}\n"
+            f"- tool_name must be EXACTLY one of: {json.dumps(tool_names)}\n"
+            "  Do NOT substitute actual IDs or path values into tool_name — keep template placeholders like {{id}} as-is.\n"
+            "  Path parameters (e.g. id='a11yproject/myrepo') go in the arguments list, NOT in tool_name.\n"
             "- arguments is a list of {name, value, value_type} objects\n"
             '- value_type is "literal" for known values, "reference" for {step_id.result} placeholders\n'
             "- CRITICAL: argument names must ONLY be parameter names explicitly listed in the endpoint's schema above. "
@@ -431,19 +478,28 @@ class PlanningAgent:
         if not validate_plan(plan_result.plan):
             raise ValueError(f"LLM produced an invalid plan. Raw response:\n{response}")
 
-        # Inject response_schema and base_url into each step using the
-        # tool_name → EndpointInfo mapping we already have from the swagger spec.
+        # Inject response_schema and api source (used at runtime for base_url routing)
+        # into each step using the tool_name → EndpointInfo mapping from the swagger spec.
+        # base_url is NOT baked from swagger here — it is injected at runtime by Agent
+        # from the servers dict passed to initialize() / run_task().
         endpoint_map = {f"{ep.method} {ep.path}": ep for ep in selected}
+        _fallback = EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
         annotated_steps = [
             step.model_copy(update={
                 "returns": endpoint_map.get(
                     step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                    EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
+                    _fallback,
                 ).response_schema,
-                "base_url": endpoint_map.get(
-                    step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                    EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
-                ).base_url,
+                "base_url": "|".join([
+                    endpoint_map.get(
+                        step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
+                        _fallback,
+                    ).api,
+                    endpoint_map.get(
+                        step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
+                        _fallback,
+                    ).base_path,
+                ]),  # "api_filename|/base/path" routing tag; replaced with real URL by Agent
             })
             for step in plan_result.plan
         ]

@@ -167,8 +167,16 @@ def test_agent_accomplishes_program_html_task(
     (``automated=True``, no re-planning). After execution,
     ``ProgramHtmlEvaluator`` opens a fresh authenticated Playwright
     session, navigates to the task's evaluation URL(s), and checks the
-    required page content. Both the program_html check and the url_match
-    check (for tasks that carry both ``eval_types``) must pass.
+    required page content.
+
+    Note: url_match is intentionally not evaluated even for tasks that
+    carry both ``eval_types`` ("url_match" + "program_html"). See the
+    comment in ``BaseAgentRunner.run_agent_on_task`` for the full
+    rationale. In short: the API-based agent never navigates a browser,
+    so ``final_url`` is always None, making url_match structurally
+    unsatisfiable. program_html alone provides equivalent signal because
+    the evaluator already navigates to ``reference_url`` when
+    ``final_url`` is absent.
     """
     passed, _agent_result, error, html_detail = session_event_loop.run_until_complete(
         agent_runner.run_agent_on_task(task)
