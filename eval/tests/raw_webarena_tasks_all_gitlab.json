@@ -1131,13 +1131,13 @@
       ],
       "reference_answers": {
         "must_include": [
-          "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/super_awesome_robot.git"
+          "git clone ssh://git@127.0.0.1:2222/convexegg/super_awesome_robot.git"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/super_awesome_robot.git"
+      "reference_answer_raw_annotation": "git clone ssh://git@127.0.0.1:2222/convexegg/super_awesome_robot.git"
     },
     "intent_template_id": 329,
     "read_only": true
@@ -1163,13 +1163,13 @@
       ],
       "reference_answers": {
         "must_include": [
-          "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/chatgpt.git"
+          "git clone ssh://git@127.0.0.1:2222/convexegg/chatgpt.git"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/convexegg/chatgpt.git"
+      "reference_answer_raw_annotation": "git clone ssh://git@127.0.0.1:2222/convexegg/chatgpt.git"
     },
     "intent_template_id": 329,
     "read_only": true
@@ -1195,13 +1195,13 @@
       ],
       "reference_answers": {
         "must_include": [
-          "git clone ssh://git@metis.lti.cs.cmu.edu:2222/root/metaseq.git"
+          "git clone ssh://git@127.0.0.1:2222/root/metaseq.git"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "git clone ssh://git@metis.lti.cs.cmu.edu:2222/root/metaseq.git"
+      "reference_answer_raw_annotation": "git clone ssh://git@127.0.0.1:2222/root/metaseq.git"
     },
     "intent_template_id": 329,
     "read_only": true
@@ -1227,13 +1227,13 @@
       ],
       "reference_answers": {
         "must_include": [
-          "ssh://git@metis.lti.cs.cmu.edu:2222/eriklindernoren/PyTorch-GAN.git"
+          "ssh://git@127.0.0.1:2222/eriklindernoren/PyTorch-GAN.git"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "ssh://git@metis.lti.cs.cmu.edu:2222/eriklindernoren/PyTorch-GAN.git"
+      "reference_answer_raw_annotation": "ssh://git@127.0.0.1:2222/eriklindernoren/PyTorch-GAN.git"
     },
     "intent_template_id": 329,
     "read_only": true
@@ -1258,12 +1258,14 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "ssh://git@metis.lti.cs.cmu.edu:2222/yjlou/2019-nCov.git"
+        "must_include": [
+          "ssh://git@127.0.0.1:2222/covid19india/covid19india-react.git"
+        ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "ssh://git@metis.lti.cs.cmu.edu:2222/yjlou/2019-nCov.git"
+      "reference_answer_raw_annotation": "ssh://git@127.0.0.1:2222/yjlou/2019-nCov.git"
     },
     "intent_template_id": 329,
     "read_only": true
@@ -1686,14 +1688,14 @@
       "reference_answers": {
         "must_include": [
           "Ian Sutherland",
-          "Joe Hadda",
+          "Joe Haddad",
           "Dan Abramov"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Ian Sutherland, Joe Hadda, Dan Abramov"
+      "reference_answer_raw_annotation": "Ian Sutherland, Joe Haddad, Dan Abramov"
     },
     "intent_template_id": 324,
     "read_only": true
@@ -2422,7 +2424,7 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "404"
+              "nvidia-patch"
             ]
           }
         },
@@ -2431,7 +2433,7 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "404"
+              "viewgrades-scraper"
             ]
           }
         }
@@ -2712,9 +2714,9 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.cover-status').lastChild.textContent",
+          "locator": "(async () => { const r = await fetch('/api/v4/users/byteblaze/status', {credentials: 'include'}); const d = await r.json(); return d.availability || ''; })()",
           "required_contents": {
-            "exact_match": "Busy"
+            "exact_match": "busy"
           }
         }
       ]
@@ -2746,7 +2748,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.cover-status').lastChild.textContent",
+          "locator": "(async () => { const r = await fetch('/api/v4/users/byteblaze/status', {credentials: 'include'}); const d = await r.json(); return d.message || ''; })()",
           "required_contents": {
             "exact_match": "Enjoying life"
           }
@@ -2780,7 +2782,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.cover-status').lastChild.textContent",
+          "locator": "(async () => { const r = await fetch('/api/v4/users/byteblaze/status', {credentials: 'include'}); const d = await r.json(); return d.message || ''; })()",
           "required_contents": {
             "exact_match": "Playing Badminton"
           }
@@ -2814,7 +2816,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.cover-status').lastChild.textContent",
+          "locator": "(async () => { const r = await fetch('/api/v4/users/byteblaze/status', {credentials: 'include'}); const d = await r.json(); return d.message || ''; })()",
           "required_contents": {
             "exact_match": "Resting due to leg injury"
           }
@@ -2848,7 +2850,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.cover-status').lastChild.textContent",
+          "locator": "(async () => { const r = await fetch('/api/v4/users/byteblaze/status', {credentials: 'include'}); const d = await r.json(); return d.message || ''; })()",
           "required_contents": {
             "exact_match": "Out of Office"
           }
@@ -3790,7 +3792,7 @@
               "ffmpeg-python",
               "PHP_XLSXWriter",
               "AndroidAsync",
-              "Pytorch-GAN",
+              "PyTorch-GAN",
               "administrate",
               "keycloak"
             ]
@@ -4069,7 +4071,7 @@
           "locator": "document.querySelector('.user-profile').outerText",
           "required_contents": {
             "must_include": [
-              "@lahwaacz",
+              "@ghost",
               "@R1kk3r",
               "@abisubramanya27"
             ]
@@ -5054,7 +5056,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
       "program_html": [
         {
-          "url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/issues?search=401+bad+gateway&sort=created_desc",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
@@ -7038,7 +7040,7 @@
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
       "program_html": [
         {
-          "url": "__GITLAB__/a11yproject/a11yproject.com/-/issues",
+          "url": "__GITLAB__/a11yproject/a11yproject.com/-/issues?search=404+for+many+URLs&sort=created_desc",
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
