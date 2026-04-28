@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-28T14:30:23.018989",
+  "timestamp": "2026-04-28T15:49:12.310664",
   "server": "gitlab",
   "total_tasks": 2,
   "successful": 2,
@@ -9,7 +9,7 @@
   "tasks": [
     {
       "task_id": 44,
-      "intent": "Check out my todos",
+      "intent": "Open my todos page",
       "status": "success",
       "plan": [
         {
@@ -40,7 +40,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "action_name": "assigned",
             "target_type": "MergeRequest",
@@ -69,7 +69,7 @@
                 "name": "Agustina Chaer",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/c3f4b8256d6ee40eda4c82780f87dc89?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/aguscha333"
+                "web_url": "http://localhost:8023/aguscha333"
               },
               "assignees": [
                 {
@@ -78,7 +78,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 }
               ],
               "assignee": {
@@ -87,7 +87,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "reviewers": [
                 {
@@ -96,7 +96,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 },
                 {
                   "id": 2331,
@@ -104,7 +104,7 @@
                   "name": "Agustina Chaer",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/c3f4b8256d6ee40eda4c82780f87dc89?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/aguscha333"
+                  "web_url": "http://localhost:8023/aguscha333"
                 },
                 {
                   "id": 2332,
@@ -112,7 +112,7 @@
                   "name": "EJ Mason",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+                  "web_url": "http://localhost:8023/mxmason"
                 }
               ],
               "source_project_id": 174,
@@ -141,7 +141,7 @@
                 "relative": "!1270",
                 "full": "a11yproject/a11yproject.com!1270"
               },
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1270",
+              "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1270",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -166,7 +166,7 @@
                 "can_merge": false
               }
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1270",
+            "target_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1270",
             "body": "feat: add WCAG levels",
             "state": "pending",
             "created_at": "2023-03-27T23:21:23.524Z",
@@ -189,7 +189,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "action_name": "assigned",
             "target_type": "MergeRequest",
@@ -218,7 +218,7 @@
                 "name": "Roshan Jossy",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+                "web_url": "http://localhost:8023/Roshanjossey"
               },
               "assignees": [
                 {
@@ -227,7 +227,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 }
               ],
               "assignee": {
@@ -236,7 +236,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "reviewers": [],
               "source_project_id": 174,
@@ -260,7 +260,7 @@
                 "relative": "!1485",
                 "full": "a11yproject/a11yproject.com!1485"
               },
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1485",
+              "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1485",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -285,7 +285,7 @@
                 "can_merge": false
               }
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1485",
+            "target_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1485",
             "body": "update or remove 404 links",
             "state": "pending",
             "created_at": "2023-03-27T23:19:56.166Z",
@@ -308,7 +308,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "action_name": "assigned",
             "target_type": "Issue",
@@ -332,7 +332,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 }
               ],
               "author": {
@@ -341,7 +341,7 @@
                 "name": "earle",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/0427d82f506848ec93e7be6b7da98751?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/earlev4"
+                "web_url": "http://localhost:8023/earlev4"
               },
               "type": "ISSUE",
               "assignee": {
@@ -350,7 +350,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "user_notes_count": 14,
               "merge_requests_count": 0,
@@ -360,7 +360,7 @@
               "confidential": false,
               "discussion_locked": null,
               "issue_type": "issue",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze/a11y-syntax-highlighting/-/issues/1",
+              "web_url": "http://localhost:8023/byteblaze/a11y-syntax-highlighting/-/issues/1",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -373,10 +373,10 @@
               },
               "has_tasks": false,
               "_links": {
-                "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/186/issues/1",
-                "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/186/issues/1/notes",
-                "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/186/issues/1/award_emoji",
-                "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/186",
+                "self": "http://localhost:8023/api/v4/projects/186/issues/1",
+                "notes": "http://localhost:8023/api/v4/projects/186/issues/1/notes",
+                "award_emoji": "http://localhost:8023/api/v4/projects/186/issues/1/award_emoji",
+                "project": "http://localhost:8023/api/v4/projects/186",
                 "closed_as_duplicate_of": null
               },
               "references": {
@@ -388,7 +388,7 @@
               "moved_to_id": null,
               "service_desk_reply_to": null
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze/a11y-syntax-highlighting/-/issues/1",
+            "target_url": "http://localhost:8023/byteblaze/a11y-syntax-highlighting/-/issues/1",
             "body": "Tm Theme Editor",
             "state": "pending",
             "created_at": "2023-03-27T23:15:19.496Z",
@@ -411,7 +411,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "action_name": "assigned",
             "target_type": "MergeRequest",
@@ -440,7 +440,7 @@
                 "name": "Dave Greene",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/f10c42f4daa1b3eb66967061827bd3ec?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/davepgreene"
+                "web_url": "http://localhost:8023/davepgreene"
               },
               "assignees": [
                 {
@@ -449,7 +449,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 }
               ],
               "assignee": {
@@ -458,7 +458,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "reviewers": [],
               "source_project_id": 179,
@@ -482,7 +482,7 @@
                 "relative": "!40",
                 "full": "byteblaze/a11y-webring.club!40"
               },
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze/a11y-webring.club/-/merge_requests/40",
+              "web_url": "http://localhost:8023/byteblaze/a11y-webring.club/-/merge_requests/40",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -507,7 +507,7 @@
                 "can_merge": false
               }
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze/a11y-webring.club/-/merge_requests/40",
+            "target_url": "http://localhost:8023/byteblaze/a11y-webring.club/-/merge_requests/40",
             "body": "Add verification functions",
             "state": "pending",
             "created_at": "2023-03-27T23:14:49.235Z",
@@ -530,7 +530,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "action_name": "unmergeable",
             "target_type": "MergeRequest",
@@ -559,7 +559,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "assignees": [],
               "assignee": null,
@@ -585,7 +585,7 @@
                 "relative": "!1071",
                 "full": "a11yproject/a11yproject.com!1071"
               },
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1071",
+              "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1071",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -610,7 +610,7 @@
                 "can_merge": false
               }
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1071",
+            "target_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1071",
             "body": "Add color utility classes",
             "state": "pending",
             "created_at": "2023-03-27T23:07:29.481Z",
@@ -637,7 +637,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "action_name": "assigned",
             "target_type": "MergeRequest",
@@ -666,7 +666,7 @@
                 "name": "Agustina Chaer",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/c3f4b8256d6ee40eda4c82780f87dc89?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/aguscha333"
+                "web_url": "http://localhost:8023/aguscha333"
               },
               "assignees": [
                 {
@@ -675,7 +675,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 }
               ],
               "assignee": {
@@ -684,7 +684,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "reviewers": [
                 {
@@ -693,7 +693,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 },
                 {
                   "id": 2331,
@@ -701,7 +701,7 @@
                   "name": "Agustina Chaer",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/c3f4b8256d6ee40eda4c82780f87dc89?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/aguscha333"
+                  "web_url": "http://localhost:8023/aguscha333"
                 },
                 {
                   "id": 2332,
@@ -709,7 +709,7 @@
                   "name": "EJ Mason",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+                  "web_url": "http://localhost:8023/mxmason"
                 }
               ],
               "source_project_id": 174,
@@ -738,7 +738,7 @@
                 "relative": "!1270",
                 "full": "a11yproject/a11yproject.com!1270"
               },
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1270",
+              "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1270",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -763,7 +763,7 @@
                 "can_merge": false
               }
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1270",
+            "target_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1270",
             "body": "feat: add WCAG levels",
             "state": "pending",
             "created_at": "2023-03-27T23:21:23.524Z",
@@ -786,7 +786,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "action_name": "assigned",
             "target_type": "MergeRequest",
@@ -815,7 +815,7 @@
                 "name": "Roshan Jossy",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+                "web_url": "http://localhost:8023/Roshanjossey"
               },
               "assignees": [
                 {
@@ -824,7 +824,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 }
               ],
               "assignee": {
@@ -833,7 +833,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "reviewers": [],
               "source_project_id": 174,
@@ -857,7 +857,7 @@
                 "relative": "!1485",
                 "full": "a11yproject/a11yproject.com!1485"
               },
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1485",
+              "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1485",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -882,7 +882,7 @@
                 "can_merge": false
               }
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1485",
+            "target_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1485",
             "body": "update or remove 404 links",
             "state": "pending",
             "created_at": "2023-03-27T23:19:56.166Z",
@@ -905,7 +905,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "action_name": "assigned",
             "target_type": "Issue",
@@ -929,7 +929,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 }
               ],
               "author": {
@@ -938,7 +938,7 @@
                 "name": "earle",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/0427d82f506848ec93e7be6b7da98751?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/earlev4"
+                "web_url": "http://localhost:8023/earlev4"
               },
               "type": "ISSUE",
               "assignee": {
@@ -947,7 +947,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "user_notes_count": 14,
               "merge_requests_count": 0,
@@ -957,7 +957,7 @@
               "confidential": false,
               "discussion_locked": null,
               "issue_type": "issue",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze/a11y-syntax-highlighting/-/issues/1",
+              "web_url": "http://localhost:8023/byteblaze/a11y-syntax-highlighting/-/issues/1",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -970,10 +970,10 @@
               },
               "has_tasks": false,
               "_links": {
-                "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/186/issues/1",
-                "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/186/issues/1/notes",
-                "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/186/issues/1/award_emoji",
-                "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/186",
+                "self": "http://localhost:8023/api/v4/projects/186/issues/1",
+                "notes": "http://localhost:8023/api/v4/projects/186/issues/1/notes",
+                "award_emoji": "http://localhost:8023/api/v4/projects/186/issues/1/award_emoji",
+                "project": "http://localhost:8023/api/v4/projects/186",
                 "closed_as_duplicate_of": null
               },
               "references": {
@@ -985,7 +985,7 @@
               "moved_to_id": null,
               "service_desk_reply_to": null
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze/a11y-syntax-highlighting/-/issues/1",
+            "target_url": "http://localhost:8023/byteblaze/a11y-syntax-highlighting/-/issues/1",
             "body": "Tm Theme Editor",
             "state": "pending",
             "created_at": "2023-03-27T23:15:19.496Z",
@@ -1008,7 +1008,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "action_name": "assigned",
             "target_type": "MergeRequest",
@@ -1037,7 +1037,7 @@
                 "name": "Dave Greene",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/f10c42f4daa1b3eb66967061827bd3ec?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/davepgreene"
+                "web_url": "http://localhost:8023/davepgreene"
               },
               "assignees": [
                 {
@@ -1046,7 +1046,7 @@
                   "name": "Byte Blaze",
                   "state": "active",
                   "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                  "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                  "web_url": "http://localhost:8023/byteblaze"
                 }
               ],
               "assignee": {
@@ -1055,7 +1055,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "reviewers": [],
               "source_project_id": 179,
@@ -1079,7 +1079,7 @@
                 "relative": "!40",
                 "full": "byteblaze/a11y-webring.club!40"
               },
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze/a11y-webring.club/-/merge_requests/40",
+              "web_url": "http://localhost:8023/byteblaze/a11y-webring.club/-/merge_requests/40",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -1104,7 +1104,7 @@
                 "can_merge": false
               }
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze/a11y-webring.club/-/merge_requests/40",
+            "target_url": "http://localhost:8023/byteblaze/a11y-webring.club/-/merge_requests/40",
             "body": "Add verification functions",
             "state": "pending",
             "created_at": "2023-03-27T23:14:49.235Z",
@@ -1127,7 +1127,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "action_name": "unmergeable",
             "target_type": "MergeRequest",
@@ -1156,7 +1156,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               },
               "assignees": [],
               "assignee": null,
@@ -1182,7 +1182,7 @@
                 "relative": "!1071",
                 "full": "a11yproject/a11yproject.com!1071"
               },
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1071",
+              "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1071",
               "time_stats": {
                 "time_estimate": 0,
                 "total_time_spent": 0,
@@ -1207,7 +1207,7 @@
                 "can_merge": false
               }
             },
-            "target_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/merge_requests/1071",
+            "target_url": "http://localhost:8023/a11yproject/a11yproject.com/-/merge_requests/1071",
             "body": "Add color utility classes",
             "state": "pending",
             "created_at": "2023-03-27T23:07:29.481Z",
@@ -1215,12 +1215,12 @@
           }
         ]
       },
-      "answer": "Here are your current todos (all in **pending** state):\n\n1. **feat: add WCAG levels** (Merge Request !1270)\n   - **Project:** a11yproject.com\n   - **Action:** Assigned to you by Roshan Jossy\n   - **Description:** Adds WCAG level indicators to checklist items for easier prioritization\n   - **Status:** Open, but has merge conflicts\n   - **Labels:** data, javascript, markup, styling\n\n2. **update or remove 404 links** (Merge Request !1485)\n   - **Project:** a11yproject.com\n   - **Action:** Assigned to you by Roshan Jossy\n   - **Description:** Removes broken links and updates outdated URLs for various accessibility resources\n   - **Status:** Open, but has merge conflicts\n\n3. **Tm Theme Editor** (Issue #1)\n   - **Project:** byteblaze/a11y-syntax-highlighting\n   - **Action:** Assigned to you (by yourself)\n   - **Description:** A request about adding the A11y Dark theme to the Tm Theme Editor website\n   - **Status:** Open\n\n4. **Add verification functions** (Merge Request !40)\n   - **Project:** byteblaze/a11y-webring.club\n   - **Action:** Assigned to you (by yourself)\n   - **Description:** Adds URL verification and DNS TXT record verification for webring members\n   - **Status:** Open and **mergeable** \u2705\n\n5. **Add color utility classes** (Merge Request !1071)\n   - **Project:** a11yproject.com\n   - **Action:** Marked as **unmergeable**\n   - **Description:** Adds color utility CSS classes\n   - **Status:** Open, but has merge conflicts\n\n**Summary:** You have 5 pending todos \u2014 3 merge requests with conflicts that need attention, 1 merge request ready to merge, and 1 open issue.",
+      "answer": "Here are your current todos:\n\n1. **feat: add WCAG levels** (Merge Request !1270) \u2014 You were assigned by Roshan Jossy on the **a11yproject.com** project. This MR adds WCAG level indicators to checklist items. Status: has merge conflicts.\n\n2. **update or remove 404 links** (Merge Request !1485) \u2014 You were assigned by Roshan Jossy on the **a11yproject.com** project. This MR fixes broken links in the project. Status: has merge conflicts.\n\n3. **Tm Theme Editor** (Issue #1) \u2014 You assigned yourself on your **a11y-syntax-highlighting** project. It's a request about adding the A11y Dark theme to the Tm Theme Editor website.\n\n4. **Add verification functions** (Merge Request !40) \u2014 You assigned yourself on your **a11y-webring.club** project. This MR adds site verification functionality for webring members. Status: ready to merge.\n\n5. **Add color utility classes** (Merge Request !1071) \u2014 Flagged as **unmergeable** on the **a11yproject.com** project. This is your own MR that currently has merge conflicts.\n\nYou have **5 pending todos** total \u2014 3 are merge requests with conflicts, 1 is a mergeable MR, and 1 is an open issue.",
       "worker_id": 1
     },
     {
       "task_id": 45,
-      "intent": "Check out the most recent open issues",
+      "intent": "Open the issues page for the current project filtered to the most recent open issues",
       "status": "success",
       "plan": [
         {
@@ -1245,11 +1245,6 @@
             {
               "name": "sort",
               "value": "desc",
-              "value_type": "literal"
-            },
-            {
-              "name": "scope",
-              "value": "all",
               "value_type": "literal"
             }
           ],
@@ -1283,7 +1278,7 @@
                 "name": "Roshan Jossy",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+                "web_url": "http://localhost:8023/Roshanjossey"
               }
             ],
             "author": {
@@ -1292,7 +1287,7 @@
               "name": "Paul McFedries",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/1a24787358a164a4badbe06745b5cbcf?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/paulmcfe"
+              "web_url": "http://localhost:8023/paulmcfe"
             },
             "type": "ISSUE",
             "assignee": {
@@ -1301,7 +1296,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "user_notes_count": 0,
             "merge_requests_count": 0,
@@ -1311,7 +1306,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1533",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1533",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1325,10 +1320,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1533",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1533/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1533/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1533",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1533/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1533/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1363,7 +1358,7 @@
               "name": "David A. Kennedy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/05fef4dda88f02ed90e1e09a9bc42265?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/davidakennedy"
+              "web_url": "http://localhost:8023/davidakennedy"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -1375,7 +1370,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1530",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1530",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1389,10 +1384,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1530",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1530/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1530/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1530",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1530/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1530/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1427,7 +1422,7 @@
               "name": "John Nyaruiru",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/8e6cbe9ba523189f82fdcd558e122a51?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/jknsocials"
+              "web_url": "http://localhost:8023/jknsocials"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -1439,7 +1434,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1529",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1529",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1452,10 +1447,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1529",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1529/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1529/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1529",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1529/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1529/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1490,7 +1485,7 @@
               "name": "ilknureren",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/9676c87c3dc6863b06608d0e90ec18cf?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/ilknureren"
+              "web_url": "http://localhost:8023/ilknureren"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -1502,7 +1497,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1526",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1526",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1516,10 +1511,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1526",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1526/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1526/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1526",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1526/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1526/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1554,7 +1549,7 @@
               "name": "Philip Wong",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b93dc4b2748bc7a8023d7d968d155e9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/p2635"
+              "web_url": "http://localhost:8023/p2635"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -1566,7 +1561,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1521",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1521",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1580,10 +1575,10 @@
             "has_tasks": true,
             "task_status": "1 of 1 checklist item completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1521",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1521/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1521/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1521",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1521/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1521/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1615,7 +1610,7 @@
               "name": "Philip Wong",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b93dc4b2748bc7a8023d7d968d155e9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/p2635"
+              "web_url": "http://localhost:8023/p2635"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -1627,7 +1622,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1519",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1519",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1640,10 +1635,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1519",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1519/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1519/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1519",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1519/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1519/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1678,7 +1673,7 @@
               "name": "Cooper Hollmaier",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/0088775a6166b7c1dc7cf5cf859c8ab8?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/chollma"
+              "web_url": "http://localhost:8023/chollma"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -1690,7 +1685,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1509",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1509",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1704,10 +1699,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1509",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1509/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1509/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1509",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1509/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1509/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1741,7 +1736,7 @@
               "name": "Victoria Ottah",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/053cd991462d7b603ab925e6367f820a?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Toriasdesign"
+              "web_url": "http://localhost:8023/Toriasdesign"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -1753,7 +1748,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1491",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1491",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1767,10 +1762,10 @@
             "has_tasks": true,
             "task_status": "0 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1491",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1491/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1491/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1491",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1491/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1491/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1807,7 +1802,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -1819,7 +1814,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1478",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1478",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1833,10 +1828,10 @@
             "has_tasks": true,
             "task_status": "1 of 34 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1478",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1478/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1478/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1478",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1478/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1478/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1871,7 +1866,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               }
             ],
             "author": {
@@ -1880,7 +1875,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "type": "ISSUE",
             "assignee": {
@@ -1889,7 +1884,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "user_notes_count": 0,
             "merge_requests_count": 0,
@@ -1899,7 +1894,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1460",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1460",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1912,10 +1907,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1460",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1460/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1460/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1460",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1460/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1460/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -1950,7 +1945,7 @@
                 "name": "ilknureren",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/9676c87c3dc6863b06608d0e90ec18cf?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/ilknureren"
+                "web_url": "http://localhost:8023/ilknureren"
               }
             ],
             "author": {
@@ -1959,7 +1954,7 @@
               "name": "ilknureren",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/9676c87c3dc6863b06608d0e90ec18cf?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/ilknureren"
+              "web_url": "http://localhost:8023/ilknureren"
             },
             "type": "ISSUE",
             "assignee": {
@@ -1968,7 +1963,7 @@
               "name": "ilknureren",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/9676c87c3dc6863b06608d0e90ec18cf?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/ilknureren"
+              "web_url": "http://localhost:8023/ilknureren"
             },
             "user_notes_count": 0,
             "merge_requests_count": 0,
@@ -1978,7 +1973,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1449",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1449",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -1992,10 +1987,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1449",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1449/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1449/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1449",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1449/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1449/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2030,7 +2025,7 @@
                 "name": "Roshan Jossy",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+                "web_url": "http://localhost:8023/Roshanjossey"
               }
             ],
             "author": {
@@ -2039,7 +2034,7 @@
               "name": "Matt Obee",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/f277bfabb7d8e4e171618b79a0dcc8da?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mattobee"
+              "web_url": "http://localhost:8023/mattobee"
             },
             "type": "ISSUE",
             "assignee": {
@@ -2048,7 +2043,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "user_notes_count": 1,
             "merge_requests_count": 0,
@@ -2058,7 +2053,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1447",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1447",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2072,10 +2067,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1447",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1447/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1447/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1447",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1447/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1447/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2110,7 +2105,7 @@
                 "name": "Conor",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/480b482a1160b888520ff34570c39a81?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/AccessiT3ch"
+                "web_url": "http://localhost:8023/AccessiT3ch"
               }
             ],
             "author": {
@@ -2119,7 +2114,7 @@
               "name": "Conor",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/480b482a1160b888520ff34570c39a81?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/AccessiT3ch"
+              "web_url": "http://localhost:8023/AccessiT3ch"
             },
             "type": "ISSUE",
             "assignee": {
@@ -2128,7 +2123,7 @@
               "name": "Conor",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/480b482a1160b888520ff34570c39a81?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/AccessiT3ch"
+              "web_url": "http://localhost:8023/AccessiT3ch"
             },
             "user_notes_count": 3,
             "merge_requests_count": 0,
@@ -2138,7 +2133,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1443",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1443",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2152,10 +2147,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1443",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1443/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1443/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1443",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1443/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1443/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2190,7 +2185,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -2202,7 +2197,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1419",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1419",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2215,10 +2210,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1419",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1419/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1419/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1419",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1419/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1419/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2254,7 +2249,7 @@
                 "name": "EJ Mason",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+                "web_url": "http://localhost:8023/mxmason"
               }
             ],
             "author": {
@@ -2263,7 +2258,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "type": "ISSUE",
             "assignee": {
@@ -2272,7 +2267,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "user_notes_count": 0,
             "merge_requests_count": 0,
@@ -2282,7 +2277,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1408",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1408",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2295,10 +2290,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1408",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1408/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1408/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1408",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1408/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1408/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2333,7 +2328,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               }
             ],
             "author": {
@@ -2342,7 +2337,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "type": "ISSUE",
             "assignee": {
@@ -2351,7 +2346,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "user_notes_count": 2,
             "merge_requests_count": 0,
@@ -2361,7 +2356,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1360",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1360",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2374,10 +2369,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1360",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1360/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1360/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1360",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1360/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1360/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2412,7 +2407,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -2424,7 +2419,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1359",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1359",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2437,10 +2432,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1359",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1359/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1359/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1359",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1359/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1359/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2475,7 +2470,7 @@
                 "name": "Roshan Jossy",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+                "web_url": "http://localhost:8023/Roshanjossey"
               }
             ],
             "author": {
@@ -2484,7 +2479,7 @@
               "name": "Steve Barnett",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/6747b0a822f8d695c5db2c595cb63816?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/SteveBarnett"
+              "web_url": "http://localhost:8023/SteveBarnett"
             },
             "type": "ISSUE",
             "assignee": {
@@ -2493,7 +2488,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "user_notes_count": 1,
             "merge_requests_count": 0,
@@ -2503,7 +2498,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1334",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1334",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2516,10 +2511,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1334",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1334/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1334/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1334",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1334/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1334/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2556,7 +2551,7 @@
                 "name": "EJ Mason",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+                "web_url": "http://localhost:8023/mxmason"
               }
             ],
             "author": {
@@ -2565,7 +2560,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "type": "ISSUE",
             "assignee": {
@@ -2574,7 +2569,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "user_notes_count": 1,
             "merge_requests_count": 0,
@@ -2584,7 +2579,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1302",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1302",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2597,10 +2592,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1302",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1302/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1302/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1302",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1302/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1302/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2636,7 +2631,7 @@
                 "name": "EJ Mason",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+                "web_url": "http://localhost:8023/mxmason"
               }
             ],
             "author": {
@@ -2645,7 +2640,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "type": "ISSUE",
             "assignee": {
@@ -2654,7 +2649,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "user_notes_count": 1,
             "merge_requests_count": 0,
@@ -2664,7 +2659,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1295",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1295",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2677,10 +2672,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1295",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1295/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1295/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1295",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1295/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1295/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2719,7 +2714,7 @@
                 "name": "Roshan Jossy",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+                "web_url": "http://localhost:8023/Roshanjossey"
               }
             ],
             "author": {
@@ -2728,7 +2723,7 @@
               "name": "Paul McFedries",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/1a24787358a164a4badbe06745b5cbcf?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/paulmcfe"
+              "web_url": "http://localhost:8023/paulmcfe"
             },
             "type": "ISSUE",
             "assignee": {
@@ -2737,7 +2732,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "user_notes_count": 0,
             "merge_requests_count": 0,
@@ -2747,7 +2742,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1533",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1533",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2761,10 +2756,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1533",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1533/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1533/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1533",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1533/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1533/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2799,7 +2794,7 @@
               "name": "David A. Kennedy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/05fef4dda88f02ed90e1e09a9bc42265?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/davidakennedy"
+              "web_url": "http://localhost:8023/davidakennedy"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -2811,7 +2806,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1530",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1530",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2825,10 +2820,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1530",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1530/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1530/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1530",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1530/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1530/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2863,7 +2858,7 @@
               "name": "John Nyaruiru",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/8e6cbe9ba523189f82fdcd558e122a51?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/jknsocials"
+              "web_url": "http://localhost:8023/jknsocials"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -2875,7 +2870,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1529",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1529",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2888,10 +2883,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1529",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1529/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1529/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1529",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1529/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1529/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2926,7 +2921,7 @@
               "name": "ilknureren",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/9676c87c3dc6863b06608d0e90ec18cf?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/ilknureren"
+              "web_url": "http://localhost:8023/ilknureren"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -2938,7 +2933,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1526",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1526",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -2952,10 +2947,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1526",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1526/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1526/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1526",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1526/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1526/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -2990,7 +2985,7 @@
               "name": "Philip Wong",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b93dc4b2748bc7a8023d7d968d155e9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/p2635"
+              "web_url": "http://localhost:8023/p2635"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -3002,7 +2997,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1521",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1521",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3016,10 +3011,10 @@
             "has_tasks": true,
             "task_status": "1 of 1 checklist item completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1521",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1521/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1521/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1521",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1521/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1521/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3051,7 +3046,7 @@
               "name": "Philip Wong",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b93dc4b2748bc7a8023d7d968d155e9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/p2635"
+              "web_url": "http://localhost:8023/p2635"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -3063,7 +3058,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1519",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1519",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3076,10 +3071,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1519",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1519/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1519/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1519",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1519/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1519/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3114,7 +3109,7 @@
               "name": "Cooper Hollmaier",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/0088775a6166b7c1dc7cf5cf859c8ab8?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/chollma"
+              "web_url": "http://localhost:8023/chollma"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -3126,7 +3121,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1509",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1509",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3140,10 +3135,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1509",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1509/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1509/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1509",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1509/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1509/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3177,7 +3172,7 @@
               "name": "Victoria Ottah",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/053cd991462d7b603ab925e6367f820a?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Toriasdesign"
+              "web_url": "http://localhost:8023/Toriasdesign"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -3189,7 +3184,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1491",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1491",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3203,10 +3198,10 @@
             "has_tasks": true,
             "task_status": "0 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1491",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1491/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1491/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1491",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1491/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1491/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3243,7 +3238,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -3255,7 +3250,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1478",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1478",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3269,10 +3264,10 @@
             "has_tasks": true,
             "task_status": "1 of 34 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1478",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1478/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1478/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1478",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1478/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1478/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3307,7 +3302,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               }
             ],
             "author": {
@@ -3316,7 +3311,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "type": "ISSUE",
             "assignee": {
@@ -3325,7 +3320,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "user_notes_count": 0,
             "merge_requests_count": 0,
@@ -3335,7 +3330,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1460",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1460",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3348,10 +3343,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1460",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1460/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1460/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1460",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1460/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1460/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3386,7 +3381,7 @@
                 "name": "ilknureren",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/9676c87c3dc6863b06608d0e90ec18cf?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/ilknureren"
+                "web_url": "http://localhost:8023/ilknureren"
               }
             ],
             "author": {
@@ -3395,7 +3390,7 @@
               "name": "ilknureren",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/9676c87c3dc6863b06608d0e90ec18cf?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/ilknureren"
+              "web_url": "http://localhost:8023/ilknureren"
             },
             "type": "ISSUE",
             "assignee": {
@@ -3404,7 +3399,7 @@
               "name": "ilknureren",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/9676c87c3dc6863b06608d0e90ec18cf?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/ilknureren"
+              "web_url": "http://localhost:8023/ilknureren"
             },
             "user_notes_count": 0,
             "merge_requests_count": 0,
@@ -3414,7 +3409,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1449",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1449",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3428,10 +3423,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1449",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1449/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1449/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1449",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1449/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1449/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3466,7 +3461,7 @@
                 "name": "Roshan Jossy",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+                "web_url": "http://localhost:8023/Roshanjossey"
               }
             ],
             "author": {
@@ -3475,7 +3470,7 @@
               "name": "Matt Obee",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/f277bfabb7d8e4e171618b79a0dcc8da?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mattobee"
+              "web_url": "http://localhost:8023/mattobee"
             },
             "type": "ISSUE",
             "assignee": {
@@ -3484,7 +3479,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "user_notes_count": 1,
             "merge_requests_count": 0,
@@ -3494,7 +3489,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1447",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1447",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3508,10 +3503,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1447",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1447/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1447/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1447",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1447/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1447/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3546,7 +3541,7 @@
                 "name": "Conor",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/480b482a1160b888520ff34570c39a81?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/AccessiT3ch"
+                "web_url": "http://localhost:8023/AccessiT3ch"
               }
             ],
             "author": {
@@ -3555,7 +3550,7 @@
               "name": "Conor",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/480b482a1160b888520ff34570c39a81?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/AccessiT3ch"
+              "web_url": "http://localhost:8023/AccessiT3ch"
             },
             "type": "ISSUE",
             "assignee": {
@@ -3564,7 +3559,7 @@
               "name": "Conor",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/480b482a1160b888520ff34570c39a81?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/AccessiT3ch"
+              "web_url": "http://localhost:8023/AccessiT3ch"
             },
             "user_notes_count": 3,
             "merge_requests_count": 0,
@@ -3574,7 +3569,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1443",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1443",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3588,10 +3583,10 @@
             "has_tasks": true,
             "task_status": "3 of 3 checklist items completed",
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1443",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1443/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1443/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1443",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1443/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1443/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3626,7 +3621,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -3638,7 +3633,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1419",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1419",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3651,10 +3646,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1419",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1419/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1419/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1419",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1419/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1419/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3690,7 +3685,7 @@
                 "name": "EJ Mason",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+                "web_url": "http://localhost:8023/mxmason"
               }
             ],
             "author": {
@@ -3699,7 +3694,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "type": "ISSUE",
             "assignee": {
@@ -3708,7 +3703,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "user_notes_count": 0,
             "merge_requests_count": 0,
@@ -3718,7 +3713,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1408",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1408",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3731,10 +3726,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1408",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1408/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1408/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1408",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1408/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1408/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3769,7 +3764,7 @@
                 "name": "Byte Blaze",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+                "web_url": "http://localhost:8023/byteblaze"
               }
             ],
             "author": {
@@ -3778,7 +3773,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "type": "ISSUE",
             "assignee": {
@@ -3787,7 +3782,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "user_notes_count": 2,
             "merge_requests_count": 0,
@@ -3797,7 +3792,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1360",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1360",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3810,10 +3805,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1360",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1360/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1360/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1360",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1360/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1360/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3848,7 +3843,7 @@
               "name": "Byte Blaze",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/99a4297c867eada2606b9b6973f081f9?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/byteblaze"
+              "web_url": "http://localhost:8023/byteblaze"
             },
             "type": "ISSUE",
             "assignee": null,
@@ -3860,7 +3855,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1359",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1359",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3873,10 +3868,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1359",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1359/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1359/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1359",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1359/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1359/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3911,7 +3906,7 @@
                 "name": "Roshan Jossy",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+                "web_url": "http://localhost:8023/Roshanjossey"
               }
             ],
             "author": {
@@ -3920,7 +3915,7 @@
               "name": "Steve Barnett",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/6747b0a822f8d695c5db2c595cb63816?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/SteveBarnett"
+              "web_url": "http://localhost:8023/SteveBarnett"
             },
             "type": "ISSUE",
             "assignee": {
@@ -3929,7 +3924,7 @@
               "name": "Roshan Jossy",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/a4c3286b786eb7c48f102211d991516f?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/Roshanjossey"
+              "web_url": "http://localhost:8023/Roshanjossey"
             },
             "user_notes_count": 1,
             "merge_requests_count": 0,
@@ -3939,7 +3934,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1334",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1334",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -3952,10 +3947,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1334",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1334/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1334/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1334",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1334/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1334/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -3992,7 +3987,7 @@
                 "name": "EJ Mason",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+                "web_url": "http://localhost:8023/mxmason"
               }
             ],
             "author": {
@@ -4001,7 +3996,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "type": "ISSUE",
             "assignee": {
@@ -4010,7 +4005,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "user_notes_count": 1,
             "merge_requests_count": 0,
@@ -4020,7 +4015,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1302",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1302",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -4033,10 +4028,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1302",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1302/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1302/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1302",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1302/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1302/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -4072,7 +4067,7 @@
                 "name": "EJ Mason",
                 "state": "active",
                 "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-                "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+                "web_url": "http://localhost:8023/mxmason"
               }
             ],
             "author": {
@@ -4081,7 +4076,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "type": "ISSUE",
             "assignee": {
@@ -4090,7 +4085,7 @@
               "name": "EJ Mason",
               "state": "active",
               "avatar_url": "https://www.gravatar.com/avatar/2b916a82cf76b84365e49af6bded0e02?s=80&d=identicon",
-              "web_url": "http://metis.lti.cs.cmu.edu:8023/mxmason"
+              "web_url": "http://localhost:8023/mxmason"
             },
             "user_notes_count": 1,
             "merge_requests_count": 0,
@@ -4100,7 +4095,7 @@
             "confidential": false,
             "discussion_locked": null,
             "issue_type": "issue",
-            "web_url": "http://metis.lti.cs.cmu.edu:8023/a11yproject/a11yproject.com/-/issues/1295",
+            "web_url": "http://localhost:8023/a11yproject/a11yproject.com/-/issues/1295",
             "time_stats": {
               "time_estimate": 0,
               "total_time_spent": 0,
@@ -4113,10 +4108,10 @@
             },
             "has_tasks": false,
             "_links": {
-              "self": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1295",
-              "notes": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1295/notes",
-              "award_emoji": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174/issues/1295/award_emoji",
-              "project": "http://metis.lti.cs.cmu.edu:8023/api/v4/projects/174",
+              "self": "http://localhost:8023/api/v4/projects/174/issues/1295",
+              "notes": "http://localhost:8023/api/v4/projects/174/issues/1295/notes",
+              "award_emoji": "http://localhost:8023/api/v4/projects/174/issues/1295/award_emoji",
+              "project": "http://localhost:8023/api/v4/projects/174",
               "closed_as_duplicate_of": null
             },
             "references": {
@@ -4130,8 +4125,8 @@
           }
         ]
       },
-      "answer": "## Most Recent Open Issues for a11yproject/a11yproject.com\n\nHere are the 20 most recent open issues, ordered from newest to oldest:\n\n### Post Proposals\n1. **#1533** \u2013 *[Post] HOWTO: Ajax with ARIA-LIVE* \u2014 by Paul McFedries (Mar 22, 2023) \u2013 Covers ARIA-LIVE for dynamic Ajax content. Assigned to Roshan Jossy. `claimed`\n2. **#1530** \u2013 *[Post] What is Semantic HTML?* \u2014 by David A. Kennedy (Mar 19, 2023) \u2013 Explains semantic HTML and its benefits. `claimed`\n3. **#1529** \u2013 *[Post] Don't Wait Until Launch: Why Accessibility Testing Early On Can Save You Time and Money* \u2014 by John Nyaruiru (Mar 13, 2023) \u2013 Importance of early accessibility testing. `claimed`\n4. **#1526** \u2013 *[Post] HOWTO: Use JAWS on Windows* \u2014 by ilknureren (Mar 7, 2023) \u2013 Guide to using the JAWS screen reader. `claimed`\n5. **#1509** \u2013 *[Post] Getting Started with TalkBack* \u2014 by Cooper Hollmaier (Feb 12, 2023) \u2013 Intro to Android's TalkBack screen reader. `claimed`\n6. **#1491** \u2013 *[Post] Accessibility in Content Creation and UX Writing* \u2014 by Victoria Ottah (Nov 30, 2022) \u2013 Accessibility for content creators/UX writers. **Terms not agreed to.**\n7. **#1449** \u2013 *[Post] What is WAI?* \u2014 by ilknureren (Jul 18, 2022) \u2013 History and importance of the Web Accessibility Initiative. `claimed`, assigned to ilknureren.\n8. **#1447** \u2013 *[Post] Bake Accessibility into Your Design and Development Process* \u2014 by Matt Obee (Jul 4, 2022) \u2013 Operational approaches to embedding accessibility. `claimed`, assigned to Roshan Jossy.\n9. **#1443** \u2013 *[Post] Text Color Contrasts on Dynamic Backgrounds* \u2014 by Conor (May 28, 2022) \u2013 Techniques for accessible text over dynamic backgrounds. `claimed`\n10. **#1334** \u2013 *Article: Starting a Design with Accessibility* \u2014 by Steve Barnett (Aug 21, 2021) \u2013 A prequel to \"Reviewing a Design for Accessibility.\" `claimed`\n\n### Bugs\n11. **#1519** \u2013 *`npm start` does not run `gulp-watch` (Windows)* \u2014 by Philip Wong (Feb 26, 2023) \u2013 Build/dev server not working on Windows 10; styles missing.\n12. **#1478** \u2013 *[Bug] 404s, bad hosts, timeouts for linked URLs* \u2014 by Roshan Jossy (Oct 3, 2022) \u2013 **33 broken links** found across the site. Only 1 of 34 checklist items fixed so far. `good first issue`, `help wanted`\n13. **#1419** \u2013 *Investigate if `<details>`/`<summary>` is a good choice for the Checklist* \u2014 by Byte Blaze (Mar 2, 2022) \u2013 Concerns about accessibility of the expand/collapse pattern used on the checklist page. `help wanted`\n14. **#1408** \u2013 *Focus indicator bug in error state* \u2014 by EJ Mason (Jan 31, 2022) \u2013 Focused form controls show incorrect purple/red indicator across browsers. `claimed`, assigned to EJ Mason.\n\n### Features & Enhancements\n15. **#1521** \u2013 *[Feature] Add a broken link checker to CI/CD* \u2014 by Philip Wong (Feb 28, 2023) \u2013 Automate link checking in the pipeline. `help wanted`\n16. **#1302** \u2013 *Provide syntactic sugar for creating figures in Markdown* \u2014 by EJ Mason (Jun 29, 2021) \u2013 Simplify how authors create `<figure>` elements in posts. `claimed`\n17. **#1295** \u2013 *Provide a callout card component for emphasizing content* \u2014 by EJ Mason (Jun 17, 2021) \u2013 Design a visual callout card distinct from blockquotes. `claimed`\n\n### Content & Process\n18. **#1460** \u2013 *Link to WCAG 2.1 instead of 2.0?* \u2014 by Byte Blaze (Aug 11, 2022) \u2013 Checklist still links to WCAG 2.0 success criteria. `claimed`\n19. **#1360** \u2013 *The process for writing for us is scattered and buried* \u2014 by Byte Blaze (Oct 11, 2021) \u2013 Consolidate contributor/writing info into a dedicated page.\n20. **#1359** \u2013 *Our non-GitHub editorial process is opaque* \u2014 by Byte Blaze (Oct 11, 2021) \u2013 Document the pitch \u2192 editing \u2192 publishing workflow.\n\n### Summary\n- **Most issues are post proposals** for new accessibility articles, many labeled `claimed`.\n- **Key bugs** include broken links across the site (#1478, with 33 URLs to fix), a Windows build issue, and UI focus indicator problems.\n- **Help wanted** items include the broken link checker feature (#1521), fixing broken links (#1478), and investigating the `<details>`/`<summary>` pattern (#1419).",
-      "worker_id": 2
+      "answer": "## Open Issues for a11yproject/a11yproject.com\n\nThe issues page has been retrieved, filtered to the most recent open issues (sorted by newest first). Here are the **20 most recent open issues**:\n\n| # | Issue | Author | Created |\n|---|-------|--------|---------|\n| #1533 | [Post] HOWTO: Ajax with ARIA-LIVE | Paul McFedries | Mar 22, 2023 |\n| #1530 | [Post]: What is Semantic HTML? | David A. Kennedy | Mar 19, 2023 |\n| #1529 | [Post] Don't Wait Until Launch: Accessibility Testing Early On | John Nyaruiru | Mar 13, 2023 |\n| #1526 | [Post] HOWTO: Use JAWS on Windows | ilknureren | Mar 7, 2023 |\n| #1521 | [Feature] Add a broken link checker to CI/CD pipeline | Philip Wong | Feb 28, 2023 |\n| #1519 | `npm start` does not run `gulp-watch` (Windows) | Philip Wong | Feb 26, 2023 |\n| #1509 | [Post] Getting Started with TalkBack | Cooper Hollmaier | Feb 12, 2023 |\n| #1491 | [Post] Accessibility in Web: Content creation and UX writing | Victoria Ottah | Nov 30, 2022 |\n| #1478 | [Bug] 404s, bad host, timeouts for URLs linked from website | Roshan Jossy | Oct 3, 2022 |\n| #1460 | Link to WCAG 2.1 instead of 2.0? | Byte Blaze | Aug 11, 2022 |\n| #1449 | [Post] What is WAI? The Web Accessibility Initiative | ilknureren | Jul 18, 2022 |\n| #1447 | [Post] Bake accessibility into your design and development process | Matt Obee | Jul 4, 2022 |\n| #1443 | [Post] Text color contrasts on dynamic backgrounds | Conor | May 28, 2022 |\n| #1419 | Investigate if `<details>`/`<summary>` is good for our Checklist | Byte Blaze | Mar 2, 2022 |\n| #1408 | Focus indicator renders purple/red in error state | EJ Mason | Jan 31, 2022 |\n| #1360 | The process for writing for us is scattered and buried | Byte Blaze | Oct 11, 2021 |\n| #1359 | Our non-GitHub editorial process is opaque | Byte Blaze | Oct 11, 2021 |\n| #1334 | Article: Starting a design with accessibility | Steve Barnett | Aug 21, 2021 |\n| #1302 | Provide syntactic sugar for creating figures in Markdown | EJ Mason | Jun 29, 2021 |\n| #1295 | Provide a callout card component for emphasizing content | EJ Mason | Jun 17, 2021 |\n\nMost issues are **post proposals** (labeled \"post\" and \"claimed\"), with a mix of **bugs**, **feature requests**, and **content/design improvements**. The project has a healthy backlog of accessibility-related article proposals spanning topics like screen readers, semantic HTML, ARIA, and accessible design processes.",
+      "worker_id": 3
     }
   ]
 }

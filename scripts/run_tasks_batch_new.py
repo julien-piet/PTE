@@ -40,7 +40,7 @@ from typing import Any, Dict, List, Optional
 from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
-from eval.docker.workers import num_workers, worker_session
+from eval.docker import workers_new as _workers_new
 
 
 from eval.program_html_evaluator import DEFAULT_BASE_URLS as _EVALUATOR_URLS
@@ -112,7 +112,7 @@ class TaskBatchRunner:
         self.debug = debug
         self.multi_docker = multi_docker
         self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, "http://localhost:8023")
-        self.num_workers = num_workers() if multi_docker else 1
+        self.num_workers = _workers_new.num_workers() if multi_docker else 1
         self._glpat: Optional[str] = None
 
         self.results: List[Dict[str, Any]] = []
@@ -177,10 +177,10 @@ class TaskBatchRunner:
 
         try:
             if self.multi_docker:
-                worker_ctx = worker_session(
+                worker_ctx = _workers_new.worker_session(
                     str(task_id),
+                    server=self.server,
                     acquire_lock=self._acquire_lock,
-                    read_only=task.get("read_only", False),
                 )
             else:
                 worker_ctx = _local_session(self.base_url, self._glpat)
