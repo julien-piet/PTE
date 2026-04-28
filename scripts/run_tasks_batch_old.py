@@ -1,14 +1,39 @@
-"""
-Batch task runner: plans each task with PlanningAgent then executes the plan
-with ExecutionAgent using curl.
-
-Results include both the generated plan and the execution output per step.
-Use --skip-execution to plan only (same as run_planning_batch.py).
-"""
+# scripts/run_tasks_batch_old.py
+#
+# Batch task runner: plans each task then executes using PlanningAgent + ExecutionAgent.
+# Reads from test_files/{server}_tasks.json based on --server.
+#
+# Run all gitlab tasks (from gitlab_tasks.json):
+#   python3 -m scripts.run_tasks_batch_old --server gitlab
+#
+# Run all shopping tasks (from shopping_tasks.json):
+#   python3 -m scripts.run_tasks_batch_old --server shopping
+#
+# Smoke test (first 5 tasks):
+#   python3 -m scripts.run_tasks_batch_old --server gitlab --limit 5
+#
+# Single task by ID:
+#   python3 -m scripts.run_tasks_batch_old --server gitlab --task-ids 44
+#
+# Multiple tasks by ID:
+#   python3 -m scripts.run_tasks_batch_old --server gitlab --task-ids 44 136 389
+#
+# Save results to a JSON log:
+#   python3 -m scripts.run_tasks_batch_old --server gitlab --output gitlab_results.json
+#
+# Plan only (skip execution):
+#   python3 -m scripts.run_tasks_batch_old --server gitlab --skip-execution
+#
+# Use multi-docker worker pool:
+#   python3 -m scripts.run_tasks_batch_old --server gitlab --multi-docker
+#
+# Override the base URL (single-instance mode only):
+#   python3 -m scripts.run_tasks_batch_old --server gitlab --base-url http://localhost:8024
 
 import asyncio
 import json
 import sys
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -17,6 +42,30 @@ from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker.workers import num_workers, worker_session
+
+
+from eval.program_html_evaluator import DEFAULT_BASE_URLS as _EVALUATOR_URLS
+
+# Map server names to the same URLs used by the evaluator's placeholder dict.
+_DEFAULT_BASE_URLS: dict = {
+    "gitlab":         _EVALUATOR_URLS["__GITLAB__"],
+    "shopping":       _EVALUATOR_URLS["__SHOPPING__"],
+    "shopping_admin": _EVALUATOR_URLS["__SHOPPING_ADMIN__"],
+    "reddit":         _EVALUATOR_URLS["__REDDIT__"],
+}
+
+_DEFAULT_TASK_FILES: dict = {
+    "gitlab":         "test_files/gitlab_tasks_old.json",
+    "shopping":       "test_files/shopping_tasks_old.json",
+    # "shopping_admin": "test_files/shopping_tasks.json",
+    "reddit":         "test_files/reddit_tasks_old.json",
+}
+
+
+@asynccontextmanager
+async def _local_session(server_url: str, glpat: Optional[str]):
+    """Stub worker session for a single local server instance."""
+    yield {"worker_id": "local", "gitlab_url": server_url, "glpat": glpat}
 
 
 def _serialize_plan(plan) -> list:
@@ -49,6 +98,8 @@ class TaskBatchRunner:
         task_ids: Optional[List[int]] = None,
         skip_execution: bool = False,
         debug: bool = False,
+        multi_docker: bool = False,
+        base_url: Optional[str] = None,
     ):
         self.tasks_file = Path(tasks_file)
         self.output_file = Path(output_file)
@@ -60,13 +111,20 @@ class TaskBatchRunner:
         self.task_ids = task_ids
         self.skip_execution = skip_execution
         self.debug = debug
-        self.num_workers = num_workers()
+        self.multi_docker = multi_docker
+        self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, "http://localhost:8023")
+        self.num_workers = num_workers() if multi_docker else 1
+        self._glpat: Optional[str] = None
 
         self.results: List[Dict[str, Any]] = []
         self._acquire_lock: asyncio.Lock = asyncio.Lock()
 
     def initialize(self):
-        print(f"Config: server={self.server!r}, workers={self.num_workers}")
+        if not self.multi_docker and self.server == "gitlab":
+            from eval.docker.gitlab_init import get_glpat
+            self._glpat = get_glpat(self.base_url, "agent-local")
+        mode = "multi-docker" if self.multi_docker else f"single ({self.base_url})"
+        print(f"Config: server={self.server!r}, workers={self.num_workers}, mode={mode}")
         print("Agent ready\n")
 
     def load_tasks(self) -> List[Dict[str, Any]]:
@@ -117,14 +175,26 @@ class TaskBatchRunner:
         task_result: Optional[Dict[str, Any]] = None
 
         try:
-            async with worker_session(str(task_id), acquire_lock=self._acquire_lock, read_only=task.get("read_only", False)) as w:
+            if self.multi_docker:
+                worker_ctx = worker_session(
+                    str(task_id),
+                    acquire_lock=self._acquire_lock,
+                    read_only=task.get("read_only", False),
+                )
+            else:
+                worker_ctx = _local_session(self.base_url, self._glpat)
+
+            async with worker_ctx as w:
                 worker_id = w["worker_id"]
                 gitlab_url = w["gitlab_url"]
                 glpat = w["glpat"]
 
-                # Inject the worker-specific token into the execution agent.
+                # Inject auth into the execution agent.
+                # GitLab uses a dynamically obtained GLPAT; other servers (e.g.
+                # shopping) use static tokens already loaded from .server_env.
                 if agent.execution_agent is not None:
-                    agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
+                    if self.server == "gitlab" and glpat:
+                        agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
                     agent.execution_agent.task_id = str(task_id)
 
                 # ── Plan + Execute ────────────────────────────────────────────
@@ -288,15 +358,15 @@ class TaskBatchRunner:
         print("\n" + "=" * 70)
 
 
-async def main():
+def main():
     import argparse
 
     parser = argparse.ArgumentParser(
         description="Plan and execute batch tasks using PlanningAgent + ExecutionAgent"
     )
     parser.add_argument(
-        "--tasks-file", default="test_files/gitlab_tasks.json",
-        help="Path to tasks JSON file (default: gitlab_tasks.json)"
+        "--tasks-file", default=None,
+        help="Path to tasks JSON file. Defaults per server: gitlab→gitlab_tasks.json, shopping→shopping_tasks.json, reddit→reddit_tasks.json."
     )
     parser.add_argument(
         "--output", "-o", dest="output_file", default="logs/task_results.json",
@@ -334,11 +404,27 @@ async def main():
         "--debug", action="store_true",
         help="Print curl commands and raw responses for each step"
     )
+    parser.add_argument(
+        "--multi-docker", action="store_true", default=False,
+        help=(
+            "Use the remote multi-docker worker pool via the SSH orchestrator. "
+            "When omitted (default), tasks run against a single server at --base-url."
+        ),
+    )
+    parser.add_argument(
+        "--base-url", default=None,
+        help=(
+            "Base URL of the server (ignored when --multi-docker is set). "
+            "Defaults are pulled from DEFAULT_BASE_URLS in eval/program_html_evaluator.py "
+            "so you only need this flag to override them."
+        ),
+    )
     args = parser.parse_args()
+    tasks_file = args.tasks_file or _DEFAULT_TASK_FILES.get(args.server, "test_files/gitlab_tasks.json")
 
     try:
         runner = TaskBatchRunner(
-            tasks_file=args.tasks_file,
+            tasks_file=tasks_file,
             output_file=args.output_file,
             server=args.server,
             env_file=args.env_file,
@@ -348,15 +434,15 @@ async def main():
             task_ids=args.task_ids,
             skip_execution=args.skip_execution,
             debug=args.debug,
+            multi_docker=args.multi_docker,
+            base_url=args.base_url,
         )
-        runner.initialize()
-        await runner.run_all()
-        runner.save_results()
-        print("\n✅ Batch run completed successfully!")
+        runner.initialize()  # sync — must run before the event loop starts
+        asyncio.run(_run_async(runner))
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user")
-        raise
+        sys.exit(1)
     except Exception as e:
         print(f"\n❌ Batch run failed: {e}")
         import traceback
@@ -364,5 +450,11 @@ async def main():
         sys.exit(1)
 
 
+async def _run_async(runner: TaskBatchRunner):
+    await runner.run_all()
+    runner.save_results()
+    print("\n✅ Batch run completed successfully!")
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

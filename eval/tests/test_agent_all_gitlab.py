@@ -32,6 +32,7 @@
 import asyncio
 import json
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -40,6 +41,12 @@ import pytest
 from agent.auth import StaticAuth
 from eval.docker.workers import num_workers, worker_session
 from eval.run_program_html_benchmark import AgentRunner
+
+
+@asynccontextmanager
+async def _local_session(gitlab_url: str, glpat: str):
+    """Stub worker session for a single local GitLab instance."""
+    yield {"worker_id": "local", "gitlab_url": gitlab_url, "glpat": glpat}
 
 
 def _serialize_plan(plan) -> list:
@@ -144,7 +151,16 @@ def test_agent_accomplishes_gitlab_tasks(
 ) -> None:
     tasks = _load_tasks(request.config)
     force_reset = request.config.getoption("--force-reset", default=False)
-    n_workers = num_workers()
+    multi_docker = request.config.getoption("--multi-docker", default=False)
+    base_url = request.config.getoption("--base-url", default="http://localhost:8023")
+
+    if multi_docker:
+        n_workers = num_workers()
+        _glpat = None
+    else:
+        n_workers = 1
+        from eval.docker.gitlab_init import get_glpat
+        _glpat = get_glpat(base_url, "agent-local")
 
     print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
 
@@ -156,12 +172,17 @@ def test_agent_accomplishes_gitlab_tasks(
         async def run_one(task: Dict[str, Any]) -> Dict[str, Any]:
             async with sem:
                 try:
-                    async with worker_session(
-                        str(task["task_id"]),
-                        acquire_lock=acquire_lock,
-                        read_only=task.get("read_only", False),
-                        force_restart=False ##try so no cold container
-                    ) as w:
+                    if multi_docker:
+                        worker_ctx = worker_session(
+                            str(task["task_id"]),
+                            acquire_lock=acquire_lock,
+                            read_only=task.get("read_only", False),
+                            force_restart=False,
+                        )
+                    else:
+                        worker_ctx = _local_session(base_url, _glpat)
+
+                    async with worker_ctx as w:
                         runner = AgentRunner(
                             headless=True,
                             enable_reset=False,
