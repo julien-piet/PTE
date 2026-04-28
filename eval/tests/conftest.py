@@ -107,6 +107,16 @@ def pytest_addoption(parser):
         default=None,
         help="Run only the task(s) with these numeric task_ids, comma-separated (e.g. --task-id 136 or --task-id 136,389,412).",
     )
+    parser.addoption(
+        "--multi-docker",
+        action="store_true",
+        default=False,
+        help=(
+            "Use the remote multi-docker worker pool via the SSH orchestrator. "
+            "When False (default), tests run against a single local GitLab instance "
+            "at --base-url (default: http://localhost:8023)."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ Use --skip-execution to plan only (same as run_planning_batch.py).
 import asyncio
 import json
 import sys
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -17,6 +18,12 @@ from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker.workers import num_workers, worker_session
+
+
+@asynccontextmanager
+async def _local_session(gitlab_url: str, glpat: str):
+    """Stub worker session for a single local GitLab instance."""
+    yield {"worker_id": "local", "gitlab_url": gitlab_url, "glpat": glpat}
 
 
 def _serialize_plan(plan) -> list:
@@ -49,6 +56,8 @@ class TaskBatchRunner:
         task_ids: Optional[List[int]] = None,
         skip_execution: bool = False,
         debug: bool = False,
+        multi_docker: bool = False,
+        base_url: str = "http://localhost:8023",
     ):
         self.tasks_file = Path(tasks_file)
         self.output_file = Path(output_file)
@@ -60,13 +69,20 @@ class TaskBatchRunner:
         self.task_ids = task_ids
         self.skip_execution = skip_execution
         self.debug = debug
-        self.num_workers = num_workers()
+        self.multi_docker = multi_docker
+        self.base_url = base_url
+        self.num_workers = num_workers() if multi_docker else 1
+        self._glpat: Optional[str] = None
 
         self.results: List[Dict[str, Any]] = []
         self._acquire_lock: asyncio.Lock = asyncio.Lock()
 
     def initialize(self):
-        print(f"Config: server={self.server!r}, workers={self.num_workers}")
+        if not self.multi_docker:
+            from eval.docker.gitlab_init import get_glpat
+            self._glpat = get_glpat(self.base_url, "agent-local")
+        mode = "multi-docker" if self.multi_docker else f"single ({self.base_url})"
+        print(f"Config: server={self.server!r}, workers={self.num_workers}, mode={mode}")
         print("Agent ready\n")
 
     def load_tasks(self) -> List[Dict[str, Any]]:
@@ -117,7 +133,16 @@ class TaskBatchRunner:
         task_result: Optional[Dict[str, Any]] = None
 
         try:
-            async with worker_session(str(task_id), acquire_lock=self._acquire_lock, read_only=task.get("read_only", False)) as w:
+            if self.multi_docker:
+                worker_ctx = worker_session(
+                    str(task_id),
+                    acquire_lock=self._acquire_lock,
+                    read_only=task.get("read_only", False),
+                )
+            else:
+                worker_ctx = _local_session(self.base_url, self._glpat)
+
+            async with worker_ctx as w:
                 worker_id = w["worker_id"]
                 gitlab_url = w["gitlab_url"]
                 glpat = w["glpat"]
@@ -334,6 +359,18 @@ async def main():
         "--debug", action="store_true",
         help="Print curl commands and raw responses for each step"
     )
+    parser.add_argument(
+        "--multi-docker", action="store_true", default=False,
+        help=(
+            "Use the remote multi-docker worker pool via the SSH orchestrator. "
+            "When omitted (default), tasks run against a single local GitLab instance "
+            "at --base-url."
+        ),
+    )
+    parser.add_argument(
+        "--base-url", default="http://localhost:8023",
+        help="Base URL of the single local GitLab instance (ignored when --multi-docker is set). Default: http://localhost:8023",
+    )
     args = parser.parse_args()
 
     try:
@@ -348,6 +385,8 @@ async def main():
             task_ids=args.task_ids,
             skip_execution=args.skip_execution,
             debug=args.debug,
+            multi_docker=args.multi_docker,
+            base_url=args.base_url,
         )
         runner.initialize()
         await runner.run_all()
