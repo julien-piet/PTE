@@ -20,10 +20,28 @@ from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker.workers import num_workers, worker_session
 
 
+from eval.program_html_evaluator import DEFAULT_BASE_URLS as _EVALUATOR_URLS
+
+# Map server names to the same URLs used by the evaluator's placeholder dict.
+_DEFAULT_BASE_URLS: dict = {
+    "gitlab":         _EVALUATOR_URLS["__GITLAB__"],
+    "shopping":       _EVALUATOR_URLS["__SHOPPING__"],
+    "shopping_admin": _EVALUATOR_URLS["__SHOPPING_ADMIN__"],
+    "reddit":         _EVALUATOR_URLS["__REDDIT__"],
+}
+
+_DEFAULT_TASK_FILES: dict = {
+    "gitlab":         "test_files/gitlab_tasks.json",
+    "shopping":       "test_files/shopping_tasks.json",
+    # "shopping_admin": "test_files/shopping_tasks.json",
+    "reddit":         "test_files/reddit_tasks.json",
+}
+
+
 @asynccontextmanager
-async def _local_session(gitlab_url: str, glpat: str):
-    """Stub worker session for a single local GitLab instance."""
-    yield {"worker_id": "local", "gitlab_url": gitlab_url, "glpat": glpat}
+async def _local_session(server_url: str, glpat: Optional[str]):
+    """Stub worker session for a single local server instance."""
+    yield {"worker_id": "local", "gitlab_url": server_url, "glpat": glpat}
 
 
 def _serialize_plan(plan) -> list:
@@ -57,7 +75,7 @@ class TaskBatchRunner:
         skip_execution: bool = False,
         debug: bool = False,
         multi_docker: bool = False,
-        base_url: str = "http://localhost:8023",
+        base_url: Optional[str] = None,
     ):
         self.tasks_file = Path(tasks_file)
         self.output_file = Path(output_file)
@@ -70,7 +88,7 @@ class TaskBatchRunner:
         self.skip_execution = skip_execution
         self.debug = debug
         self.multi_docker = multi_docker
-        self.base_url = base_url
+        self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, "http://localhost:8023")
         self.num_workers = num_workers() if multi_docker else 1
         self._glpat: Optional[str] = None
 
@@ -78,7 +96,7 @@ class TaskBatchRunner:
         self._acquire_lock: asyncio.Lock = asyncio.Lock()
 
     def initialize(self):
-        if not self.multi_docker:
+        if not self.multi_docker and self.server == "gitlab":
             from eval.docker.gitlab_init import get_glpat
             self._glpat = get_glpat(self.base_url, "agent-local")
         mode = "multi-docker" if self.multi_docker else f"single ({self.base_url})"
@@ -147,9 +165,12 @@ class TaskBatchRunner:
                 gitlab_url = w["gitlab_url"]
                 glpat = w["glpat"]
 
-                # Inject the worker-specific token into the execution agent.
+                # Inject auth into the execution agent.
+                # GitLab uses a dynamically obtained GLPAT; other servers (e.g.
+                # shopping) use static tokens already loaded from .server_env.
                 if agent.execution_agent is not None:
-                    agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
+                    if self.server == "gitlab" and glpat:
+                        agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
                     agent.execution_agent.task_id = str(task_id)
 
                 # ── Plan + Execute ────────────────────────────────────────────
@@ -320,8 +341,8 @@ async def main():
         description="Plan and execute batch tasks using PlanningAgent + ExecutionAgent"
     )
     parser.add_argument(
-        "--tasks-file", default="test_files/gitlab_tasks.json",
-        help="Path to tasks JSON file (default: gitlab_tasks.json)"
+        "--tasks-file", default=None,
+        help="Path to tasks JSON file. Defaults per server: gitlab→gitlab_tasks.json, shopping→shopping_tasks.json, reddit→reddit_tasks.json."
     )
     parser.add_argument(
         "--output", "-o", dest="output_file", default="logs/task_results.json",
@@ -363,19 +384,23 @@ async def main():
         "--multi-docker", action="store_true", default=False,
         help=(
             "Use the remote multi-docker worker pool via the SSH orchestrator. "
-            "When omitted (default), tasks run against a single local GitLab instance "
-            "at --base-url."
+            "When omitted (default), tasks run against a single server at --base-url."
         ),
     )
     parser.add_argument(
-        "--base-url", default="http://localhost:8023",
-        help="Base URL of the single local GitLab instance (ignored when --multi-docker is set). Default: http://localhost:8023",
+        "--base-url", default=None,
+        help=(
+            "Base URL of the server (ignored when --multi-docker is set). "
+            "Defaults are pulled from DEFAULT_BASE_URLS in eval/program_html_evaluator.py "
+            "so you only need this flag to override them."
+        ),
     )
     args = parser.parse_args()
+    tasks_file = args.tasks_file or _DEFAULT_TASK_FILES.get(args.server, "test_files/gitlab_tasks.json")
 
     try:
         runner = TaskBatchRunner(
-            tasks_file=args.tasks_file,
+            tasks_file=tasks_file,
             output_file=args.output_file,
             server=args.server,
             env_file=args.env_file,
