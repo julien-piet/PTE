@@ -23,6 +23,32 @@ This is currently set up, so it shouldn't be a problem...
 
 ## Managing Workers (run from your local terminal)
 
+NEW version:
+
+| Action | Command |
+|--------|---------|
+| Check status | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py status'` |
+| Stop all workers | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py down'` |
+| Init workers | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py init --num-workers <#ofworkers>'` |
+| Release a worker | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py release --worker-id <id>'` |
+
+> **Note:** `init` defaults to 3 workers if no number is provided.
+
+---
+
+## Port Forwarding
+
+Run from the `PTE/scripts/docker_parallel` directory:
+
+```bash
+./port_forwarding_new.sh annabella@red5k.cs.berkeley.edu
+```
+
+
+
+
+Old docker image use these.
+
 | Action | Command |
 |--------|---------|
 | Check status | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent/webarena_orchestrator/orchestrator.py status'` |
@@ -39,5 +65,5 @@ This is currently set up, so it shouldn't be a problem...
 Run from the `PTE/scripts/docker_parallel` directory:
 
 ```bash
-./port_forwarding.sh annabella@red5k.cs.berkeley.edu
+./port_forwarding_old.sh annabella@red5k.cs.berkeley.edu
 ```
