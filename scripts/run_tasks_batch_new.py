@@ -1,37 +1,36 @@
-# scripts/run_tasks_batch_old.py
+# scripts/run_tasks_batch_new.py
 #
-# Batch task runner: plans each task then executes using PlanningAgent + ExecutionAgent.
-# Reads from test_files/{server}_tasks.json based on --server.
+# Batch task runner for webarena-verified.json format.
+# Reads from server-specific subsets of test_files/webarena-verified.json
+# (gitlab_tasks_new.json or shopping_tasks_new.json) based on --server.
 #
-# Run all gitlab tasks (from gitlab_tasks.json):
-#   python3 -m scripts.run_tasks_batch_old --server gitlab
+# Run all gitlab tasks (180 tasks):
+#   python3 -m scripts.run_tasks_batch_new --server gitlab
 #
-# Run all shopping tasks (from shopping_tasks.json):
-#   python3 -m scripts.run_tasks_batch_old --server shopping
+# Run all shopping tasks (187 tasks):
+#   python3 -m scripts.run_tasks_batch_new --server shopping
 #
 # Smoke test (first 5 tasks):
-#   python3 -m scripts.run_tasks_batch_old --server gitlab --limit 5
+#   python3 -m scripts.run_tasks_batch_new --server gitlab --limit 5
 #
 # Single task by ID:
-#   python3 -m scripts.run_tasks_batch_old --server gitlab --task-ids 44
+#   python3 -m scripts.run_tasks_batch_new --server gitlab --task-ids 44
 #
 # Multiple tasks by ID:
-#   python3 -m scripts.run_tasks_batch_old --server gitlab --task-ids 44 136 389
+#   python3 -m scripts.run_tasks_batch_new --server gitlab --task-ids 44 136 389
 #
 # Save results to a JSON log:
-#   python3 -m scripts.run_tasks_batch_old --server gitlab --output gitlab_results.json
+#   python3 -m scripts.run_tasks_batch_new --server gitlab --output gitlab_results.json
 #
 # Plan only (skip execution):
-#   python3 -m scripts.run_tasks_batch_old --server gitlab --skip-execution
+#   python3 -m scripts.run_tasks_batch_new --server gitlab --skip-execution
 #
 # Use multi-docker worker pool:
-#   python3 -m scripts.run_tasks_batch_old --server gitlab --multi-docker
-#
-# Override the base URL (single-instance mode only):
-#   python3 -m scripts.run_tasks_batch_old --server gitlab --base-url http://localhost:8024
+#   python3 -m scripts.run_tasks_batch_new --server gitlab --multi-docker
 
 import asyncio
 import json
+import re
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -54,11 +53,11 @@ _DEFAULT_BASE_URLS: dict = {
     "reddit":         _EVALUATOR_URLS["__REDDIT__"],
 }
 
+_WEBARENA_TASKS_FILE = "test_files/webarena-verified.json"
+
 _DEFAULT_TASK_FILES: dict = {
-    "gitlab":         "test_files/gitlab_tasks_old.json",
-    "shopping":       "test_files/shopping_tasks_old.json",
-    # "shopping_admin": "test_files/shopping_tasks.json",
-    "reddit":         "test_files/reddit_tasks_old.json",
+    "gitlab":   "test_files/gitlab_tasks_new.json",
+    "shopping": "test_files/shopping_tasks_new.json",
 }
 
 
@@ -150,13 +149,15 @@ class TaskBatchRunner:
 
         return tasks
 
-    
+
     async def run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         task_id = task.get("task_id", "unknown")
         intent = task.get("intent", "")
 
-        start_url = task.get("start_url", "")
-        repo_path = start_url.replace("__GITLAB__", "").replace("__SHOPPING__", "").strip("/")
+        # webarena-verified.json uses `start_urls` (list); fall back to legacy `start_url` (string).
+        start_urls = task.get("start_urls") or [task.get("start_url", "")]
+        start_url = start_urls[0] if start_urls else ""
+        repo_path = re.sub(r"__[A-Z_]+__", "", start_url).strip("/")
         prompt = f"Project path: {repo_path}\n\nTask: {intent}" if repo_path else intent
 
         print(f"\n{'='*70}")
@@ -362,19 +363,19 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Plan and execute batch tasks using PlanningAgent + ExecutionAgent"
+        description="Plan and execute webarena-verified.json tasks using PlanningAgent + ExecutionAgent"
     )
     parser.add_argument(
         "--tasks-file", default=None,
-        help="Path to tasks JSON file. Defaults per server: gitlab→gitlab_tasks.json, shopping→shopping_tasks.json, reddit→reddit_tasks.json."
+        help="Path to tasks JSON file. Defaults per --server: gitlab→gitlab_tasks_new.json, shopping→shopping_tasks_new.json, else webarena-verified.json."
     )
     parser.add_argument(
         "--output", "-o", dest="output_file", default="logs/task_results.json",
         help="Path to save results JSON file (default: task_results.json)"
     )
     parser.add_argument(
-        "--server", default="gitlab",
-        help="Auth server to use from .server_env (default: gitlab)"
+        "--server", default="shopping_admin",
+        help="Auth server to use from .server_env (default: shopping_admin)"
     )
     parser.add_argument(
         "--env-file", default="config/.server_env",
@@ -420,7 +421,7 @@ def main():
         ),
     )
     args = parser.parse_args()
-    tasks_file = args.tasks_file or _DEFAULT_TASK_FILES.get(args.server, "test_files/gitlab_tasks.json")
+    tasks_file = args.tasks_file or _DEFAULT_TASK_FILES.get(args.server, _WEBARENA_TASKS_FILE)
 
     try:
         runner = TaskBatchRunner(
