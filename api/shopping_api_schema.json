@@ -12,7 +12,7 @@
         "title": "Magento Community"
     },
     "host": "127.0.0.1:7770",
-    "basePath": "/rest/all",
+    "basePath": "/rest/default",
     "schemes": [
         "http"
     ],
@@ -35286,7 +35286,7 @@
                 },
                 "review_entity": {
                     "type": "string",
-                    "description": "Review entity type."
+                    "description": "Review entity type. Possible value: product."
                 },
                 "review_type": {
                     "type": "integer",

@@ -189,10 +189,17 @@ Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1
 - Getting all items: To fetch all items with no filters, you MUST still pass at least an empty searchCriteria: `?searchCriteria=all` or `?searchCriteria[pageSize]=50`.
 
 CRITICAL — Search Strategy for Product Names:
-  - Database titles may omit certain words (e.g., "Amazon" might not be in the title for "Echo Dot 3rd Gen"). If you use a strict AND query for every single word in a long phrase, you will likely get 0 results. 
-  - Be strategic: Select 1 to 3 CORE identifying keywords from the target product name (e.g., "Echo" and "Dot"). Place each of these core words into a separate `filterGroups` index to perform a logical AND.
-  - Do NOT chain multiple words together with wildcards (e.g., do NOT use `%Amazon%Echo%`).
-  - Fallback Strategy: If your initial AND search returns 0 items, broaden your search by dropping the least unique word (like a brand name) or switching to an OR logic for related terms.
+  - Be strategic: Select 1 to 3 CORE identifying keywords from the target product name (e.g., "Amazon" and "Alexa"). Place each of these core words into a separate `filterGroups` index to perform a logical AND to avoid missing relevant results or retrieving no results.
+
+Search endpoint for product relevance:
+  - When you need to search for a product, you can use the `GET /V1/search` endpoint to perform full text search first and get relevance scores.
+  - Example query: `searchCriteria[requestName]=quick_search_container` with a `search_term` filter using `conditionType=like` and a wildcard pattern that replaces spaces with `%` (e.g., `%Amazon%Alexa%`, not `%Amazon Alexa%`).
+  - The response `items` include product `id` and a custom attribute `_score` for relevancy.
+  - Use those `id` as `entity_id` values to filter other endpoints (e.g., `GET /V1/products`) when you need product details.
+  - Example product lookup by IDs: `searchCriteria[filterGroups][0][filters][0][field]=entity_id&searchCriteria[filterGroups][0][filters][0][value]=101295,20551&searchCriteria[filterGroups][0][filters][0][conditionType]=in`.
+  - This is optional; use it when relevancy scoring or ranked search is helpful, not for every task.
+  - Always add pagination with `searchCriteria[pageSize]` and `searchCriteria[currentPage]` for this endpoint to avoid returning too many results.
+
 
 CRITICAL — POST/PUT request body structure:
 The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsMineItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
@@ -217,6 +224,6 @@ CRITICAL — searchCriteria is REQUIRED for list endpoints:
 Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpoints REQUIRE the `searchCriteria` query parameter. Calling these endpoints with no query parameters at all will return HTTP 400 with "searchCriteria is required".
 - Always include at least one `searchCriteria` parameter, even if you do not need any specific filters (see "Getting all items" above).
 
-CRITICAL — For tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), your customer email is "emma.lopez@gmail.com" and you MUST first look up her customer ID using `GET /V1/customers/search` with appropriate filters (e.g., `searchCriteria[filterGroups][0][filters][0][field]=email&searchCriteria[filterGroups][0][filters][0][value]=emma.lopez@example.com`). You cannot assume or guess the customer ID, and you cannot use "self", "me", or any other alias in place of the actual customer ID.
+CRITICAL — For tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), use the given customer email. You can look up their customer ID using `GET /V1/customers/search` with appropriate filters.
 CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
 """

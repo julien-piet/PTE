@@ -158,11 +158,21 @@ class ExecutionAgent:
                 # Explicit body object — use as-is
                 body = value
             elif method in ("POST", "PUT", "PATCH"):
-                # Non-path args for mutating methods → merge into JSON body
-                if body is None:
-                    body = {}
-                if isinstance(body, dict):
-                    body[name] = value
+                # NOTE: Some Shopping Website endpoints expect the body Swagger/OpenAPI auto-generated
+                # body parameter names (e.g. "PostV1CartsMineItemsBody", "PutV1CustomersCustomerIdBody") 
+                # to be wrapped in a specific key (e.g., "cartItem"), but the auto-generated
+                # names already include this wrapper, so we should use the value directly.
+                if isinstance(value, dict) and re.match(
+                    r"^(Post|Put|Patch|Delete)V\d+.*Body$", name
+                ):
+                    body = value
+                else:
+                    # Fallback to default behavior
+                    # Non-path args for mutating methods → merge into JSON body
+                    if body is None:
+                        body = {}
+                    if isinstance(body, dict):
+                        body[name] = value
             else:
                 # GET / DELETE → query string
                 query_params[name] = value
