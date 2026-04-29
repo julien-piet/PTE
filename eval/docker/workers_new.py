@@ -22,8 +22,8 @@ ORCH = "/scr2/webagent-verified/webarena_orchestrator/orchestrator.py"
 _URL_FIELD = {
     "gitlab":         "gitlab_url",
     "shopping":       "shopping_url",
-    "shopping_admin": "shopping_admin_url",
-    "reddit":         "reddit_url",
+    # "shopping_admin": "shopping_admin_url",
+    # "reddit":         "reddit_url",
 }
 
 
@@ -58,10 +58,24 @@ def acquire_worker(task_id: str) -> dict:
     return data
 
 
-def release_worker(worker_id: int) -> None:
-    cmd = f"python3 {ORCH} release --worker-id {worker_id}"
-    subprocess.run(["ssh", SERVER, cmd], check=False)
+def release_worker(worker_id: int, read_only: bool = False, force_restart: Optional[bool] = None):
+    """
+    Release a worker back to the orchestrator.
 
+    Args:
+        worker_id:     The worker to release.
+        read_only:     If True, passes --read-only so the instance is not restarted.
+        force_restart: If set, overrides read_only logic entirely.
+                       True  → always restart the instance on release.
+                       False → never restart the instance on release (same as read_only=True).
+    """
+    cmd = f"python3 {ORCH} release --worker-id {worker_id}"
+    if force_restart is not None:
+        if not force_restart:
+            cmd += " --read-only"
+    elif read_only:
+        cmd += " --read-only"
+    subprocess.run(["ssh", SERVER, cmd], check=False)
 
 def wait_for_server(url: str, timeout: int = 120, interval: int = 5) -> None:
     """Poll server URL until HTTP 200 or timeout."""
@@ -126,6 +140,7 @@ async def worker_session(
     max_attempts: int = 10,
     wait: int = 15,
     acquire_lock: Optional[asyncio.Lock] = None,
+    read_only: bool = False,
 ):
     """
     Async context manager for the new multi-server worker pool.
@@ -171,4 +186,4 @@ async def worker_session(
 
     finally:
         print(f"  Releasing worker {worker_id}")
-        release_worker(worker_id)
+        release_worker(worker_id, read_only=read_only)
