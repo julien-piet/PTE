@@ -8,10 +8,11 @@ class GoogleProvider(object):
 
     def get_llm_model(self, config, model_name):
         model = None
-        for model in config.llm_providers.google:
-            if model.model == model_name:
+        for m in config.llm_providers.google:
+            if m.model == model_name:
+                model = m
                 break
-        if not model:
+        if model is None:
             raise Exception(f'{model_name} for Google provider not found in the config.yaml file')
         
         # Use direct Gemini API instead of Vertex AI
