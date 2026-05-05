@@ -181,6 +181,7 @@ class TaskBatchRunner:
                     str(task_id),
                     server=self.server,
                     acquire_lock=self._acquire_lock,
+                    read_only=True,
                 )
             else:
                 worker_ctx = _local_session(self.base_url, self._glpat)
@@ -297,10 +298,18 @@ class TaskBatchRunner:
         print(f"\nStarting batch run of {len(tasks)} tasks ({self.num_workers} workers)\n" + "=" * 70)
 
         sem = asyncio.Semaphore(self.num_workers)
+        remaining = len(tasks)
+        remaining_lock = asyncio.Lock()
 
         async def run_with_sem(task):
             async with sem:
-                return await self.run_task(task)
+                result = await self.run_task(task)
+            async with remaining_lock:
+                nonlocal remaining
+                remaining -= 1
+                status = result.get("status", "unknown")
+                print(f"\n[{remaining} tasks remaining] Task {result.get('task_id')} done ({status})")
+            return result
 
         futures = [asyncio.ensure_future(run_with_sem(t)) for t in tasks]
         try:
