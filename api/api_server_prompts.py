@@ -1,3 +1,124 @@
+import json
+project_templates = {
+    "Ruby on Rails": {
+        "id": "rails",
+        "description": "Includes an MVC structure, Gemfile, Rakefile, along with many others, to help you get started"
+    },
+    "Spring": {
+        "id": "spring",
+        "description": "Includes an MVC structure, mvnw and pom.xml to help you get started"
+    },
+    "NodeJS Express": {
+        "id": "express",
+        "description": "Includes an MVC structure to help you get started"
+    },
+    "iOS (Swift)": {
+        "id": "iosswift",
+        "description": "A ready-to-go template for use with iOS Swift apps"
+    },
+    ".NET Core": {
+        "id": "dotnetcore",
+        "description": "A .NET Core console application template, customizable for any .NET Core project"
+    },
+    "Android": {
+        "id": "android",
+        "description": "A ready-to-go template for use with Android apps"
+    },
+    "Go Micro": {
+        "id": "gomicro",
+        "description": "Go Micro is a framework for micro service development"
+    },
+    "Pages/Bridgetown": {
+        "id": "bridgetown",
+        "description": "Everything you need to create a GitLab Pages site using Bridgetown"
+    },
+    "Pages/Gatsby": {
+        "id": "gatsby",
+        "description": "Everything you need to create a GitLab Pages site using Gatsby"
+    },
+    "Pages/Hugo": {
+        "id": "hugo",
+        "description": "Everything you need to create a GitLab Pages site using Hugo"
+    },
+    "Pages/Pelican": {
+        "id": "pelican",
+        "description": "Everything you need to create a GitLab Pages site using Pelican"
+    },
+    "Pages/Jekyll": {
+        "id": "jekyll",
+        "description": "Everything you need to create a GitLab Pages site using Jekyll"
+    },
+    "Pages/Plain HTML": {
+        "id": "plainhtml",
+        "description": "Everything you need to create a GitLab Pages site using plain HTML"
+    },
+    "Pages/GitBook": {
+        "id": "gitbook",
+        "description": "Everything you need to create a GitLab Pages site using GitBook"
+    },
+    "Pages/Hexo": {
+        "id": "hexo",
+        "description": "Everything you need to create a GitLab Pages site using Hexo"
+    },
+    "Pages/Middleman": {
+        "id": "middleman",
+        "description": "Everything you need to create a GitLab Pages site using Middleman"
+    },
+    "Gitpod/Spring Petclinic": {
+        "id": "gitpod_spring_petclinic",
+        "description": "A Gitpod configured Webapplication in Spring and Java"
+    },
+    "Netlify/Hugo": {
+        "id": "nfhugo",
+        "description": "A Hugo site that uses Netlify for CI/CD instead of GitLab, but still with all the other great GitLab features"
+    },
+    "Netlify/Jekyll": {
+        "id": "nfjekyll",
+        "description": "A Jekyll site that uses Netlify for CI/CD instead of GitLab, but still with all the other great GitLab features"
+    },
+    "Netlify/Plain HTML": {
+        "id": "nfplainhtml",
+        "description": "A plain HTML site that uses Netlify for CI/CD instead of GitLab, but still with all the other great GitLab features"
+    },
+    "Netlify/GitBook": {
+        "id": "nfgitbook",
+        "description": "A GitBook site that uses Netlify for CI/CD instead of GitLab, but still with all the other great GitLab features"
+    },
+    "Netlify/Hexo": {
+        "id": "nfhexo",
+        "description": "A Hexo site that uses Netlify for CI/CD instead of GitLab, but still with all the other great GitLab features"
+    },
+    "SalesforceDX": {
+        "id": "salesforcedx",
+        "description": "A project boilerplate for Salesforce App development with Salesforce Developer tools"
+    },
+    "Serverless Framework/JS": {
+        "id": "serverless_framework",
+        "description": "A basic page and serverless function that uses AWS Lambda, AWS API Gateway, and GitLab Pages"
+    },
+    "Tencent Serverless Framework/NextjsSSR": {
+        "id": "tencent_serverless_framework",
+        "description": "A project boilerplate for Tencent Serverless Framework that uses Next.js SSR"
+    },
+    "Jsonnet for Dynamic Child Pipelines": {
+        "id": "jsonnet",
+        "description": "An example showing how to use Jsonnet with GitLab dynamic child pipelines"
+    },
+    "GitLab Cluster Management": {
+        "id": "cluster_management",
+        "description": "An example project for managing Kubernetes clusters integrated with GitLab"
+    },
+    "Kotlin Native Linux": {
+        "id": "kotlin_native_linux",
+        "description": "A basic template for developing Linux programs using Kotlin Native"
+    },
+    "TYPO3 Distribution": {
+        "id": "typo3_distribution",
+        "description": "A template for starting a new TYPO3 project"
+    }
+}
+
+
 GITLAB_HINTS = f"""
 GitLab project `{{id}}` path parameter has exactly two directly usable forms:
 
@@ -37,6 +158,10 @@ When reading or updating a file in a repository:
 When writing a LICENSE file to a repository:
 - To fetch license text, call `GET /templates/licenses/{{key}}` directly with the known key (e.g. key=`mit`, `apache-2.0`, `gpl-3.0`). The `content` field in the response is the full license text. Do NOT use `GET /templates/licenses` (the list endpoint — it has no `content` field). Do NOT use `GET /license` or `GET /licenses` — those manage the GitLab instance EE license key, not code license templates.
 - ALWAYS look up the repository tree first (`GET /projects/{{id}}/repository/tree`) before writing. If a file whose name starts with "LICENSE" is found, use `action: "update"` with that exact `path` value. If no such file exists, use `action: "create"` with filename `LICENSE.md`.
+
+For Project Templates. Use this json schema to search through available built-in templates. Otherwise, leave template_name blank. 
+
+{json.dumps(project_templates, indent=2)}
 
 When finding repositories a user contributed to:                                                                                                                   
 - "Contributions" include commits pushed to projects the user does NOT own or have membership in (e.g. forks, external repos they pushed to).                      

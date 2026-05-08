@@ -40084,7 +40084,7 @@
                 },
                 "template_name": {
                   "type": "string",
-                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template. Available built-in template IDs: rails, spring, express, iosswift, dotnetcore, android, gomicro, bridgetown, gatsby, hugo, pelican, jekyll, plainhtml, gitbook, hexo, middleman, gitpod_spring_petclinic, nfhugo, nfjekyll, nfplainhtml, nfgitbook, nfhexo, salesforcedx, serverless_framework, tencent_serverless_framework, jsonnet, cluster_management, kotlin_native_linux, typo3_distribution."
+                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template. Available built-in templates (display name → id): Ruby on Rails → rails; Spring → spring; NodeJS Express → express; iOS (Swift) → iosswift; .NET Core → dotnetcore; Android → android; Go Micro → gomicro; Pages/Bridgetown → bridgetown; Pages/Gatsby → gatsby; Pages/Hugo → hugo; Pages/Pelican → pelican; Pages/Jekyll → jekyll; Pages/Plain HTML → plainhtml; Pages/GitBook → gitbook; Pages/Hexo → hexo; Pages/Middleman → middleman; Gitpod/Spring Petclinic → gitpod_spring_petclinic; Netlify/Hugo → nfhugo; Netlify/Jekyll → nfjekyll; Netlify/Plain HTML → nfplainhtml; Netlify/GitBook → nfgitbook; Netlify/Hexo → nfhexo; SalesforceDX → salesforcedx; Serverless Framework/JS → serverless_framework; Tencent Serverless Framework/NextjsSSR → tencent_serverless_framework; Jsonnet for Dynamic Child Pipelines → jsonnet; GitLab Cluster Management → cluster_management; Kotlin Native Linux → kotlin_native_linux; TYPO3 Distribution → typo3_distribution."
                 },
                 "template_project_id": {
                   "type": "integer",
@@ -41296,7 +41296,7 @@
                 },
                 "template_name": {
                   "type": "string",
-                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template. Available built-in template IDs: rails, spring, express, iosswift, dotnetcore, android, gomicro, bridgetown, gatsby, hugo, pelican, jekyll, plainhtml, gitbook, hexo, middleman, gitpod_spring_petclinic, nfhugo, nfjekyll, nfplainhtml, nfgitbook, nfhexo, salesforcedx, serverless_framework, tencent_serverless_framework, jsonnet, cluster_management, kotlin_native_linux, typo3_distribution."
+                  "description": "When used without use_custom_template, name of a built-in project template required. When used with use_custom_template, name of a custom project template."
                 },
                 "topics": {
                   "type": "array",
