@@ -49,6 +49,9 @@ llm_providers:
   - model: claude-opus-4-6
     temp: 0.0
 
+  - model: claude-sonnet-4-6
+    temp: 0.0
+
  google:
   - model: gemini-3-pro-preview
     temp: 0.0

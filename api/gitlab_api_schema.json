@@ -4166,7 +4166,7 @@
                       },
                       "file_path": {
                         "type": "string",
-                        "description": "Full path to the file, e.g. 'LICENSE.txt' or 'src/main.py'."
+                        "description": "Full path to the file including its extension, e.g. 'LICENSE.txt' or 'src/main.py'. For 'update', 'delete', or 'move' actions, this must exactly match the existing filename in the repository."
                       },
                       "previous_path": {
                         "type": "string",
@@ -4189,7 +4189,10 @@
                         "description": "When true sets the file as executable. Only used for 'chmod' action."
                       }
                     },
-                    "required": ["action", "file_path"]
+                    "required": [
+                      "action",
+                      "file_path"
+                    ]
                   },
                   "description": "An array of action objects to commit as a batch. Each object must have 'action' (one of: create, delete, move, update, chmod) and 'file_path'. Use 'update' when the file already exists, 'create' when it does not."
                 },
@@ -27416,7 +27419,8 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Manages the GitLab instance EE/Ultimate license key \u2014 not open-source code license templates (MIT, Apache, etc.)."
       },
       "post": {
         "summary": "Add a new license",
@@ -27459,7 +27463,8 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Manages the GitLab instance EE/Ultimate license key \u2014 not open-source code license templates (MIT, Apache, etc.)."
       }
     },
     "/licenses": {
@@ -27483,7 +27488,8 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Manages the GitLab instance EE/Ultimate license key \u2014 not open-source code license templates (MIT, Apache, etc.)."
       }
     },
     "/license/{id}": {
@@ -27515,7 +27521,8 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Manages the GitLab instance EE/Ultimate license key \u2014 not open-source code license templates (MIT, Apache, etc.)."
       },
       "delete": {
         "summary": "Delete a license",
@@ -27545,7 +27552,8 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Manages the GitLab instance EE/Ultimate license key \u2014 not open-source code license templates (MIT, Apache, etc.)."
       }
     },
     "/groups/{id}/epics/{epic_iid}/related_epics": {
@@ -33961,14 +33969,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The numeric project ID (e.g. 179) or the URL-encoded full path of the project (e.g. 'byteblaze%2Fa11y-webring.club')."
           },
           {
             "name": "merge_request_iid",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The internal ID (iid) of the merge request within the project — this is the 'iid' field from merge request objects (e.g. 40), NOT the global database 'id' field (e.g. 138783). Using the database 'id' will return 404."
           }
         ],
         "responses": {
@@ -33998,14 +34006,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The numeric project ID (e.g. 179) or the URL-encoded full path of the project (e.g. 'byteblaze%2Fa11y-webring.club')."
           },
           {
             "name": "merge_request_iid",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The internal ID (iid) of the merge request within the project — this is the 'iid' field from merge request objects (e.g. 40), NOT the global database 'id' field (e.g. 138783). Using the database 'id' will return 404."
           },
           {
             "name": "body",
@@ -40076,7 +40084,7 @@
                 },
                 "template_name": {
                   "type": "string",
-                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template."
+                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template. Available built-in template IDs: rails, spring, express, iosswift, dotnetcore, android, gomicro, bridgetown, gatsby, hugo, pelican, jekyll, plainhtml, gitbook, hexo, middleman, gitpod_spring_petclinic, nfhugo, nfjekyll, nfplainhtml, nfgitbook, nfhexo, salesforcedx, serverless_framework, tencent_serverless_framework, jsonnet, cluster_management, kotlin_native_linux, typo3_distribution."
                 },
                 "template_project_id": {
                   "type": "integer",
@@ -41288,7 +41296,7 @@
                 },
                 "template_name": {
                   "type": "string",
-                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template."
+                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template. Available built-in template IDs: rails, spring, express, iosswift, dotnetcore, android, gomicro, bridgetown, gatsby, hugo, pelican, jekyll, plainhtml, gitbook, hexo, middleman, gitpod_spring_petclinic, nfhugo, nfjekyll, nfplainhtml, nfgitbook, nfhexo, salesforcedx, serverless_framework, tencent_serverless_framework, jsonnet, cluster_management, kotlin_native_linux, typo3_distribution."
                 },
                 "topics": {
                   "type": "array",
@@ -43905,7 +43913,8 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns the list of files and directories in the repository root (or a subdirectory). Each entry's 'path' field is the exact string to use as file_path in file operations."
       }
     },
     "/projects/{id}/repository/blobs/{sha}": {
@@ -44353,14 +44362,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Project ID or namespace/project path."
           },
           {
             "name": "file_path",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Must include full file path including file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "ref",
@@ -44383,7 +44392,8 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Read the full content of a single file."
       },
       "head": {
         "summary": "Get file from repository",
@@ -44543,7 +44553,7 @@
               "properties": {
                 "branch": {
                   "type": "string",
-                  "description": "Name of the new branch to create. The commit is added to this branch."
+                  "description": "The existing branch to commit the change to (e.g. 'master' or 'main'). Use the project's default_branch from GET /projects/{id}. Do NOT assume 'main'."
                 },
                 "commit_message": {
                   "type": "string",
@@ -44571,7 +44581,7 @@
                 },
                 "last_commit_id": {
                   "type": "string",
-                  "description": "Last known file commit ID."
+                  "description": "Optional. Last known file commit ID. Not required to perform an update \u2014 omit if unknown."
                 },
                 "start_branch": {
                   "type": "string",
@@ -44602,7 +44612,8 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Update an existing file's content. Only requires branch, content, and commit_message. You do NOT need to GET the file first \u2014 last_commit_id is optional and not required. Use the exact file_path from GET /projects/{id}/repository/tree. Use the project's default_branch (from GET /projects/{id}) as the branch value."
       },
       "delete": {
         "summary": "Delete existing file in repository",
@@ -52511,6 +52522,55 @@
           },
           "400": {
             "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/templates/licenses": {
+      "get": {
+        "summary": "List all license templates (e.g. MIT, Apache-2.0, GPL). Use this to discover license keys for fetching full license text.",
+        "operationId": "get_templates_licenses",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns array of license objects with keys: key (e.g. \"mit\"), name, popular, description."
+          }
+        }
+      }
+    },
+    "/templates/licenses/{key}": {
+      "get": {
+        "summary": "Get the full text of a specific license template. The response field \"content\" contains the complete license text ready to write to a file.",
+        "operationId": "get_templates_licenses_key",
+        "security": [],
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "License identifier, e.g. \"mit\", \"apache-2.0\", \"gpl-3.0\"."
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Project namespace/path to auto-populate copyright year and author in the license content."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns license object. Use the \"content\" field as the file content when writing a LICENSE file."
+          },
+          "404": {
+            "description": "License key not found"
           }
         }
       }

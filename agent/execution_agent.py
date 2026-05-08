@@ -93,9 +93,12 @@ class ExecutionAgent:
                     return None
                 obj = obj.get(dot_key)
             elif bracket_idx:
-                if not isinstance(obj, list):
+                if isinstance(obj, list):
+                    obj = obj[int(bracket_idx)]
+                # If obj is a dict (fan-out already distributed this item), skip the
+                # bracket index — the dict IS the item, so just continue down the chain.
+                elif not isinstance(obj, dict):
                     return None
-                obj = obj[int(bracket_idx)]
             if obj is None:
                 return None
         return obj

@@ -122,8 +122,11 @@ class TaskBatchRunner:
         if not self.multi_docker and self.server == "gitlab":
             from eval.docker.gitlab_init import get_glpat
             self._glpat = get_glpat(self.base_url, "agent-local")
+        from agent.common.configurator import Configurator
+        _cfg = Configurator()
         mode = "multi-docker" if self.multi_docker else f"single ({self.base_url})"
         print(f"Config: server={self.server!r}, workers={self.num_workers}, mode={mode}")
+        print(f"Model:  {_cfg.data.agent_llm_provider}/{_cfg.data.agent_llm_model}")
         print("Agent ready\n")
 
     def load_tasks(self) -> List[Dict[str, Any]]:
