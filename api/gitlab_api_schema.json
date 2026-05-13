@@ -3080,6 +3080,43 @@
             "description": "No Content"
           }
         }
+      },
+      "head": {
+        "summary": "Check if a branch exists",
+        "operationId": "head_projects_id_repository_branches_branch",
+        "tags": [
+          "Branches"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The ID or URL-encoded path of the project"
+          },
+          {
+            "name": "branch",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The name of the branch"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
       }
     },
     "/projects/{id}/repository/merged_branches": {
@@ -4110,7 +4147,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Commit"
+              }
+            }
           }
         }
       },
@@ -15317,7 +15360,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Group"
+              }
+            }
           }
         }
       },
@@ -15980,7 +16029,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GroupDetail"
+            }
           }
         }
       },
@@ -28211,7 +28263,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Member"
+              }
+            }
           }
         }
       },
@@ -28394,7 +28452,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Member"
+              }
+            }
           }
         }
       },
@@ -30988,7 +31052,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_MergeRequestBasic"
+            }
           }
         }
       },
@@ -33976,7 +34043,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "The internal ID (iid) of the merge request within the project — this is the 'iid' field from merge request objects (e.g. 40), NOT the global database 'id' field (e.g. 138783). Using the database 'id' will return 404."
+            "description": "The internal ID (iid) of the merge request within the project \u2014 this is the 'iid' field from merge request objects (e.g. 40), NOT the global database 'id' field (e.g. 138783). Using the database 'id' will return 404."
           }
         ],
         "responses": {
@@ -34013,7 +34080,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "The internal ID (iid) of the merge request within the project — this is the 'iid' field from merge request objects (e.g. 40), NOT the global database 'id' field (e.g. 138783). Using the database 'id' will return 404."
+            "description": "The internal ID (iid) of the merge request within the project \u2014 this is the 'iid' field from merge request objects (e.g. 40), NOT the global database 'id' field (e.g. 138783). Using the database 'id' will return 404."
           },
           {
             "name": "body",
@@ -39808,7 +39875,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_BasicProjectDetails"
+              }
+            }
           }
         }
       },
@@ -40084,7 +40157,7 @@
                 },
                 "template_name": {
                   "type": "string",
-                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template. Available built-in templates (display name → id): Ruby on Rails → rails; Spring → spring; NodeJS Express → express; iOS (Swift) → iosswift; .NET Core → dotnetcore; Android → android; Go Micro → gomicro; Pages/Bridgetown → bridgetown; Pages/Gatsby → gatsby; Pages/Hugo → hugo; Pages/Pelican → pelican; Pages/Jekyll → jekyll; Pages/Plain HTML → plainhtml; Pages/GitBook → gitbook; Pages/Hexo → hexo; Pages/Middleman → middleman; Gitpod/Spring Petclinic → gitpod_spring_petclinic; Netlify/Hugo → nfhugo; Netlify/Jekyll → nfjekyll; Netlify/Plain HTML → nfplainhtml; Netlify/GitBook → nfgitbook; Netlify/Hexo → nfhexo; SalesforceDX → salesforcedx; Serverless Framework/JS → serverless_framework; Tencent Serverless Framework/NextjsSSR → tencent_serverless_framework; Jsonnet for Dynamic Child Pipelines → jsonnet; GitLab Cluster Management → cluster_management; Kotlin Native Linux → kotlin_native_linux; TYPO3 Distribution → typo3_distribution."
+                  "description": "When used without use_custom_template, name of a built-in project template. When used with use_custom_template, name of a custom project template. Available built-in templates (display name \u2192 id): Ruby on Rails \u2192 rails; Spring \u2192 spring; NodeJS Express \u2192 express; iOS (Swift) \u2192 iosswift; .NET Core \u2192 dotnetcore; Android \u2192 android; Go Micro \u2192 gomicro; Pages/Bridgetown \u2192 bridgetown; Pages/Gatsby \u2192 gatsby; Pages/Hugo \u2192 hugo; Pages/Pelican \u2192 pelican; Pages/Jekyll \u2192 jekyll; Pages/Plain HTML \u2192 plainhtml; Pages/GitBook \u2192 gitbook; Pages/Hexo \u2192 hexo; Pages/Middleman \u2192 middleman; Gitpod/Spring Petclinic \u2192 gitpod_spring_petclinic; Netlify/Hugo \u2192 nfhugo; Netlify/Jekyll \u2192 nfjekyll; Netlify/Plain HTML \u2192 nfplainhtml; Netlify/GitBook \u2192 nfgitbook; Netlify/Hexo \u2192 nfhexo; SalesforceDX \u2192 salesforcedx; Serverless Framework/JS \u2192 serverless_framework; Tencent Serverless Framework/NextjsSSR \u2192 tencent_serverless_framework; Jsonnet for Dynamic Child Pipelines \u2192 jsonnet; GitLab Cluster Management \u2192 cluster_management; Kotlin Native Linux \u2192 kotlin_native_linux; TYPO3 Distribution \u2192 typo3_distribution."
                 },
                 "template_project_id": {
                   "type": "integer",
@@ -40474,7 +40547,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ProjectWithAccess"
+            }
           }
         }
       },
@@ -43843,7 +43919,7 @@
     },
     "/projects/{id}/repository/tree": {
       "get": {
-        "summary": "List repository tree",
+        "summary": "List the files and directories within a specific project's repository",
         "operationId": "get_projects_id_repository_tree",
         "tags": [
           "Repositories"
@@ -43911,7 +43987,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_TreeObject"
+            }
           }
         },
         "description": "Returns the list of files and directories in the repository root (or a subdirectory). Each entry's 'path' field is the exact string to use as file_path in file operations."
@@ -44143,7 +44222,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Contributor"
+            }
           }
         }
       }
@@ -44369,7 +44451,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "Must include full file path including file extensions (.txt, .pdf, etc)."
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "ref",
@@ -44414,7 +44496,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "ref",
@@ -44455,7 +44537,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "body",
@@ -44542,7 +44624,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "body",
@@ -44634,7 +44716,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "branch",
@@ -44715,7 +44797,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "ref",
@@ -44762,6 +44844,50 @@
             "description": "Successful"
           }
         }
+      },
+      "head": {
+        "summary": "Get blame file metadata from repository",
+        "operationId": "head_projects_id_repository_files_file_path_blame",
+        "tags": [
+          "Repository Files"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The project ID"
+          },
+          {
+            "name": "file_path",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The url encoded path to the file."
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of branch, tag or commit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get blame file metadata from repository"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
       }
     },
     "/projects/{id}/repository/files/{file_path}/raw": {
@@ -44784,7 +44910,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "ref",
@@ -44813,6 +44939,50 @@
           },
           "200": {
             "description": "Successful"
+          }
+        }
+      },
+      "head": {
+        "summary": "Get raw file metadata from repository",
+        "operationId": "head_projects_id_repository_files_file_path_raw",
+        "tags": [
+          "Repository Files"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The project ID"
+          },
+          {
+            "name": "file_path",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The url encoded path to the file."
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "The name of branch, tag or commit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get raw file metadata from repository"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -48123,7 +48293,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           }
         ],
         "responses": {
@@ -49590,8 +49760,8 @@
     },
     "/users": {
       "get": {
-        "summary": "For normal users",
-        "description": "Returns a list of users. The response includes only public profile fields: id, username, name, state, avatar_url, web_url.",
+        "summary": "List users",
+        "description": "Returns a list of users. For non-admin tokens, the response includes only public profile fields: id, username, name, state, avatar_url, web_url.",
         "operationId": "get_users",
         "tags": [
           "Users"
@@ -49635,7 +49805,7 @@
         }
       },
       "post": {
-        "summary": "User creation",
+        "summary": "Create user",
         "operationId": "post_users",
         "tags": [
           "Users"
@@ -49671,12 +49841,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Creates a new GitLab user account. Requires email, name, username, and a password (or reset_password/force_random_password flag).",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}": {
       "get": {
-        "summary": "For user",
+        "summary": "Get a single user",
         "operationId": "get_users_id",
         "tags": [
           "Users"
@@ -49703,11 +49879,12 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns the public profile of a user by ID, including bio, location, website URL, organization, social links, and follower/following counts."
       },
       "put": {
-        "summary": "User modification",
-        "description": "REQUIRES ADMIN TOKEN: This endpoint modifies another user's account and returns 403 Forbidden when called with a regular user token. Only accessible with an admin-level personal access token.",
+        "summary": "Modify user",
+        "description": "Modifies an existing user's account attributes such as name, email, username, password, admin status, and profile fields.",
         "operationId": "put_users_id",
         "tags": [
           "Users"
@@ -49750,10 +49927,15 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       },
       "delete": {
-        "summary": "User deletion",
+        "summary": "Delete user",
         "operationId": "delete_users_id",
         "tags": [
           "Users"
@@ -49787,7 +49969,13 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Permanently deletes a user account and all associated data.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/identities/{provider}": {
@@ -49826,12 +50014,18 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Removes a linked OAuth identity (e.g. google_oauth2, github) from the specified user account.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/user": {
       "get": {
-        "summary": "For normal users",
+        "summary": "Get current user",
         "operationId": "get_user",
         "tags": [
           "Users"
@@ -49884,12 +50078,13 @@
               }
             }
           }
-        }
+        },
+        "description": "Returns the full profile of the currently authenticated user, including private fields such as email, commit_email, theme_id, projects_limit, two_factor_enabled, and identity list."
       }
     },
     "/user/status": {
       "get": {
-        "summary": "User status",
+        "summary": "Get current user status",
         "operationId": "get_user_status",
         "tags": [
           "Users"
@@ -49908,10 +50103,11 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns the status of the currently authenticated user, including emoji, message, availability, and clear_status_at timestamp."
       },
       "put": {
-        "summary": "Set user status",
+        "summary": "Set current user status",
         "operationId": "put_user_status",
         "tags": [
           "Users"
@@ -49960,12 +50156,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Updates the authenticated user's status. Accepts emoji, message, availability (busy/not_set), and clear_status_after parameters."
       }
     },
     "/users/{id_or_username}/status": {
       "get": {
-        "summary": "Get the status of a user",
+        "summary": "Get status of a user",
         "operationId": "get_users_id_or_username_status",
         "tags": [
           "Users"
@@ -49992,12 +50189,13 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns the status of a specific user identified by their ID or username, including emoji, message, availability, and clear_status_at timestamp."
       }
     },
     "/user/preferences": {
       "get": {
-        "summary": "Get user preferences",
+        "summary": "Get current user preferences",
         "operationId": "get_user_preferences",
         "tags": [
           "Users"
@@ -50016,10 +50214,11 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns display preferences for the authenticated user: view_diffs_file_by_file and show_whitespace_in_diffs."
       },
       "put": {
-        "summary": "User preference modification",
+        "summary": "Update current user preferences",
         "operationId": "put_user_preferences",
         "tags": [
           "Users"
@@ -50064,12 +50263,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Updates display preferences for the authenticated user. Supports view_diffs_file_by_file and show_whitespace_in_diffs fields."
       }
     },
     "/users/{id}/follow": {
       "post": {
-        "summary": "Follow and unfollow users",
+        "summary": "Follow a user",
         "operationId": "post_users_id_follow",
         "tags": [
           "Users"
@@ -50099,12 +50299,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Follows the specified user on behalf of the authenticated user. Returns an empty response on success."
       }
     },
     "/users/{id}/unfollow": {
       "post": {
-        "summary": "Follow and unfollow users",
+        "summary": "Unfollow a user",
         "operationId": "post_users_id_unfollow",
         "tags": [
           "Users"
@@ -50134,12 +50335,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Unfollows the specified user on behalf of the authenticated user. Returns the unfollowed user's public profile (id, username, name, state, avatar_url, web_url)."
       }
     },
     "/users/{id}/followers": {
       "get": {
-        "summary": "Followers and following",
+        "summary": "List followers of a user",
         "operationId": "get_users_id_followers",
         "tags": [
           "Users"
@@ -50166,12 +50368,13 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a list of users who follow the specified user. Each entry includes id, username, name, state, avatar_url, and web_url."
       }
     },
     "/users/{id}/following": {
       "get": {
-        "summary": "Followers and following",
+        "summary": "List users followed by a user",
         "operationId": "get_users_id_following",
         "tags": [
           "Users"
@@ -50198,12 +50401,13 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a list of users that the specified user is following. Each entry includes id, username, name, state, avatar_url, and web_url."
       }
     },
     "/user_counts": {
       "get": {
-        "summary": "User counts",
+        "summary": "Get counts for current user",
         "operationId": "get_user_counts",
         "tags": [
           "Users"
@@ -50258,12 +50462,13 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns activity counts for the authenticated user: open merge_requests, assigned_issues, assigned_merge_requests, review_requested_merge_requests, and pending todos."
       }
     },
     "/users/{id}/associations_count": {
       "get": {
-        "summary": "List associations count for user",
+        "summary": "Get associations count for a user",
         "operationId": "get_users_id_associations_count",
         "tags": [
           "Users"
@@ -50290,12 +50495,13 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns the number of groups, projects, issues, and merge requests the specified user is associated with."
       }
     },
     "/user/keys": {
       "get": {
-        "summary": "List SSH keys",
+        "summary": "List SSH keys for current user",
         "operationId": "get_user_keys",
         "tags": [
           "Users"
@@ -50314,10 +50520,11 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a list of SSH public keys registered to the authenticated user."
       },
       "post": {
-        "summary": "Add SSH key",
+        "summary": "Add SSH key for current user",
         "operationId": "post_user_keys",
         "tags": [
           "Users"
@@ -50370,12 +50577,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Adds a new SSH public key to the authenticated user's account. Requires title and key fields."
       }
     },
     "/users/{id_or_username}/keys": {
       "get": {
-        "summary": "List SSH keys for user",
+        "summary": "List SSH keys for a user",
         "operationId": "get_users_id_or_username_keys",
         "tags": [
           "Users"
@@ -50402,12 +50610,13 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a list of SSH public keys for the specified user, identified by ID or username."
       }
     },
     "/user/keys/{key_id}": {
       "get": {
-        "summary": "Single SSH key",
+        "summary": "Get a single SSH key for current user",
         "operationId": "get_user_keys_key_id",
         "tags": [
           "Users"
@@ -50434,7 +50643,8 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a specific SSH public key by key_id belonging to the authenticated user."
       },
       "delete": {
         "summary": "Delete SSH key for current user",
@@ -50464,12 +50674,13 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Removes a specific SSH public key from the authenticated user's account."
       }
     },
     "/users/{id}/keys/{key_id}": {
       "get": {
-        "summary": "Single SSH key for given user",
+        "summary": "Get a single SSH key for a given user",
         "operationId": "get_users_id_keys_key_id",
         "tags": [
           "Users"
@@ -50503,10 +50714,11 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a specific SSH public key by key_id belonging to the specified user."
       },
       "delete": {
-        "summary": "Delete SSH key for given user",
+        "summary": "Delete SSH key for a given user",
         "operationId": "delete_users_id_keys_key_id",
         "tags": [
           "Users"
@@ -50540,12 +50752,18 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Removes a specific SSH public key from the specified user's account.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/keys": {
       "post": {
-        "summary": "Add SSH key for user",
+        "summary": "Add SSH key for a given user",
         "operationId": "post_users_id_keys",
         "tags": [
           "Users"
@@ -50605,12 +50823,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Adds a new SSH public key to the specified user's account. Requires title and key fields.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/user/gpg_keys": {
       "get": {
-        "summary": "List all GPG keys",
+        "summary": "List GPG keys for current user",
         "operationId": "get_user_gpg_keys",
         "tags": [
           "Users"
@@ -50629,10 +50853,11 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a list of GPG keys registered to the authenticated user."
       },
       "post": {
-        "summary": "Add a GPG key",
+        "summary": "Add a GPG key for current user",
         "operationId": "post_user_gpg_keys",
         "tags": [
           "Users"
@@ -50672,12 +50897,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Adds a new GPG public key to the authenticated user's account. Requires the key field (ASCII-armored PGP public key)."
       }
     },
     "/user/gpg_keys/{key_id}": {
       "get": {
-        "summary": "Get a specific GPG key",
+        "summary": "Get a specific GPG key for current user",
         "operationId": "get_user_gpg_keys_key_id",
         "tags": [
           "Users"
@@ -50704,10 +50930,11 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a specific GPG key by key_id belonging to the authenticated user."
       },
       "delete": {
-        "summary": "Delete a GPG key",
+        "summary": "Delete a GPG key for current user",
         "operationId": "delete_user_gpg_keys_key_id",
         "tags": [
           "Users"
@@ -50734,12 +50961,13 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Removes a specific GPG key from the authenticated user's account."
       }
     },
     "/users/{id}/gpg_keys": {
       "get": {
-        "summary": "List all GPG keys for given user",
+        "summary": "List GPG keys for a given user",
         "operationId": "get_users_id_gpg_keys",
         "tags": [
           "Users"
@@ -50766,7 +50994,8 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a list of GPG keys registered to the specified user."
       },
       "post": {
         "summary": "Add a GPG key for a given user",
@@ -50817,7 +51046,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Adds a new GPG public key to the specified user's account. Requires the key field (ASCII-armored PGP public key).",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/gpg_keys/{key_id}": {
@@ -50856,7 +51091,8 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a specific GPG key by key_id belonging to the specified user."
       },
       "delete": {
         "summary": "Delete a GPG key for a given user",
@@ -50893,12 +51129,18 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Removes a specific GPG key from the specified user's account.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/user/emails": {
       "get": {
-        "summary": "List emails",
+        "summary": "List email addresses for current user",
         "operationId": "get_user_emails",
         "tags": [
           "Users"
@@ -50917,10 +51159,11 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns all email addresses associated with the authenticated user's account, including confirmed_at timestamps."
       },
       "post": {
-        "summary": "Add email",
+        "summary": "Add email address for current user",
         "operationId": "post_user_emails",
         "tags": [
           "Users"
@@ -50960,12 +51203,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Adds a new email address to the authenticated user's account. Requires an email field."
       }
     },
     "/users/{id}/emails": {
       "get": {
-        "summary": "List emails for user",
+        "summary": "List email addresses for a given user",
         "operationId": "get_users_id_emails",
         "tags": [
           "Users"
@@ -50992,10 +51236,16 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns all email addresses associated with the specified user's account.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       },
       "post": {
-        "summary": "Add email for user",
+        "summary": "Add email address for a given user",
         "operationId": "post_users_id_emails",
         "tags": [
           "Users"
@@ -51046,12 +51296,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Adds a new email address to the specified user's account. Requires an email field.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/user/emails/{email_id}": {
       "get": {
-        "summary": "Single email",
+        "summary": "Get a single email for current user",
         "operationId": "get_user_emails_email_id",
         "tags": [
           "Users"
@@ -51078,10 +51334,11 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns a specific email address by email_id belonging to the authenticated user."
       },
       "delete": {
-        "summary": "Delete email for current user",
+        "summary": "Delete email address for current user",
         "operationId": "delete_user_emails_email_id",
         "tags": [
           "Users"
@@ -51108,12 +51365,13 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Removes a specific email address from the authenticated user's account."
       }
     },
     "/users/{id}/emails/{email_id}": {
       "delete": {
-        "summary": "Delete email for given user",
+        "summary": "Delete email address for a given user",
         "operationId": "delete_users_id_emails_email_id",
         "tags": [
           "Users"
@@ -51147,12 +51405,18 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Removes a specific email address from the specified user's account.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/block": {
       "post": {
-        "summary": "Block user",
+        "summary": "Block a user",
         "operationId": "post_users_id_block",
         "tags": [
           "Users"
@@ -51182,12 +51446,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Blocks the specified user, preventing them from logging in or accessing GitLab.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/unblock": {
       "post": {
-        "summary": "Unblock user",
+        "summary": "Unblock a user",
         "operationId": "post_users_id_unblock",
         "tags": [
           "Users"
@@ -51217,12 +51487,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Unblocks a previously blocked user, restoring their ability to log in and access GitLab.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/deactivate": {
       "post": {
-        "summary": "Deactivate user",
+        "summary": "Deactivate a user",
         "operationId": "post_users_id_deactivate",
         "tags": [
           "Users"
@@ -51252,12 +51528,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Deactivates the specified user account. Deactivated users cannot log in or use the API.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/activate": {
       "post": {
-        "summary": "Activate user",
+        "summary": "Activate a user",
         "operationId": "post_users_id_activate",
         "tags": [
           "Users"
@@ -51287,12 +51569,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Reactivates a previously deactivated user account, restoring their ability to log in and use the API.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/ban": {
       "post": {
-        "summary": "Ban user",
+        "summary": "Ban a user",
         "operationId": "post_users_id_ban",
         "tags": [
           "Users"
@@ -51322,12 +51610,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Permanently bans the specified user, blocking access and hiding their contributions.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/unban": {
       "post": {
-        "summary": "Unban user",
+        "summary": "Unban a user",
         "operationId": "post_users_id_unban",
         "tags": [
           "Users"
@@ -51357,12 +51651,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Lifts a permanent ban on the specified user, restoring access to GitLab.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{user_id}/impersonation_tokens": {
       "get": {
-        "summary": "Get all impersonation tokens of a user",
+        "summary": "List impersonation tokens for a user",
         "operationId": "get_users_user_id_impersonation_tokens",
         "tags": [
           "Users"
@@ -51396,10 +51696,16 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns all impersonation tokens for the specified user. Supports filtering by state (all, active, inactive).",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       },
       "post": {
-        "summary": "Create an impersonation token",
+        "summary": "Create an impersonation token for a user",
         "operationId": "post_users_user_id_impersonation_tokens",
         "tags": [
           "Users"
@@ -51459,12 +51765,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Creates a new impersonation token for the specified user, allowing admins to act on their behalf. Requires name and scopes fields.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/approve": {
       "post": {
-        "summary": "Approve user",
+        "summary": "Approve a pending user",
         "operationId": "post_users_id_approve",
         "tags": [
           "Users"
@@ -51494,12 +51806,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Approves a user account that is pending administrator approval, granting them access to GitLab.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/reject": {
       "post": {
-        "summary": "Reject user",
+        "summary": "Reject a pending user",
         "operationId": "post_users_id_reject",
         "tags": [
           "Users"
@@ -51529,12 +51847,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Rejects a user account that is pending administrator approval, denying them access to GitLab.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{user_id}/impersonation_tokens/{impersonation_token_id}": {
       "get": {
-        "summary": "Get an impersonation token of a user",
+        "summary": "Get a specific impersonation token for a user",
         "operationId": "get_users_user_id_impersonation_tokens_impersonation_token_id",
         "tags": [
           "Users"
@@ -51568,7 +51892,13 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns details of a specific impersonation token for the specified user.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       },
       "delete": {
         "summary": "Revoke an impersonation token",
@@ -51605,12 +51935,18 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Revokes (deletes) a specific impersonation token for the specified user, immediately invalidating it.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{user_id}/personal_access_tokens": {
       "post": {
-        "summary": "Create a personal access token",
+        "summary": "Create a personal access token for a user",
         "operationId": "post_users_user_id_personal_access_tokens",
         "tags": [
           "Users"
@@ -51670,12 +52006,18 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Creates a personal access token for the specified user. Requires name and scopes fields; optionally accepts expires_at.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/user/activities": {
       "get": {
-        "summary": "Get user activities",
+        "summary": "Get user activity timestamps",
         "operationId": "get_user_activities",
         "tags": [
           "Users"
@@ -51702,13 +52044,19 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "description": "Returns the last activity date for all users, useful for auditing active accounts.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/memberships": {
       "get": {
-        "summary": "User memberships",
-        "description": "REQUIRES ADMIN TOKEN: This endpoint returns 403 Forbidden when called with a regular user token. Only accessible with an admin-level personal access token.",
+        "summary": "List group and project memberships for a user",
+        "description": "Returns all group and project memberships for the specified user, including access level and source details.",
         "operationId": "get_users_id_memberships",
         "tags": [
           "Users"
@@ -51742,12 +52090,17 @@
           "200": {
             "description": "Successful"
           }
-        }
+        },
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/users/{id}/disable_two_factor": {
       "patch": {
-        "summary": "Disable two factor authentication",
+        "summary": "Disable two-factor authentication for a user",
         "operationId": "patch_users_id_disable_two_factor",
         "tags": [
           "Users"
@@ -51777,7 +52130,13 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Disables two-factor authentication (2FA) for the specified user account.",
+        "security": [
+          {
+            "adminPrivateToken": []
+          }
+        ]
       }
     },
     "/projects/{id}/merge_requests/{merge_request_iid}/visual_review_discussions": {
@@ -52574,6 +52933,1973 @@
           }
         }
       }
+    },
+    "/projects/{id}/repository/archive": {
+      "get": {
+        "summary": "Get an archive of the repository",
+        "operationId": "get_projects_id_repository_archive",
+        "tags": [
+          "Repositories"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The ID or URL-encoded path of the project"
+          },
+          {
+            "name": "sha",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "The commit sha of the archive to be downloaded"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "The archive format"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Subfolder of the repository to be downloaded"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get an archive of the repository"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/projects/{id}/repository/branches/{branch}/protect": {
+      "put": {
+        "summary": "Protect a single branch",
+        "operationId": "put_projects_id_repository_branches_branch_protect",
+        "tags": [
+          "Branches"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The ID or URL-encoded path of the project"
+          },
+          {
+            "name": "branch",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The name of the branch"
+          },
+          {
+            "name": "developers_can_push",
+            "in": "formData",
+            "required": false,
+            "type": "boolean",
+            "description": "Flag if developers can push to that branch"
+          },
+          {
+            "name": "developers_can_merge",
+            "in": "formData",
+            "required": false,
+            "type": "boolean",
+            "description": "Flag if developers can merge to that branch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Protect a single branch"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "404 Branch Not Found"
+          }
+        }
+      }
+    },
+    "/projects/{id}/repository/branches/{branch}/unprotect": {
+      "put": {
+        "summary": "Unprotect a single branch",
+        "operationId": "put_projects_id_repository_branches_branch_unprotect",
+        "tags": [
+          "Branches"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The ID or URL-encoded path of the project"
+          },
+          {
+            "name": "branch",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The name of the branch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unprotect a single branch"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "404 Project Not Found"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "API_Entities_BasicProjectDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "description": {
+          "type": "string",
+          "example": "desc"
+        },
+        "name": {
+          "type": "string",
+          "example": "project1"
+        },
+        "name_with_namespace": {
+          "type": "string",
+          "example": "John Doe / project1"
+        },
+        "path": {
+          "type": "string",
+          "example": "project1"
+        },
+        "path_with_namespace": {
+          "type": "string",
+          "example": "namespace1/project1"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2020-05-07T04:27:17.016Z"
+        },
+        "default_branch": {
+          "type": "string",
+          "example": "main"
+        },
+        "tag_list": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "tag"
+          }
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "topic"
+          }
+        },
+        "ssh_url_to_repo": {
+          "type": "string",
+          "example": "git@gitlab.example.com:gitlab/gitlab.git"
+        },
+        "http_url_to_repo": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab.git"
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab"
+        },
+        "readme_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab/blob/master/README.md"
+        },
+        "license_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab/blob/master/LICENCE"
+        },
+        "license": {
+          "$ref": "#/definitions/API_Entities_LicenseBasic"
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "http://example.com/uploads/project/avatar/3/uploads/avatar.png"
+        },
+        "forks_count": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "star_count": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "last_activity_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2013-09-30T13:46:02Z"
+        },
+        "namespace": {
+          "$ref": "#/definitions/API_Entities_NamespaceBasic"
+        },
+        "custom_attributes": {
+          "$ref": "#/definitions/API_Entities_CustomAttribute"
+        }
+      },
+      "description": "API_Entities_BasicProjectDetails model"
+    },
+    "API_Entities_Commit": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "2695effb5807a22ff3d138d593fd856244e155e7"
+        },
+        "short_id": {
+          "type": "string",
+          "example": "2695effb"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2017-07-26T11:08:53.000+02:00"
+        },
+        "parent_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "2a4b78934375d7f53875269ffd4f45fd83a84ebe"
+          }
+        },
+        "title": {
+          "type": "string",
+          "example": "Initial commit"
+        },
+        "message": {
+          "type": "string",
+          "example": "Initial commit"
+        },
+        "author_name": {
+          "type": "string",
+          "example": "John Smith"
+        },
+        "author_email": {
+          "type": "string",
+          "example": "john@example.com"
+        },
+        "authored_date": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2012-05-28T04:42:42-07:00"
+        },
+        "committer_name": {
+          "type": "string",
+          "example": "Jack Smith"
+        },
+        "committer_email": {
+          "type": "string",
+          "example": "jack@example.com"
+        },
+        "committed_date": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2012-05-28T04:42:42-07:00"
+        },
+        "trailers": {
+          "type": "object",
+          "example": "{ \"Merged-By\": \"Jane Doe janedoe@gitlab.com\" }"
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/janedoe/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"
+        }
+      },
+      "description": "API_Entities_Commit model"
+    },
+    "API_Entities_Contributor": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "John Doe"
+        },
+        "email": {
+          "type": "string",
+          "example": "johndoe@example.com"
+        },
+        "commits": {
+          "type": "integer",
+          "format": "int32",
+          "example": 117
+        },
+        "additions": {
+          "type": "integer",
+          "format": "int32",
+          "example": 3
+        },
+        "deletions": {
+          "type": "integer",
+          "format": "int32",
+          "example": 5
+        }
+      },
+      "description": "API_Entities_Contributor model"
+    },
+    "API_Entities_CustomAttribute": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "example": "foo"
+        },
+        "value": {
+          "type": "string",
+          "example": "bar"
+        }
+      },
+      "description": "API_Entities_CustomAttribute model"
+    },
+    "API_Entities_IssuableReferences": {
+      "type": "object",
+      "properties": {
+        "short": {
+          "type": "string",
+          "example": "&6"
+        },
+        "relative": {
+          "type": "string",
+          "example": "&6"
+        },
+        "full": {
+          "type": "string",
+          "example": "test&6"
+        }
+      }
+    },
+    "API_Entities_IssuableTimeStats": {
+      "type": "object",
+      "properties": {
+        "time_estimate": {
+          "type": "integer",
+          "format": "int32",
+          "example": 12600
+        },
+        "total_time_spent": {
+          "type": "integer",
+          "format": "int32",
+          "example": 3600
+        },
+        "human_time_estimate": {
+          "type": "string",
+          "example": "3h 30m"
+        },
+        "human_total_time_spent": {
+          "type": "string",
+          "example": "1h"
+        }
+      },
+      "description": "API_Entities_IssuableTimeStats model"
+    },
+    "API_Entities_LicenseBasic": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "example": "gpl-3.0"
+        },
+        "name": {
+          "type": "string",
+          "example": "GNU General Public License v3.0"
+        },
+        "nickname": {
+          "type": "string",
+          "example": "GNU GPLv3"
+        },
+        "html_url": {
+          "type": "string",
+          "example": "http://choosealicense.com/licenses/gpl-3.0"
+        },
+        "source_url": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_Member": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "username": {
+          "type": "string",
+          "example": "admin"
+        },
+        "name": {
+          "type": "string",
+          "example": "Administrator"
+        },
+        "state": {
+          "type": "string",
+          "example": "active"
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "https://gravatar.com/avatar/1"
+        },
+        "avatar_path": {
+          "type": "string",
+          "example": "/user/avatar/28/The-Big-Lebowski-400-400.png"
+        },
+        "custom_attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_CustomAttribute"
+          }
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/root"
+        },
+        "access_level": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "created_by": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "expires_at": {
+          "type": "string"
+        }
+      },
+      "description": "API_Entities_Member model"
+    },
+    "API_Entities_MergeRequestBasic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 84
+        },
+        "iid": {
+          "type": "integer",
+          "format": "int32",
+          "example": 14
+        },
+        "project_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 4
+        },
+        "title": {
+          "type": "string",
+          "example": "Impedit et ut et dolores vero provident ullam est"
+        },
+        "description": {
+          "type": "string",
+          "example": "Repellendus impedit et vel velit dignissimos."
+        },
+        "state": {
+          "type": "string",
+          "example": "closed"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-08-17T12:46:35.053Z"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2022-11-14T17:22:01.470Z"
+        },
+        "merged_by": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "merge_user": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "merged_at": {
+          "type": "string"
+        },
+        "closed_by": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "closed_at": {
+          "type": "string"
+        },
+        "title_html": {
+          "type": "string"
+        },
+        "description_html": {
+          "type": "string"
+        },
+        "target_branch": {
+          "type": "string"
+        },
+        "source_branch": {
+          "type": "string"
+        },
+        "user_notes_count": {
+          "type": "string"
+        },
+        "upvotes": {
+          "type": "string"
+        },
+        "downvotes": {
+          "type": "string"
+        },
+        "author": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "assignees": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "assignee": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "reviewers": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "source_project_id": {
+          "type": "string"
+        },
+        "target_project_id": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "string"
+        },
+        "draft": {
+          "type": "string"
+        },
+        "work_in_progress": {
+          "type": "string"
+        },
+        "milestone": {
+          "$ref": "#/definitions/API_Entities_Milestone"
+        },
+        "merge_when_pipeline_succeeds": {
+          "type": "string"
+        },
+        "merge_status": {
+          "type": "string"
+        },
+        "detailed_merge_status": {
+          "type": "string"
+        },
+        "sha": {
+          "type": "string"
+        },
+        "merge_commit_sha": {
+          "type": "string"
+        },
+        "squash_commit_sha": {
+          "type": "string"
+        },
+        "discussion_locked": {
+          "type": "string"
+        },
+        "should_remove_source_branch": {
+          "type": "string"
+        },
+        "force_remove_source_branch": {
+          "type": "string"
+        },
+        "allow_collaboration": {
+          "type": "string"
+        },
+        "allow_maintainer_to_push": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "references": {
+          "$ref": "#/definitions/API_Entities_IssuableReferences"
+        },
+        "web_url": {
+          "type": "string"
+        },
+        "time_stats": {
+          "$ref": "#/definitions/API_Entities_IssuableTimeStats"
+        },
+        "squash": {
+          "type": "string"
+        },
+        "task_completion_status": {
+          "type": "string"
+        },
+        "has_conflicts": {
+          "type": "string"
+        },
+        "blocking_discussions_resolved": {
+          "type": "string"
+        }
+      },
+      "description": "API_Entities_MergeRequestBasic model"
+    },
+    "API_Entities_Milestone": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "iid": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "string"
+        },
+        "group_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "due_date": {
+          "type": "string"
+        },
+        "start_date": {
+          "type": "string"
+        },
+        "expired": {
+          "type": "string"
+        },
+        "web_url": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_NamespaceBasic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 2
+        },
+        "name": {
+          "type": "string",
+          "example": "project"
+        },
+        "path": {
+          "type": "string",
+          "example": "my_project"
+        },
+        "kind": {
+          "type": "string",
+          "example": "project"
+        },
+        "full_path": {
+          "type": "string",
+          "example": "group/my_project"
+        },
+        "parent_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "https://example.com/avatar/12345"
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://example.com/group/my_project"
+        }
+      }
+    },
+    "API_Entities_TreeObject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba"
+        },
+        "name": {
+          "type": "string",
+          "example": "html"
+        },
+        "type": {
+          "type": "string",
+          "example": "tree"
+        },
+        "path": {
+          "type": "string",
+          "example": "files/html"
+        },
+        "mode": {
+          "type": "string",
+          "example": "040000"
+        }
+      },
+      "description": "API_Entities_TreeObject model"
+    },
+    "API_Entities_UserBasic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "username": {
+          "type": "string",
+          "example": "admin"
+        },
+        "name": {
+          "type": "string",
+          "example": "Administrator"
+        },
+        "state": {
+          "type": "string",
+          "example": "active"
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "https://gravatar.com/avatar/1"
+        },
+        "avatar_path": {
+          "type": "string",
+          "example": "/user/avatar/28/The-Big-Lebowski-400-400.png"
+        },
+        "custom_attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_CustomAttribute"
+          }
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/root"
+        }
+      },
+      "description": "API_Entities_UserBasic model"
+    },
+    "API_Entities_ProjectWithAccess": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "description": {
+          "type": "string",
+          "example": "desc"
+        },
+        "name": {
+          "type": "string",
+          "example": "project1"
+        },
+        "name_with_namespace": {
+          "type": "string",
+          "example": "John Doe / project1"
+        },
+        "path": {
+          "type": "string",
+          "example": "project1"
+        },
+        "path_with_namespace": {
+          "type": "string",
+          "example": "namespace1/project1"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2020-05-07T04:27:17.016Z"
+        },
+        "default_branch": {
+          "type": "string",
+          "example": "main"
+        },
+        "tag_list": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "tag"
+          }
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "topic"
+          }
+        },
+        "ssh_url_to_repo": {
+          "type": "string",
+          "example": "git@gitlab.example.com:gitlab/gitlab.git"
+        },
+        "http_url_to_repo": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab.git"
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab"
+        },
+        "readme_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab/blob/master/README.md"
+        },
+        "license_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab/blob/master/LICENCE"
+        },
+        "license": {
+          "$ref": "#/definitions/API_Entities_LicenseBasic"
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "http://example.com/uploads/project/avatar/3/uploads/avatar.png"
+        },
+        "forks_count": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "star_count": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "last_activity_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2013-09-30T13:46:02Z"
+        },
+        "namespace": {
+          "$ref": "#/definitions/API_Entities_NamespaceBasic"
+        },
+        "custom_attributes": {
+          "$ref": "#/definitions/API_Entities_CustomAttribute"
+        },
+        "container_registry_image_prefix": {
+          "type": "string",
+          "example": "registry.gitlab.example.com/gitlab/gitlab-client"
+        },
+        "_links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4"
+            },
+            "issues": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/issues"
+            },
+            "merge_requests": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/merge_requests"
+            },
+            "repo_branches": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/repository/branches"
+            },
+            "labels": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/labels"
+            },
+            "events": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/events"
+            },
+            "members": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/members"
+            },
+            "cluster_agents": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/cluster_agents"
+            }
+          }
+        },
+        "packages_enabled": {
+          "type": "boolean"
+        },
+        "empty_repo": {
+          "type": "boolean"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "visibility": {
+          "type": "string",
+          "example": "public"
+        },
+        "owner": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "resolve_outdated_diff_discussions": {
+          "type": "boolean"
+        },
+        "container_expiration_policy": {
+          "$ref": "#/definitions/API_Entities_ContainerExpirationPolicy"
+        },
+        "issues_enabled": {
+          "type": "boolean"
+        },
+        "merge_requests_enabled": {
+          "type": "boolean"
+        },
+        "wiki_enabled": {
+          "type": "boolean"
+        },
+        "jobs_enabled": {
+          "type": "boolean"
+        },
+        "snippets_enabled": {
+          "type": "boolean"
+        },
+        "container_registry_enabled": {
+          "type": "boolean"
+        },
+        "service_desk_enabled": {
+          "type": "boolean"
+        },
+        "service_desk_address": {
+          "type": "string",
+          "example": "address@example.com"
+        },
+        "can_create_merge_request_in": {
+          "type": "boolean"
+        },
+        "issues_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "repository_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "merge_requests_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "forking_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "wiki_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "builds_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "snippets_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "pages_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "operations_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "analytics_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "container_registry_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "security_and_compliance_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "releases_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "environments_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "feature_flags_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "infrastructure_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "monitor_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "emails_disabled": {
+          "type": "boolean"
+        },
+        "shared_runners_enabled": {
+          "type": "boolean"
+        },
+        "lfs_enabled": {
+          "type": "boolean"
+        },
+        "creator_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "forked_from_project": {
+          "$ref": "#/definitions/API_Entities_BasicProjectDetails"
+        },
+        "mr_default_target_self": {
+          "type": "boolean"
+        },
+        "import_url": {
+          "type": "string",
+          "example": "https://gitlab.com/gitlab/gitlab.git"
+        },
+        "import_type": {
+          "type": "string",
+          "example": "git"
+        },
+        "import_status": {
+          "type": "string",
+          "example": "none"
+        },
+        "import_error": {
+          "type": "string",
+          "example": "Import error"
+        },
+        "open_issues_count": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "runners_token": {
+          "type": "string",
+          "example": "b8547b1dc37721d05889db52fa2f02"
+        },
+        "ci_default_git_depth": {
+          "type": "integer",
+          "format": "int32",
+          "example": 20
+        },
+        "ci_forward_deployment_enabled": {
+          "type": "boolean"
+        },
+        "ci_job_token_scope_enabled": {
+          "type": "boolean"
+        },
+        "ci_separated_caches": {
+          "type": "boolean"
+        },
+        "ci_opt_in_jwt": {
+          "type": "boolean"
+        },
+        "ci_allow_fork_pipelines_to_run_in_parent_project": {
+          "type": "boolean"
+        },
+        "public_jobs": {
+          "type": "boolean"
+        },
+        "build_git_strategy": {
+          "type": "string",
+          "example": "fetch"
+        },
+        "build_timeout": {
+          "type": "integer",
+          "format": "int32",
+          "example": 3600
+        },
+        "auto_cancel_pending_pipelines": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "ci_config_path": {
+          "type": "string",
+          "example": ""
+        },
+        "shared_with_groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "only_allow_merge_if_pipeline_succeeds": {
+          "type": "boolean"
+        },
+        "allow_merge_on_skipped_pipeline": {
+          "type": "boolean"
+        },
+        "restrict_user_defined_variables": {
+          "type": "boolean"
+        },
+        "request_access_enabled": {
+          "type": "boolean"
+        },
+        "only_allow_merge_if_all_discussions_are_resolved": {
+          "type": "boolean"
+        },
+        "remove_source_branch_after_merge": {
+          "type": "boolean"
+        },
+        "printing_merge_request_link_enabled": {
+          "type": "boolean"
+        },
+        "merge_method": {
+          "type": "string",
+          "example": "merge"
+        },
+        "squash_option": {
+          "type": "string",
+          "example": "default_off"
+        },
+        "enforce_auth_checks_on_uploads": {
+          "type": "boolean"
+        },
+        "suggestion_commit_message": {
+          "type": "string",
+          "example": "Suggestion message"
+        },
+        "merge_commit_template": {
+          "type": "string",
+          "example": "%(title)"
+        },
+        "squash_commit_template": {
+          "type": "string",
+          "example": "%(source_branch)"
+        },
+        "issue_branch_template": {
+          "type": "string",
+          "example": "%(title)"
+        },
+        "statistics": {
+          "$ref": "#/definitions/API_Entities_ProjectStatistics"
+        },
+        "auto_devops_enabled": {
+          "type": "boolean"
+        },
+        "auto_devops_deploy_strategy": {
+          "type": "string",
+          "example": "continuous"
+        },
+        "autoclose_referenced_issues": {
+          "type": "boolean"
+        },
+        "repository_storage": {
+          "type": "string",
+          "example": "default"
+        },
+        "keep_latest_artifact": {
+          "type": "boolean"
+        },
+        "runner_token_expiration_interval": {
+          "type": "integer",
+          "format": "int32",
+          "example": 3600
+        },
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "project_access": {
+              "$ref": "#/definitions/API_Entities_ProjectAccess"
+            },
+            "group_access": {
+              "$ref": "#/definitions/API_Entities_GroupAccess"
+            }
+          }
+        }
+      },
+      "description": "API_Entities_ProjectWithAccess model"
+    },
+    "API_Entities_ContainerExpirationPolicy": {
+      "type": "object",
+      "properties": {
+        "cadence": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "string"
+        },
+        "keep_n": {
+          "type": "string"
+        },
+        "older_than": {
+          "type": "string"
+        },
+        "name_regex": {
+          "type": "string"
+        },
+        "name_regex_keep": {
+          "type": "string"
+        },
+        "next_run_at": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_GroupAccess": {
+      "type": "object",
+      "properties": {
+        "access_level": {
+          "type": "string"
+        },
+        "notification_level": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_ProjectAccess": {
+      "type": "object",
+      "properties": {
+        "access_level": {
+          "type": "string"
+        },
+        "notification_level": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_ProjectStatistics": {
+      "type": "object",
+      "properties": {
+        "commit_count": {
+          "type": "string"
+        },
+        "storage_size": {
+          "type": "string"
+        },
+        "repository_size": {
+          "type": "string"
+        },
+        "wiki_size": {
+          "type": "string"
+        },
+        "lfs_objects_size": {
+          "type": "string"
+        },
+        "job_artifacts_size": {
+          "type": "string"
+        },
+        "pipeline_artifacts_size": {
+          "type": "string"
+        },
+        "packages_size": {
+          "type": "string"
+        },
+        "snippets_size": {
+          "type": "string"
+        },
+        "uploads_size": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_Group": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "web_url": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "share_with_group_lock": {
+          "type": "string"
+        },
+        "require_two_factor_authentication": {
+          "type": "string"
+        },
+        "two_factor_grace_period": {
+          "type": "string"
+        },
+        "project_creation_level": {
+          "type": "string"
+        },
+        "auto_devops_enabled": {
+          "type": "string"
+        },
+        "subgroup_creation_level": {
+          "type": "string"
+        },
+        "emails_disabled": {
+          "type": "string"
+        },
+        "mentions_disabled": {
+          "type": "string"
+        },
+        "lfs_enabled": {
+          "type": "string"
+        },
+        "default_branch_protection": {
+          "type": "string"
+        },
+        "avatar_url": {
+          "type": "string"
+        },
+        "request_access_enabled": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "full_path": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "parent_id": {
+          "type": "string"
+        },
+        "custom_attributes": {
+          "$ref": "#/definitions/API_Entities_CustomAttribute"
+        },
+        "statistics": {
+          "type": "object",
+          "properties": {
+            "storage_size": {
+              "type": "string"
+            },
+            "repository_size": {
+              "type": "string"
+            },
+            "wiki_size": {
+              "type": "string"
+            },
+            "lfs_objects_size": {
+              "type": "string"
+            },
+            "job_artifacts_size": {
+              "type": "string"
+            },
+            "pipeline_artifacts_size": {
+              "type": "string"
+            },
+            "packages_size": {
+              "type": "string"
+            },
+            "snippets_size": {
+              "type": "string"
+            },
+            "uploads_size": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "API_Entities_Group model"
+    },
+    "API_Entities_GroupDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "web_url": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "share_with_group_lock": {
+          "type": "string"
+        },
+        "require_two_factor_authentication": {
+          "type": "string"
+        },
+        "two_factor_grace_period": {
+          "type": "string"
+        },
+        "project_creation_level": {
+          "type": "string"
+        },
+        "auto_devops_enabled": {
+          "type": "string"
+        },
+        "subgroup_creation_level": {
+          "type": "string"
+        },
+        "emails_disabled": {
+          "type": "string"
+        },
+        "mentions_disabled": {
+          "type": "string"
+        },
+        "lfs_enabled": {
+          "type": "string"
+        },
+        "default_branch_protection": {
+          "type": "string"
+        },
+        "avatar_url": {
+          "type": "string"
+        },
+        "request_access_enabled": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "full_path": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "parent_id": {
+          "type": "string"
+        },
+        "custom_attributes": {
+          "$ref": "#/definitions/API_Entities_CustomAttribute"
+        },
+        "statistics": {
+          "type": "object",
+          "properties": {
+            "storage_size": {
+              "type": "string"
+            },
+            "repository_size": {
+              "type": "string"
+            },
+            "wiki_size": {
+              "type": "string"
+            },
+            "lfs_objects_size": {
+              "type": "string"
+            },
+            "job_artifacts_size": {
+              "type": "string"
+            },
+            "pipeline_artifacts_size": {
+              "type": "string"
+            },
+            "packages_size": {
+              "type": "string"
+            },
+            "snippets_size": {
+              "type": "string"
+            },
+            "uploads_size": {
+              "type": "string"
+            }
+          }
+        },
+        "shared_with_groups": {
+          "type": "string"
+        },
+        "runners_token": {
+          "type": "string"
+        },
+        "prevent_sharing_groups_outside_hierarchy": {
+          "type": "string"
+        },
+        "projects": {
+          "$ref": "#/definitions/API_Entities_Project"
+        },
+        "shared_projects": {
+          "$ref": "#/definitions/API_Entities_Project"
+        }
+      },
+      "description": "API_Entities_GroupDetail model"
+    },
+    "API_Entities_Project": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "description": {
+          "type": "string",
+          "example": "desc"
+        },
+        "name": {
+          "type": "string",
+          "example": "project1"
+        },
+        "name_with_namespace": {
+          "type": "string",
+          "example": "John Doe / project1"
+        },
+        "path": {
+          "type": "string",
+          "example": "project1"
+        },
+        "path_with_namespace": {
+          "type": "string",
+          "example": "namespace1/project1"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2020-05-07T04:27:17.016Z"
+        },
+        "default_branch": {
+          "type": "string",
+          "example": "main"
+        },
+        "tag_list": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "tag"
+          }
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "topic"
+          }
+        },
+        "ssh_url_to_repo": {
+          "type": "string",
+          "example": "git@gitlab.example.com:gitlab/gitlab.git"
+        },
+        "http_url_to_repo": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab.git"
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab"
+        },
+        "readme_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab/blob/master/README.md"
+        },
+        "license_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/gitlab/gitlab/blob/master/LICENCE"
+        },
+        "license": {
+          "$ref": "#/definitions/API_Entities_LicenseBasic"
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "http://example.com/uploads/project/avatar/3/uploads/avatar.png"
+        },
+        "forks_count": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "star_count": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "last_activity_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2013-09-30T13:46:02Z"
+        },
+        "namespace": {
+          "$ref": "#/definitions/API_Entities_NamespaceBasic"
+        },
+        "custom_attributes": {
+          "$ref": "#/definitions/API_Entities_CustomAttribute"
+        },
+        "container_registry_image_prefix": {
+          "type": "string",
+          "example": "registry.gitlab.example.com/gitlab/gitlab-client"
+        },
+        "_links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4"
+            },
+            "issues": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/issues"
+            },
+            "merge_requests": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/merge_requests"
+            },
+            "repo_branches": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/repository/branches"
+            },
+            "labels": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/labels"
+            },
+            "events": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/events"
+            },
+            "members": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/members"
+            },
+            "cluster_agents": {
+              "type": "string",
+              "example": "https://gitlab.example.com/api/v4/projects/4/cluster_agents"
+            }
+          }
+        },
+        "packages_enabled": {
+          "type": "boolean"
+        },
+        "empty_repo": {
+          "type": "boolean"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "visibility": {
+          "type": "string",
+          "example": "public"
+        },
+        "owner": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "resolve_outdated_diff_discussions": {
+          "type": "boolean"
+        },
+        "container_expiration_policy": {
+          "$ref": "#/definitions/API_Entities_ContainerExpirationPolicy"
+        },
+        "issues_enabled": {
+          "type": "boolean"
+        },
+        "merge_requests_enabled": {
+          "type": "boolean"
+        },
+        "wiki_enabled": {
+          "type": "boolean"
+        },
+        "jobs_enabled": {
+          "type": "boolean"
+        },
+        "snippets_enabled": {
+          "type": "boolean"
+        },
+        "container_registry_enabled": {
+          "type": "boolean"
+        },
+        "service_desk_enabled": {
+          "type": "boolean"
+        },
+        "service_desk_address": {
+          "type": "string",
+          "example": "address@example.com"
+        },
+        "can_create_merge_request_in": {
+          "type": "boolean"
+        },
+        "issues_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "repository_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "merge_requests_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "forking_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "wiki_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "builds_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "snippets_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "pages_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "operations_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "analytics_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "container_registry_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "security_and_compliance_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "releases_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "environments_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "feature_flags_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "infrastructure_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "monitor_access_level": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "emails_disabled": {
+          "type": "boolean"
+        },
+        "shared_runners_enabled": {
+          "type": "boolean"
+        },
+        "lfs_enabled": {
+          "type": "boolean"
+        },
+        "creator_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "forked_from_project": {
+          "$ref": "#/definitions/API_Entities_BasicProjectDetails"
+        },
+        "mr_default_target_self": {
+          "type": "boolean"
+        },
+        "import_url": {
+          "type": "string",
+          "example": "https://gitlab.com/gitlab/gitlab.git"
+        },
+        "import_type": {
+          "type": "string",
+          "example": "git"
+        },
+        "import_status": {
+          "type": "string",
+          "example": "none"
+        },
+        "import_error": {
+          "type": "string",
+          "example": "Import error"
+        },
+        "open_issues_count": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "runners_token": {
+          "type": "string",
+          "example": "b8547b1dc37721d05889db52fa2f02"
+        },
+        "ci_default_git_depth": {
+          "type": "integer",
+          "format": "int32",
+          "example": 20
+        },
+        "ci_forward_deployment_enabled": {
+          "type": "boolean"
+        },
+        "ci_job_token_scope_enabled": {
+          "type": "boolean"
+        },
+        "ci_separated_caches": {
+          "type": "boolean"
+        },
+        "ci_opt_in_jwt": {
+          "type": "boolean"
+        },
+        "ci_allow_fork_pipelines_to_run_in_parent_project": {
+          "type": "boolean"
+        },
+        "public_jobs": {
+          "type": "boolean"
+        },
+        "build_git_strategy": {
+          "type": "string",
+          "example": "fetch"
+        },
+        "build_timeout": {
+          "type": "integer",
+          "format": "int32",
+          "example": 3600
+        },
+        "auto_cancel_pending_pipelines": {
+          "type": "string",
+          "example": "enabled"
+        },
+        "ci_config_path": {
+          "type": "string",
+          "example": ""
+        },
+        "shared_with_groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "only_allow_merge_if_pipeline_succeeds": {
+          "type": "boolean"
+        },
+        "allow_merge_on_skipped_pipeline": {
+          "type": "boolean"
+        },
+        "restrict_user_defined_variables": {
+          "type": "boolean"
+        },
+        "request_access_enabled": {
+          "type": "boolean"
+        },
+        "only_allow_merge_if_all_discussions_are_resolved": {
+          "type": "boolean"
+        },
+        "remove_source_branch_after_merge": {
+          "type": "boolean"
+        },
+        "printing_merge_request_link_enabled": {
+          "type": "boolean"
+        },
+        "merge_method": {
+          "type": "string",
+          "example": "merge"
+        },
+        "squash_option": {
+          "type": "string",
+          "example": "default_off"
+        },
+        "enforce_auth_checks_on_uploads": {
+          "type": "boolean"
+        },
+        "suggestion_commit_message": {
+          "type": "string",
+          "example": "Suggestion message"
+        },
+        "merge_commit_template": {
+          "type": "string",
+          "example": "%(title)"
+        },
+        "squash_commit_template": {
+          "type": "string",
+          "example": "%(source_branch)"
+        },
+        "issue_branch_template": {
+          "type": "string",
+          "example": "%(title)"
+        },
+        "statistics": {
+          "$ref": "#/definitions/API_Entities_ProjectStatistics"
+        },
+        "auto_devops_enabled": {
+          "type": "boolean"
+        },
+        "auto_devops_deploy_strategy": {
+          "type": "string",
+          "example": "continuous"
+        },
+        "autoclose_referenced_issues": {
+          "type": "boolean"
+        },
+        "repository_storage": {
+          "type": "string",
+          "example": "default"
+        },
+        "keep_latest_artifact": {
+          "type": "boolean"
+        },
+        "runner_token_expiration_interval": {
+          "type": "integer",
+          "format": "int32",
+          "example": 3600
+        }
+      },
+      "description": "API_Entities_Project model"
     }
   }
 }

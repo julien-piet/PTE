@@ -353,7 +353,7 @@ class ProgramHtmlEvaluator:
         Navigate to the shopping order history page and return the view URL
         for the most recently placed order (first row in the table).
         """
-        from api.shipping_pw.order import get_order_history
+        from api.shopping_pw.order import get_order_history
 
         orders = get_order_history(page)
         if not orders:

@@ -8,7 +8,7 @@ from pathlib import Path
 parent_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(parent_dir))
 
-from shipping_pw import order, login
+from shopping_pw import order, login
 
 # TODO: Add real test credentials
 TEST_EMAIL = None  # "test@example.com"

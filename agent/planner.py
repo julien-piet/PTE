@@ -102,6 +102,14 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             default="",
             description="Base URL of the API server for this step (e.g. http://127.0.0.1:8023/api/v4)",
         )
+        foreach: Optional[Union[str, List]] = Field(
+            default=None,
+            description=(
+                "If set, run this step once per element and collect all results as a list. "
+                "Value is a literal list (['Alice', 'Bob']) or a reference like 'step_1.result[*].id'. "
+                "Use {loop_item} in argument values as a placeholder for the current element."
+            ),
+        )
 
     class DirectResponse(BaseModel):
         tool_call_required: Literal[False]
@@ -268,6 +276,11 @@ def pretty_print_plan(
             lines.append("  Depends on: " + ", ".join(deps))
         else:
             lines.append("  Depends on: None (can execute immediately)")
+
+        # Foreach
+        foreach_val = getattr(step, "foreach", None)
+        if foreach_val is not None:
+            lines.append(f"  Foreach: {foreach_val}")
 
         # Returns
         returns = getattr(step, "returns", "")

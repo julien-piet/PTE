@@ -86,22 +86,63 @@ class ExecutionAgent:
 
     @staticmethod
     def _follow_accessor(obj: Any, accessor: str) -> Any:
-        """Navigate a dot/bracket accessor chain into obj, e.g. '.default_branch' or '[0].id'."""
-        for dot_key, bracket_idx in re.findall(r'\.(\w+)|\[(\d+)\]', accessor):
-            if dot_key:
-                if not isinstance(obj, dict):
+        """Navigate a dot/bracket accessor chain into obj, e.g. '.default_branch', '[0].id', '[*].id'."""
+        pos = 0
+        length = len(accessor)
+        while pos < length:
+            # [*] wildcard — apply the remaining accessor to every element of the list
+            if accessor[pos:pos + 3] == "[*]":
+                pos += 3
+                if not isinstance(obj, list):
                     return None
-                obj = obj.get(dot_key)
-            elif bracket_idx:
+                remaining = accessor[pos:]
+                if remaining:
+                    return [ExecutionAgent._follow_accessor(item, remaining) for item in obj]
+                return list(obj)
+            # [n] numeric index
+            m = re.match(r'\[(\d+)\]', accessor[pos:])
+            if m:
+                pos += len(m.group(0))
                 if isinstance(obj, list):
-                    obj = obj[int(bracket_idx)]
+                    obj = obj[int(m.group(1))]
                 # If obj is a dict (fan-out already distributed this item), skip the
                 # bracket index — the dict IS the item, so just continue down the chain.
                 elif not isinstance(obj, dict):
                     return None
-            if obj is None:
-                return None
+                if obj is None:
+                    return None
+                continue
+            # .key dot accessor
+            m = re.match(r'\.(\w+)', accessor[pos:])
+            if m:
+                pos += len(m.group(0))
+                if not isinstance(obj, dict):
+                    return None
+                obj = obj.get(m.group(1))
+                if obj is None:
+                    return None
+                continue
+            break  # unrecognised token
         return obj
+
+    def _resolve_foreach(self, foreach_value: Any, outputs: Dict[str, Any]) -> List[Any]:
+        """Resolve a foreach field to a concrete list of items to iterate over."""
+        if isinstance(foreach_value, list):
+            return foreach_value
+        if isinstance(foreach_value, str):
+            m = re.match(r'^(\w+)\.result(.*)$', foreach_value)
+            if m:
+                step_id, accessor = m.group(1), m.group(2)
+                out = outputs.get(step_id)
+                if out is None:
+                    return []
+                if not accessor:
+                    return out if isinstance(out, list) else [out]
+                resolved = self._follow_accessor(out, accessor)
+                if isinstance(resolved, list):
+                    return resolved
+                return [resolved] if resolved is not None else []
+        return []
 
     def _resolve(self, value: Any, outputs: Dict[str, Any]) -> Any:
         """
@@ -112,6 +153,16 @@ class ExecutionAgent:
         navigation fails or no accessor is present.
         """
         if isinstance(value, str):
+            # Substitute {loop_item} / {loop_item.field} when inside a foreach iteration
+            if "__loop_item__" in outputs:
+                def _sub_loop(m: re.Match) -> str:
+                    item = outputs["__loop_item__"]
+                    field = m.group(1)
+                    if field and isinstance(item, dict):
+                        item = item.get(field, item)
+                    return json.dumps(item) if isinstance(item, (dict, list)) else str(item)
+                value = re.sub(r"\{loop_item(?:\.(\w+))?\}", _sub_loop, value)
+
             def _sub(m: re.Match) -> str:
                 step_id, accessor = m.group(1), m.group(2)
                 out = outputs.get(step_id)
@@ -328,6 +379,34 @@ class ExecutionAgent:
                         raise _MissingDependency(
                             f"step '{ref_id}' produced no extractable value for argument '{arg.name}'"
                         )
+
+            # Foreach: step declares an explicit iteration list — run once per element
+            # and collect all results as a list stored in ctx.step_outputs.
+            foreach_val = getattr(step, "foreach", None)
+            if foreach_val is not None:
+                items = self._resolve_foreach(foreach_val, ctx.step_outputs)
+                if not items:
+                    raw_outputs[step.step_id] = []
+                    ctx.mark_completed(step.step_id, [])
+                    print(f"{prefix} ✓ {step.step_id} done (foreach: 0 items)")
+                    return
+                print(f"{prefix} → foreach: {step.step_id} × {len(items)} item(s)")
+                all_results = []
+                for item in items:
+                    loop_outputs = dict(ctx.step_outputs)
+                    loop_outputs["__loop_item__"] = item
+                    cmd = self._build_cmd(step, loop_outputs)
+                    self._debug(f"{step.step_id} foreach curl (item={item!r}): " + " ".join(
+                        f"'{p}'" if " " in p else p for p in cmd
+                    ))
+                    item_result = await loop.run_in_executor(None, self._run_curl, cmd)
+                    all_results.append(item_result)
+                raw = all_results
+                raw_outputs[step.step_id] = raw
+                # Store raw list directly — downstream foreach refs resolve via _resolve_foreach
+                ctx.mark_completed(step.step_id, raw)
+                print(f"{prefix} ✓ {step.step_id} done (foreach: {len(items)} iterations)")
+                return
 
             # Detect fan-out: if a path parameter resolves to a list, call the
             # step once per item and collect all results into a list.

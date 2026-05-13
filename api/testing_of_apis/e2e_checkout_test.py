@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 from pathlib import Path
 
 # Import normally - works when run from parent directory
-from shipping_pw import product, cart, shipping, login
+from shopping_pw import product, cart, shipping, login
 
 # ============================================================================
 # CONFIGURATION

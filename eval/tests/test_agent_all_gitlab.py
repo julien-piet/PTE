@@ -39,7 +39,7 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from agent.auth import StaticAuth
-from eval.docker.workers import num_workers, worker_session
+from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
 
 
@@ -155,7 +155,7 @@ def test_agent_accomplishes_gitlab_tasks(
     base_url = request.config.getoption("--base-url", default="http://localhost:8023")
 
     if multi_docker:
-        n_workers = num_workers()
+        n_workers = _workers_new.num_workers()
         _glpat = None
     else:
         n_workers = 1
@@ -173,11 +173,11 @@ def test_agent_accomplishes_gitlab_tasks(
             async with sem:
                 try:
                     if multi_docker:
-                        worker_ctx = worker_session(
+                        worker_ctx = _workers_new.worker_session(
                             str(task["task_id"]),
+                            server="gitlab",
                             acquire_lock=acquire_lock,
-                            read_only=task.get("read_only", False),
-                            force_restart=False,
+                            read_only=True,
                         )
                     else:
                         worker_ctx = _local_session(base_url, _glpat)
