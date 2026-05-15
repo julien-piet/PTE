@@ -287,7 +287,7 @@ class PlanningAgent:
         self, task: str, endpoints: List[EndpointInfo]
     ) -> List[int]:
         endpoint_list = "\n".join(
-            f"{i}. {ep.method} {ep.path} [{ep.api}] — {ep.summary}"
+            f"{i}. {ep.method} {ep.path} — {ep.summary}"
             for i, ep in enumerate(endpoints)
         )
         api_hints_section = self._build_hints_section(endpoints, header="API context")
