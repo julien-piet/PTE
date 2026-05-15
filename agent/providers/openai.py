@@ -7,10 +7,11 @@ class OpenAIProvider(object):
 
     def get_llm_model(self, config, model_name):
         model = None
-        for model in config.llm_providers.openai:
-            if model.model == model_name:
+        for m in config.llm_providers.openai:
+            if m.model == model_name:
+                model = m
                 break
-        if not model:
+        if model is None:
             raise Exception(f'{model_name} for OpenAI provider not found in the config.yaml file')
 
         # Validate API key exists
