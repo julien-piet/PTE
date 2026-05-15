@@ -146,18 +146,11 @@ GitLab user `{{id}}` path parameter has exactly two directly usable forms:
 
 You do NOT know your own user ID or username — if the task requires acting on "my" account, you MUST first resolve your user info using a lookup endpoint such as `GET /user` before calling endpoints any form of {{id}} or {{username}} parameter.
 Do NOT pass string aliases like 'self', 'me', or 'current_user' for parameters that require an ID/username — add a prior step to look up the real value instead.
-You do NOT know the user IDs or usernames of any other users — if the task requires acting on another user, you MUST first resolve that user's info using a lookup endpoint such as `GET /users?search=...` before calling endpoints with any form of {{id}} or {{username}} parameter.
+You do NOT know the user IDs or usernames of any other users — if the task requires acting on another user, you MUST first resolve that user's info using a lookup endpoint before calling endpoints with any form of {{id}} or {{username}} parameter.
 
+Contributors are Git commit authors derived from repository history, not GitLab user accounts — they may have no GitLab account, a deleted/blocked account, or a mismatched email. Never assume a contributor name or email can be resolved to a GitLab user record.
 
-When determining default_branch for a repository, do NOT assume it is always 'main' or 'master' — call `GET /projects/{{id}}` and use the `default_branch` field. Use this value for the `ref` parameter in GET requests and the `branch` parameter in PUT/POST requests.
-
-When reading or updating a file in a repository:
-- ALWAYS call `GET /projects/{{id}}/repository/tree` FIRST to discover the exact filename including extension (e.g. `LICENSE.txt`, not `LICENSE`).
-- Use the `path` field from the tree result directly as the `file_path` parameter — do NOT guess or assume a filename. `LICENSE` and `LICENSE.txt` are different files.
-
-When writing a LICENSE file to a repository:
-- To fetch license text, call `GET /templates/licenses/{{key}}` directly with the known key (e.g. key=`mit`, `apache-2.0`, `gpl-3.0`). The `content` field in the response is the full license text. Do NOT use `GET /templates/licenses` (the list endpoint — it has no `content` field). Do NOT use `GET /license` or `GET /licenses` — those manage the GitLab instance EE license key, not code license templates.
-- ALWAYS look up the repository tree first (`GET /projects/{{id}}/repository/tree`) before writing. If a file whose name starts with "LICENSE" is found, use `action: "update"` with that exact `path` value. If no such file exists, use `action: "create"` with filename `LICENSE.md`.
+When determining default_branch for a repository, do NOT assume it is always 'main' or 'master'. Look up the default branch instead.
 
 For Project Templates. Use this json schema to search through available built-in templates. Otherwise, leave template_name blank. 
 

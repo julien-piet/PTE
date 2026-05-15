@@ -74,6 +74,20 @@ class PlanningAgent:
             print(response)
             print("=" * 60 + "\n")
 
+    async def _run_llm(self, label: str, prompt: str) -> str:
+        self._debug_print(label, prompt=prompt)
+        if self.debug_prompts or self.debug_responses:
+            print(f"[PlanningAgent] {label} calling LLM (prompt length: {len(prompt)} chars)...")
+        agent = Agent(self.llm, output_type=str)
+        try:
+            result = await agent.run(prompt)
+        except Exception as exc:
+            print(f"\n[PlanningAgent] {label} LLM ERROR: {type(exc).__name__}: {exc}")
+            raise
+        response = result.output
+        self._debug_print(label, response=response)
+        return response
+
     # ------------------------------------------------------------------
     # Step 1: load swagger index and api hints
     # ------------------------------------------------------------------
@@ -171,11 +185,7 @@ class PlanningAgent:
             Reason: The task is about checking the weather, which is unrelated to any of the available API schemas that focus on project management and e-commerce.
             '''
         )
-        self._debug_print("_select_api_files", prompt=prompt)
-        agent = Agent(self.llm, output_type=str)
-        result = await agent.run(prompt)
-        response = result.output
-        self._debug_print("_select_api_files", response=response)
+        response = await self._run_llm("_select_api_files", prompt)
         decoder = json.JSONDecoder()
         selected = None
         for i, ch in enumerate(response):
@@ -283,6 +293,8 @@ class PlanningAgent:
         api_hints_section = self._build_hints_section(endpoints, header="API context")
 
         prompt = (
+            'Respond with ONLY valid JSON — no explanation, no markdown, no preamble.\n'
+            'Format: {"excluded_indices": [3, 7, 15]}\n\n'
             f"Task: {task}\n\n"
             f"Available endpoints:\n{endpoint_list}\n\n"
             + api_hints_section
@@ -291,15 +303,9 @@ class PlanningAgent:
             "- Only exclude an endpoint if you are confident it has zero possible connection to the task.\n"
             "- When in doubt, do NOT exclude — keeping a marginally relevant endpoint is safer than missing a needed one.\n"
             "- Exclude endpoints that operate on completely different resources or systems.\n"
-            "- Do NOT try to pick the best endpoints here — only filter out the obviously irrelevant ones.\n\n"
-            'Respond with ONLY valid JSON:\n'
-            '{"excluded_indices": [3, 7, 15]}'
+            "- Do NOT try to pick the best endpoints here — only filter out the obviously irrelevant ones.\n"
         )
-        self._debug_print("_exclude_unrelated_endpoints", prompt=prompt)
-        agent = Agent(self.llm, output_type=str)
-        result = await agent.run(prompt)
-        response = result.output
-        self._debug_print("_exclude_unrelated_endpoints", response=response)
+        response = await self._run_llm("_exclude_unrelated_endpoints", prompt)
 
         decoder = json.JSONDecoder()
         data = None
@@ -311,7 +317,10 @@ class PlanningAgent:
                 except json.JSONDecodeError:
                     continue
         if data is None:
-            data = json.loads(response.strip())
+            try:
+                data = json.loads(response.strip())
+            except json.JSONDecodeError:
+                data = {"excluded_indices": []}
 
         excluded = [i for i in data.get("excluded_indices", []) if 0 <= i < len(endpoints)]
 
@@ -418,49 +427,18 @@ class PlanningAgent:
         rules rather than declared swagger parameters.
         """
         prior_issues_section = (
-            "\nA previous planning attempt failed with these issues:\n"
-            + "\n".join(f"  - {iss}" for iss in prior_issues) + "\n"
+            "⚠️ REQUIRED CORRECTIONS — a prior attempt failed. Apply these constraints before choosing:\n"
+            + "\n".join(f"  - {iss}" for iss in prior_issues) + "\n\n"
             if prior_issues else ""
         )
 
-        resolver_instruction = (
-            "\nAlso identify resolver steps needed before the goal. Include:\n"
-            "1. Steps to supply required parameters (e.g. look up a project ID from its name).\n"
-            "2. Steps for task-relevant OPTIONAL parameters — if the task asks to filter by a "
-            "specific person, author, status, or any other attribute, add a resolver to look up "
-            "the exact identifier so it can be passed as that optional parameter to the goal.\n"
-            "3. Foreach steps for BULK operations — if the task requires the SAME operation on "
-            "MULTIPLE named entities (e.g. follow 5 users, star 3 repos), use foreach:\n"
-            "   - On the resolver: set 'foreach' to a list of the entity names/identifiers from the task.\n"
-            "     The resolver will run once per item; use {loop_item} in its argument for the search value.\n"
-            "   - On the goal: set 'foreach' to 'step_N.result[*].id' (or the relevant ID field) "
-            "so the goal runs once per resolved ID.\n"
-        )
-        if prior_issues:
-            resolver_instruction += (
-                "4. Resolvers that fix the prior issues listed above.\n"
-            )
-        resolver_instruction += (
-            "\nList resolvers in execution order (first to run first).\n"
-            "CRITICAL: satisfies_param must exactly match the parameter name in the goal endpoint's schema.\n\n"
-            'Respond with ONLY valid JSON:\n'
-            "Single-entity example:\n"
-            '{"goal_index": 2, "literal_args": {"since": "2023-03-02T00:00:00Z"}, "foreach": null, "required_resolvers": ['
-            '{"endpoint_index": 5, "satisfies_param": "author", "literal_args": {}, "foreach": null, "capability": "looks up Eric user to get author identifier"}'
-            ']}\n'
-            "Bulk-entity example (follow 5 users):\n"
-            '{"goal_index": 5, "literal_args": {}, "foreach": "step_1.result[*].id", "required_resolvers": ['
-            '{"endpoint_index": 2, "satisfies_param": "user_ids", "literal_args": {}, '
-            '"foreach": ["Jakub Klinkovsk", "convexegg", "Vinta Chen", "yjlou", "Abishek S"], '
-            '"capability": "looks up each named user to get their ID"}'
-            ']}'
-        )
-
         prompt = (
-            f"Task: {task}\n\n"
-            f"Available endpoints:\n{detailed_list}\n\n"
-            + api_hints_section
+            "Respond with ONLY a JSON object — no markdown, no explanation.\n"
+            'Format: {"goal_index": <int>, "literal_args": {<param>: <value>, ...}, "foreach": <null|"LOOP_OVER_PRIOR">}\n\n'
             + prior_issues_section
+            + f"Task: {task}\n\n"
+            + f"Available endpoints:\n{detailed_list}\n\n"
+            + api_hints_section
             + "Identify the single goal endpoint — the one whose response directly contains the final answer the task is asking for.\n\n"
             "Rules for choosing the goal:\n"
             "- The goal endpoint is the LAST step to execute. Its output must directly satisfy the task.\n"
@@ -470,15 +448,16 @@ class PlanningAgent:
             "Only pick a list endpoint as the goal if the task explicitly asks for a list.\n"
             "- Write/mutate endpoints (POST, PUT, DELETE, PATCH) are the goal when the task asks to "
             "create, update, or delete something.\n\n"
-            "Also list any arguments for the goal endpoint that can be filled directly as literals from "
-            "the task description if you are confident they match the field correctly.\n"
-            + resolver_instruction
+            "Also list any literal arguments for the goal that can be filled directly from the task description.\n\n"
+            "Foreach (bulk operations only):\n"
+            "- If the task requires the SAME operation on MULTIPLE entities resolved from a prior step, "
+            "set foreach to the string 'LOOP_OVER_PRIOR' — the exact step reference will be resolved when the full plan is built.\n"
+            "- Otherwise set foreach to null.\n\n"
+            'Required output — ONLY valid JSON, examples:\n'
+            '{"goal_index": 2, "literal_args": {"state": "opened"}, "foreach": null}\n'
+            'Bulk: {"goal_index": 5, "literal_args": {}, "foreach": "LOOP_OVER_PRIOR"}'
         )
-        self._debug_print("_pick_goal", prompt=prompt)
-        agent = Agent(self.llm, output_type=str)
-        result = await agent.run(prompt)
-        response = result.output
-        self._debug_print("_pick_goal", response=response)
+        response = await self._run_llm("_pick_goal", prompt)
 
         decoder = json.JSONDecoder()
         data = None
@@ -547,32 +526,33 @@ class PlanningAgent:
         chain_keys = {f"{cs.endpoint.method} {cs.endpoint.path}" for cs in chain_so_far}
 
         prior_issues_section = (
-            "\nPrevious planning attempt failed with these issues — keep them in mind when choosing a resolver:\n"
-            + "\n".join(f"  - {iss}" for iss in prior_issues) + "\n"
+            "⚠️ REQUIRED CORRECTIONS — a prior attempt failed. Apply these constraints before choosing:\n"
+            + "\n".join(f"  - {iss}" for iss in prior_issues) + "\n\n"
             if prior_issues else ""
         )
 
         prompt = (
-            f"Task context: {task}\n\n"
-            f"You need to find ONE endpoint that provides value(s) for: {param_descriptions}\n\n"
-            f"Available endpoints:\n{detailed_list}\n\n"
+            prior_issues_section
+            + f"Task context: {task}\n\n"
+            + f"You need to find ONE endpoint that provides value(s) for: {param_descriptions}\n\n"
+            + f"Available endpoints:\n{detailed_list}\n\n"
             + api_hints_section
-            + prior_issues_section
             + "Rules:\n"
             "- Pick the single best endpoint whose response output can supply the needed parameter value(s).\n"
             "- Prefer endpoints that return the specific resource containing the needed identifier.\n"
             "- Also extract any literal argument values directly from the task description for this resolver.\n"
             "- Specify which parameter name (from the missing list above) this resolver's output will satisfy.\n"
             "- If no endpoint can provide the needed value, return null for endpoint_index.\n\n"
+            "Foreach (bulk operations only):\n"
+            "- If the task names multiple specific entities that all need this resolver to run once per entity, "
+            "set foreach to a list of those names and use {loop_item} as the argument value.\n"
+            "- Otherwise set foreach to null.\n\n"
             'Respond with ONLY valid JSON:\n'
-            '{"endpoint_index": 3, "satisfies_param": "project_id", "literal_args": {"search": "dotfiles"}, "capability": "searches for project by name to get its ID"}\n'
-            'Or if nothing fits: {"endpoint_index": null, "satisfies_param": "", "literal_args": {}, "capability": ""}'
+            '{"endpoint_index": 3, "satisfies_param": "project_id", "literal_args": {"search": "dotfiles"}, "foreach": null, "capability": "searches for project by name to get its ID"}\n'
+            'Bulk example: {"endpoint_index": 2, "satisfies_param": "user_id", "literal_args": {}, "foreach": ["Alice", "Bob", "Carol"], "capability": "looks up each user by name"}\n'
+            'Or if nothing fits: {"endpoint_index": null, "satisfies_param": "", "literal_args": {}, "foreach": null, "capability": ""}'
         )
-        self._debug_print("_find_resolver", prompt=prompt)
-        agent = Agent(self.llm, output_type=str)
-        result = await agent.run(prompt)
-        response = result.output
-        self._debug_print("_find_resolver", response=response)
+        response = await self._run_llm("_find_resolver", prompt)
 
         decoder = json.JSONDecoder()
         data = None
@@ -601,6 +581,7 @@ class PlanningAgent:
             capability=data.get("capability", "provides prerequisite data"),
             satisfies_param=data.get("satisfies_param", ""),
             literal_args=data.get("literal_args", {}),
+            foreach=data.get("foreach"),
         )
 
     # ------------------------------------------------------------------
@@ -620,14 +601,10 @@ class PlanningAgent:
         if not kept:
             raise ValueError("No endpoints available — cannot build a plan.")
 
-        # Pick goal from expanded subset
-        # When prior_issues exist, _pick_goal also returns resolver steps identified
-        # from the issues — steps required by API rules, not swagger param declarations.
-        goal_step, required_resolvers = await self._pick_goal(
+        goal_step, _ = await self._pick_goal(
             task, kept, detailed_list, api_hints_section, prior_issues
         )
-        # Seed chain: required_resolvers (in execution order) followed by goal
-        chain: List[ChainStep] = required_resolvers + [goal_step]
+        chain: List[ChainStep] = [goal_step]
 
         # Backward chaining: iteratively prepend resolvers for missing params
         for iteration in range(MAX_RESOLVER_ITERATIONS):
@@ -718,16 +695,23 @@ class PlanningAgent:
     # ------------------------------------------------------------------
     # Step 6: LLM builds a full execution plan
     # ------------------------------------------------------------------
-    async def _build_plan(self, task: str, chain_steps: List[ChainStep]):
-        selected = [cs.endpoint for cs in chain_steps]
-        tool_names = [f"{ep.method} {ep.path}" for ep in selected]
+    async def _build_plan(
+        self,
+        task: str,
+        chain_steps: List[ChainStep],
+        kept: List[EndpointInfo],
+        detailed_list: str,
+    ):
+        # ToolEnum and endpoint details use ALL kept endpoints so the LLM can
+        # pick the best set and the fix step is never blocked by a missing tool.
+        tool_names = list(dict.fromkeys(f"{ep.method} {ep.path}" for ep in kept))
         bundle = build_agent_models(tool_names)
 
-        endpoint_details = "\n\n".join(self._format_endpoint_detail(ep) for ep in selected)
+        endpoint_details = detailed_list  # pre-formatted full list of kept endpoints
         schema = json.dumps(bundle.ToolBasedResponse.model_json_schema(), indent=2)
 
         hints = self._load_hints()
-        api_files_used = {ep.api for ep in selected}
+        api_files_used = {ep.api for ep in kept}
         relevant_hints = [
             f"[ {fname} ]\n{hints[fname]}"
             for fname in api_files_used
@@ -779,8 +763,8 @@ class PlanningAgent:
                 lines.append(f"    output provides: {cs.satisfies_param}")
             wiring_lines.append("\n".join(lines))
         wiring_section = (
-            "\nPre-wired execution chain (use this to set depends_on and wire reference arguments — "
-            "do NOT re-derive the dependency structure):\n"
+            "\nSuggested execution chain (use as a starting point — you may deviate if a better "
+            "wiring or additional endpoint from the list above is needed):\n"
             + "\n\n".join(wiring_lines) + "\n"
         )
 
@@ -791,8 +775,11 @@ class PlanningAgent:
             f"Available API endpoints:\n{endpoint_details}\n\n"
             + wiring_section
             + user_context_section
-            + api_hints_section + "\n"
-            "Build a step-by-step execution plan following the pre-wired chain above.\n"
+            # + api_hints_section + "\n"
+            + "Build a complete step-by-step execution plan for the task above.\n"
+            "Use any endpoints from the available list that are needed. "
+            "The suggested chain above is a starting point — follow it where it is correct, "
+            "but deviate if a better wiring or an additional endpoint is required.\n"
             "Steps can depend on each other using depends_on and reference prior outputs with '{step_id.result}'.\n\n"
             f"Respond with ONLY valid JSON matching this schema:\n{schema}\n\n"
             "Rules:\n"
@@ -822,25 +809,25 @@ class PlanningAgent:
             "and add a post_processing instruction on that step to perform the remaining filtering/sorting.\n\n"
             "Free-string parameter rule:\n"
             "- If a parameter is a free string (no enum, no documented example values), do NOT invent a value for it. "
-            "Only include it if: (a) the task explicitly states the exact value, or (b) a prior step's output supplies it, or (c) you can look it up via another API endpoint first. "
-            "If none of these apply and the parameter is optional, omit it entirely.\n\n"
+            "Only include it if: (a) the task explicitly states the exact value, or (b) a prior step's output supplies it, or (c) you can look it up via another API endpoint first. \n\n"
+            "If none of these apply and the parameter is optional and not necessary for the task, omit it entirely.\n\n"
+            
+            "Foreach rule:\n"
+            "- If a step needs to process each item from a prior step's list output individually "
+            "(e.g., fetch details for each ID returned by a search or events step), set foreach to "
+            "'step_N.result[*].field_name' where N is the prior step and field_name is the relevant field.\n"
+            "- If the wiring shows 'foreach: LOOP_OVER_PRIOR' or 'foreach: [...]' or 'foreach: \"...\"', "
+            "resolve or copy that value to the correct step reference.\n"
+            "- CRITICAL consistency rule: if any argument value in a step contains '{loop_item}', "
+            "that step's foreach field MUST be set. A step with {loop_item} arguments but no foreach is always wrong.\n"
+            "- foreach accepts a literal list ([\"Alice\", \"Bob\"]) or a reference string (\"step_1.result[*].id\").\n"
+            "- In argument values, use {loop_item} as the placeholder for the current iterated element.\n"
+            "- A foreach step runs N times and its output is automatically collected as a list.\n\n"
             "Post-processing:\n"
             "- If the API cannot fully satisfy the task (e.g. unsupported sort order), retrieve with valid params "
             "and describe the remaining client-side operation in the step's post_processing field.\n\n"
-            "Foreach rule (bulk operations on multiple entities):\n"
-            "- If the wiring shows 'foreach: [...]' or 'foreach: \"...\"' for a step, set that step's foreach field to exactly that value.\n"
-            "- foreach accepts a literal list ([\"Alice\", \"Bob\"]) or a reference string (\"step_1.result[*].id\").\n"
-            "- In argument values, use {loop_item} as the placeholder for the current element.\n"
-            "  Example: foreach step on GET /users with search parameter → set search value to '{loop_item}'.\n"
-            "- A foreach step runs N times and its output is automatically collected as a list.\n"
-            "- To iterate over a field from each object in a prior foreach step's output, "
-            "set foreach to \"step_N.result[*].field_name\" on the next step.\n"
         )
-        self._debug_print("_build_plan", prompt=prompt)
-        agent = Agent(self.llm, output_type=str)
-        result = await agent.run(prompt)
-        response = result.output
-        self._debug_print("_build_plan", response=response)
+        response = await self._run_llm("_build_plan", prompt)
 
         decoder = json.JSONDecoder()
         data = None
@@ -857,7 +844,8 @@ class PlanningAgent:
         if not validate_plan(plan_result.plan):
             raise ValueError(f"LLM produced an invalid plan. Raw response:\n{response}")
 
-        endpoint_map = {f"{ep.method} {ep.path}": ep for ep in selected}
+        # Annotate each plan step with returns/base_url from the full kept endpoint map
+        endpoint_map = {f"{ep.method} {ep.path}": ep for ep in kept}
         _fallback = EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
         annotated_steps = [
             step.model_copy(update={
@@ -883,11 +871,10 @@ class PlanningAgent:
     # ------------------------------------------------------------------
     # Step 7: LLM semantic verification + auto-fix loop
     # ------------------------------------------------------------------
-    def _plan_context(self, chain_steps: List[ChainStep]) -> tuple:
-        selected = [cs.endpoint for cs in chain_steps]
-        endpoint_details = "\n\n".join(self._format_endpoint_detail(ep) for ep in selected)
+    def _plan_context(self, kept: List[EndpointInfo]) -> tuple:
+        endpoint_details = "\n\n".join(self._format_endpoint_detail(ep) for ep in kept)
         hints = self._load_hints()
-        api_files_used = {ep.api for ep in selected}
+        api_files_used = {ep.api for ep in kept}
         relevant_hints = [
             f"[ {fname} ]\n{hints[fname]}"
             for fname in api_files_used
@@ -898,7 +885,7 @@ class PlanningAgent:
             + "\n\n".join(relevant_hints) + "\n"
             if relevant_hints else ""
         )
-        tool_names = [f"{ep.method} {ep.path}" for ep in selected]
+        tool_names = list(dict.fromkeys(f"{ep.method} {ep.path}" for ep in kept))
         bundle = build_agent_models(tool_names)
         return endpoint_details, api_hints_section, tool_names, bundle
 
@@ -914,9 +901,9 @@ class PlanningAgent:
         )
 
     async def _check_plan(
-        self, task: str, plan_result, chain_steps: List[ChainStep]
+        self, task: str, plan_result, kept: List[EndpointInfo]
     ) -> tuple:
-        endpoint_details, api_hints_section, _, _ = self._plan_context(chain_steps)
+        endpoint_details, api_hints_section, _, _ = self._plan_context(kept)
         plan_text = self._format_plan_text(plan_result)
 
         prompt = (
@@ -924,7 +911,9 @@ class PlanningAgent:
             f"Endpoint definitions:\n{endpoint_details}\n\n"
             + api_hints_section
             + f"\nGenerated plan:\n{plan_text}\n\n"
-            "Review this plan for correctness. Check ALL of the following:\n\n"
+            "Review this plan for argument-level correctness. Do NOT flag endpoint selection "
+            "or high-level sequencing — focus only on the wiring within the plan as written.\n\n"
+            "Check ALL of the following:\n\n"
             "1. Missing required parameters: are any required parameters absent from a step "
             "that cannot be inferred from a prior step or the task description?\n\n"
             "2. Type mismatch in reference wiring: does each {step_N.result} reference supply "
@@ -934,17 +923,12 @@ class PlanningAgent:
             "3. Parameter value correctness: are literal argument values valid for their parameter "
             "according to the endpoint description? (wrong enum, wrong format, user display name "
             "used where a machine identifier is needed, etc.)\n\n"
-            "4. Task accomplishment: does the plan as a whole accomplish the stated task? "
-            "Are any steps clearly missing or in the wrong order?\n\n"
+            "4. Task accomplishment: does the plan as a whole accomplish the stated task?\n\n"
             'Respond with ONLY valid JSON:\n'
             '{"issues": ["step_2 arg \'id\' wires step_1.result (user_id) into a project {id} — type mismatch"], "ok": false}\n'
             'If no issues found: {"issues": [], "ok": true}'
         )
-        self._debug_print("_check_plan", prompt=prompt)
-        agent = Agent(self.llm, output_type=str)
-        result = await agent.run(prompt)
-        response = result.output
-        self._debug_print("_check_plan", response=response)
+        response = await self._run_llm("_check_plan", prompt)
 
         decoder = json.JSONDecoder()
         data: dict = {}
@@ -959,9 +943,9 @@ class PlanningAgent:
         return data.get("issues", []), data.get("ok", True)
 
     async def _fix_plan(
-        self, task: str, plan_result, chain_steps: List[ChainStep], issues: list
+        self, task: str, plan_result, kept: List[EndpointInfo], issues: list
     ):
-        endpoint_details, api_hints_section, tool_names, bundle = self._plan_context(chain_steps)
+        endpoint_details, api_hints_section, tool_names, bundle = self._plan_context(kept)
         plan_text = self._format_plan_text(plan_result)
         schema = json.dumps(bundle.ToolBasedResponse.model_json_schema(), indent=2)
         issues_text = "\n".join(f"  - {iss}" for iss in issues)
@@ -980,11 +964,7 @@ class PlanningAgent:
             "- If a step has foreach set, preserve it. Use {{loop_item}} as the argument value for the iterated parameter.\n\n"
             f"Respond with ONLY valid JSON matching this schema:\n{schema}"
         )
-        self._debug_print("_fix_plan", prompt=prompt)
-        agent = Agent(self.llm, output_type=str)
-        result = await agent.run(prompt)
-        response = result.output
-        self._debug_print("_fix_plan", response=response)
+        response = await self._run_llm("_fix_plan", prompt)
 
         decoder = json.JSONDecoder()
         data = None
@@ -1002,8 +982,7 @@ class PlanningAgent:
         if not validate_plan(fixed.plan):
             raise ValueError("_fix_plan produced an invalid plan structure.")
 
-        selected = [cs.endpoint for cs in chain_steps]
-        endpoint_map = {f"{ep.method} {ep.path}": ep for ep in selected}
+        endpoint_map = {f"{ep.method} {ep.path}": ep for ep in kept}
         _fallback = EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
         annotated = [
             step.model_copy(update={
@@ -1037,33 +1016,34 @@ class PlanningAgent:
         Checks logical correctness (goal, ordering, missing prerequisites, data-flow
         mismatches) without needing a fully-built plan.  Returns (issues, ok).
         """
+        # Chain text: one line per endpoint showing its role and what data it contributes.
+        # No wiring detail — wiring is verified separately after the plan is built.
         chain_text = "\n".join(
-            f"  {i + 1}. {cs.endpoint.method} {cs.endpoint.path} [{cs.capability}]"
-            + (f" → provides: {cs.satisfies_param}" if cs.satisfies_param else "")
-            + (f" | literal_args: {cs.literal_args}" if cs.literal_args else "")
+            f"  {i + 1}. {cs.endpoint.method} {cs.endpoint.path} — {cs.capability}"
+            + (f" | provides: {cs.satisfies_param}" if cs.satisfies_param else "")
             + (f" | foreach: {json.dumps(cs.foreach)}" if cs.foreach is not None else "")
             for i, cs in enumerate(chain_steps)
         )
+
         prompt = (
             f"Task: {task}\n\n"
-            f"Planned execution chain:\n{chain_text}\n\n"
+            f"Selected endpoints:\n{chain_text}\n\n"
             + api_hints_section
-            + "Review this chain for logical correctness. Check ALL of the following:\n\n"
-            "1. Does the LAST step directly produce the answer or result the task needs?\n\n"
-            "2. Are any prerequisite steps missing? (e.g. an ID that must be looked up before it can be used)\n\n"
-            "3. Are steps in the correct execution order?\n\n"
-            "4. Does each step's output logically supply the correct type of data to the next step "
-            "that depends on it? (e.g. a step returning a user_id must NOT feed a parameter that "
-            "expects a project {id})\n\n"
+            + "Check that this set of endpoints is COMPLETE and SUFFICIENT to accomplish the task.\n\n"
+            "Ask yourself:\n"
+            "1. Does the last endpoint produce the final result the task asks for?\n"
+            "2. Is there any data or identifier the task needs that NO endpoint in this set can provide? "
+            "(e.g. the task asks to filter commits by author but there is no user-lookup endpoint to resolve the author name)\n"
+            "3. Is any endpoint clearly wrong or irrelevant for this task?\n"
+            "4. Is the execution order conceptually correct?\n\n"
+            "IMPORTANT: Do NOT check how arguments are wired between steps, what parameter names are used, "
+            "or whether reference values are correct — argument-level wiring is verified in a separate pass "
+            "after the plan is built.\n\n"
             'Respond with ONLY valid JSON:\n'
-            '{"issues": ["description of issue"], "ok": false}\n'
-            'If the chain looks correct: {"issues": [], "ok": true}'
+            '{"issues": ["description of gap or problem"], "ok": false}\n'
+            'If the endpoint set is complete and correct: {"issues": [], "ok": true}'
         )
-        self._debug_print("_check_chain", prompt=prompt)
-        agent = Agent(self.llm, output_type=str)
-        result = await agent.run(prompt)
-        response = result.output
-        self._debug_print("_check_chain", response=response)
+        response = await self._run_llm("_check_chain", prompt)
 
         decoder = json.JSONDecoder()
         data: dict = {}
@@ -1080,9 +1060,9 @@ class PlanningAgent:
     # ------------------------------------------------------------------
     # Step 8: Validate the plan for semantic correctness
     # ------------------------------------------------------------------
-    async def _validate_plan(self, plan_result, selected: List[EndpointInfo]) -> None:
+    async def _validate_plan(self, plan_result, kept: List[EndpointInfo]) -> None:
         plan = plan_result.plan
-        endpoint_map = {(ep.method + " " + ep.path): ep for ep in selected}
+        endpoint_map = {(ep.method + " " + ep.path): ep for ep in kept}
 
         errors = []
         step_ids_seen = []
@@ -1187,8 +1167,41 @@ class PlanningAgent:
                     + "\n".join(f"  - {iss}" for iss in issues)
                 )
 
-        plan_result = await self._build_plan(task, chain_steps)
+        # Step 1 check passed — build the plan using all kept endpoints so the
+        # LLM has full visibility and _fix_plan is never blocked by a missing tool.
+        plan_result = await self._build_plan(task, chain_steps, kept, detailed_list)
 
-        await self._validate_plan(plan_result, [cs.endpoint for cs in chain_steps])
+        # Catch validation errors from the initial build so they feed into the fix loop
+        # rather than immediately aborting planning.
+        pending_validation_error: Optional[str] = None
+        try:
+            await self._validate_plan(plan_result, kept)
+        except ValueError as exc:
+            pending_validation_error = str(exc)
+
+        # Step 2: verify argument-level wiring in the built plan, fix if needed.
+        # Validation errors from _validate_plan are merged with _check_plan issues
+        # so _fix_plan gets full context in one pass.
+        MAX_PLAN_FIX_ATTEMPTS = 2
+        for attempt in range(MAX_PLAN_FIX_ATTEMPTS):
+            issues, ok = await self._check_plan(task, plan_result, kept)
+            all_issues = list(issues)
+            if pending_validation_error:
+                all_issues.append(pending_validation_error)
+            if not all_issues or (ok and not pending_validation_error):
+                break
+            self._debug_print(
+                "plan",
+                response=f"plan fix attempt {attempt + 1}: {len(all_issues)} issue(s): {all_issues}",
+            )
+            plan_result = await self._fix_plan(task, plan_result, kept, all_issues)
+            pending_validation_error = None
+            try:
+                await self._validate_plan(plan_result, kept)
+            except ValueError as exc:
+                pending_validation_error = str(exc)
+
+        if pending_validation_error:
+            raise ValueError(pending_validation_error)
 
         return plan_result

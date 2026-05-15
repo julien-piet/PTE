@@ -3080,43 +3080,6 @@
             "description": "No Content"
           }
         }
-      },
-      "head": {
-        "summary": "Check if a branch exists",
-        "operationId": "head_projects_id_repository_branches_branch",
-        "tags": [
-          "Branches"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The ID or URL-encoded path of the project"
-          },
-          {
-            "name": "branch",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The name of the branch"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
       }
     },
     "/projects/{id}/repository/merged_branches": {
@@ -4073,7 +4036,7 @@
     },
     "/projects/{id}/repository/commits": {
       "get": {
-        "summary": "Get a project repository commits",
+        "summary": "List repository commits",
         "operationId": "get_projects_id_repository_commits",
         "tags": [
           "Commits"
@@ -4098,7 +4061,6 @@
             "in": "query",
             "required": false,
             "type": "string",
-            "format": "date-time",
             "description": "Only commits after or on this date are returned. ISO 8601 format, e.g. 2023-02-06T00:00:00Z"
           },
           {
@@ -4106,7 +4068,6 @@
             "in": "query",
             "required": false,
             "type": "string",
-            "format": "date-time",
             "description": "Only commits before or on this date are returned. ISO 8601 format, e.g. 2023-02-06T23:59:59Z"
           },
           {
@@ -4124,56 +4085,18 @@
             "description": "Retrieve every commit from the repository, not just the default branch"
           },
           {
-            "name": "with_stats",
+            "name": "per_page",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "description": "Stats about each commit will be added to the response"
-          },
-          {
-            "name": "first_parent",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "description": "Only include the first parent of merges"
-          },
-          {
-            "name": "order",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "default": "default",
-            "enum": [
-              "default",
-              "topo"
-            ],
-            "description": "List commits in order"
-          },
-          {
-            "name": "trailers",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "default": false,
-            "description": "Parse and include Git trailers for every commit"
+            "type": "integer",
+            "description": "Number of results per page (default 20, max 100)"
           },
           {
             "name": "page",
             "in": "query",
             "required": false,
             "type": "integer",
-            "format": "int32",
-            "default": 1,
             "description": "Page number for pagination (default 1)"
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "default": 20,
-            "description": "Number of results per page (default 20, max 100)"
           }
         ],
         "responses": {
@@ -4289,13 +4212,11 @@
                 },
                 "stats": {
                   "type": "boolean",
-                  "description": "Include commit stats. Default is true",
-                  "default": true
+                  "description": "Include commit stats. Default is true"
                 },
                 "force": {
                   "type": "boolean",
-                  "description": "When true overwrites the target branch with a new commit based on the start_branch or start_sha",
-                  "default": false
+                  "description": "When true overwrites the target branch with a new commit based on the start_branch or start_sha"
                 }
               },
               "required": [
@@ -4317,10 +4238,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created",
-            "schema": {
-              "$ref": "#/definitions/API_Entities_CommitDetail"
-            }
+            "description": "Created"
           },
           "400": {
             "description": "Bad Request"
@@ -39714,7 +39632,7 @@
     },
     "/projects": {
       "get": {
-        "summary": "Get a list of visible projects for authenticated user",
+        "summary": "List all projects",
         "operationId": "get_projects",
         "tags": [
           "Projects"
@@ -39748,8 +39666,7 @@
             "in": "query",
             "required": false,
             "description": "Limit results to projects which were imported from external systems by current user.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "last_activity_after",
@@ -39772,8 +39689,7 @@
             "in": "query",
             "required": false,
             "description": "Limit by projects that the current user is a member of.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "min_access_level",
@@ -39781,43 +39697,21 @@
             "required": false,
             "description": "Limit by current user minimal role (access_level).",
             "type": "integer",
-            "format": "int32",
-            "enum": [
-              10,
-              20,
-              30,
-              40,
-              50
-            ]
+            "format": "int64"
           },
           {
             "name": "order_by",
             "in": "query",
             "required": false,
             "description": "Return projects ordered by id, name, path, created_at, updated_at, last_activity_at, or similarity fields. repository_size, storage_size, packages_size or wiki_size fields are only allowed for administrators. similarity (introduced in GitLab 14.1) is only available when searching and is limited to projects that the current user is a member of. Default is created_at.",
-            "type": "string",
-            "enum": [
-              "id",
-              "name",
-              "path",
-              "created_at",
-              "updated_at",
-              "last_activity_at",
-              "similarity",
-              "storage_size",
-              "repository_size",
-              "wiki_size",
-              "packages_size"
-            ],
-            "default": "created_at"
+            "type": "string"
           },
           {
             "name": "owned",
             "in": "query",
             "required": false,
             "description": "Limit by projects explicitly owned by the current user.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "repository_checksum_failed",
@@ -39852,46 +39746,35 @@
             "in": "query",
             "required": false,
             "description": "Return only limited fields for each project. This is a no-op without authentication where only simple fields are returned.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "sort",
             "in": "query",
             "required": false,
             "description": "Return projects sorted in asc or desc order. Default is desc.",
-            "type": "string",
-            "enum": [
-              "asc",
-              "desc"
-            ],
-            "default": "desc"
+            "type": "string"
           },
           {
             "name": "starred",
             "in": "query",
             "required": false,
             "description": "Limit by projects starred by the current user.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "statistics",
             "in": "query",
             "required": false,
             "description": "Include project statistics. Only available to Reporter or higher level role members.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "topic",
             "in": "query",
             "required": false,
             "description": "Comma-separated topic names. Limit results to projects that match all of given topics. See topics attribute.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "string"
           },
           {
             "name": "topic_id",
@@ -39906,12 +39789,7 @@
             "in": "query",
             "required": false,
             "description": "Limit by visibility public, internal, or private.",
-            "type": "string",
-            "enum": [
-              "private",
-              "internal",
-              "public"
-            ]
+            "type": "string"
           },
           {
             "name": "wiki_checksum_failed",
@@ -39925,24 +39803,21 @@
             "in": "query",
             "required": false,
             "description": "Include custom attributes in response.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "with_issues_enabled",
             "in": "query",
             "required": false,
             "description": "Limit by enabled issues feature.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "with_merge_requests_enabled",
             "in": "query",
             "required": false,
             "description": "Limit by enabled merge requests feature.",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           {
             "name": "with_programming_language",
@@ -39950,24 +39825,6 @@
             "required": false,
             "description": "Limit by projects which use the given programming language.",
             "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "default": 1,
-            "description": "Current page number"
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "default": 20,
-            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -39992,7 +39849,7 @@
         }
       },
       "post": {
-        "summary": "Create new project",
+        "summary": "Create project",
         "operationId": "post_projects",
         "tags": [
           "Projects"
@@ -40023,12 +39880,7 @@
                 },
                 "analytics_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private or enabled",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private or enabled"
                 },
                 "approvals_before_merge": {
                   "type": "integer",
@@ -40037,20 +39889,11 @@
                 },
                 "auto_cancel_pending_pipelines": {
                   "type": "string",
-                  "description": "Auto-cancel pending pipelines. This isn't a boolean, but enabled/disabled.",
-                  "enum": [
-                    "disabled",
-                    "enabled"
-                  ]
+                  "description": "Auto-cancel pending pipelines. This isn't a boolean, but enabled/disabled."
                 },
                 "auto_devops_deploy_strategy": {
                   "type": "string",
-                  "description": "Auto Deploy strategy (continuous, manual or timed_incremental).",
-                  "enum": [
-                    "continuous",
-                    "manual",
-                    "timed_incremental"
-                  ]
+                  "description": "Auto Deploy strategy (continuous, manual or timed_incremental)."
                 },
                 "auto_devops_enabled": {
                   "type": "boolean",
@@ -40066,11 +39909,7 @@
                 },
                 "build_git_strategy": {
                   "type": "string",
-                  "description": "The Git strategy. Defaults to fetch.",
-                  "enum": [
-                    "fetch",
-                    "clone"
-                  ]
+                  "description": "The Git strategy. Defaults to fetch."
                 },
                 "build_timeout": {
                   "type": "integer",
@@ -40079,12 +39918,7 @@
                 },
                 "builds_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "ci_config_path": {
                   "type": "string",
@@ -40097,12 +39931,7 @@
                 },
                 "container_registry_access_level": {
                   "type": "string",
-                  "description": "Set visibility of container registry, for this project, to one of disabled, private or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "Set visibility of container registry, for this project, to one of disabled, private or enabled."
                 },
                 "container_registry_enabled": {
                   "type": "boolean",
@@ -40126,12 +39955,7 @@
                 },
                 "forking_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "group_with_project_templates_id": {
                   "type": "integer",
@@ -40148,12 +39972,7 @@
                 },
                 "issues_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "issues_enabled": {
                   "type": "boolean",
@@ -40169,12 +39988,7 @@
                 },
                 "merge_method": {
                   "type": "string",
-                  "description": "Set the merge method used.",
-                  "enum": [
-                    "ff",
-                    "rebase_merge",
-                    "merge"
-                  ]
+                  "description": "Set the merge method used."
                 },
                 "merge_pipelines_enabled": {
                   "type": "boolean",
@@ -40182,12 +39996,7 @@
                 },
                 "merge_requests_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "merge_requests_enabled": {
                   "type": "boolean",
@@ -40220,12 +40029,7 @@
                 },
                 "operations_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "packages_enabled": {
                   "type": "boolean",
@@ -40233,13 +40037,7 @@
                 },
                 "pages_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, enabled, or public.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled",
-                    "public"
-                  ]
+                  "description": "One of disabled, private, enabled, or public."
                 },
                 "printing_merge_request_link_enabled": {
                   "type": "boolean",
@@ -40251,48 +40049,23 @@
                 },
                 "releases_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "environments_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "feature_flags_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "infrastructure_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "monitor_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "remove_source_branch_after_merge": {
                   "type": "boolean",
@@ -40300,12 +40073,7 @@
                 },
                 "repository_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "repository_storage": {
                   "type": "string",
@@ -40317,12 +40085,7 @@
                 },
                 "requirements_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private or enabled",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private or enabled"
                 },
                 "resolve_outdated_diff_discussions": {
                   "type": "boolean",
@@ -40330,12 +40093,7 @@
                 },
                 "security_and_compliance_access_level": {
                   "type": "string",
-                  "description": "(GitLab 14.9 and later) Security and compliance access level. One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "(GitLab 14.9 and later) Security and compliance access level. One of disabled, private, or enabled."
                 },
                 "shared_runners_enabled": {
                   "type": "boolean",
@@ -40343,12 +40101,7 @@
                 },
                 "snippets_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "snippets_enabled": {
                   "type": "boolean",
@@ -40356,13 +40109,7 @@
                 },
                 "squash_option": {
                   "type": "string",
-                  "description": "One of never, always, default_on, or default_off.",
-                  "enum": [
-                    "never",
-                    "always",
-                    "default_on",
-                    "default_off"
-                  ]
+                  "description": "One of never, always, default_on, or default_off."
                 },
                 "tag_list": {
                   "type": "array",
@@ -40393,74 +40140,15 @@
                 },
                 "visibility": {
                   "type": "string",
-                  "description": "See project visibility level.",
-                  "enum": [
-                    "private",
-                    "internal",
-                    "public"
-                  ]
+                  "description": "See project visibility level."
                 },
                 "wiki_access_level": {
                   "type": "string",
-                  "description": "One of disabled, private, or enabled.",
-                  "enum": [
-                    "disabled",
-                    "private",
-                    "enabled"
-                  ]
+                  "description": "One of disabled, private, or enabled."
                 },
                 "wiki_enabled": {
                   "type": "boolean",
                   "description": "Enable wiki for this project. Use wiki_access_level instead."
-                },
-                "service_desk_enabled": {
-                  "type": "boolean",
-                  "description": "Disable or enable the service desk."
-                },
-                "keep_latest_artifact": {
-                  "type": "boolean",
-                  "description": "Indicates if the latest artifact should be kept for this project."
-                },
-                "show_default_award_emojis": {
-                  "type": "boolean",
-                  "description": "Show default award emojis."
-                },
-                "show_diff_preview_in_email": {
-                  "type": "boolean",
-                  "description": "Include the code diff preview in merge request notification emails."
-                },
-                "warn_about_potentially_unwanted_characters": {
-                  "type": "boolean",
-                  "description": "Warn about potentially unwanted characters in the repository."
-                },
-                "enforce_auth_checks_on_uploads": {
-                  "type": "boolean",
-                  "description": "Enforce auth check on uploads."
-                },
-                "suggestion_commit_message": {
-                  "type": "string",
-                  "description": "The commit message used to apply merge request suggestions."
-                },
-                "merge_commit_template": {
-                  "type": "string",
-                  "description": "Template used to create merge commit message."
-                },
-                "squash_commit_template": {
-                  "type": "string",
-                  "description": "Template used to create squash commit message."
-                },
-                "issue_branch_template": {
-                  "type": "string",
-                  "description": "Template used to create a branch from an issue."
-                },
-                "ci_default_git_depth": {
-                  "type": "integer",
-                  "format": "int32",
-                  "description": "Default number of revisions for shallow cloning."
-                },
-                "mr_default_target_self": {
-                  "type": "boolean",
-                  "description": "Merge requests of this forked project target itself by default."
                 }
               },
               "required": [
@@ -40481,10 +40169,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created",
-            "schema": {
-              "$ref": "#/definitions/API_Entities_Project"
-            }
+            "description": "Created"
           },
           "400": {
             "description": "Bad Request"
@@ -44461,8 +44146,7 @@
     },
     "/projects/{id}/repository/contributors": {
       "get": {
-        "summary": "Get repository contributors",
-        "description": "Returns a list of Git commit authors derived from repository history. Contributors are identified by raw Git author name and email \u2014 they may not have a GitLab account, or their commit email may not match their GitLab profile.",
+        "summary": "Contributors",
         "operationId": "get_projects_id_repository_contributors",
         "tags": [
           "Repositories"
@@ -44473,50 +44157,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "The ID or URL-encoded path of the project"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "default": 1,
-            "description": "Current page number"
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "default": 20,
-            "description": "Number of items per page"
+            "description": ""
           },
           {
             "name": "order_by",
             "in": "query",
             "required": false,
-            "type": "string",
-            "default": "commits",
-            "enum": [
-              "email",
-              "name",
-              "commits"
-            ],
-            "description": "Return contributors ordered by name, email, or commits (orders by commit date) fields. Default is commits."
+            "description": "Return contributors ordered by name, email, or commits (orders by commit date) fields. Default is commits.",
+            "type": "string"
           },
           {
             "name": "sort",
             "in": "query",
             "required": false,
-            "type": "string",
-            "default": "asc",
-            "enum": [
-              "asc",
-              "desc"
-            ],
-            "description": "Return contributors sorted in asc or desc order. Default is asc."
+            "description": "Return contributors sorted in asc or desc order. Default is asc.",
+            "type": "string"
           }
         ],
         "responses": {
@@ -44752,14 +44407,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "The project ID"
+            "description": "Project ID or namespace/project path."
           },
           {
             "name": "file_path",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "The url encoded path to the file."
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "ref",
@@ -44780,7 +44435,7 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Get a file from the repository"
+            "description": "Successful"
           }
         },
         "description": "Read the full content of a single file."
@@ -44832,21 +44487,20 @@
         "tags": [
           "Repository Files"
         ],
-        "description": "Creates a new file in the repository. Fails with 400 if the file already exists \u2014 use PUT to update an existing file.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "The project ID or namespace/project path."
+            "description": ""
           },
           {
             "name": "file_path",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "URL encoded full path to the file, e.g. lib%2Fclass%2Erb. Slashes must be encoded as %2F."
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "body",
@@ -44857,41 +44511,35 @@
               "properties": {
                 "branch": {
                   "type": "string",
-                  "description": "Name of the branch to commit into. To create a new branch, also provide start_branch."
+                  "description": "Name of the new branch to create. The commit is added to this branch."
                 },
                 "commit_message": {
                   "type": "string",
-                  "description": "Commit message."
+                  "description": "The commit message."
                 },
                 "content": {
                   "type": "string",
-                  "description": "File content."
-                },
-                "encoding": {
-                  "type": "string",
-                  "description": "File encoding.",
-                  "enum": ["base64", "text"],
-                  "default": "text"
-                },
-                "start_branch": {
-                  "type": "string",
-                  "description": "Name of the branch to start the new commit from."
+                  "description": "The file's content."
                 },
                 "author_email": {
                   "type": "string",
-                  "description": "The email of the author."
+                  "description": "The commit author's email address."
                 },
                 "author_name": {
                   "type": "string",
-                  "description": "The name of the author."
+                  "description": "The commit author's name."
                 },
-                "last_commit_id": {
+                "encoding": {
                   "type": "string",
-                  "description": "Last known commit id for this file."
+                  "description": "Change encoding to base64. Default is text."
                 },
                 "execute_filemode": {
                   "type": "boolean",
-                  "description": "Enable or disable the executable flag on the file path."
+                  "description": "Enables or disables the execute flag on the file. Can be true or false."
+                },
+                "start_branch": {
+                  "type": "string",
+                  "description": "Name of the base branch to create the new branch from."
                 }
               },
               "required": [
@@ -44926,21 +44574,20 @@
         "tags": [
           "Repository Files"
         ],
-        "description": "Updates an existing file in the repository. Fails with 400 if the file does not exist \u2014 use POST to create a new file. Only branch, content, and commit_message are required; last_commit_id is optional and not required to perform an update.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "The project ID or namespace/project path."
+            "description": ""
           },
           {
             "name": "file_path",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "URL encoded full path to the file, e.g. lib%2Fclass%2Erb. Slashes must be encoded as %2F."
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "body",
@@ -44951,41 +44598,39 @@
               "properties": {
                 "branch": {
                   "type": "string",
-                  "description": "Name of the branch to commit into. To create a new branch, also provide start_branch."
+                  "description": "The existing branch to commit the change to (e.g. 'master' or 'main'). Use the project's default_branch from GET /projects/{id}. Do NOT assume 'main'."
                 },
                 "commit_message": {
                   "type": "string",
-                  "description": "Commit message."
+                  "description": "The commit message."
                 },
                 "content": {
                   "type": "string",
-                  "description": "File content."
-                },
-                "encoding": {
-                  "type": "string",
-                  "description": "File encoding.",
-                  "enum": ["base64", "text"],
-                  "default": "text"
-                },
-                "start_branch": {
-                  "type": "string",
-                  "description": "Name of the branch to start the new commit from."
+                  "description": "The file's content."
                 },
                 "author_email": {
                   "type": "string",
-                  "description": "The email of the author."
+                  "description": "The commit author's email address."
                 },
                 "author_name": {
                   "type": "string",
-                  "description": "The name of the author."
+                  "description": "The commit author's name."
                 },
-                "last_commit_id": {
+                "encoding": {
                   "type": "string",
-                  "description": "Last known commit id for this file. Optional \u2014 omit if unknown."
+                  "description": "Change encoding to base64. Default is text."
                 },
                 "execute_filemode": {
                   "type": "boolean",
-                  "description": "Enable or disable the executable flag on the file path."
+                  "description": "Enables or disables the execute flag on the file. Can be true or false."
+                },
+                "last_commit_id": {
+                  "type": "string",
+                  "description": "Optional. Last known file commit ID. Not required to perform an update \u2014 omit if unknown."
+                },
+                "start_branch": {
+                  "type": "string",
+                  "description": "Name of the base branch to create the new branch from."
                 }
               },
               "required": [
@@ -45012,7 +44657,8 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Update an existing file's content. Only requires branch, content, and commit_message. You do NOT need to GET the file first \u2014 last_commit_id is optional and not required. Use the exact file_path from GET /projects/{id}/repository/tree. Use the project's default_branch (from GET /projects/{id}) as the branch value."
       },
       "delete": {
         "summary": "Delete existing file in repository",
@@ -45020,55 +44666,61 @@
         "tags": [
           "Repository Files"
         ],
-        "description": "Delete an existing file in the repository.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "The project ID or namespace/project path."
+            "description": ""
           },
           {
             "name": "file_path",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "URL encoded full path to the file, e.g. lib%2Fclass%2Erb. Slashes must be encoded as %2F."
+            "description": "Full file path INCLUDING file extensions (.txt, .pdf, etc)."
           },
           {
             "name": "branch",
             "in": "query",
             "required": true,
-            "description": "Name of the branch to commit into. To create a new branch, also provide start_branch.",
+            "description": "Name of the new branch to create. The commit is added to this branch.",
             "type": "string"
           },
           {
             "name": "commit_message",
             "in": "query",
             "required": true,
-            "description": "Commit message.",
-            "type": "string"
-          },
-          {
-            "name": "start_branch",
-            "in": "query",
-            "required": false,
-            "description": "Name of the branch to start the new commit from.",
+            "description": "The commit message.",
             "type": "string"
           },
           {
             "name": "author_email",
             "in": "query",
             "required": false,
-            "description": "The email of the author.",
+            "description": "The commit author's email address.",
             "type": "string"
           },
           {
             "name": "author_name",
             "in": "query",
             "required": false,
-            "description": "The name of the author.",
+            "description": "The commit author's name.",
+            "type": "string"
+          },
+          {
+            "name": "last_commit_id",
+            "in": "query",
+            "required": false,
+            "description": "Last known file commit ID.",
+            "type": "string"
+          },
+          {
+            "name": "start_branch",
+            "in": "query",
+            "required": false,
+            "description": "Name of the base branch to create the new branch from.",
             "type": "string"
           }
         ],
@@ -45155,50 +44807,6 @@
             "description": "Successful"
           }
         }
-      },
-      "head": {
-        "summary": "Get blame file metadata from repository",
-        "operationId": "head_projects_id_repository_files_file_path_blame",
-        "tags": [
-          "Repository Files"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The project ID"
-          },
-          {
-            "name": "file_path",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The url encoded path to the file."
-          },
-          {
-            "name": "ref",
-            "in": "query",
-            "required": true,
-            "type": "string",
-            "description": "The name of branch, tag or commit"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Get blame file metadata from repository"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
       }
     },
     "/projects/{id}/repository/files/{file_path}/raw": {
@@ -45250,50 +44858,6 @@
           },
           "200": {
             "description": "Successful"
-          }
-        }
-      },
-      "head": {
-        "summary": "Get raw file metadata from repository",
-        "operationId": "head_projects_id_repository_files_file_path_raw",
-        "tags": [
-          "Repository Files"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The project ID"
-          },
-          {
-            "name": "file_path",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The url encoded path to the file."
-          },
-          {
-            "name": "ref",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "description": "The name of branch, tag or commit"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Get raw file metadata from repository"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
           }
         }
       }
@@ -50071,7 +49635,7 @@
     },
     "/users": {
       "get": {
-        "summary": "List Gitlab user accounts",
+        "summary": "List users",
         "description": "Returns a list of users. For non-admin tokens, the response includes only public profile fields: id, username, name, state, avatar_url, web_url.",
         "operationId": "get_users",
         "tags": [
@@ -53244,151 +52808,6 @@
           }
         }
       }
-    },
-    "/projects/{id}/repository/archive": {
-      "get": {
-        "summary": "Get an archive of the repository",
-        "operationId": "get_projects_id_repository_archive",
-        "tags": [
-          "Repositories"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The ID or URL-encoded path of the project"
-          },
-          {
-            "name": "sha",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "description": "The commit sha of the archive to be downloaded"
-          },
-          {
-            "name": "format",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "description": "The archive format"
-          },
-          {
-            "name": "path",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "description": "Subfolder of the repository to be downloaded"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Get an archive of the repository"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      }
-    },
-    "/projects/{id}/repository/branches/{branch}/protect": {
-      "put": {
-        "summary": "Protect a single branch",
-        "operationId": "put_projects_id_repository_branches_branch_protect",
-        "tags": [
-          "Branches"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The ID or URL-encoded path of the project"
-          },
-          {
-            "name": "branch",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The name of the branch"
-          },
-          {
-            "name": "developers_can_push",
-            "in": "formData",
-            "required": false,
-            "type": "boolean",
-            "description": "Flag if developers can push to that branch"
-          },
-          {
-            "name": "developers_can_merge",
-            "in": "formData",
-            "required": false,
-            "type": "boolean",
-            "description": "Flag if developers can merge to that branch"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Protect a single branch"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "404 Branch Not Found"
-          }
-        }
-      }
-    },
-    "/projects/{id}/repository/branches/{branch}/unprotect": {
-      "put": {
-        "summary": "Unprotect a single branch",
-        "operationId": "put_projects_id_repository_branches_branch_unprotect",
-        "tags": [
-          "Branches"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The ID or URL-encoded path of the project"
-          },
-          {
-            "name": "branch",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "The name of the branch"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Unprotect a single branch"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "404 Project Not Found"
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -53494,57 +52913,6 @@
       },
       "description": "API_Entities_BasicProjectDetails model"
     },
-    "API_Entities_Ci_PipelineBasic": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int32",
-          "example": 1
-        },
-        "iid": {
-          "type": "integer",
-          "format": "int32",
-          "example": 2
-        },
-        "project_id": {
-          "type": "integer",
-          "format": "int32",
-          "example": 3
-        },
-        "sha": {
-          "type": "string",
-          "example": "0ec9e58fdfca6cdd6652c083c9edb53abc0bad52"
-        },
-        "ref": {
-          "type": "string",
-          "example": "feature-branch"
-        },
-        "status": {
-          "type": "string",
-          "example": "success"
-        },
-        "source": {
-          "type": "string",
-          "example": "push"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2022-10-21T16:49:48.000+02:00"
-        },
-        "updated_at": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2022-10-21T16:49:48.000+02:00"
-        },
-        "web_url": {
-          "type": "string",
-          "example": "https://gitlab.example.com/gitlab-org/gitlab-foss/-/pipelines/61"
-        }
-      },
-      "description": "API_Entities_Ci_PipelineBasic model"
-    },
     "API_Entities_Commit": {
       "type": "object",
       "properties": {
@@ -53612,109 +52980,6 @@
         }
       },
       "description": "API_Entities_Commit model"
-    },
-    "API_Entities_CommitDetail": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "example": "2695effb5807a22ff3d138d593fd856244e155e7"
-        },
-        "short_id": {
-          "type": "string",
-          "example": "2695effb"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2017-07-26T11:08:53.000+02:00"
-        },
-        "parent_ids": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "example": "2a4b78934375d7f53875269ffd4f45fd83a84ebe"
-          }
-        },
-        "title": {
-          "type": "string",
-          "example": "Initial commit"
-        },
-        "message": {
-          "type": "string",
-          "example": "Initial commit"
-        },
-        "author_name": {
-          "type": "string",
-          "example": "John Smith"
-        },
-        "author_email": {
-          "type": "string",
-          "example": "john@example.com"
-        },
-        "authored_date": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2012-05-28T04:42:42-07:00"
-        },
-        "committer_name": {
-          "type": "string",
-          "example": "Jack Smith"
-        },
-        "committer_email": {
-          "type": "string",
-          "example": "jack@example.com"
-        },
-        "committed_date": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2012-05-28T04:42:42-07:00"
-        },
-        "trailers": {
-          "type": "object",
-          "example": "{ \"Merged-By\": \"Jane Doe janedoe@gitlab.com\" }"
-        },
-        "web_url": {
-          "type": "string",
-          "example": "https://gitlab.example.com/janedoe/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"
-        },
-        "stats": {
-          "$ref": "#/definitions/API_Entities_CommitStats"
-        },
-        "status": {
-          "type": "string",
-          "example": "success"
-        },
-        "project_id": {
-          "type": "integer",
-          "format": "int32",
-          "example": 1
-        },
-        "last_pipeline": {
-          "$ref": "#/definitions/API_Entities_Ci_PipelineBasic"
-        }
-      },
-      "description": "API_Entities_CommitDetail model"
-    },
-    "API_Entities_CommitStats": {
-      "type": "object",
-      "properties": {
-        "additions": {
-          "type": "integer",
-          "format": "int32",
-          "example": 1
-        },
-        "deletions": {
-          "type": "integer",
-          "format": "int32",
-          "example": 0
-        },
-        "total": {
-          "type": "integer",
-          "format": "int32",
-          "example": 1
-        }
-      }
     },
     "API_Entities_Contributor": {
       "type": "object",
