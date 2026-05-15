@@ -82,7 +82,9 @@ class PlanningAgent:
         try:
             result = await agent.run(prompt)
         except Exception as exc:
-            print(f"\n[PlanningAgent] {label} LLM ERROR: {type(exc).__name__}: {exc}")
+            cause = getattr(exc, "__cause__", None)
+            print(f"\n[PlanningAgent] {label} LLM ERROR: {type(exc).__name__}: {exc}"
+                  + (f"\n  caused by: {type(cause).__name__}: {cause}" if cause else ""))
             raise
         response = result.output
         self._debug_print(label, response=response)
