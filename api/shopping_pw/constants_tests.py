@@ -20,7 +20,7 @@ playwright_stub.sync_api = types.SimpleNamespace(Page=object)
 sys.modules["playwright"] = playwright_stub
 sys.modules["playwright.sync_api"] = playwright_stub.sync_api
 
-from api.shipping_pw import constants  # noqa:E402
+from api.shopping_pw import constants  # noqa:E402
 
 
 class ConstantsTests(unittest.TestCase):

@@ -22,3 +22,6 @@ class GoogleProvider(object):
             raise RuntimeError("GOOGLE_API_KEY or GEMINI_API_KEY environment variable must be set")
 
         return f"google-gla:{model.model}"
+
+    def get_agent_kwargs(self) -> dict:
+        return {}

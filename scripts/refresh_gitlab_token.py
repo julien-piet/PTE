@@ -42,7 +42,7 @@ def refresh_token() -> str:
         sys.path.insert(0, str(PROJECT_ROOT))
         from api.gitlab_pw.settings import create_access_token
 
-        result = create_access_token(page, name=TOKEN_NAME, scopes=["api"])
+        result = create_access_token(page, token_name=TOKEN_NAME, scopes=["api"])
         browser.close()
 
     if not result.success:

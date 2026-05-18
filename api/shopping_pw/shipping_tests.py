@@ -22,8 +22,8 @@ playwright_stub.sync_api = types.SimpleNamespace(Page=object)
 sys.modules["playwright"] = playwright_stub
 sys.modules["playwright.sync_api"] = playwright_stub.sync_api
 
-from api.shipping_pw import shipping  # noqa:E402
-from api.shipping_pw.test_utils import FakeClient, FakeLocator, FakePage  # noqa:E402
+from api.shopping_pw import shipping  # noqa:E402
+from api.shopping_pw.test_utils import FakeClient, FakeLocator, FakePage  # noqa:E402
 
 
 class ShippingTests(unittest.TestCase):

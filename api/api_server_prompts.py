@@ -144,17 +144,13 @@ GitLab user `{{id}}` path parameter has exactly two directly usable forms:
 - a numeric user ID, for example `2330`
 - a username, for example `byteblaze`
 
-You do NOT know your own user ID or username — if the task requires acting on "my" account, you MUST first resolve your user info using a lookup endpoint such as `GET /user` before calling endpoints any form of {{id}} or {{username}} parameter.
+You do NOT know your own user ID or username — if the task requires acting on "my" account, you MUST first resolve your user info using a lookup endpoint before calling endpoints any form of {{id}} or {{username}} parameter.
 Do NOT pass string aliases like 'self', 'me', or 'current_user' for parameters that require an ID/username — add a prior step to look up the real value instead.
-You do NOT know the user IDs or usernames of any other users — if the task requires acting on another user, you MUST first resolve that user's info using a lookup endpoint such as `GET /users?search=...` before calling endpoints with any form of {{id}} or {{username}} parameter.
+You do NOT know the user IDs or usernames of any other users — if the task requires acting on another user, you MUST first resolve that user's info using a lookup endpoint before calling endpoints with any form of {{id}} or {{username}} parameter.
 
+Contributors are Git commit authors derived from repository history, not GitLab user accounts — they may have no GitLab account, a deleted/blocked account, or a mismatched email. Never assume a contributor name or email can be resolved to a GitLab user record.
 
-
-When determining default_branch for a repository, do NOT assume it is always 'main' or 'master' — use the API to look up the actual default branch name.
-
-When writing a LICENSE file to a repository :
-- Use `GET /licenses` to list available license templates, or `GET /license/{{id}}` (e.g. id="mit") to fetch the exact license text — do NOT hardcode license text.
-- Do NOT assume the LICENSE file already exists. Always look up the repository tree first (`GET /projects/{{id}}/repository/tree`). If a file starting with "LICENSE" is found, use action "update" with that exact filename. If no such file is found, use action "create" with a sensible filename (e.g. "LICENSE.md").
+When determining default_branch for a repository, do NOT assume it is always 'main' or 'master'. Look up the default branch instead.
 
 For Project Templates. Use this json schema to search through available built-in templates. Otherwise, leave template_name blank. 
 
