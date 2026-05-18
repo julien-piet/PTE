@@ -578,7 +578,8 @@
   "paths": {
     "/groups/{id}/access_requests": {
       "get": {
-        "summary": "List access requests for a group or project",
+        "summary": "Gets a list of access requests for a group.",
+        "description": "This feature was introduced in GitLab 8.11.",
         "operationId": "get_groups_id_access_requests",
         "tags": [
           "Access Requests"
@@ -589,7 +590,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "description": "Current page number (default: 1)."
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "description": "Number of items per page (default: 20)."
           }
         ],
         "responses": {
@@ -603,12 +618,19 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of pending access requesters.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_AccessRequester"
+              }
+            }
           }
         }
       },
       "post": {
-        "summary": "Request access to a group or project",
+        "summary": "Requests access for the authenticated user to a group.",
+        "description": "This feature was introduced in GitLab 8.11.",
         "operationId": "post_groups_id_access_requests",
         "tags": [
           "Access Requests"
@@ -619,7 +641,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           }
         ],
         "responses": {
@@ -632,18 +654,22 @@
           "404": {
             "description": "Not Found"
           },
-          "201": {
-            "description": "Created"
-          },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "description": "Access request submitted.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_AccessRequester"
+            }
           }
         }
       }
     },
     "/projects/{id}/access_requests": {
       "get": {
-        "summary": "List access requests for a group or project",
+        "summary": "Gets a list of access requests for a project.",
+        "description": "This feature was introduced in GitLab 8.11.",
         "operationId": "get_projects_id_access_requests",
         "tags": [
           "Access Requests"
@@ -654,7 +680,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "description": "Current page number (default: 1)."
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "description": "Number of items per page (default: 20)."
           }
         ],
         "responses": {
@@ -668,12 +708,19 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of pending access requesters.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_AccessRequester"
+              }
+            }
           }
         }
       },
       "post": {
-        "summary": "Request access to a group or project",
+        "summary": "Requests access for the authenticated user to a project.",
+        "description": "This feature was introduced in GitLab 8.11.",
         "operationId": "post_projects_id_access_requests",
         "tags": [
           "Access Requests"
@@ -684,7 +731,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
           }
         ],
         "responses": {
@@ -697,18 +744,22 @@
           "404": {
             "description": "Not Found"
           },
-          "201": {
-            "description": "Created"
-          },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "description": "Access request submitted.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_AccessRequester"
+            }
           }
         }
       }
     },
     "/groups/{id}/access_requests/{user_id}/approve": {
       "put": {
-        "summary": "Approve an access request",
+        "summary": "Approves an access request for the given user.",
+        "description": "This feature was introduced in GitLab 8.11.",
         "operationId": "put_groups_id_access_requests_user_id_approve",
         "tags": [
           "Access Requests"
@@ -719,29 +770,22 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "user_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "description": "The user ID of the access requester."
           },
           {
-            "name": "body",
-            "in": "body",
+            "name": "access_level",
+            "in": "formData",
             "required": false,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "access_level": {
-                  "type": "integer",
-                  "format": "int64",
-                  "description": "A valid access level (defaults: 30, the Developer role)"
-                }
-              }
-            }
+            "type": "integer",
+            "default": 30,
+            "description": "A valid access level (defaults: 30, the Developer role). 10=Guest, 20=Reporter, 30=Developer, 40=Maintainer, 50=Owner."
           }
         ],
         "responses": {
@@ -754,18 +798,22 @@
           "404": {
             "description": "Not Found"
           },
-          "200": {
-            "description": "Successful"
-          },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "description": "Access request approved.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_AccessRequester"
+            }
           }
         }
       }
     },
     "/projects/{id}/access_requests/{user_id}/approve": {
       "put": {
-        "summary": "Approve an access request",
+        "summary": "Approves an access request for the given user.",
+        "description": "This feature was introduced in GitLab 8.11.",
         "operationId": "put_projects_id_access_requests_user_id_approve",
         "tags": [
           "Access Requests"
@@ -776,29 +824,22 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
           },
           {
             "name": "user_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "description": "The user ID of the access requester."
           },
           {
-            "name": "body",
-            "in": "body",
+            "name": "access_level",
+            "in": "formData",
             "required": false,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "access_level": {
-                  "type": "integer",
-                  "format": "int64",
-                  "description": "A valid access level (defaults: 30, the Developer role)"
-                }
-              }
-            }
+            "type": "integer",
+            "default": 30,
+            "description": "A valid access level (defaults: 30, the Developer role). 10=Guest, 20=Reporter, 30=Developer, 40=Maintainer, 50=Owner."
           }
         ],
         "responses": {
@@ -811,18 +852,22 @@
           "404": {
             "description": "Not Found"
           },
-          "200": {
-            "description": "Successful"
-          },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "description": "Access request approved.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_AccessRequester"
+            }
           }
         }
       }
     },
     "/groups/{id}/access_requests/{user_id}": {
       "delete": {
-        "summary": "Deny an access request",
+        "summary": "Denies an access request for the given user.",
+        "description": "This feature was introduced in GitLab 8.11.",
         "operationId": "delete_groups_id_access_requests_user_id",
         "tags": [
           "Access Requests"
@@ -833,14 +878,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "user_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "description": "The user ID of the access requester."
           }
         ],
         "responses": {
@@ -854,14 +899,15 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Access request denied. No content returned."
           }
         }
       }
     },
     "/projects/{id}/access_requests/{user_id}": {
       "delete": {
-        "summary": "Deny an access request",
+        "summary": "Denies an access request for the given user.",
+        "description": "This feature was introduced in GitLab 8.11.",
         "operationId": "delete_projects_id_access_requests_user_id",
         "tags": [
           "Access Requests"
@@ -872,14 +918,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
           },
           {
             "name": "user_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "description": "The user ID of the access requester."
           }
         ],
         "responses": {
@@ -893,7 +939,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Access request denied. No content returned."
           }
         }
       }
@@ -2925,14 +2971,51 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "search",
             "in": "query",
             "required": false,
-            "description": "Return list of branches containing the search string. You can use ^term and term$ to find branches that begin and end with term respectively.",
+            "description": "Return list of branches matching the search criteria",
             "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "name_asc",
+              "updated_asc",
+              "updated_desc"
+            ],
+            "description": "Return list of branches sorted by the given field"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
+          },
+          {
+            "name": "page_token",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Name of branch to start the pagination from"
           }
         ],
         "responses": {
@@ -2946,9 +3029,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a project repository branches",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Branch"
+              }
+            }
           }
-        }
+        },
+        "description": "Get a project repository branches"
       },
       "post": {
         "summary": "Create repository branch",
@@ -2962,29 +3052,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
-            "name": "body",
-            "in": "body",
+            "name": "branch",
+            "in": "formData",
             "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "branch": {
-                  "type": "string",
-                  "description": "Name of the branch."
-                },
-                "ref": {
-                  "type": "string",
-                  "description": "Branch name or commit SHA to create branch from."
-                }
-              },
-              "required": [
-                "branch",
-                "ref"
-              ]
-            }
+            "type": "string",
+            "description": "The name of the branch"
+          },
+          {
+            "name": "ref",
+            "in": "formData",
+            "required": true,
+            "type": "string",
+            "description": "Create branch from commit SHA or existing branch"
           }
         ],
         "responses": {
@@ -2998,12 +3080,16 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Create branch",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Branch"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Create a repository branch"
       }
     },
     "/projects/{id}/repository/branches/{branch}": {
@@ -3019,14 +3105,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "branch",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the branch"
           }
         ],
         "responses": {
@@ -3040,9 +3126,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a single repository branch",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Branch"
+            }
           }
-        }
+        },
+        "description": "Get a single repository branch"
       },
       "delete": {
         "summary": "Delete repository branch",
@@ -3056,14 +3146,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "branch",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the branch"
           }
         ],
         "responses": {
@@ -3074,12 +3164,13 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Branch Not Found"
           },
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Delete a repository branch"
       },
       "head": {
         "summary": "Check if a branch exists",
@@ -3116,7 +3207,8 @@
           "404": {
             "description": "Not Found"
           }
-        }
+        },
+        "description": "Check if a branch exists"
       }
     },
     "/projects/{id}/repository/merged_branches": {
@@ -3132,7 +3224,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           }
         ],
         "responses": {
@@ -3142,13 +3234,14 @@
           "403": {
             "description": "Forbidden"
           },
-          "404": {
-            "description": "Not Found"
+          "202": {
+            "description": "202 Accepted \u2014 deletion queued asynchronously"
           },
-          "204": {
-            "description": "No Content"
+          "404": {
+            "description": "404 Project Not Found"
           }
-        }
+        },
+        "description": "Delete all merged branches (asynchronous \u2014 returns 202 Accepted)"
       }
     },
     "/broadcast_messages": {
@@ -4195,7 +4288,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Get a list of repository commits in a project."
       },
       "post": {
         "summary": "Create a commit with multiple files and actions",
@@ -4209,7 +4303,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "body",
@@ -4303,7 +4397,8 @@
                 "commit_message",
                 "actions[]"
               ]
-            }
+            },
+            "description": "Commit payload with branch, message, and file actions"
           }
         ],
         "responses": {
@@ -4325,7 +4420,8 @@
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Commit multiple file changes as a single commit. This feature was introduced in GitLab 8.13."
       }
     },
     "/projects/{id}/repository/commits/{sha}": {
@@ -4341,14 +4437,22 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha, or the name of a branch or tag"
+          },
+          {
+            "name": "stats",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "default": true,
+            "description": "Include commit stats"
           }
         ],
         "responses": {
@@ -4362,9 +4466,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a specific commit of a project",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CommitDetail"
+            }
           }
-        }
+        },
+        "description": "Get a specific commit of a project."
       }
     },
     "/projects/{id}/repository/commits/{sha}/refs": {
@@ -4380,14 +4488,45 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "all",
+            "enum": [
+              "branch",
+              "tag",
+              "all"
+            ],
+            "description": "Filter refs by type"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -4401,9 +4540,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get all references a commit is pushed to",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_BasicRef"
+              }
+            }
           }
-        }
+        },
+        "description": "Get all references (branches and tags) a commit is pushed to. This feature was introduced in GitLab 10.6."
       }
     },
     "/projects/{id}/repository/commits/{sha}/cherry_pick": {
@@ -4419,14 +4565,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha, or the name of a branch or tag to be cherry picked"
           },
           {
             "name": "body",
@@ -4434,22 +4580,26 @@
             "required": true,
             "schema": {
               "type": "object",
+              "required": [
+                "branch"
+              ],
               "properties": {
                 "branch": {
                   "type": "string",
-                  "description": "The name of the branch"
+                  "description": "The name of the branch to cherry-pick into",
+                  "example": "master"
                 },
                 "dry_run": {
                   "type": "boolean",
-                  "description": "Does not commit any changes. Default is false. Introduced in GitLab 13.3"
+                  "default": false,
+                  "description": "Does not commit any changes. Introduced in GitLab 13.3"
                 },
                 "message": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "A custom commit message to use for the picked commit",
+                  "example": "Initial commit"
                 }
-              },
-              "required": [
-                "branch"
-              ]
+              }
             }
           }
         ],
@@ -4463,13 +4613,17 @@
           "404": {
             "description": "Not Found"
           },
-          "201": {
-            "description": "Created"
+          "200": {
+            "description": "Cherry pick commit into a branch",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Commit"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Cherry-pick a commit into a branch. This feature was introduced in GitLab 8.15."
       }
     },
     "/projects/{id}/repository/commits/{sha}/revert": {
@@ -4485,14 +4639,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Commit SHA to revert"
           },
           {
             "name": "body",
@@ -4500,19 +4654,21 @@
             "required": true,
             "schema": {
               "type": "object",
+              "required": [
+                "branch"
+              ],
               "properties": {
                 "branch": {
                   "type": "string",
-                  "description": "Target branch name"
+                  "description": "Target branch name",
+                  "example": "master"
                 },
                 "dry_run": {
                   "type": "boolean",
-                  "description": "Does not commit any changes. Default is false. Introduced in GitLab 13.3"
+                  "default": false,
+                  "description": "Does not commit any changes. Introduced in GitLab 13.3"
                 }
-              },
-              "required": [
-                "branch"
-              ]
+              }
             }
           }
         ],
@@ -4526,13 +4682,17 @@
           "404": {
             "description": "Not Found"
           },
-          "201": {
-            "description": "Created"
+          "200": {
+            "description": "Revert a commit in a branch",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Commit"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Revert a commit in a branch. This feature was introduced in GitLab 11.5."
       }
     },
     "/projects/{id}/repository/commits/{sha}/diff": {
@@ -4548,14 +4708,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha, or the name of a branch or tag"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -4569,9 +4747,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get the diff for a specific commit of a project",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Diff"
+              }
+            }
           }
-        }
+        },
+        "description": "Get the diff for a specific commit of a project."
       }
     },
     "/projects/{id}/repository/commits/{sha}/comments": {
@@ -4587,14 +4772,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha, or the name of a branch or tag"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -4608,9 +4811,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a commit's comments",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_CommitNote"
+              }
+            }
           }
-        }
+        },
+        "description": "Get the comments (notes) of a commit."
       },
       "post": {
         "summary": "Post comment to commit",
@@ -4624,14 +4834,52 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha, or the name of a branch or tag on which to post a comment"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "note"
+              ],
+              "properties": {
+                "note": {
+                  "type": "string",
+                  "description": "The text of the comment",
+                  "example": "Nice code!"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The file path for an inline comment",
+                  "example": "doc/update/5.4-to-6.0.md"
+                },
+                "line": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "The line number for an inline comment",
+                  "example": 11
+                },
+                "line_type": {
+                  "type": "string",
+                  "default": "new",
+                  "enum": [
+                    "new",
+                    "old"
+                  ],
+                  "description": "The type of the line for an inline comment"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -4645,12 +4893,16 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Post comment to commit",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CommitNote"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Post a comment to a specific commit."
       }
     },
     "/projects/{id}/repository/commits/{sha}/discussions": {
@@ -4666,14 +4918,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha, or the name of a branch or tag"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -4687,9 +4957,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get discussions of a commit",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Discussion"
+              }
+            }
           }
-        }
+        },
+        "description": "Get the discussions of a commit."
       }
     },
     "/projects/{id}/repository/commits/{sha}/statuses": {
@@ -4705,14 +4982,60 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The commit SHA"
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Filter by branch or tag name"
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Filter by build stage"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Filter by job name"
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "description": "Return all statuses, not just the latest"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -4726,9 +5049,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List the statuses of a commit",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_CommitStatus"
+              }
+            }
           }
-        }
+        },
+        "description": "List the statuses of a commit in a project."
       }
     },
     "/projects/{id}/statuses/{sha}": {
@@ -4744,14 +5074,64 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The commit SHA"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "state"
+              ],
+              "properties": {
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "success",
+                    "failed",
+                    "canceled"
+                  ],
+                  "description": "The state of the status"
+                },
+                "ref": {
+                  "type": "string",
+                  "description": "The ref (branch or tag) to which the status refers"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The label to differentiate this status from the status of other systems. Default: default"
+                },
+                "target_url": {
+                  "type": "string",
+                  "description": "The target URL to associate with this status"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The short description of the status"
+                },
+                "coverage": {
+                  "type": "number",
+                  "format": "float",
+                  "description": "The total code coverage"
+                },
+                "pipeline_id": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "The ID of the pipeline to set status for (use instead of sha when referencing a specific pipeline)"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -4765,12 +5145,16 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Set the pipeline status of a commit",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CommitStatus"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Set the pipeline status of a commit. Adds or updates the status of a commit."
       }
     },
     "/projects/{id}/repository/commits/{sha}/merge_requests": {
@@ -4786,14 +5170,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha, or the name of a branch or tag on which to find Merge Requests"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -4807,9 +5209,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get Merge Requests associated with a commit",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_MergeRequestBasic"
+              }
+            }
           }
-        }
+        },
+        "description": "Get Merge Requests associated with a commit."
       }
     },
     "/projects/{id}/repository/commits/{sha}/signature": {
@@ -4825,14 +5234,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "A commit sha, or the name of a branch or tag"
           }
         ],
         "responses": {
@@ -4846,9 +5255,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a commit's signature",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CommitSignature"
+            }
           }
-        }
+        },
+        "description": "Get the GPG or SSH signature of a commit."
       }
     },
     "/projects/{id}/": {
@@ -41294,12 +41707,30 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "id": {"type": "integer", "description": "Unique numeric user ID"},
-                  "username": {"type": "string", "description": "GitLab username"},
-                  "name": {"type": "string", "description": "Display name (full name)"},
-                  "state": {"type": "string", "description": "Account state: active, blocked, etc."},
-                  "avatar_url": {"type": "string", "description": "URL to user avatar image"},
-                  "web_url": {"type": "string", "description": "URL to user GitLab profile page"}
+                  "id": {
+                    "type": "integer",
+                    "description": "Unique numeric user ID"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "GitLab username"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name (full name)"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Account state: active, blocked, etc."
+                  },
+                  "avatar_url": {
+                    "type": "string",
+                    "description": "URL to user avatar image"
+                  },
+                  "web_url": {
+                    "type": "string",
+                    "description": "URL to user GitLab profile page"
+                  }
                 }
               }
             }
@@ -43288,7 +43719,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "search",
@@ -43309,9 +43740,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List protected branches",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_ProtectedBranch"
+              }
+            }
           }
-        }
+        },
+        "description": "List protected branches"
       },
       "post": {
         "summary": "Protect repository branches",
@@ -43325,7 +43763,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "body",
@@ -43400,12 +43838,16 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Protect repository branches",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ProtectedBranch"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Protect repository branches"
       }
     },
     "/projects/{id}/protected_branches/{name}": {
@@ -43421,14 +43863,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the branch or wildcard"
           }
         ],
         "responses": {
@@ -43442,9 +43884,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a single protected branch",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ProtectedBranch"
+            }
           }
-        }
+        },
+        "description": "Get a single protected branch or wildcard protected branch"
       },
       "delete": {
         "summary": "Unprotect repository branches",
@@ -43458,14 +43904,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the branch or wildcard"
           }
         ],
         "responses": {
@@ -43481,7 +43927,8 @@
           "204": {
             "description": "No Content"
           }
-        }
+        },
+        "description": "Unprotect a repository branch"
       },
       "patch": {
         "summary": "Update a protected branch",
@@ -43495,14 +43942,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the branch or wildcard"
           },
           {
             "name": "body",
@@ -43555,12 +44002,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Update a protected branch",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ProtectedBranch"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Update a protected branch"
       }
     },
     "/projects/{id}/protected_environments": {
@@ -50136,16 +50587,34 @@
             "description": "Successful",
             "schema": {
               "type": "array",
-              "description": "List of users. Only basic public fields are returned for non-admin tokens — does NOT include location, email, bio, or other detailed profile fields. Use GET /users/{id} to retrieve the full profile for a specific user.",
+              "description": "List of users. Only basic public fields are returned for non-admin tokens \u2014 does NOT include location, email, bio, or other detailed profile fields. Use GET /users/{id} to retrieve the full profile for a specific user.",
               "items": {
                 "type": "object",
                 "properties": {
-                  "id": {"type": "integer", "description": "Unique numeric user ID"},
-                  "username": {"type": "string", "description": "GitLab username (used for @mentions and API path lookups)"},
-                  "name": {"type": "string", "description": "Display name (full name)"},
-                  "state": {"type": "string", "description": "Account state: active, blocked, etc."},
-                  "avatar_url": {"type": "string", "description": "URL to user avatar image"},
-                  "web_url": {"type": "string", "description": "URL to user GitLab profile page"}
+                  "id": {
+                    "type": "integer",
+                    "description": "Unique numeric user ID"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "GitLab username (used for @mentions and API path lookups)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name (full name)"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Account state: active, blocked, etc."
+                  },
+                  "avatar_url": {
+                    "type": "string",
+                    "description": "URL to user avatar image"
+                  },
+                  "web_url": {
+                    "type": "string",
+                    "description": "URL to user GitLab profile page"
+                  }
                 }
               }
             }
@@ -50184,7 +50653,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User created successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserWithAdmin"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -50305,7 +50777,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "body",
@@ -50332,7 +50804,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "User updated successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserWithAdmin"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -50356,7 +50831,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to delete"
           },
           {
             "name": "hard_delete",
@@ -50377,7 +50852,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "User deleted successfully"
           }
         },
         "description": "Permanently deletes a user account and all associated data.",
@@ -50401,14 +50876,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "provider",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "External provider name (e.g. github, google_oauth2)"
           }
         ],
         "responses": {
@@ -50422,7 +50897,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Identity deleted successfully"
           }
         },
         "description": "Removes a linked OAuth identity (e.g. google_oauth2, github) from the specified user account.",
@@ -50511,7 +50986,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns the status of the currently authenticated user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserStatus"
+            }
           }
         },
         "description": "Returns the status of the currently authenticated user, including emoji, message, availability, and clear_status_at timestamp."
@@ -50561,7 +51039,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Status updated successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserStatus"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -50583,7 +51064,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID or username of the user"
           }
         ],
         "responses": {
@@ -50597,7 +51078,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns the status of the specified user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserStatus"
+            }
           }
         },
         "description": "Returns the status of a specific user identified by their ID or username, including emoji, message, availability, and clear_status_at timestamp."
@@ -50622,7 +51106,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns display preferences for the authenticated user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserPreferences"
+            }
           }
         },
         "description": "Returns display preferences for the authenticated user: view_diffs_file_by_file and show_whitespace_in_diffs."
@@ -50668,7 +51155,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Preferences updated successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserPreferences"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -50690,7 +51180,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to follow"
           }
         ],
         "responses": {
@@ -50704,7 +51194,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User followed successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserBasic"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -50726,7 +51219,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to unfollow"
           }
         ],
         "responses": {
@@ -50740,7 +51233,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User unfollowed successfully"
           },
           "400": {
             "description": "Bad Request"
@@ -50762,7 +51255,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           }
         ],
         "responses": {
@@ -50776,7 +51269,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of users who follow the specified user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_UserBasic"
+              }
+            }
           }
         },
         "description": "Returns a list of users who follow the specified user. Each entry includes id, username, name, state, avatar_url, and web_url."
@@ -50795,7 +51294,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           }
         ],
         "responses": {
@@ -50809,7 +51308,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of users that the specified user follows",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_UserBasic"
+              }
+            }
           }
         },
         "description": "Returns a list of users that the specified user is following. Each entry includes id, username, name, state, avatar_url, and web_url."
@@ -50870,7 +51375,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Return the user specific counts",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserCounts"
+            }
           }
         },
         "description": "Returns activity counts for the authenticated user: open merge_requests, assigned_issues, assigned_merge_requests, review_requested_merge_requests, and pending todos."
@@ -50889,7 +51397,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           }
         ],
         "responses": {
@@ -50903,7 +51411,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns the number of associations for the specified user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_UserAssociationsCount"
+            }
           }
         },
         "description": "Returns the number of groups, projects, issues, and merge requests the specified user is associated with."
@@ -50928,7 +51439,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of SSH public keys for the current user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_SSHKey"
+              }
+            }
           }
         },
         "description": "Returns a list of SSH public keys registered to the authenticated user."
@@ -50982,7 +51499,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "SSH key added successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_SSHKey"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51004,7 +51524,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID or username of the user"
           }
         ],
         "responses": {
@@ -51018,7 +51538,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of SSH public keys for the specified user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_SSHKey"
+              }
+            }
           }
         },
         "description": "Returns a list of SSH public keys for the specified user, identified by ID or username."
@@ -51037,7 +51563,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the SSH key"
           }
         ],
         "responses": {
@@ -51051,7 +51577,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns a single SSH key for the current user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_SSHKey"
+            }
           }
         },
         "description": "Returns a specific SSH public key by key_id belonging to the authenticated user."
@@ -51068,7 +51597,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the SSH key to delete"
           }
         ],
         "responses": {
@@ -51082,7 +51611,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "SSH key deleted successfully"
           }
         },
         "description": "Removes a specific SSH public key from the authenticated user's account."
@@ -51101,14 +51630,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "key_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the SSH key"
           }
         ],
         "responses": {
@@ -51122,7 +51651,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns a single SSH key for the specified user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_SSHKeyWithUser"
+            }
           }
         },
         "description": "Returns a specific SSH public key by key_id belonging to the specified user."
@@ -51139,14 +51671,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "key_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the SSH key to delete"
           }
         ],
         "responses": {
@@ -51160,7 +51692,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "SSH key deleted successfully"
           }
         },
         "description": "Removes a specific SSH public key from the specified user's account.",
@@ -51184,7 +51716,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "body",
@@ -51228,7 +51760,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "SSH key added to user successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_SSHKey"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51261,7 +51796,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of GPG keys for the current user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_GPGKey"
+              }
+            }
           }
         },
         "description": "Returns a list of GPG keys registered to the authenticated user."
@@ -51302,7 +51843,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "GPG key added successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GPGKey"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51324,7 +51868,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the GPG key"
           }
         ],
         "responses": {
@@ -51338,7 +51882,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns a single GPG key for the current user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GPGKey"
+            }
           }
         },
         "description": "Returns a specific GPG key by key_id belonging to the authenticated user."
@@ -51355,7 +51902,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the GPG key to delete"
           }
         ],
         "responses": {
@@ -51369,7 +51916,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "GPG key deleted successfully"
           }
         },
         "description": "Removes a specific GPG key from the authenticated user's account."
@@ -51388,7 +51935,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           }
         ],
         "responses": {
@@ -51402,7 +51949,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of GPG keys for the specified user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_GPGKey"
+              }
+            }
           }
         },
         "description": "Returns a list of GPG keys registered to the specified user."
@@ -51419,7 +51972,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "body",
@@ -51451,7 +52004,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "GPG key added to user successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GPGKey"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51478,14 +52034,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "key_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the GPG key"
           }
         ],
         "responses": {
@@ -51499,7 +52055,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns a single GPG key for the specified user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GPGKey"
+            }
           }
         },
         "description": "Returns a specific GPG key by key_id belonging to the specified user."
@@ -51516,14 +52075,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "key_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the GPG key to delete"
           }
         ],
         "responses": {
@@ -51537,7 +52096,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "GPG key deleted successfully"
           }
         },
         "description": "Removes a specific GPG key from the specified user's account.",
@@ -51567,7 +52126,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of email addresses for the current user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Email"
+              }
+            }
           }
         },
         "description": "Returns all email addresses associated with the authenticated user's account, including confirmed_at timestamps."
@@ -51608,7 +52173,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Email address added successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Email"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51630,7 +52198,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           }
         ],
         "responses": {
@@ -51644,7 +52212,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of email addresses for the specified user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Email"
+              }
+            }
           }
         },
         "description": "Returns all email addresses associated with the specified user's account.",
@@ -51666,7 +52240,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "body",
@@ -51701,7 +52275,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Email address added to user successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Email"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51728,7 +52305,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the email address"
           }
         ],
         "responses": {
@@ -51742,7 +52319,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns a single email address for the current user",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Email"
+            }
           }
         },
         "description": "Returns a specific email address by email_id belonging to the authenticated user."
@@ -51759,7 +52339,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the email address to delete"
           }
         ],
         "responses": {
@@ -51773,7 +52353,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Email address deleted successfully"
           }
         },
         "description": "Removes a specific email address from the authenticated user's account."
@@ -51792,14 +52372,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "email_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the email address to delete"
           }
         ],
         "responses": {
@@ -51813,7 +52393,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Email address deleted successfully"
           }
         },
         "description": "Removes a specific email address from the specified user's account.",
@@ -51837,7 +52417,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to block"
           }
         ],
         "responses": {
@@ -51851,7 +52431,11 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User blocked successfully",
+            "schema": {
+              "type": "boolean",
+              "description": "Returns true if the user was blocked successfully"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51878,7 +52462,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to unblock"
           }
         ],
         "responses": {
@@ -51892,7 +52476,11 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User unblocked successfully",
+            "schema": {
+              "type": "boolean",
+              "description": "Returns true if the user was unblocked successfully"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51919,7 +52507,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to deactivate"
           }
         ],
         "responses": {
@@ -51933,7 +52521,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User deactivated successfully"
           },
           "400": {
             "description": "Bad Request"
@@ -51960,7 +52548,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to activate"
           }
         ],
         "responses": {
@@ -51974,7 +52562,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User activated successfully"
           },
           "400": {
             "description": "Bad Request"
@@ -52001,7 +52589,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to ban"
           }
         ],
         "responses": {
@@ -52015,7 +52603,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User banned successfully"
           },
           "400": {
             "description": "Bad Request"
@@ -52042,7 +52630,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to unban"
           }
         ],
         "responses": {
@@ -52056,7 +52644,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User unbanned successfully"
           },
           "400": {
             "description": "Bad Request"
@@ -52083,13 +52671,13 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "state",
             "in": "query",
             "required": false,
-            "description": "Filter tokens based on state (all, active, inactive)",
+            "description": "Filter tokens by state: all, active, or inactive",
             "type": "string"
           }
         ],
@@ -52104,7 +52692,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of impersonation tokens for the specified user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_ImpersonationToken"
+              }
+            }
           }
         },
         "description": "Returns all impersonation tokens for the specified user. Supports filtering by state (all, active, inactive).",
@@ -52126,7 +52720,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "body",
@@ -52170,7 +52764,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Impersonation token created successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ImpersonationToken"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -52197,7 +52794,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to approve"
           }
         ],
         "responses": {
@@ -52211,7 +52808,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User approved successfully"
           },
           "400": {
             "description": "Bad Request"
@@ -52238,7 +52835,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user to reject"
           }
         ],
         "responses": {
@@ -52252,7 +52849,7 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "User rejected successfully"
           },
           "400": {
             "description": "Bad Request"
@@ -52279,14 +52876,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "impersonation_token_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the impersonation token"
           }
         ],
         "responses": {
@@ -52300,7 +52897,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Returns details of the specified impersonation token",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ImpersonationToken"
+            }
           }
         },
         "description": "Returns details of a specific impersonation token for the specified user.",
@@ -52322,14 +52922,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "impersonation_token_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the impersonation token to revoke"
           }
         ],
         "responses": {
@@ -52343,7 +52943,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Impersonation token revoked successfully"
           }
         },
         "description": "Revokes (deletes) a specific impersonation token for the specified user, immediately invalidating it.",
@@ -52367,7 +52967,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "body",
@@ -52411,7 +53011,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Personal access token created successfully",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_PersonalAccessToken"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -52452,7 +53055,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of user activity timestamps",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_UserActivity"
+              }
+            }
           }
         },
         "description": "Returns the last activity date for all users, useful for auditing active accounts.",
@@ -52477,13 +53086,13 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           },
           {
             "name": "type",
             "in": "query",
             "required": false,
-            "description": "Filter memberships by type. Can be either Project or Namespace",
+            "description": "Filter memberships by type: Project or Namespace",
             "type": "string"
           }
         ],
@@ -52498,7 +53107,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of group and project memberships for the specified user",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Membership"
+              }
+            }
           }
         },
         "security": [
@@ -52521,7 +53136,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID of the user"
           }
         ],
         "responses": {
@@ -52535,7 +53150,11 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Two-factor authentication disabled successfully",
+            "schema": {
+              "type": "string",
+              "description": "Success message confirming 2FA was disabled"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -53436,7 +54055,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Protect a single branch"
+            "description": "Protect a single branch",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Branch"
+            }
           },
           "401": {
             "description": "Unauthorized"
@@ -53447,7 +54069,8 @@
           "404": {
             "description": "404 Branch Not Found"
           }
-        }
+        },
+        "description": "Protect a single branch"
       }
     },
     "/projects/{id}/repository/branches/{branch}/unprotect": {
@@ -53475,7 +54098,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Unprotect a single branch"
+            "description": "Unprotect a single branch",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Branch"
+            }
           },
           "401": {
             "description": "Unauthorized"
@@ -53486,7 +54112,8 @@
           "404": {
             "description": "404 Project Not Found"
           }
-        }
+        },
+        "description": "Unprotect a single branch"
       }
     }
   },
@@ -55464,6 +56091,1112 @@
         }
       },
       "description": "API_Entities_Project model"
+    },
+    "API_Entities_AccessRequester": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "User ID"
+        },
+        "username": {
+          "type": "string",
+          "description": "GitLab username"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "state": {
+          "type": "string",
+          "description": "Account state: active, blocked, etc."
+        },
+        "avatar_url": {
+          "type": "string"
+        },
+        "avatar_path": {
+          "type": "string"
+        },
+        "web_url": {
+          "type": "string"
+        },
+        "requested_at": {
+          "type": "string",
+          "description": "ISO 8601 datetime when access was requested"
+        },
+        "access_level": {
+          "type": "integer",
+          "description": "Access level granted (10=Guest, 20=Reporter, 30=Developer, 40=Maintainer, 50=Owner); present after approval"
+        },
+        "custom_attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_CustomAttribute"
+          }
+        }
+      },
+      "description": "API_Entities_AccessRequester model"
+    },
+    "API_Entities_UserCounts": {
+      "type": "object",
+      "properties": {
+        "merge_requests": {
+          "type": "integer",
+          "format": "int32",
+          "example": 10
+        },
+        "assigned_issues": {
+          "type": "integer",
+          "format": "int32",
+          "example": 10
+        },
+        "assigned_merge_requests": {
+          "type": "integer",
+          "format": "int32",
+          "example": 10
+        },
+        "review_requested_merge_requests": {
+          "type": "integer",
+          "format": "int32",
+          "example": 10
+        },
+        "todos": {
+          "type": "integer",
+          "format": "int32",
+          "example": 10
+        }
+      },
+      "description": "API_Entities_UserCounts model"
+    },
+    "API_Entities_User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "username": {
+          "type": "string",
+          "example": "admin"
+        },
+        "name": {
+          "type": "string",
+          "example": "Administrator"
+        },
+        "state": {
+          "type": "string",
+          "example": "active"
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "https://gravatar.com/avatar/1"
+        },
+        "avatar_path": {
+          "type": "string",
+          "example": "/user/avatar/28/The-Big-Lebowski-400-400.png"
+        },
+        "custom_attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_CustomAttribute"
+          }
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/root"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "public_email": {
+          "type": "string"
+        },
+        "skype": {
+          "type": "string"
+        },
+        "linkedin": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "website_url": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "string"
+        },
+        "job_title": {
+          "type": "string"
+        },
+        "pronouns": {
+          "type": "string"
+        },
+        "bot": {
+          "type": "string"
+        },
+        "work_information": {
+          "type": "string"
+        },
+        "followers": {
+          "type": "string"
+        },
+        "following": {
+          "type": "string"
+        },
+        "is_followed": {
+          "type": "string"
+        },
+        "local_time": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_UserPublic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "username": {
+          "type": "string",
+          "example": "admin"
+        },
+        "name": {
+          "type": "string",
+          "example": "Administrator"
+        },
+        "state": {
+          "type": "string",
+          "example": "active"
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "https://gravatar.com/avatar/1"
+        },
+        "avatar_path": {
+          "type": "string",
+          "example": "/user/avatar/28/The-Big-Lebowski-400-400.png"
+        },
+        "custom_attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_CustomAttribute"
+          }
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/root"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "public_email": {
+          "type": "string"
+        },
+        "skype": {
+          "type": "string"
+        },
+        "linkedin": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "website_url": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "string"
+        },
+        "job_title": {
+          "type": "string"
+        },
+        "pronouns": {
+          "type": "string"
+        },
+        "bot": {
+          "type": "string"
+        },
+        "work_information": {
+          "type": "string"
+        },
+        "followers": {
+          "type": "string"
+        },
+        "following": {
+          "type": "string"
+        },
+        "is_followed": {
+          "type": "string"
+        },
+        "local_time": {
+          "type": "string"
+        },
+        "last_sign_in_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:01.670Z"
+        },
+        "confirmed_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:01.670Z"
+        },
+        "last_activity_on": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:01.670Z"
+        },
+        "email": {
+          "type": "string",
+          "example": "john@example.com"
+        },
+        "theme_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 2
+        },
+        "color_scheme_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "projects_limit": {
+          "type": "integer",
+          "format": "int32",
+          "example": 10
+        },
+        "current_sign_in_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:01.670Z"
+        },
+        "identities": {
+          "$ref": "#/definitions/API_Entities_Identity"
+        },
+        "can_create_group": {
+          "type": "boolean",
+          "example": true
+        },
+        "can_create_project": {
+          "type": "boolean",
+          "example": true
+        },
+        "two_factor_enabled": {
+          "type": "boolean",
+          "example": true
+        },
+        "external": {
+          "type": "string"
+        },
+        "private_profile": {
+          "type": "boolean",
+          "example": "null"
+        },
+        "commit_email": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_UserWithAdmin": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "username": {
+          "type": "string",
+          "example": "admin"
+        },
+        "name": {
+          "type": "string",
+          "example": "Administrator"
+        },
+        "state": {
+          "type": "string",
+          "example": "active"
+        },
+        "avatar_url": {
+          "type": "string",
+          "example": "https://gravatar.com/avatar/1"
+        },
+        "avatar_path": {
+          "type": "string",
+          "example": "/user/avatar/28/The-Big-Lebowski-400-400.png"
+        },
+        "custom_attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_CustomAttribute"
+          }
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://gitlab.example.com/root"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "public_email": {
+          "type": "string"
+        },
+        "skype": {
+          "type": "string"
+        },
+        "linkedin": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "website_url": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "string"
+        },
+        "job_title": {
+          "type": "string"
+        },
+        "pronouns": {
+          "type": "string"
+        },
+        "bot": {
+          "type": "string"
+        },
+        "work_information": {
+          "type": "string"
+        },
+        "followers": {
+          "type": "string"
+        },
+        "following": {
+          "type": "string"
+        },
+        "is_followed": {
+          "type": "string"
+        },
+        "local_time": {
+          "type": "string"
+        },
+        "last_sign_in_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:01.670Z"
+        },
+        "confirmed_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:01.670Z"
+        },
+        "last_activity_on": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:01.670Z"
+        },
+        "email": {
+          "type": "string",
+          "example": "john@example.com"
+        },
+        "theme_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 2
+        },
+        "color_scheme_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "projects_limit": {
+          "type": "integer",
+          "format": "int32",
+          "example": 10
+        },
+        "current_sign_in_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:01.670Z"
+        },
+        "identities": {
+          "$ref": "#/definitions/API_Entities_Identity"
+        },
+        "can_create_group": {
+          "type": "boolean",
+          "example": true
+        },
+        "can_create_project": {
+          "type": "boolean",
+          "example": true
+        },
+        "two_factor_enabled": {
+          "type": "boolean",
+          "example": true
+        },
+        "external": {
+          "type": "string"
+        },
+        "private_profile": {
+          "type": "boolean",
+          "example": "null"
+        },
+        "commit_email": {
+          "type": "string"
+        },
+        "is_admin": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "namespace_id": {
+          "type": "string"
+        },
+        "created_by": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        }
+      },
+      "description": "API_Entities_UserWithAdmin model"
+    },
+    "API_Entities_SSHKeyWithUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "title": {
+          "type": "string",
+          "example": "Sample key 25"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-09-03T07:24:44.627Z"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2020-09-03T07:24:44.627Z"
+        },
+        "key": {
+          "type": "string",
+          "example": "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt1256k6Yjz\\\n      GGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCdd\\\n      NaP0L+hM7zhFNzjFvpaMgJw0="
+        },
+        "usage_type": {
+          "type": "string",
+          "example": "auth"
+        },
+        "user": {
+          "$ref": "#/definitions/API_Entities_UserPublic"
+        }
+      },
+      "description": "API_Entities_SSHKeyWithUser model"
+    },
+    "API_Entities_PersonalAccessToken": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 2
+        },
+        "name": {
+          "type": "string",
+          "example": "John Doe"
+        },
+        "revoked": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scopes": {
+          "type": "array",
+          "example": [
+            "api"
+          ]
+        },
+        "user_id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 3
+        },
+        "last_used_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2020-08-31T15:53:00.073Z"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2020-08-31T15:53:00.073Z"
+        }
+      },
+      "description": "API_Entities_PersonalAccessToken model"
+    },
+    "API_Entities_Identity": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "extern_uid": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_UserStatus": {
+      "type": "object",
+      "properties": {
+        "emoji": {
+          "type": "string",
+          "example": "coffee"
+        },
+        "message": {
+          "type": "string",
+          "example": "Working on project"
+        },
+        "availability": {
+          "type": "string",
+          "example": "busy"
+        },
+        "message_html": {
+          "type": "string"
+        },
+        "clear_status_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "User status including emoji, message, availability and clear_status_at"
+    },
+    "API_Entities_UserPreferences": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "user_id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "view_diffs_file_by_file": {
+          "type": "boolean"
+        },
+        "show_whitespace_in_diffs": {
+          "type": "boolean"
+        }
+      },
+      "description": "User display preferences"
+    },
+    "API_Entities_SSHKey": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "title": {
+          "type": "string",
+          "example": "Sample key"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "key": {
+          "type": "string"
+        },
+        "usage_type": {
+          "type": "string",
+          "example": "auth"
+        }
+      },
+      "description": "SSH public key"
+    },
+    "API_Entities_GPGKey": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "key": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "subkeys": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "description": "GPG key"
+    },
+    "API_Entities_Email": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "email": {
+          "type": "string",
+          "example": "user@example.com"
+        },
+        "confirmed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Email address"
+    },
+    "API_Entities_ImpersonationToken": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "revoked": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "user_id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "last_used_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "token": {
+          "type": "string",
+          "description": "Only present on creation response"
+        }
+      },
+      "description": "Impersonation token"
+    },
+    "API_Entities_Membership": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "source_full_name": {
+          "type": "string"
+        },
+        "source_members_url": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "access_level": {
+          "type": "object",
+          "properties": {
+            "integer_value": {
+              "type": "integer"
+            },
+            "string_value": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Group or project membership"
+    },
+    "API_Entities_UserAssociationsCount": {
+      "type": "object",
+      "properties": {
+        "groups_count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "projects_count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "issues_count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "merge_requests_count": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "description": "Count of groups, projects, issues, and merge requests the user is associated with"
+    },
+    "API_Entities_UserActivity": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "last_activity_on": {
+          "type": "string",
+          "format": "date",
+          "example": "2021-01-15"
+        },
+        "last_activity_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "User activity timestamp"
+    },
+    "API_Entities_ProtectedRefAccess": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "access_level": {
+          "type": "integer",
+          "format": "int32",
+          "example": 40
+        },
+        "access_level_description": {
+          "type": "string",
+          "example": "Maintainers"
+        }
+      }
+    },
+    "API_Entities_ProtectedBranch": {
+      "type": "object",
+      "description": "API_Entities_ProtectedBranch model",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "main"
+        },
+        "push_access_levels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_ProtectedRefAccess"
+          }
+        },
+        "merge_access_levels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_ProtectedRefAccess"
+          }
+        },
+        "allow_force_push": {
+          "type": "boolean"
+        }
+      }
+    },
+    "API_Entities_Branch": {
+      "type": "object",
+      "description": "API_Entities_Branch model",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "master"
+        },
+        "commit": {
+          "$ref": "#/definitions/API_Entities_Commit"
+        },
+        "merged": {
+          "type": "boolean",
+          "example": false
+        },
+        "protected": {
+          "type": "boolean",
+          "example": true
+        },
+        "developers_can_push": {
+          "type": "boolean",
+          "example": false
+        },
+        "developers_can_merge": {
+          "type": "boolean",
+          "example": false
+        },
+        "can_push": {
+          "type": "boolean",
+          "example": true
+        },
+        "default": {
+          "type": "boolean",
+          "example": true
+        },
+        "web_url": {
+          "type": "string",
+          "example": "http://gitlab.example.com/group/project/-/tree/master"
+        }
+      }
+    },
+    "API_Entities_CommitSignature": {
+      "type": "object",
+      "description": "GPG or SSH signature for a commit",
+      "properties": {
+        "signature_type": {
+          "type": "string",
+          "example": "PGP",
+          "description": "Type of signature, e.g. PGP or SSH"
+        },
+        "signature": {
+          "type": "string",
+          "description": "The raw signature data"
+        },
+        "commit_source": {
+          "type": "string",
+          "example": "gitaly",
+          "description": "Source of the commit"
+        }
+      }
+    },
+    "API_Entities_CommitNote": {
+      "type": "object",
+      "description": "A comment/note on a commit",
+      "properties": {
+        "note": {
+          "type": "string",
+          "example": "this doc is really nice",
+          "description": "The text of the comment"
+        },
+        "path": {
+          "type": "string",
+          "example": "README.md",
+          "description": "The file path the comment is on"
+        },
+        "line": {
+          "type": "integer",
+          "format": "int32",
+          "example": 11,
+          "description": "The line number"
+        },
+        "line_type": {
+          "type": "string",
+          "example": "new",
+          "description": "The type of the line (new or old)"
+        },
+        "author": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2016-01-19T09:44:55.600Z"
+        }
+      }
+    },
+    "API_Entities_BasicRef": {
+      "type": "object",
+      "description": "A basic branch or tag reference",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "branch",
+          "description": "The type of reference: branch or tag"
+        },
+        "name": {
+          "type": "string",
+          "example": "main",
+          "description": "The name of the branch or tag"
+        }
+      }
+    },
+    "API_Entities_Diff": {
+      "type": "object",
+      "description": "Diff for a single file in a commit",
+      "properties": {
+        "diff": {
+          "type": "string",
+          "description": "The unified diff of the file changes"
+        },
+        "new_path": {
+          "type": "string",
+          "example": "doc/update/5.4-to-6.0.md",
+          "description": "New file path"
+        },
+        "old_path": {
+          "type": "string",
+          "example": "doc/update/5.4-to-6.0.md",
+          "description": "Old file path"
+        },
+        "a_mode": {
+          "type": "string",
+          "example": "100755"
+        },
+        "b_mode": {
+          "type": "string",
+          "example": "100644"
+        },
+        "new_file": {
+          "type": "boolean",
+          "description": "Whether this is a new file"
+        },
+        "renamed_file": {
+          "type": "boolean",
+          "description": "Whether the file was renamed"
+        },
+        "deleted_file": {
+          "type": "boolean",
+          "description": "Whether the file was deleted"
+        }
+      }
+    },
+    "API_Entities_CommitStatus": {
+      "type": "object",
+      "description": "Pipeline/CI status for a commit",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sha": {
+          "type": "string",
+          "description": "The commit SHA"
+        },
+        "ref": {
+          "type": "string",
+          "description": "The branch or tag name"
+        },
+        "status": {
+          "type": "string",
+          "description": "State of the status: pending, running, success, failed, canceled"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the status context"
+        },
+        "target_url": {
+          "type": "string",
+          "nullable": true,
+          "description": "The URL to associate with this status"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "description": "Short description of the status"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "allow_failure": {
+          "type": "boolean"
+        },
+        "coverage": {
+          "type": "number",
+          "format": "float",
+          "nullable": true
+        },
+        "author": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        }
+      }
+    },
+    "API_Entities_Discussion": {
+      "type": "object",
+      "description": "A discussion thread on a commit",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique ID of the discussion"
+        },
+        "individual_note": {
+          "type": "boolean",
+          "description": "Whether this is an individual note rather than a diff note"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_CommitNote"
+          },
+          "description": "The notes/comments in this discussion"
+        }
+      }
     }
   }
 }
