@@ -26,6 +26,7 @@
 #   python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --force-reset
 #
 # Plug in a custom agent runner:
+
 #   python3 -m pytest eval/tests/test_agent_all_gitlab.py \
 #       --agent-runner my_agent_runner.MyAgentRunner -v -s
 
@@ -72,8 +73,8 @@ if str(PROJECT_ROOT) not in sys.path:
 # Task loading
 # ---------------------------------------------------------------------------
 
-# TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
-TASK_FILE = Path(__file__).parent / "webarena_verified_string_match.json" #string match only
+TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
+# TASK_FILE = Path(__file__).parent / "webarena_verified_string_match.json" #string match only
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:
