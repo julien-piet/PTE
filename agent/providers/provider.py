@@ -24,6 +24,10 @@ class ModelProvider(object):
         prov = self.__import_provider_class(self.llm_provider)
         return prov.get_llm_model(self.config, self.model_name)
 
+    def get_agent_kwargs(self) -> dict:
+        prov = self.__import_provider_class(self.llm_provider)
+        return prov.get_agent_kwargs() if hasattr(prov, "get_agent_kwargs") else {}
+
     def __import_provider_class(self, provider):
         
         if provider not in MODEL_PROVIDERS:

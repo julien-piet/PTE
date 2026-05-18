@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Sequence, Set, Tuple, Union
 
-from typing_extensions import Annotated
 from pydantic import BaseModel, Field
 
 
@@ -27,12 +26,7 @@ def _abbr(v: Any, max_len: int = 50) -> str:
 @dataclass(frozen=True)
 class AgentModelBundle:
     """A convenience container for runtime-generated types."""
-    Argument: type[BaseModel]
-    ExecutionStep: type[BaseModel]
-    DirectResponse: type[BaseModel]
     ToolBasedResponse: type[BaseModel]
-    AgentResponse: Any  # Annotated[Union[..., ...], Field(discriminator=...)]
-    ToolEnum: type[Enum]
 
 
 # =======================
@@ -50,7 +44,7 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
     Returns
     -------
     AgentModelBundle
-        A bundle containing all generated classes, including ToolEnum and AgentResponse.
+        A bundle containing the ToolBasedResponse model for the given tool set.
     """
     if not allowed_tools:
         raise ValueError("allowed_tools must be a non-empty sequence")
@@ -111,11 +105,6 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             ),
         )
 
-    class DirectResponse(BaseModel):
-        tool_call_required: Literal[False]
-        response: str = Field(min_length=1, description="Direct answer to user query")
-        plan: None = None
-
     class ToolBasedResponse(BaseModel):
         tool_call_required: Literal[True]
         response: Literal[""] = ""  # Must be empty string
@@ -124,18 +113,8 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             description="Execution plan with at least one step"
         )
 
-    AgentResponse = Annotated[
-        Union[DirectResponse, ToolBasedResponse],
-        Field(discriminator="tool_call_required")
-    ]
-
     return AgentModelBundle(
-        Argument=Argument,
-        ExecutionStep=ExecutionStep,
-        DirectResponse=DirectResponse,
         ToolBasedResponse=ToolBasedResponse,
-        AgentResponse=AgentResponse,
-        ToolEnum=ToolEnum,
     )
 
 

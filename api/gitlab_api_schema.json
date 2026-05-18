@@ -41244,6 +41244,7 @@
     "/projects/{id}/users": {
       "get": {
         "summary": "Get project users",
+        "description": "Get the list of users who are members of a project.",
         "operationId": "get_projects_id_users",
         "tags": [
           "Projects"
@@ -41254,13 +41255,13 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "search",
             "in": "query",
             "required": false,
-            "description": "Search for specific users.",
+            "description": "Return list of users matching the search criteria.",
             "type": "string"
           },
           {
@@ -41286,7 +41287,22 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "description": "List of project member users (basic public fields only).",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {"type": "integer", "description": "Unique numeric user ID"},
+                  "username": {"type": "string", "description": "GitLab username"},
+                  "name": {"type": "string", "description": "Display name (full name)"},
+                  "state": {"type": "string", "description": "Account state: active, blocked, etc."},
+                  "avatar_url": {"type": "string", "description": "URL to user avatar image"},
+                  "web_url": {"type": "string", "description": "URL to user GitLab profile page"}
+                }
+              }
+            }
           }
         }
       }
@@ -44870,7 +44886,10 @@
                 "encoding": {
                   "type": "string",
                   "description": "File encoding.",
-                  "enum": ["base64", "text"],
+                  "enum": [
+                    "base64",
+                    "text"
+                  ],
                   "default": "text"
                 },
                 "start_branch": {
@@ -44964,7 +44983,10 @@
                 "encoding": {
                   "type": "string",
                   "description": "File encoding.",
-                  "enum": ["base64", "text"],
+                  "enum": [
+                    "base64",
+                    "text"
+                  ],
                   "default": "text"
                 },
                 "start_branch": {
@@ -50111,7 +50133,22 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "description": "List of users. Only basic public fields are returned for non-admin tokens — does NOT include location, email, bio, or other detailed profile fields. Use GET /users/{id} to retrieve the full profile for a specific user.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {"type": "integer", "description": "Unique numeric user ID"},
+                  "username": {"type": "string", "description": "GitLab username (used for @mentions and API path lookups)"},
+                  "name": {"type": "string", "description": "Display name (full name)"},
+                  "state": {"type": "string", "description": "Account state: active, blocked, etc."},
+                  "avatar_url": {"type": "string", "description": "URL to user avatar image"},
+                  "web_url": {"type": "string", "description": "URL to user GitLab profile page"}
+                }
+              }
+            }
           }
         }
       },
@@ -50174,7 +50211,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Numeric ID or username of the user."
           }
         ],
         "responses": {
@@ -50188,7 +50225,69 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "username": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full display name of the user (full_name)."
+                },
+                "state": {
+                  "type": "string"
+                },
+                "avatar_url": {
+                  "type": "string"
+                },
+                "web_url": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "bio": {
+                  "type": "string"
+                },
+                "location": {
+                  "type": "string",
+                  "description": "Geographic location of the user (user_location)."
+                },
+                "public_email": {
+                  "type": "string",
+                  "description": "Publicly visible email address. This is the only email field returned; there is no separate email field."
+                },
+                "website_url": {
+                  "type": "string"
+                },
+                "organization": {
+                  "type": "string"
+                },
+                "job_title": {
+                  "type": "string"
+                },
+                "pronouns": {
+                  "type": "string"
+                },
+                "bot": {
+                  "type": "boolean"
+                },
+                "followers": {
+                  "type": "integer"
+                },
+                "following": {
+                  "type": "integer"
+                },
+                "local_time": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "description": "Returns the public profile of a user by ID, including bio, location, website URL, organization, social links, and follower/following counts."

@@ -21,3 +21,7 @@ class AnthropicProvider(object):
 
         # Return pydantic-ai format string
         return f"anthropic:{model.model}"
+
+    def get_agent_kwargs(self) -> dict:
+        # Anthropic sometimes returns empty streaming responses; increase retries.
+        return {"output_retries": 3}

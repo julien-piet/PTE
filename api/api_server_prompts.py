@@ -144,7 +144,7 @@ GitLab user `{{id}}` path parameter has exactly two directly usable forms:
 - a numeric user ID, for example `2330`
 - a username, for example `byteblaze`
 
-You do NOT know your own user ID or username — if the task requires acting on "my" account, you MUST first resolve your user info using a lookup endpoint such as `GET /user` before calling endpoints any form of {{id}} or {{username}} parameter.
+You do NOT know your own user ID or username — if the task requires acting on "my" account, you MUST first resolve your user info using a lookup endpoint before calling endpoints any form of {{id}} or {{username}} parameter.
 Do NOT pass string aliases like 'self', 'me', or 'current_user' for parameters that require an ID/username — add a prior step to look up the real value instead.
 You do NOT know the user IDs or usernames of any other users — if the task requires acting on another user, you MUST first resolve that user's info using a lookup endpoint before calling endpoints with any form of {{id}} or {{username}} parameter.
 

@@ -72,7 +72,8 @@ if str(PROJECT_ROOT) not in sys.path:
 # Task loading
 # ---------------------------------------------------------------------------
 
-TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
+# TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
+TASK_FILE = Path(__file__).parent / "webarena_verified_string_match.json" #string match only
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:
@@ -211,11 +212,15 @@ def test_agent_accomplishes_gitlab_tasks(
                         plan_steps = None
                         parsed_outputs = None
                         raw_execution = None
+                        planning_log = None
                         _agent = getattr(runner, "_agent", None)
                         if _agent is not None:
                             pr = getattr(_agent, "last_plan_response", None)
                             if pr is not None:
                                 plan_steps = _serialize_plan(pr.plan)
+                            pa = getattr(_agent, "planning_agent", None)
+                            if pa is not None:
+                                planning_log = getattr(pa, "last_run_log", None)
                             ea = getattr(_agent, "execution_agent", None)
                             if ea is not None:
                                 raw_execution = getattr(ea, "last_raw_outputs", None)
@@ -239,6 +244,7 @@ def test_agent_accomplishes_gitlab_tasks(
                             "plan": plan_steps,
                             "parsed_outputs": parsed_outputs,
                             "execution": raw_execution,
+                            "planning_log": planning_log,
                             "worker_id": w["worker_id"],
                             "status": status,
                         }
@@ -300,6 +306,7 @@ def test_agent_accomplishes_gitlab_tasks(
             "plan_step_count": len(r["plan"]) if r.get("plan") else None,
             "execution":      r.get("execution"),
             "parsed_outputs": r.get("parsed_outputs"),
+            "planning_log":   r.get("planning_log"),
         })
 
         if error:

@@ -21,3 +21,6 @@ class OpenAIProvider(object):
 
         # Return pydantic-ai format string
         return f"openai:{model.model}"
+
+    def get_agent_kwargs(self) -> dict:
+        return {}
