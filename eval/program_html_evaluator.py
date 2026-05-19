@@ -24,6 +24,7 @@ DEFAULT_BASE_URLS: Dict[str, str] = {
     "__GITLAB__": "http://localhost:8023",
     "__REDDIT__": "http://localhost:9999",
     "__SHOPPING__": "http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082",
+    "__SHOPPING_EXTRA__": "http://localhost:7790",
     "__SHOPPING_ADMIN__": "http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082/admin",
     "__MAP__": "http://localhost:3000",
 }

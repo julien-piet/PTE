@@ -51,6 +51,7 @@ _DEFAULT_BASE_URLS: dict = {
     "shopping":       _EVALUATOR_URLS["__SHOPPING__"],
     "shopping_admin": _EVALUATOR_URLS["__SHOPPING_ADMIN__"],
     "reddit":         _EVALUATOR_URLS["__REDDIT__"],
+    "shopping_extra": _EVALUATOR_URLS["__SHOPPING_EXTRA__"]
 }
 
 _WEBARENA_TASKS_FILE = "test_files/webarena-verified.json"
@@ -174,7 +175,12 @@ class TaskBatchRunner:
             skip_execution=self.skip_execution,
             debug=self.debug,
         )
-        agent.initialize({self.server: ""})
+        init_servers: Dict[str, str] = {self.server: ""}
+
+        if self.server == "shopping":
+            init_servers["shopping_extra"] = _DEFAULT_BASE_URLS["shopping_extra"]
+
+        agent.initialize(init_servers)
 
         task_result: Optional[Dict[str, Any]] = None
 
@@ -203,7 +209,11 @@ class TaskBatchRunner:
                     agent.execution_agent.task_id = str(task_id)
 
                 # ── Plan + Execute ────────────────────────────────────────────
-                execution_result = await agent.run_task(prompt, servers={self.server: gitlab_url})
+                # NOTE: gitlab_url is used here since it was hardcoded in the original version for all servers. Probably need to be changed in the future.
+                run_servers: Dict[str, str] = {self.server: gitlab_url}
+                if self.server == "shopping":
+                    run_servers["shopping_extra"] = _DEFAULT_BASE_URLS["shopping_extra"]
+                execution_result = await agent.run_task(prompt, servers=run_servers)
 
                 plan_response = agent.last_plan_response
                 plan_steps = _serialize_plan(plan_response.plan)

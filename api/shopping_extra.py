@@ -8,8 +8,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from playwright.sync_api import sync_playwright
 
-from shipping_pw import add_product_to_wishlist, get_default_customer_credentials, login_customer
-from shipping_pw.constants import BASE_URL
+from shopping_pw import add_product_to_wishlist, get_default_customer_credentials, login_customer
+from shopping_pw.constants import BASE_URL
 
 app = FastAPI(
     title="Shopping Extra API",
