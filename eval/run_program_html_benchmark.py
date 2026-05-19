@@ -124,8 +124,8 @@ def _login_for_task(
         return result.success
 
     if "shopping_admin" in sites:
-        from api.shipping_pw import login as shopping_login
-        from api.shipping_pw.constants import BASE_URL
+        from api.shopping_pw import login as shopping_login
+        from api.shopping_pw.constants import BASE_URL
         admin_url = BASE_URL + "/admin"
         username = os.getenv("SHOPPING_ADMIN_USER", "admin")
         password = os.getenv("SHOPPING_ADMIN_PASS", "admin123")
@@ -133,7 +133,7 @@ def _login_for_task(
         return result.success
 
     if "shopping" in sites:
-        from api.shipping_pw import login as shopping_login
+        from api.shopping_pw import login as shopping_login
         username = os.getenv("SHOPPING_USER", "customer@example.com")
         password = os.getenv("SHOPPING_PASS", "secret")
         result = shopping_login.login_customer(page, username, password)

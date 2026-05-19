@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Sequence, Set, Tuple, Union
 
-from typing_extensions import Annotated
 from pydantic import BaseModel, Field
 
 
@@ -27,12 +26,7 @@ def _abbr(v: Any, max_len: int = 50) -> str:
 @dataclass(frozen=True)
 class AgentModelBundle:
     """A convenience container for runtime-generated types."""
-    Argument: type[BaseModel]
-    ExecutionStep: type[BaseModel]
-    DirectResponse: type[BaseModel]
     ToolBasedResponse: type[BaseModel]
-    AgentResponse: Any  # Annotated[Union[..., ...], Field(discriminator=...)]
-    ToolEnum: type[Enum]
 
 
 # =======================
@@ -50,7 +44,7 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
     Returns
     -------
     AgentModelBundle
-        A bundle containing all generated classes, including ToolEnum and AgentResponse.
+        A bundle containing the ToolBasedResponse model for the given tool set.
     """
     if not allowed_tools:
         raise ValueError("allowed_tools must be a non-empty sequence")
@@ -102,11 +96,14 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             default="",
             description="Base URL of the API server for this step (e.g. http://127.0.0.1:8023/api/v4)",
         )
-
-    class DirectResponse(BaseModel):
-        tool_call_required: Literal[False]
-        response: str = Field(min_length=1, description="Direct answer to user query")
-        plan: None = None
+        foreach: Optional[Union[str, List]] = Field(
+            default=None,
+            description=(
+                "If set, run this step once per element and collect all results as a list. "
+                "Value is a literal list (['Alice', 'Bob']) or a reference like 'step_1.result[*].id'. "
+                "Use {loop_item} in argument values as a placeholder for the current element."
+            ),
+        )
 
     class ToolBasedResponse(BaseModel):
         tool_call_required: Literal[True]
@@ -116,18 +113,8 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             description="Execution plan with at least one step"
         )
 
-    AgentResponse = Annotated[
-        Union[DirectResponse, ToolBasedResponse],
-        Field(discriminator="tool_call_required")
-    ]
-
     return AgentModelBundle(
-        Argument=Argument,
-        ExecutionStep=ExecutionStep,
-        DirectResponse=DirectResponse,
         ToolBasedResponse=ToolBasedResponse,
-        AgentResponse=AgentResponse,
-        ToolEnum=ToolEnum,
     )
 
 
@@ -268,6 +255,11 @@ def pretty_print_plan(
             lines.append("  Depends on: " + ", ".join(deps))
         else:
             lines.append("  Depends on: None (can execute immediately)")
+
+        # Foreach
+        foreach_val = getattr(step, "foreach", None)
+        if foreach_val is not None:
+            lines.append(f"  Foreach: {foreach_val}")
 
         # Returns
         returns = getattr(step, "returns", "")

@@ -40,4 +40,4 @@ CMD+=("$SERVER")
 
 exec "${CMD[@]}"
 
-  #ex: ./port_fowarding.sh username@red5k.cs.berkeley.edu
+  #ex: ./port_forwarding_new.sh username@red5k.cs.berkeley.edu
