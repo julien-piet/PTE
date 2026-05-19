@@ -6,10 +6,10 @@ import os
 from typing import Tuple
 
 # Override these via environment variables for your own account.
-DEFAULT_CUSTOMER_EMAIL = "customer@example.com"
-DEFAULT_CUSTOMER_PASSWORD = "secret1234!"
-DEFAULT_CUSTOMER_FIRST_NAME = "Test"
-DEFAULT_CUSTOMER_LAST_NAME = "Test"
+DEFAULT_CUSTOMER_EMAIL = "emma.lopez@gmail.com"
+DEFAULT_CUSTOMER_PASSWORD = "Password.123"
+DEFAULT_CUSTOMER_FIRST_NAME = "Emma"
+DEFAULT_CUSTOMER_LAST_NAME = "Lopez"
 
 EMAIL_ENV_VARS = (
     "SHOPPING_CUSTOMER_EMAIL",

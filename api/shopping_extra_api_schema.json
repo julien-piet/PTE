@@ -1,0 +1,105 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Shopping Extra API",
+        "description": "Custom endpoints for the WebArena Shopping website.",
+        "version": "1.0.0"
+    },
+    "host": "127.0.0.1:7790",
+    "basePath": "/",
+    "schemes": ["http"],
+    "paths": {
+        "/fuzzy_search": {
+            "get": {
+                "summary": "Fuzzy search for products",
+                "description": "Search the shopping website and return a ranked dict of product names (rank → name) as they appear in the search results UI, sorted by relevance.",
+                "operationId": "fuzzy_search",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "description": "The search query string (e.g. 'amazon echo dot')"
+                    }
+                ],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Ranked dict of product names matching the query, e.g. {\"1\": \"Echo Dot\", \"2\": \"...\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/add_to_wishlist": {
+            "post": {
+                "summary": "Add product to wishlist",
+                "description": "Log in with default storefront credentials from environment and add a product page item to wishlist. Requires product_url (absolute URL or URL slug).",
+                "operationId": "add_to_wishlist",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "required": ["product_url"],
+                            "properties": {
+                                "product_url": {
+                                    "type": "string",
+                                    "description": "Product page URL or URL slug"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "default": 1,
+                                    "description": "Desired quantity to set before adding"
+                                }
+                            },
+                            "description": "JSON request body for adding to wishlist.",
+                            "example": {
+                                "product_url": "elmwood-inn-fine-teas-orange-vanilla-caffeine-free-fruit-infusion-16-ounce-pouch.html",
+                                "quantity": 1
+                            }
+                        },
+                        "description": "Required JSON body. Use product_url and optional quantity."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wishlist add result",
+                        "schema": {
+                            "type": "object",
+                            "required": ["success", "product_url", "requested_quantity"],
+                            "properties": {
+                                "success": {
+                                    "type": "boolean"
+                                },
+                                "product_url": {
+                                    "type": "string"
+                                },
+                                "requested_quantity": {
+                                    "type": "integer"
+                                },
+                                "wishlist_count_after": {
+                                    "type": "integer"
+                                },
+                                "error_message": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

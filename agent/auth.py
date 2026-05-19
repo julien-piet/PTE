@@ -182,6 +182,9 @@ class AuthRegistry:
                 HeaderAuth(env, "ADMIN_AUTH_TOKEN", "Authorization", prefix="Bearer "),
             )
 
+        # Shopping Extra — no auth required (public FastAPI endpoints)
+        registry.register("shopping_extra", StaticAuth({}))
+
         # Reddit — cookie-based auth (token + phpbb session)
         # Add REDDIT_TOKEN and REDDIT_PHPBB_SESSION to .server_env when ready.
         if env.get("REDDIT_TOKEN"):
