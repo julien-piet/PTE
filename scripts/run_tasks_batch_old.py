@@ -44,15 +44,7 @@ from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker.workers import num_workers, worker_session
 
 
-from eval.program_html_evaluator import DEFAULT_BASE_URLS as _EVALUATOR_URLS
-
-# Map server names to the same URLs used by the evaluator's placeholder dict.
-_DEFAULT_BASE_URLS: dict = {
-    "gitlab":         _EVALUATOR_URLS["__GITLAB__"],
-    "shopping":       _EVALUATOR_URLS["__SHOPPING__"],
-    "shopping_admin": _EVALUATOR_URLS["__SHOPPING_ADMIN__"],
-    "reddit":         _EVALUATOR_URLS["__REDDIT__"],
-}
+from config.base_urls import SERVER_URLS as _DEFAULT_BASE_URLS
 
 _DEFAULT_TASK_FILES: dict = {
     "gitlab":         "test_files/gitlab_tasks_old.json",
@@ -112,7 +104,7 @@ class TaskBatchRunner:
         self.skip_execution = skip_execution
         self.debug = debug
         self.multi_docker = multi_docker
-        self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, "http://localhost:8023")
+        self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, _DEFAULT_BASE_URLS["gitlab"])
         self.num_workers = num_workers() if multi_docker else 1
         self._glpat: Optional[str] = None
 
@@ -415,7 +407,7 @@ def main():
         "--base-url", default=None,
         help=(
             "Base URL of the server (ignored when --multi-docker is set). "
-            "Defaults are pulled from DEFAULT_BASE_URLS in eval/program_html_evaluator.py "
+            "Defaults are pulled from SERVER_URLS in config/base_urls.py "
             "so you only need this flag to override them."
         ),
     )

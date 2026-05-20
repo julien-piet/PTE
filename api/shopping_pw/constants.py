@@ -1,6 +1,6 @@
 """Shared constants for the shipping_pw package."""
 
-BASE_URL = "http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082"
+BASE_URL = "http://127.0.0.1:7770"
 CART_URL = f"{BASE_URL}/checkout/cart/"
 CHECKOUT_URL = f"{BASE_URL}/checkout/"
 WISHLIST_URL = f"{BASE_URL}/wishlist/"

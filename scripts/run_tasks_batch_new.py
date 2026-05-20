@@ -41,17 +41,10 @@ from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker import workers_new as _workers_new
+from scripts.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
 
 
-from eval.program_html_evaluator import DEFAULT_BASE_URLS as _EVALUATOR_URLS
-
-# Map server names to the same URLs used by the evaluator's placeholder dict.
-_DEFAULT_BASE_URLS: dict = {
-    "gitlab":         _EVALUATOR_URLS["__GITLAB__"],
-    "shopping":       _EVALUATOR_URLS["__SHOPPING__"],
-    "shopping_admin": _EVALUATOR_URLS["__SHOPPING_ADMIN__"],
-    "reddit":         _EVALUATOR_URLS["__REDDIT__"],
-}
+from config.base_urls import SERVER_URLS as _DEFAULT_BASE_URLS
 
 _WEBARENA_TASKS_FILE = "test_files/webarena-verified.json"
 
@@ -111,9 +104,10 @@ class TaskBatchRunner:
         self.skip_execution = skip_execution
         self.debug = debug
         self.multi_docker = multi_docker
-        self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, "http://localhost:8023")
+        self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, _DEFAULT_BASE_URLS["gitlab"])
         self.num_workers = _workers_new.num_workers() if multi_docker else 1
         self._glpat: Optional[str] = None
+        self._shopping_token: Optional[str] = None
 
         self.results: List[Dict[str, Any]] = []
         self._acquire_lock: asyncio.Lock = asyncio.Lock()
@@ -122,6 +116,9 @@ class TaskBatchRunner:
         if not self.multi_docker and self.server == "gitlab":
             from eval.docker.gitlab_init import get_glpat
             self._glpat = get_glpat(self.base_url, "agent-local")
+        if self.server in ("shopping", "shopping_admin"):
+            print("Refreshing shopping auth tokens...")
+            self._shopping_token = _refresh_shopping_tokens(base_url=self.base_url)
         from agent.common.configurator import Configurator
         _cfg = Configurator()
         mode = "multi-docker" if self.multi_docker else f"single ({self.base_url})"
@@ -174,7 +171,12 @@ class TaskBatchRunner:
             skip_execution=self.skip_execution,
             debug=self.debug,
         )
-        agent.initialize({self.server: ""})
+        init_servers: Dict[str, str] = {self.server: ""}
+
+        if self.server == "shopping":
+            init_servers["shopping_extra"] = _DEFAULT_BASE_URLS["shopping_extra"]
+
+        agent.initialize(init_servers)
 
         task_result: Optional[Dict[str, Any]] = None
 
@@ -195,15 +197,19 @@ class TaskBatchRunner:
                 glpat = w["glpat"]
 
                 # Inject auth into the execution agent.
-                # GitLab uses a dynamically obtained GLPAT; other servers (e.g.
-                # shopping) use static tokens already loaded from .server_env.
                 if agent.execution_agent is not None:
                     if self.server == "gitlab" and glpat:
                         agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
+                    elif self.server in ("shopping", "shopping_admin") and self._shopping_token:
+                        agent.execution_agent.auth = StaticAuth({"Authorization": f"Bearer {self._shopping_token}"})
                     agent.execution_agent.task_id = str(task_id)
 
                 # ── Plan + Execute ────────────────────────────────────────────
-                execution_result = await agent.run_task(prompt, servers={self.server: gitlab_url})
+                # NOTE: gitlab_url is used here since it was hardcoded in the original version for all servers. Probably need to be changed in the future.
+                run_servers: Dict[str, str] = {self.server: gitlab_url}
+                if self.server == "shopping":
+                    run_servers["shopping_extra"] = _DEFAULT_BASE_URLS["shopping_extra"]
+                execution_result = await agent.run_task(prompt, servers=run_servers)
 
                 plan_response = agent.last_plan_response
                 plan_steps = _serialize_plan(plan_response.plan)
@@ -428,7 +434,7 @@ def main():
         "--base-url", default=None,
         help=(
             "Base URL of the server (ignored when --multi-docker is set). "
-            "Defaults are pulled from DEFAULT_BASE_URLS in eval/program_html_evaluator.py "
+            "Defaults are pulled from SERVER_URLS in config/base_urls.py "
             "so you only need this flag to override them."
         ),
     )

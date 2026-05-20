@@ -26,6 +26,8 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from config.base_urls import SERVER_URLS as _SERVER_URLS
+
 
 # ---------------------------------------------------------------------------
 # CLI options
@@ -83,11 +85,11 @@ def pytest_addoption(parser):
     parser.addoption(
         "--base-url",
         type=str,
-        default="http://localhost:8023",
+        default=_SERVER_URLS["gitlab"],
         metavar="URL",
         help=(
             "Base URL of the GitLab instance the agent talks to. "
-            "Default: http://localhost:8023"
+            f"Default: {_SERVER_URLS['gitlab']}"
         ),
     )
     parser.addoption(
@@ -114,7 +116,7 @@ def pytest_addoption(parser):
         help=(
             "Use the remote multi-docker worker pool via the SSH orchestrator. "
             "When False (default), tests run against a single local GitLab instance "
-            "at --base-url (default: http://localhost:8023)."
+            f"at --base-url (default: {_SERVER_URLS['gitlab']})."
         ),
     )
 
@@ -181,11 +183,12 @@ def agent_runner(request, session_event_loop):
         runner_cls = AgentRunner
 
     force_reset = request.config.getoption("--force-reset", default=False)
-    base_url = request.config.getoption("--base-url", default="http://localhost:8023")
+    base_url = request.config.getoption("--base-url", default=_SERVER_URLS["gitlab"])
     runner = runner_cls(headless=True, enable_reset=True, force_reset=force_reset,
                         gitlab_base_url=base_url)
     runner.server = request.config.getoption("--server", default="gitlab")
     runner.base_url = base_url
+
     session_event_loop.run_until_complete(runner._init_agent())
     return runner
 

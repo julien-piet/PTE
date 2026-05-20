@@ -141,6 +141,7 @@ async def worker_session(
     wait: int = 15,
     acquire_lock: Optional[asyncio.Lock] = None,
     read_only: bool = False,
+    init_retries: int = 3,
 ):
     """
     Async context manager for the new multi-server worker pool.
@@ -148,6 +149,9 @@ async def worker_session(
     Acquires a worker, waits for the requested service to be healthy,
     obtains a GLPAT for gitlab (other servers use static tokens from .server_env),
     yields the session dict, then releases the worker.
+
+    If health-check or GLPAT creation fails, the bad worker is released and a
+    fresh one is acquired, up to `init_retries` times total.
 
     Usage::
 
@@ -160,30 +164,54 @@ async def worker_session(
     if server not in _URL_FIELD:
         raise ValueError(f"Unknown server {server!r}. Known: {list(_URL_FIELD)}")
 
-    worker = await acquire_worker_with_retry(
-        task_id, server=server, max_attempts=max_attempts, wait=wait, acquire_lock=acquire_lock
-    )
-    worker_id = worker["worker_id"]
-    # Orchestrator returns 127.0.0.1; replace with localhost since port forwarding
-    # tunnels the remote ports to the same port numbers on this machine.
-    server_url = worker[_URL_FIELD[server]].replace("127.0.0.1", "localhost")
+    worker_id = None
+    server_url = None
+    glpat = None
+    last_exc: Optional[Exception] = None
+
+    for attempt in range(init_retries):
+        worker = await acquire_worker_with_retry(
+            task_id, server=server, max_attempts=max_attempts, wait=wait, acquire_lock=acquire_lock
+        )
+        worker_id = worker["worker_id"]
+        # Orchestrator returns 127.0.0.1; replace with localhost since port forwarding
+        # tunnels the remote ports to the same port numbers on this machine.
+        server_url = worker[_URL_FIELD[server]].replace("127.0.0.1", "localhost")
+
+        try:
+            print(f"  Acquired worker {worker_id} → task {task_id} ({server} @ {server_url})")
+
+            health = _health_url(server, server_url)
+            print(f"  Waiting for {server} on worker {worker_id} to be ready...")
+            await asyncio.to_thread(wait_for_server, health)
+            print(f"  {server} on worker {worker_id} is ready")
+
+            if server == "gitlab":
+                from eval.docker.gitlab_init import get_glpat
+                glpat = await asyncio.to_thread(get_glpat, server_url, f"agent-task-{task_id}")
+                print(f"  GLPAT obtained for worker {worker_id}")
+
+            break  # worker is healthy and ready
+
+        except Exception as exc:
+            last_exc = exc
+            print(
+                f"  Worker {worker_id} init failed (attempt {attempt + 1}/{init_retries},"
+                f" task {task_id}): {exc}"
+            )
+            print(f"  Releasing bad worker {worker_id} and retrying with a fresh one...")
+            # Force-restart so the next task doesn't inherit a broken instance.
+            release_worker(worker_id, force_restart=True)
+            worker_id = None
+            if attempt < init_retries - 1:
+                await asyncio.sleep(wait)
+    else:
+        raise RuntimeError(
+            f"Worker init failed after {init_retries} attempts for task {task_id}: {last_exc}"
+        ) from last_exc
 
     try:
-        print(f"  Acquired worker {worker_id} → task {task_id} ({server} @ {server_url})")
-
-        health = _health_url(server, server_url)
-        print(f"  Waiting for {server} on worker {worker_id} to be ready...")
-        await asyncio.to_thread(wait_for_server, health)
-        print(f"  {server} on worker {worker_id} is ready")
-
-        glpat = None
-        if server == "gitlab":
-            from eval.docker.gitlab_init import get_glpat
-            glpat = await asyncio.to_thread(get_glpat, server_url, f"agent-task-{task_id}")
-            print(f"  GLPAT obtained for worker {worker_id}")
-
         yield {"worker_id": worker_id, "gitlab_url": server_url, "glpat": glpat}
-
     finally:
         print(f"  Releasing worker {worker_id}")
         release_worker(worker_id, read_only=read_only)

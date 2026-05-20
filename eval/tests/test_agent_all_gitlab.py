@@ -40,30 +40,16 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from agent.auth import StaticAuth
+from config.base_urls import SERVER_URLS as _SERVER_URLS
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
+from eval.tests.agent_test_utils import extract_agent_details, task_status
 
 
 @asynccontextmanager
-async def _local_session(gitlab_url: str, glpat: str):
+async def _local_session(gitlab_url: str, glpat=None):
     """Stub worker session for a single local GitLab instance."""
     yield {"worker_id": "local", "gitlab_url": gitlab_url, "glpat": glpat}
-
-
-def _serialize_plan(plan) -> list:
-    return [
-        {
-            "step_id": step.step_id,
-            "tool_name": step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-            "arguments": [
-                {"name": a.name, "value": a.value, "value_type": a.value_type}
-                for a in (step.arguments or [])
-            ],
-            "depends_on": step.depends_on or [],
-            "hints": step.hints or "",
-        }
-        for step in plan
-    ]
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -73,13 +59,13 @@ if str(PROJECT_ROOT) not in sys.path:
 # Task loading
 # ---------------------------------------------------------------------------
 
-TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
-# TASK_FILE = Path(__file__).parent / "webarena_verified_string_match.json" #string match only
+# TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
+TASK_FILE = Path(__file__).parent / "webarena_verified_string_match.json" #string match only
+TASK_FILE2 = Path(__file__).parent / "webarena_verified_program_html.json"
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:
-    with open(TASK_FILE) as f:
-        tasks = json.load(f)
+    tasks = json.loads(TASK_FILE.read_text()) + json.loads(TASK_FILE2.read_text())
     if config is not None:
         task_id = config.getoption("--task-id", default=None)
         if task_id is not None:
@@ -154,15 +140,12 @@ def test_agent_accomplishes_gitlab_tasks(
     tasks = _load_tasks(request.config)
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
-    base_url = request.config.getoption("--base-url", default="http://localhost:8023")
+    base_url = request.config.getoption("--base-url", default=_SERVER_URLS["gitlab"])
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
-        _glpat = None
     else:
         n_workers = 1
-        from eval.docker.gitlab_init import get_glpat
-        _glpat = get_glpat(base_url, "agent-local")
 
     print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
 
@@ -182,7 +165,7 @@ def test_agent_accomplishes_gitlab_tasks(
                             read_only=True,
                         )
                     else:
-                        worker_ctx = _local_session(base_url, _glpat)
+                        worker_ctx = _local_session(base_url, glpat=None)
 
                     async with worker_ctx as w:
                         runner = AgentRunner(
@@ -197,9 +180,10 @@ def test_agent_accomplishes_gitlab_tasks(
                         await runner._init_agent()
 
                         if runner._agent.execution_agent is not None:
-                            runner._agent.execution_agent.auth = StaticAuth(
-                                {"PRIVATE-TOKEN": w["glpat"]}
-                            )
+                            if w["glpat"]:
+                                runner._agent.execution_agent.auth = StaticAuth(
+                                    {"PRIVATE-TOKEN": w["glpat"]}
+                                )
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 
                         passed, agent_result, error, html_detail = await runner.run_agent_on_task(task)
@@ -209,32 +193,8 @@ def test_agent_accomplishes_gitlab_tasks(
                             remaining -= 1
                             print(f"\n[{remaining} tasks remaining] Task {task['task_id']} done ({'PASS' if passed and not error else 'FAIL'})")
 
-                        # Capture execution details for structured logging, even on failure.
-                        plan_steps = None
-                        parsed_outputs = None
-                        raw_execution = None
-                        planning_log = None
-                        _agent = getattr(runner, "_agent", None)
-                        if _agent is not None:
-                            pr = getattr(_agent, "last_plan_response", None)
-                            if pr is not None:
-                                plan_steps = _serialize_plan(pr.plan)
-                            pa = getattr(_agent, "planning_agent", None)
-                            if pa is not None:
-                                planning_log = getattr(pa, "last_run_log", None)
-                            ea = getattr(_agent, "execution_agent", None)
-                            if ea is not None:
-                                raw_execution = getattr(ea, "last_raw_outputs", None)
-                                ctx = getattr(ea, "last_ctx", None)
-                                if ctx is not None:
-                                    parsed_outputs = getattr(ctx, "step_outputs", None)
-
-                        if error:
-                            status = "failed" if plan_steps is None else "execution_failed"
-                        elif passed:
-                            status = "success"
-                        else:
-                            status = "execution_failed"
+                        details = extract_agent_details(runner)
+                        status = task_status(passed, error, details["plan_steps"])
 
                         return {
                             "task": task,
@@ -242,10 +202,10 @@ def test_agent_accomplishes_gitlab_tasks(
                             "agent_result": agent_result,
                             "error": error,
                             "html_detail": html_detail,
-                            "plan": plan_steps,
-                            "parsed_outputs": parsed_outputs,
-                            "execution": raw_execution,
-                            "planning_log": planning_log,
+                            "plan": details["plan_steps"],
+                            "parsed_outputs": details["parsed_outputs"],
+                            "execution": details["raw_execution"],
+                            "planning_log": details["planning_log"],
                             "worker_id": w["worker_id"],
                             "status": status,
                         }
