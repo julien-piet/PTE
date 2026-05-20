@@ -8,10 +8,10 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 import prance
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from pydantic_ai import Agent
 
 from agent.common.configurator import Configurator
@@ -19,6 +19,39 @@ from agent.planner import build_agent_models, validate_plan
 from agent.providers.provider import ModelProvider
 
 _HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
+
+
+# ── Structured output models for each LLM sub-call ──────────────────────────
+
+class _ApiSelection(BaseModel):
+    files: List[str] = []
+
+class _ExclusionResult(BaseModel):
+    excluded_indices: List[int] = []
+
+class _ResolverSpec(BaseModel):
+    endpoint_index: int
+    capability: str = ""
+    satisfies_param: str = ""
+    literal_args: dict = {}
+    foreach: Optional[Union[str, List]] = None
+
+class _GoalResult(BaseModel):
+    goal_index: int
+    literal_args: dict = {}
+    foreach: Optional[Union[str, List]] = None
+    required_resolvers: List[_ResolverSpec] = []
+
+class _ResolverResult(BaseModel):
+    endpoint_index: Optional[int] = None
+    satisfies_param: str = ""
+    literal_args: dict = {}
+    foreach: Optional[Union[str, List]] = None
+    capability: str = ""
+
+class _CheckResult(BaseModel):
+    issues: List[str] = []
+    ok: bool = True
 
 
 class EndpointInfo(BaseModel):
@@ -85,11 +118,11 @@ class PlanningAgent:
         """Return the accumulated log from the most recent plan() call."""
         return list(self._run_log)
 
-    async def _run_llm(self, label: str, prompt: str) -> str:
+    async def _run_agent(self, label: str, prompt: str, output_type: type) -> Any:
         self._debug_print(label, prompt=prompt)
         if self.debug_prompts or self.debug_responses:
             print(f"[PlanningAgent] {label} calling LLM (prompt length: {len(prompt)} chars)...")
-        agent = Agent(self.llm, output_type=str, **self._agent_kwargs)
+        agent = Agent(self.llm, output_type=output_type, **self._agent_kwargs)
         try:
             result = await agent.run(prompt)
         except Exception as exc:
@@ -99,10 +132,10 @@ class PlanningAgent:
             print(f"\n{err_msg}")
             self._record(f"{label}.llm_error", err_msg)
             raise
-        response = result.output
-        self._record(f"{label}.response", response)
-        self._debug_print(label, response=response)
-        return response
+        output = result.output
+        self._record(f"{label}.response", output.model_dump() if hasattr(output, "model_dump") else output)
+        self._debug_print(label, response=str(output))
+        return output
 
     # ------------------------------------------------------------------
     # Step 1: load swagger index and api hints
@@ -186,34 +219,15 @@ class PlanningAgent:
 
             5. Multiple files may be required to complete the task. Select all that might contain relevant endpoints.
 
-            Output format rules:
-
-            - Respond with ONLY a JSON array of filenames on the first line.
-            - Include explanations if no files are selected on the second line.
-
+            Output format: return a JSON object with a "files" key containing the list of selected filenames.
             Examples:
-            ["shopping_api_schema.json"]
-
-            ["gitlab_api_schema.json", "user_api_schema.json"]
-
-            If no file is relevant:
-            []
-            Reason: The task is about checking the weather, which is unrelated to any of the available API schemas that focus on project management and e-commerce.
+            {{"files": ["shopping_api_schema.json"]}}
+            {{"files": ["gitlab_api_schema.json", "user_api_schema.json"]}}
+            If no file is relevant: {{"files": []}}
             '''
         )
-        response = await self._run_llm("_select_api_files", prompt)
-        decoder = json.JSONDecoder()
-        selected = None
-        for i, ch in enumerate(response):
-            if ch == "[":
-                try:
-                    selected, _ = decoder.raw_decode(response, i)
-                    break
-                except json.JSONDecodeError:
-                    continue
-        if selected is None:
-            selected = json.loads(response.strip())
-        return [f for f in selected if f in index]
+        result: _ApiSelection = await self._run_agent("_select_api_files", prompt, _ApiSelection)
+        return [f for f in result.files if f in index]
 
     # ------------------------------------------------------------------
     # Step 3: parse swagger file with prance
@@ -309,8 +323,6 @@ class PlanningAgent:
         api_hints_section = self._build_hints_section(endpoints, header="API context")
 
         prompt = (
-            'Respond with ONLY valid JSON — no explanation, no markdown, no preamble.\n'
-            'Format: {"excluded_indices": [3, 7, 15]}\n\n'
             f"Task: {task}\n\n"
             f"Available endpoints:\n{endpoint_list}\n\n"
             + api_hints_section
@@ -324,24 +336,10 @@ class PlanningAgent:
             "under the same path prefix. These root collection endpoints are commonly needed as name-to-ID "
             "resolvers even when the task does not mention them explicitly.\n"
         )
-        response = await self._run_llm("_exclude_unrelated_endpoints", prompt)
-
-        decoder = json.JSONDecoder()
-        data = None
-        for i, ch in enumerate(response):
-            if ch == "{":
-                try:
-                    data, _ = decoder.raw_decode(response, i)
-                    break
-                except json.JSONDecodeError:
-                    continue
-        if data is None:
-            try:
-                data = json.loads(response.strip())
-            except json.JSONDecodeError:
-                data = {"excluded_indices": []}
-
-        excluded = [i for i in data.get("excluded_indices", []) if 0 <= i < len(endpoints)]
+        result: _ExclusionResult = await self._run_agent(
+            "_exclude_unrelated_endpoints", prompt, _ExclusionResult
+        )
+        excluded = [i for i in result.excluded_indices if 0 <= i < len(endpoints)]
 
         # Deterministic safety net: never exclude a parameterless GET endpoint that
         # has children in this API (i.e. its path is a prefix of another endpoint's
@@ -465,10 +463,7 @@ class PlanningAgent:
         )
 
         prompt = (
-            "Respond with ONLY a JSON object — no markdown, no explanation.\n"
-            'Format: {"goal_index": <int>, "literal_args": {<param>: <value>, ...}, "foreach": <null|"LOOP_OVER_PRIOR">, '
-            '"required_resolvers": [{"endpoint_index": <int>, "capability": "<why needed>", "satisfies_param": "<param>", "literal_args": {}}]}\n\n'
-            + prior_issues_section
+            prior_issues_section
             + f"Task: {task}\n\n"
             + f"Available endpoints:\n{detailed_list}\n\n"
             + api_hints_section
@@ -500,57 +495,40 @@ class PlanningAgent:
             "include that resolver endpoint EXACTLY ONCE with foreach set to all their names: "
             'foreach: ["Name1", "Name2", ...]. Do NOT list the same resolver endpoint multiple times.\n'
             "- The foreach step runs once per element and collects all results as a list for the goal step to iterate over.\n\n"
-            'Required output — ONLY valid JSON, examples:\n'
-            '{"goal_index": 2, "literal_args": {"state": "opened"}, "foreach": null, "required_resolvers": []}\n'
-            'Single resolver: {"goal_index": 4, "literal_args": {}, "foreach": null, '
-            '"required_resolvers": [{"endpoint_index": 1, "capability": "looks up current user identity", "satisfies_param": "author_id", "literal_args": {}, "foreach": null}]}\n'
-            'Multi-entity resolver: {"goal_index": 4, "literal_args": {}, "foreach": "LOOP_OVER_PRIOR", '
-            '"required_resolvers": [{"endpoint_index": 2, "capability": "looks up each entity by name", "satisfies_param": "entity_id", "literal_args": {}, "foreach": ["Alice", "Bob"]}]}'
+            "Return a JSON object with fields: goal_index, literal_args, foreach, required_resolvers.\n"
+            "Examples (goal_index=2, no resolvers): goal_index=2, literal_args={\"state\": \"opened\"}, foreach=null, required_resolvers=[]\n"
+            "Example with resolver: required_resolvers=[{endpoint_index: 1, capability: \"...\", satisfies_param: \"author_id\", literal_args: {}, foreach: null}]\n"
+            "Example multi-entity: foreach=\"LOOP_OVER_PRIOR\", required_resolvers=[{..., foreach: [\"Alice\", \"Bob\"]}]"
         )
-        response = await self._run_llm("_pick_goal", prompt)
+        data: _GoalResult = await self._run_agent("_pick_goal", prompt, _GoalResult)
 
-        decoder = json.JSONDecoder()
-        data = None
-        for i, ch in enumerate(response):
-            if ch == "{":
-                try:
-                    data, _ = decoder.raw_decode(response, i)
-                    break
-                except json.JSONDecodeError:
-                    continue
-        if data is None:
-            data = json.loads(response.strip())
-
-        goal_index = data.get("goal_index", 0)
-        if not (0 <= goal_index < len(kept_endpoints)):
+        if not (0 <= data.goal_index < len(kept_endpoints)):
             raise ValueError(
-                f"LLM returned goal_index {goal_index} but only {len(kept_endpoints)} endpoints available."
+                f"LLM returned goal_index {data.goal_index} but only {len(kept_endpoints)} endpoints available."
             )
         goal_step = ChainStep(
-            endpoint=kept_endpoints[goal_index],
+            endpoint=kept_endpoints[data.goal_index],
             capability="performs the main action of the task",
-            literal_args=data.get("literal_args", {}),
-            foreach=data.get("foreach"),
+            literal_args=data.literal_args,
+            foreach=data.foreach,
         )
 
-        # Parse required_resolvers (always present, even when no prior_issues)
         required_resolvers: List[ChainStep] = []
         seen_keys = {f"{goal_step.endpoint.method} {goal_step.endpoint.path}"}
-        for r in data.get("required_resolvers", []):
-            ep_index = r.get("endpoint_index")
-            if ep_index is None or not (0 <= ep_index < len(kept_endpoints)):
+        for r in data.required_resolvers:
+            if not (0 <= r.endpoint_index < len(kept_endpoints)):
                 continue
-            ep = kept_endpoints[ep_index]
+            ep = kept_endpoints[r.endpoint_index]
             key = f"{ep.method} {ep.path}"
             if key in seen_keys:
                 continue
             seen_keys.add(key)
             required_resolvers.append(ChainStep(
                 endpoint=ep,
-                capability=r.get("capability", "provides prerequisite data"),
-                satisfies_param=r.get("satisfies_param", ""),
-                literal_args=r.get("literal_args", {}),
-                foreach=r.get("foreach"),
+                capability=r.capability or "provides prerequisite data",
+                satisfies_param=r.satisfies_param,
+                literal_args=r.literal_args,
+                foreach=r.foreach,
             ))
 
         return goal_step, required_resolvers
@@ -598,30 +576,15 @@ class PlanningAgent:
             "set foreach to a list of ALL their names: foreach: [\"Name1\", \"Name2\", ...]. "
             "Do NOT return this resolver with foreach=null and expect a second call — each resolver endpoint is used at most once.\n"
             "- Otherwise set foreach to null.\n\n"
-            'Respond with ONLY valid JSON:\n'
-            '{"endpoint_index": 3, "satisfies_param": "project_id", "literal_args": {"search": "dotfiles"}, "foreach": null, "capability": "searches for project by name to get its ID"}\n'
-            'Bulk example: {"endpoint_index": 2, "satisfies_param": "entity_id", "literal_args": {}, "foreach": ["Alice", "Bob", "Carol"], "capability": "looks up each entity by name"}\n'
-            'Or if nothing fits: {"endpoint_index": null, "satisfies_param": "", "literal_args": {}, "foreach": null, "capability": ""}'
+            "Return a JSON object with fields: endpoint_index (int or null), satisfies_param, literal_args, foreach, capability.\n"
+            "If nothing fits, set endpoint_index to null."
         )
-        response = await self._run_llm("_find_resolver", prompt)
+        data: _ResolverResult = await self._run_agent("_find_resolver", prompt, _ResolverResult)
 
-        decoder = json.JSONDecoder()
-        data = None
-        for i, ch in enumerate(response):
-            if ch == "{":
-                try:
-                    data, _ = decoder.raw_decode(response, i)
-                    break
-                except json.JSONDecodeError:
-                    continue
-        if data is None:
-            data = json.loads(response.strip())
-
-        ep_index = data.get("endpoint_index")
-        if ep_index is None or not (0 <= ep_index < len(kept)):
+        if data.endpoint_index is None or not (0 <= data.endpoint_index < len(kept)):
             return None
 
-        chosen_ep = kept[ep_index]
+        chosen_ep = kept[data.endpoint_index]
         key = f"{chosen_ep.method} {chosen_ep.path}"
         if key in chain_keys:
             self._debug_print("_find_resolver", response=f"Cycle detected: {key} already in chain, stopping.")
@@ -629,10 +592,10 @@ class PlanningAgent:
 
         return ChainStep(
             endpoint=chosen_ep,
-            capability=data.get("capability", "provides prerequisite data"),
-            satisfies_param=data.get("satisfies_param", ""),
-            literal_args=data.get("literal_args", {}),
-            foreach=data.get("foreach"),
+            capability=data.capability or "provides prerequisite data",
+            satisfies_param=data.satisfies_param,
+            literal_args=data.literal_args,
+            foreach=data.foreach,
         )
 
     # ------------------------------------------------------------------
@@ -890,27 +853,11 @@ class PlanningAgent:
             "- In argument values, use {loop_item} as the placeholder for the current iterated element.\n"
             "- A foreach step runs N times and its output is automatically collected as a list.\n\n"
         )
-        response = await self._run_llm("_build_plan", prompt)
-
-        decoder = json.JSONDecoder()
-        data = None
-        for i, ch in enumerate(response):
-            if ch == '{':
-                try:
-                    data, _ = decoder.raw_decode(response, i)
-                    break
-                except json.JSONDecodeError:
-                    continue
-        if data is None:
-            data = json.loads(response.strip())
-        try:
-            plan_result = bundle.ToolBasedResponse(**data)
-        except ValidationError as exc:
-            raise ValueError(
-                f"Plan schema validation failed (type constraint violated):\n{exc}\n\nRaw response:\n{response}"
-            ) from exc
+        # pydantic_ai validates against bundle.ToolBasedResponse (including our model_validators)
+        # and auto-retries on schema violations — no manual JSON parsing needed.
+        plan_result = await self._run_agent("_build_plan", prompt, bundle.ToolBasedResponse)
         if not validate_plan(plan_result.plan):
-            raise ValueError(f"LLM produced an invalid plan. Raw response:\n{response}")
+            raise ValueError("LLM produced an invalid plan.")
 
         # Annotate each plan step with returns/base_url from the full kept endpoint map
         endpoint_map = {f"{ep.method} {ep.path}": ep for ep in kept}
@@ -992,23 +939,12 @@ class PlanningAgent:
             "according to the endpoint description? (wrong enum, wrong format, user display name "
             "used where a machine identifier is needed, etc.)\n\n"
             "4. Task accomplishment: does the plan as a whole accomplish the stated task?\n\n"
-            'Respond with ONLY valid JSON:\n'
-            '{"issues": ["step_2 arg \'id\' wires step_1.result (user_id) into a project {id} — type mismatch"], "ok": false}\n'
-            'If no issues found: {"issues": [], "ok": true}'
+            "Return a JSON object with fields: issues (list of strings) and ok (bool).\n"
+            "Example with issues: {\"issues\": [\"step_2 arg 'id' wires step_1.result (user_id) into a project {id} — type mismatch\"], \"ok\": false}\n"
+            "If no issues: {\"issues\": [], \"ok\": true}"
         )
-        response = await self._run_llm("_check_plan", prompt)
-
-        decoder = json.JSONDecoder()
-        data: dict = {}
-        for i, ch in enumerate(response):
-            if ch == "{":
-                try:
-                    data, _ = decoder.raw_decode(response, i)
-                    break
-                except json.JSONDecodeError:
-                    continue
-
-        return data.get("issues", []), data.get("ok", True)
+        result: _CheckResult = await self._run_agent("_check_plan", prompt, _CheckResult)
+        return result.issues, result.ok
 
     async def _fix_plan(
         self, task: str, plan_result, kept: List[EndpointInfo], issues: list
@@ -1040,26 +976,7 @@ class PlanningAgent:
             "fetch with valid params and apply [sort_desc:field] / [:N] in the accessor chain.\n\n"
             f"Respond with ONLY valid JSON matching this schema:\n{schema}"
         )
-        response = await self._run_llm("_fix_plan", prompt)
-
-        decoder = json.JSONDecoder()
-        data = None
-        for i, ch in enumerate(response):
-            if ch == "{":
-                try:
-                    data, _ = decoder.raw_decode(response, i)
-                    break
-                except json.JSONDecodeError:
-                    continue
-        if data is None:
-            data = json.loads(response.strip())
-
-        try:
-            fixed = bundle.ToolBasedResponse(**data)
-        except ValidationError as exc:
-            raise ValueError(
-                f"Fixed plan schema validation failed (type constraint violated):\n{exc}"
-            ) from exc
+        fixed = await self._run_agent("_fix_plan", prompt, bundle.ToolBasedResponse)
         if not validate_plan(fixed.plan):
             raise ValueError("_fix_plan produced an invalid plan structure.")
 
@@ -1126,23 +1043,11 @@ class PlanningAgent:
             "identifier-resolution requirement for ALL N entities. It is NOT missing N-1 steps.\n"
             "- Only flag a missing lookup if there is NO step (with or without foreach) that can resolve "
             "the needed identifier for one or more entities in the task.\n\n"
-            'Respond with ONLY valid JSON:\n'
-            '{"issues": ["description of gap or problem"], "ok": false}\n'
-            'If the endpoint set is complete and correct: {"issues": [], "ok": true}'
+            "Return a JSON object with fields: issues (list of strings) and ok (bool).\n"
+            "If the endpoint set is complete and correct: {\"issues\": [], \"ok\": true}"
         )
-        response = await self._run_llm("_check_chain", prompt)
-
-        decoder = json.JSONDecoder()
-        data: dict = {}
-        for i, ch in enumerate(response):
-            if ch == "{":
-                try:
-                    data, _ = decoder.raw_decode(response, i)
-                    break
-                except json.JSONDecodeError:
-                    continue
-
-        return data.get("issues", []), data.get("ok", True)
+        result: _CheckResult = await self._run_agent("_check_chain", prompt, _CheckResult)
+        return result.issues, result.ok
 
     # ------------------------------------------------------------------
     # Step 8: Validate the plan for semantic correctness
