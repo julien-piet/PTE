@@ -1,11 +1,12 @@
 # tracks which steps are ready, completed, failed, and manages dependencies between steps
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Sequence, Set, Tuple, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # =======================
@@ -56,22 +57,34 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
     class Argument(BaseModel):
         name: str = Field(description="Name of the argument parameter")
         value: Union[str, int, float, bool, dict, list] = Field(
-            description="Value of the argument. Can be a literal value or placeholder like '{step_1.result}'"
+            description=(
+                "Value of the argument. Literals can be any JSON type. "
+                "References must be a string placeholder like '{step_1.result}' or '{loop_item}'."
+            )
         )
-        value_type: str = Field(
+        value_type: Literal["literal", "reference"] = Field(
             default="literal",
-            description="Type of value: 'literal' for direct values, 'reference' for dependency references"
+            description="Type of value: 'literal' for direct values, 'reference' for dependency references",
         )
-        # value_source: str = Field(
-        #     description=(
-        #         "Justification for why this value is valid. "
-        #         "Must be one of: 'from_task' (value comes directly from the user's request), "
-        #         "'documented_enum' (value is an explicit enum/accepted literal in the API docs), "
-        #         "'documented_literal' (value is a documented constant for this parameter), "
-        #         "'from_prior_step' (value is obtained from a prior step's output via {step_id.result}). "
-        #         "If none of these apply, the plan is invalid — add a lookup step instead."
-        #     )
-        # )
+
+        @model_validator(mode="before")
+        @classmethod
+        def normalize_reference(cls, data: Any) -> Any:
+            if not isinstance(data, dict):
+                return data
+            if data.get("value_type") != "reference":
+                return data
+            v = data.get("value", "")
+            if not isinstance(v, str):
+                raise ValueError(
+                    f"Argument '{data.get('name', '?')}': value_type is 'reference' "
+                    f"but value is {type(v).__name__}, not a string."
+                )
+            # Auto-wrap bare references that are missing braces:
+            # "step_1.result[0].id" → "{step_1.result[0].id}"
+            if not v.startswith("{") and re.match(r"\w+\.result", v):
+                data["value"] = "{" + v + "}"
+            return data
 
     class ExecutionStep(BaseModel):
         step_id: str = Field(description="Unique identifier for this step")
@@ -104,6 +117,20 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
                 "Use {loop_item} in argument values as a placeholder for the current element."
             ),
         )
+
+        @model_validator(mode="after")
+        def foreach_required_when_loop_item_used(self) -> "ExecutionStep":
+            uses_loop_item = any(
+                "{loop_item" in str(arg.value)
+                for arg in (self.arguments or [])
+            )
+            if uses_loop_item and self.foreach is None:
+                raise ValueError(
+                    f"Step '{self.step_id}' uses {{loop_item}} in arguments but 'foreach' is not set. "
+                    "Set foreach to the source of iteration "
+                    "(e.g. 'step_1.result[*].id' or a literal list)."
+                )
+            return self
 
     class ToolBasedResponse(BaseModel):
         tool_call_required: Literal[True]

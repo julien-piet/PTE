@@ -33,6 +33,11 @@ class _MissingDependency(Exception):
 
 class _HttpError(Exception):
     """Raised when a curl call returns a non-2xx HTTP status."""
+
+class _AlreadyExistsBody(dict):
+    """Dict subclass returned by _run_curl for HTTP 409 already-exists responses.
+    Stored directly without LLM parsing so downstream steps are never blocked
+    by a None output, even when they declare a depends_on on this step."""
 from agent.common.configurator import Configurator
 from agent.planner import ExecutionContext
 from agent.providers.provider import ModelProvider
@@ -184,15 +189,18 @@ class ExecutionAgent:
         navigation fails or no accessor is present.
         """
         if isinstance(value, str):
-            # Substitute {loop_item} / {loop_item.field} when inside a foreach iteration
+            # Substitute {loop_item}, {loop_item.field}, {loop_item[n].field}, etc.
             if "__loop_item__" in outputs:
                 def _sub_loop(m: re.Match) -> str:
                     item = outputs["__loop_item__"]
-                    field = m.group(1)
-                    if field and isinstance(item, dict):
-                        item = item.get(field, item)
+                    accessor = m.group(1)  # everything after "loop_item": "", ".field", "[0].id", etc.
+                    if accessor:
+                        result = ExecutionAgent._follow_accessor(item, accessor)
+                        if result is None:
+                            return "null"
+                        item = result
                     return json.dumps(item) if isinstance(item, (dict, list)) else str(item)
-                value = re.sub(r"\{loop_item(?:\.(\w+))?\}", _sub_loop, value)
+                value = re.sub(r"\{loop_item([^}]*)\}", _sub_loop, value)
 
             def _sub(m: re.Match) -> str:
                 step_id, accessor = m.group(1), m.group(2)
@@ -223,11 +231,12 @@ class ExecutionAgent:
         method, path_template = tool_name.split(" ", 1)
         method = method.upper()
 
-        # Resolve all argument values (substituting {step_id.result} references)
-        args: Dict[str, Any] = {
-            arg.name: self._resolve(arg.value, outputs)
-            for arg in step.arguments
-        }
+        # Resolve all argument values, substituting {step_id.result} and {loop_item} references.
+        # Bare-reference normalization (missing {}) is enforced at the Argument model level.
+        def _normalize(arg) -> Any:
+            return self._resolve(arg.value, outputs)
+
+        args: Dict[str, Any] = {arg.name: _normalize(arg) for arg in step.arguments}
 
         # Detect path parameters from {name} tokens in the URL template
         path_param_names = set(re.findall(r"\{(\w+)\}", path_template))
@@ -286,7 +295,15 @@ class ExecutionAgent:
     def _run_curl(self, cmd: List[str]) -> Any:
         # Append -w "\n%{http_code}" so the status code appears on the last line
         cmd = cmd[:-1] + ["-w", "\n%{http_code}", cmd[-1]]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        for attempt in range(3):
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                break
+            except subprocess.TimeoutExpired:
+                if attempt < 2:
+                    continue
+                raise _HttpError("Request timed out after 3 attempts")
+
         output = result.stdout
         # Split off the status code line appended by -w
         *body_lines, status_line = output.rsplit("\n", 1)
@@ -298,13 +315,16 @@ class ExecutionAgent:
         except json.JSONDecodeError:
             body = raw
 
-        # 304 Not Modified is treated as success: the resource is already in the
-        # desired state (e.g. project already starred), so the operation is idempotent.
-        if not (200 <= status_code < 300) and status_code != 304:
-            raise _HttpError(
-                f"HTTP {status_code}: {json.dumps(body) if isinstance(body, dict) else body}"
-            )
-        return body
+        if 200 <= status_code < 300 or status_code == 304:
+            return body
+        # 409 Conflict: resource already exists — idempotent success.
+        # Return a marked dict so _execute_step can skip LLM parsing and store
+        # a non-None value, keeping dependent steps unblocked.
+        if status_code == 409:
+            return _AlreadyExistsBody(body if isinstance(body, dict) else {})
+        raise _HttpError(
+            f"HTTP {status_code}: {json.dumps(body) if isinstance(body, dict) else body}"
+        )
 
     # ── Inter-step output parsing ────────────────────────────────────────────
 
@@ -347,6 +367,16 @@ class ExecutionAgent:
         accessor_guidance = ""
         unique_accessors = list(dict.fromkeys(all_accessors))
         if unique_accessors:
+            # If every accessor has a structural path after .result (e.g. [0].field,
+            # [sort_desc:f][0].id, .key), _follow_accessor handles all the navigation
+            # correctly on the raw output — skip the LLM entirely. The LLM is only
+            # needed for bare {step.result} references that require semantic extraction.
+            structural_path_re = re.compile(
+                r"\{" + re.escape(step.step_id) + r"\.result[.\[]"
+            )
+            if all(structural_path_re.match(acc) for acc in unique_accessors):
+                return raw_output
+
             lines = []
             for acc in unique_accessors:
                 # Extract the field path after .result (e.g. ".default_branch" → "default_branch")
@@ -448,11 +478,15 @@ class ExecutionAgent:
             fan_out_values: Optional[List[Any]] = None
             for arg in (step.arguments or []):
                 if arg.name in path_param_names:
-                    # Check the raw stored output (not _resolve, which stringifies lists)
-                    m = re.search(r"\{(\w+)\.result", str(arg.value))
+                    # Check the raw stored output (not _resolve, which stringifies lists).
+                    # Only fan-out for bare {step.result} or [*] wildcard patterns —
+                    # [N] index and [sort_desc:...] patterns resolve to a single item.
+                    m = re.search(r"\{(\w+)\.result([^}]*)\}", str(arg.value))
                     ref_step_id = m.group(1) if m else None
+                    accessor_path = m.group(2) if m else ""
                     raw_val = ctx.step_outputs.get(ref_step_id) if ref_step_id else None
-                    if isinstance(raw_val, list):
+                    is_multi = not accessor_path or "[*]" in accessor_path
+                    if isinstance(raw_val, list) and is_multi:
                         fan_out_ref_step = ref_step_id
                         fan_out_values = raw_val
                         break
@@ -513,18 +547,23 @@ class ExecutionAgent:
             # Always preserve the full raw response for final answer generation
             raw_outputs[step.step_id] = raw
 
-            # If downstream steps reference this result, parse it down to what they need
-            dependent_steps = [s for s in plan if step.step_id in (getattr(s, "depends_on", []) or [])]
-            if dependent_steps:
-                print(f"{prefix} Parsing {step.step_id} output for {len(dependent_steps)} dependent step(s)...")
-                parsed = await self._parse_step_output(step, raw, dependent_steps)
-                # Explicitly store None so the downstream guard can detect parse failure.
-                ctx.step_outputs[step.step_id] = parsed
-                ctx.mark_completed(step.step_id, parsed)
+            if isinstance(raw, _AlreadyExistsBody):
+                # 409 already-exists: store the body directly (non-None) so that
+                # any step with depends_on this one is never blocked by the guard.
+                ctx.mark_completed(step.step_id, dict(raw))
+                print(f"{prefix} ✓ {step.step_id} done (already exists, skipping parse)")
             else:
-                ctx.mark_completed(step.step_id, raw)
-
-            print(f"{prefix} ✓ {step.step_id} done")
+                # If downstream steps reference this result, parse it down to what they need
+                dependent_steps = [s for s in plan if step.step_id in (getattr(s, "depends_on", []) or [])]
+                if dependent_steps:
+                    print(f"{prefix} Parsing {step.step_id} output for {len(dependent_steps)} dependent step(s)...")
+                    parsed = await self._parse_step_output(step, raw, dependent_steps)
+                    # Explicitly store None so the downstream guard can detect parse failure.
+                    ctx.step_outputs[step.step_id] = parsed
+                    ctx.mark_completed(step.step_id, parsed)
+                else:
+                    ctx.mark_completed(step.step_id, raw)
+                print(f"{prefix} ✓ {step.step_id} done")
         except _MissingDependency as e:
             ctx.mark_failed(step.step_id, str(e))
             print(f"{prefix} ✗ {step.step_id} skipped: {e}")

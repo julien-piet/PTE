@@ -53862,7 +53862,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": "Numeric ID or username of the user."
+            "description": "Numeric ID of the user."
           }
         ],
         "responses": {

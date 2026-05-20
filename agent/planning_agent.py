@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import List, Optional, Union
 
 import prance
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent
 
 from agent.common.configurator import Configurator
@@ -903,7 +903,12 @@ class PlanningAgent:
                     continue
         if data is None:
             data = json.loads(response.strip())
-        plan_result = bundle.ToolBasedResponse(**data)
+        try:
+            plan_result = bundle.ToolBasedResponse(**data)
+        except ValidationError as exc:
+            raise ValueError(
+                f"Plan schema validation failed (type constraint violated):\n{exc}\n\nRaw response:\n{response}"
+            ) from exc
         if not validate_plan(plan_result.plan):
             raise ValueError(f"LLM produced an invalid plan. Raw response:\n{response}")
 
@@ -1049,7 +1054,12 @@ class PlanningAgent:
         if data is None:
             data = json.loads(response.strip())
 
-        fixed = bundle.ToolBasedResponse(**data)
+        try:
+            fixed = bundle.ToolBasedResponse(**data)
+        except ValidationError as exc:
+            raise ValueError(
+                f"Fixed plan schema validation failed (type constraint violated):\n{exc}"
+            ) from exc
         if not validate_plan(fixed.plan):
             raise ValueError("_fix_plan produced an invalid plan structure.")
 
@@ -1152,6 +1162,16 @@ class PlanningAgent:
                 for p in ep.parameters:
                     if isinstance(p, dict) and p.get("name"):
                         param_map[p["name"]] = p
+
+            uses_loop_item = any(
+                "{loop_item" in str(arg.value)
+                for arg in (step.arguments or [])
+            )
+            if uses_loop_item and getattr(step, "foreach", None) is None:
+                errors.append(
+                    f"Step '{step.step_id}' uses {{loop_item}} in arguments but 'foreach' is not set. "
+                    "Set foreach to the source of iteration (e.g. 'step_1.result[*].id')."
+                )
 
             for arg in (step.arguments or []):
                 aname = arg.name
