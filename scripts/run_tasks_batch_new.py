@@ -41,6 +41,7 @@ from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker import workers_new as _workers_new
+from scripts.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
 
 
 from eval.program_html_evaluator import DEFAULT_BASE_URLS as _EVALUATOR_URLS
@@ -115,6 +116,7 @@ class TaskBatchRunner:
         self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, "http://localhost:8023")
         self.num_workers = _workers_new.num_workers() if multi_docker else 1
         self._glpat: Optional[str] = None
+        self._shopping_token: Optional[str] = None
 
         self.results: List[Dict[str, Any]] = []
         self._acquire_lock: asyncio.Lock = asyncio.Lock()
@@ -123,6 +125,9 @@ class TaskBatchRunner:
         if not self.multi_docker and self.server == "gitlab":
             from eval.docker.gitlab_init import get_glpat
             self._glpat = get_glpat(self.base_url, "agent-local")
+        if self.server in ("shopping", "shopping_admin"):
+            print("Refreshing shopping auth tokens...")
+            self._shopping_token = _refresh_shopping_tokens(base_url=self.base_url)
         from agent.common.configurator import Configurator
         _cfg = Configurator()
         mode = "multi-docker" if self.multi_docker else f"single ({self.base_url})"
@@ -201,11 +206,11 @@ class TaskBatchRunner:
                 glpat = w["glpat"]
 
                 # Inject auth into the execution agent.
-                # GitLab uses a dynamically obtained GLPAT; other servers (e.g.
-                # shopping) use static tokens already loaded from .server_env.
                 if agent.execution_agent is not None:
                     if self.server == "gitlab" and glpat:
                         agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
+                    elif self.server in ("shopping", "shopping_admin") and self._shopping_token:
+                        agent.execution_agent.auth = StaticAuth({"Authorization": f"Bearer {self._shopping_token}"})
                     agent.execution_agent.task_id = str(task_id)
 
                 # ── Plan + Execute ────────────────────────────────────────────

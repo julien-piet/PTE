@@ -186,7 +186,18 @@ def agent_runner(request, session_event_loop):
                         gitlab_base_url=base_url)
     runner.server = request.config.getoption("--server", default="gitlab")
     runner.base_url = base_url
+
     session_event_loop.run_until_complete(runner._init_agent())
+
+    if runner.server in ("shopping", "shopping_admin"):
+        from eval.program_html_evaluator import DEFAULT_BASE_URLS
+        from agent.auth import StaticAuth
+        from scripts.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
+        shopping_base_url = DEFAULT_BASE_URLS["__SHOPPING__"]
+        print(f"\nRefreshing shopping auth tokens from {shopping_base_url}...")
+        token = _refresh_shopping_tokens(base_url=shopping_base_url)
+        if hasattr(runner, "_agent") and runner._agent.execution_agent is not None:
+            runner._agent.execution_agent.auth = StaticAuth({"Authorization": f"Bearer {token}"})
     return runner
 
 

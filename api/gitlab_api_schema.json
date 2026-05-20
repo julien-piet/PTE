@@ -5799,7 +5799,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the user."
           }
         ],
         "responses": {
@@ -5813,7 +5813,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get all custom attributes on a user.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_CustomAttribute"
+              }
+            }
           }
         }
       }
@@ -5831,7 +5837,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           }
         ],
         "responses": {
@@ -5845,7 +5851,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get all custom attributes on a group.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_CustomAttribute"
+              }
+            }
           }
         }
       }
@@ -5863,7 +5875,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
           }
         ],
         "responses": {
@@ -5877,7 +5889,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get all custom attributes on a project.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_CustomAttribute"
+              }
+            }
           }
         }
       }
@@ -5895,14 +5913,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           }
         ],
         "responses": {
@@ -5916,7 +5934,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a custom attribute on a user.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CustomAttribute"
+            }
           }
         }
       },
@@ -5932,14 +5953,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           },
           {
             "name": "body",
@@ -5970,7 +5991,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Set a custom attribute on a user.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CustomAttribute"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -5989,14 +6013,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           }
         ],
         "responses": {
@@ -6028,14 +6052,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           }
         ],
         "responses": {
@@ -6049,7 +6073,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a custom attribute on a group.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CustomAttribute"
+            }
           }
         }
       },
@@ -6065,14 +6092,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           },
           {
             "name": "body",
@@ -6103,7 +6130,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Set a custom attribute on a group.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CustomAttribute"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -6122,14 +6152,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           }
         ],
         "responses": {
@@ -6161,14 +6191,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           }
         ],
         "responses": {
@@ -6182,7 +6212,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a custom attribute on a project.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CustomAttribute"
+            }
           }
         }
       },
@@ -6198,14 +6231,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           },
           {
             "name": "body",
@@ -6236,7 +6269,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Set a custom attribute on a project.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_CustomAttribute"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -6255,14 +6291,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the custom attribute."
           }
         ],
         "responses": {
@@ -6294,7 +6330,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "package_manager",
@@ -6306,6 +6342,22 @@
               "type": "string"
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of results per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -6319,7 +6371,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of project dependencies (GitLab EE only).",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Dependency"
+              }
+            }
           }
         }
       }
@@ -6337,7 +6395,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           }
         ],
         "responses": {
@@ -6350,8 +6408,8 @@
           "404": {
             "description": "Not Found"
           },
-          "204": {
-            "description": "No Content"
+          "202": {
+            "description": "Schedules deletion of cached manifests and blobs for a group. Requires Owner role."
           }
         }
       }
@@ -10412,7 +10470,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "author_id",
@@ -10530,6 +10588,22 @@
             "required": false,
             "description": "Return epics that do not match the parameters supplied. Accepts: author_id, author_username (GitLab 14.7 and later) and labels. Available in GitLab 14.6 and later (JSON object)",
             "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of results per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -10543,7 +10617,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of epics.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Epic"
+              }
+            }
           }
         }
       },
@@ -10559,7 +10639,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "body",
@@ -10630,7 +10710,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Epic created successfully.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Epic"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -10651,14 +10734,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "epic_iid",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The internal ID of the epic."
           }
         ],
         "responses": {
@@ -10672,7 +10755,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Single epic.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Epic"
+            }
           }
         }
       },
@@ -10688,14 +10774,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "epic_iid",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The internal ID of the epic."
           },
           {
             "name": "body",
@@ -10775,7 +10861,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Updated epic.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Epic"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -10794,14 +10883,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "epic_iid",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The internal ID of the epic."
           }
         ],
         "responses": {
@@ -10833,14 +10922,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "epic_iid",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The internal ID of the epic."
           }
         ],
         "responses": {
@@ -10854,7 +10943,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "To-do item created.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Todo"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -11668,14 +11760,30 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "scope",
             "in": "query",
             "required": false,
-            "description": "The condition of feature flags, one of: enabled, disabled.",
+            "description": "The scope of feature flags to return. One of: enabled, disabled.",
             "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of results per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -11689,7 +11797,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of feature flags for the project.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_FeatureFlag"
+              }
+            }
           }
         }
       },
@@ -11705,7 +11819,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "body",
@@ -11769,7 +11883,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Feature flag created successfully.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_FeatureFlag"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -11790,14 +11907,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "feature_flag_name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the feature flag."
           }
         ],
         "responses": {
@@ -11811,7 +11928,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Single feature flag.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_FeatureFlag"
+            }
           }
         }
       },
@@ -11827,14 +11947,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "feature_flag_name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the feature flag."
           },
           {
             "name": "body",
@@ -11898,7 +12018,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Updated feature flag.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_FeatureFlag"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -11917,14 +12040,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "feature_flag_name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the feature flag."
           }
         ],
         "responses": {
@@ -11937,8 +12060,11 @@
           "404": {
             "description": "Not Found"
           },
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "Deleted feature flag (returns the flag object).",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_FeatureFlag"
+            }
           }
         }
       }
@@ -12834,7 +12960,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "issues_count": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
           }
         }
       }
@@ -12866,7 +13001,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "merge_requests_count": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
           }
         }
       }
@@ -12898,7 +13042,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "new_members_count": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
           }
         }
       }
@@ -12916,7 +13069,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "name",
@@ -12924,6 +13077,24 @@
             "required": false,
             "description": "Name of the badges to return (case-sensitive).",
             "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -12937,7 +13108,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Badge"
+              }
+            }
           }
         }
       },
@@ -12953,7 +13130,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "body",
@@ -12989,7 +13166,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Badge"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -13010,14 +13190,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "badge_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The badge ID"
           }
         ],
         "responses": {
@@ -13031,7 +13211,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Badge"
+            }
           }
         }
       },
@@ -13047,14 +13230,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "badge_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The badge ID"
           },
           {
             "name": "body",
@@ -13086,7 +13269,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Badge"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -13105,14 +13291,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "badge_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The badge ID"
           }
         ],
         "responses": {
@@ -13144,7 +13330,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "link_url",
@@ -13172,7 +13358,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_BasicBadgeDetails"
+            }
           }
         }
       }
@@ -13190,7 +13379,25 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -13204,7 +13411,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Board"
+              }
+            }
           }
         }
       },
@@ -13220,7 +13433,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "body",
@@ -13251,7 +13464,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Board"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -13272,14 +13488,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           }
         ],
         "responses": {
@@ -13293,7 +13509,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Board"
+            }
           }
         }
       },
@@ -13309,14 +13528,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "body",
@@ -13371,7 +13590,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Board"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -13390,14 +13612,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           }
         ],
         "responses": {
@@ -13429,14 +13651,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -13450,7 +13690,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_BoardList"
+              }
+            }
           }
         }
       },
@@ -13466,14 +13712,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "body",
@@ -13505,7 +13751,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_BoardList"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -13526,21 +13775,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "list_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a board list"
           }
         ],
         "responses": {
@@ -13554,7 +13803,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_BoardList"
+            }
           }
         }
       },
@@ -13570,21 +13822,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "list_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a board list"
           },
           {
             "name": "body",
@@ -13616,7 +13868,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_BoardList"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -13635,21 +13890,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "list_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a board list"
           }
         ],
         "responses": {
@@ -13681,7 +13936,25 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -13695,7 +13968,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_ClusterGroup"
+              }
+            }
           }
         }
       }
@@ -13713,14 +13992,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "cluster_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the cluster"
           }
         ],
         "responses": {
@@ -13734,7 +14013,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ClusterGroup"
+            }
           }
         }
       },
@@ -13750,14 +14032,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "cluster_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the cluster"
           },
           {
             "name": "body",
@@ -13818,7 +14100,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ClusterGroup"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -13837,14 +14122,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "cluster_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the cluster"
           }
         ],
         "responses": {
@@ -13876,7 +14161,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "body",
@@ -13946,7 +14231,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ClusterGroup"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -13967,7 +14255,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           }
         ],
         "responses": {
@@ -13985,6 +14273,9 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "202": {
+            "description": "Group export started"
           }
         }
       }
@@ -14002,7 +14293,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           }
         ],
         "responses": {
@@ -14016,7 +14307,7 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Send the file"
           }
         }
       }
@@ -14077,6 +14368,9 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "202": {
+            "description": "Group import started"
           }
         }
       }
@@ -14094,7 +14388,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "state",
@@ -14116,6 +14410,24 @@
             "required": false,
             "description": "Include iterations from parent group and its ancestors. Defaults to true.",
             "type": "boolean"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -14129,7 +14441,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_GroupIteration"
+              }
+            }
           }
         }
       }
@@ -14147,7 +14465,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "with_counts",
@@ -14183,6 +14501,24 @@
             "required": false,
             "description": "Keyword to filter labels by. Introduced in GitLab 13.6",
             "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -14196,7 +14532,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Label"
+              }
+            }
           }
         }
       },
@@ -14212,7 +14554,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "body",
@@ -14252,7 +14594,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -14273,14 +14618,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a group label"
           },
           {
             "name": "include_ancestor_groups",
@@ -14315,7 +14660,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           }
         }
       },
@@ -14331,14 +14679,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a group label"
           },
           {
             "name": "body",
@@ -14374,7 +14722,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -14393,14 +14744,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a group label"
           }
         ],
         "responses": {
@@ -14432,14 +14783,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a group label"
           }
         ],
         "responses": {
@@ -14457,6 +14808,11 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           }
         }
       }
@@ -14474,14 +14830,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a group label"
           }
         ],
         "responses": {
@@ -14499,6 +14855,11 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           }
         }
       }
@@ -14516,7 +14877,25 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group or URL-encoded path of the group owned by the authenticated user"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -14530,7 +14909,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Ci_Variable"
+              }
+            }
           }
         }
       },
@@ -14546,7 +14931,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "body",
@@ -14602,7 +14987,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Variable"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -14623,14 +15011,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the variable"
           }
         ],
         "responses": {
@@ -14644,7 +15032,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Variable"
+            }
           }
         }
       },
@@ -14660,14 +15051,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of a variable"
           },
           {
             "name": "body",
@@ -14718,7 +15109,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Variable"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -14737,14 +15131,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of a variable"
           }
         ],
         "responses": {
@@ -14776,7 +15170,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "iids[]",
@@ -14816,6 +15210,24 @@
             "required": false,
             "description": "Include milestones from parent group and its ancestors. Introduced in GitLab 13.4",
             "type": "boolean"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -14829,7 +15241,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Milestone"
+              }
+            }
           }
         }
       },
@@ -14845,7 +15263,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "body",
@@ -14890,7 +15308,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Milestone"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -14911,14 +15332,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the milestone"
           }
         ],
         "responses": {
@@ -14932,7 +15353,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Milestone"
+            }
           }
         }
       },
@@ -14948,14 +15372,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the milestone"
           },
           {
             "name": "body",
@@ -15001,7 +15425,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Milestone"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -15020,14 +15447,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the milestone"
           }
         ],
         "responses": {
@@ -15059,14 +15486,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the milestone"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -15080,7 +15525,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Issue"
+              }
+            }
           }
         }
       }
@@ -15098,14 +15549,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the milestone"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -15119,7 +15588,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_MergeRequest"
+              }
+            }
           }
         }
       }
@@ -15137,14 +15612,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the milestone"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -15158,7 +15651,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_BurndownEvent"
+              }
+            }
           }
         }
       }
@@ -15176,7 +15675,25 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -15190,7 +15707,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_ProtectedEnvironment"
+              }
+            }
           }
         }
       },
@@ -15206,7 +15729,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "body",
@@ -15257,7 +15780,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ProtectedEnvironment"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -15278,14 +15804,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the protected environment"
           }
         ],
         "responses": {
@@ -15299,7 +15825,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ProtectedEnvironment"
+            }
           }
         }
       },
@@ -15315,14 +15844,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the protected environment"
           },
           {
             "name": "body",
@@ -15365,7 +15894,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_ProtectedEnvironment"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -15384,14 +15916,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the protected environment"
           }
         ],
         "responses": {
@@ -15423,7 +15955,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           }
         ],
         "responses": {
@@ -15441,6 +15973,9 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "202": {
+            "description": "Group relations export started"
           }
         }
       }
@@ -15458,7 +15993,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           }
         ],
         "responses": {
@@ -15472,7 +16007,29 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "relation": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -15490,7 +16047,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a group"
           },
           {
             "name": "relation",
@@ -15511,7 +16068,7 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Send the file"
           }
         }
       }
@@ -15529,7 +16086,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "sort",
@@ -15544,6 +16101,24 @@
             "required": false,
             "description": "Return only limited fields for each release.",
             "type": "boolean"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -15557,7 +16132,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Release"
+              }
+            }
           }
         }
       }
@@ -15569,7 +16150,26 @@
         "tags": [
           "Group Repository Storage Moves"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
+          }
+        ],
         "responses": {
           "401": {
             "description": "Unauthorized"
@@ -15581,7 +16181,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_GroupRepositoryStorageMove"
+              }
+            }
           }
         }
       },
@@ -15629,6 +16235,11 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GroupRepositoryStorageMove"
+            }
           }
         }
       }
@@ -15646,7 +16257,25 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the group"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -15660,7 +16289,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_GroupRepositoryStorageMove"
+              }
+            }
           }
         }
       },
@@ -15676,7 +16311,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the group"
           },
           {
             "name": "body",
@@ -15708,6 +16343,11 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GroupRepositoryStorageMove"
+            }
           }
         }
       }
@@ -15725,7 +16365,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the repository storage move"
           }
         ],
         "responses": {
@@ -15739,7 +16379,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GroupRepositoryStorageMove"
+            }
           }
         }
       }
@@ -15757,14 +16400,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the group"
           },
           {
             "name": "repository_storage_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the repository storage move"
           }
         ],
         "responses": {
@@ -15778,7 +16421,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_GroupRepositoryStorageMove"
+            }
           }
         }
       }
@@ -15796,7 +16442,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "with_content",
@@ -15804,6 +16450,24 @@
             "required": false,
             "description": "Include pages' content",
             "type": "boolean"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -15817,7 +16481,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_WikiPageBasic"
+              }
+            }
           }
         }
       }
@@ -15835,14 +16505,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "slug",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The slug of the wiki page"
           },
           {
             "name": "render_html",
@@ -15870,7 +16540,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_WikiPage"
+            }
           }
         }
       },
@@ -15886,14 +16559,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "slug",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The slug of the wiki page"
           },
           {
             "name": "body",
@@ -15933,7 +16606,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_WikiPage"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -15952,14 +16628,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "slug",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The slug of the wiki page"
           }
         ],
         "responses": {
@@ -15991,7 +16667,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "body",
@@ -16031,7 +16707,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_WikiPage"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -16089,7 +16768,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group"
           },
           {
             "name": "body",
@@ -16128,6 +16807,11 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/API_Entities_WikiAttachment"
+            }
           }
         }
       }
@@ -16214,6 +16898,22 @@
             "required": false,
             "description": "Limit to top level groups, excluding all subgroups",
             "type": "boolean"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -18090,6 +18790,22 @@
             "required": true,
             "type": "string",
             "description": "The ID or URL-encoded path of the group"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -18333,6 +19049,22 @@
             "required": true,
             "type": "string",
             "description": "The ID or URL-encoded path of the group"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -28020,18 +28752,49 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "scope",
             "in": "query",
             "required": false,
-            "description": "Scope of jobs to show. Either one of or an array of the following: created, pending, running, failed, success, canceled, skipped, waiting_for_resource, or manual. All jobs are returned if scope is not provided.",
+            "description": "The scope of builds to show",
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "created",
+                "waiting_for_resource",
+                "preparing",
+                "pending",
+                "running",
+                "success",
+                "failed",
+                "canceled",
+                "skipped",
+                "manual",
+                "scheduled"
+              ]
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -28042,12 +28805,19 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a projects jobs",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Ci_Job"
+              }
+            }
           }
-        }
+        },
+        "description": "Get a projects jobs"
       }
     },
     "/projects/{id}/pipelines/{pipeline_id}/jobs": {
@@ -28063,32 +28833,65 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The project ID or URL-encoded path"
           },
           {
             "name": "pipeline_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
-          },
-          {
-            "name": "scope",
-            "in": "query",
-            "required": false,
-            "description": "Scope of jobs to show. Either one of or an array of the following: created, pending, running, failed, success, canceled, skipped, waiting_for_resource, or manual. All jobs are returned if scope is not provided.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "collectionFormat": "multi"
+            "type": "integer",
+            "format": "int32",
+            "description": "The pipeline ID"
           },
           {
             "name": "include_retried",
             "in": "query",
             "required": false,
-            "description": "Include retried jobs in the response. Defaults to false. Introduced in GitLab 13.9.",
-            "type": "boolean"
+            "type": "boolean",
+            "default": false,
+            "description": "Includes retried jobs"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "description": "The scope of builds to show",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "created",
+                "waiting_for_resource",
+                "preparing",
+                "pending",
+                "running",
+                "success",
+                "failed",
+                "canceled",
+                "skipped",
+                "manual",
+                "scheduled"
+              ]
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -28099,12 +28902,19 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get pipeline jobs",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Ci_Job"
+              }
+            }
           }
-        }
+        },
+        "description": "Get pipeline jobs"
       }
     },
     "/projects/{id}/pipelines/{pipeline_id}/bridges": {
@@ -28120,25 +28930,57 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The project ID or URL-encoded path"
           },
           {
             "name": "pipeline_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "format": "int32",
+            "description": "The pipeline ID"
           },
           {
             "name": "scope",
             "in": "query",
             "required": false,
-            "description": "Scope of jobs to show. Either one of or an array of the following: created, pending, running, failed, success, canceled, skipped, waiting_for_resource, or manual. All jobs are returned if scope is not provided.",
+            "description": "The scope of builds to show",
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "created",
+                "waiting_for_resource",
+                "preparing",
+                "pending",
+                "running",
+                "success",
+                "failed",
+                "canceled",
+                "skipped",
+                "manual",
+                "scheduled"
+              ]
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -28149,12 +28991,19 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get pipeline bridge jobs",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Ci_Bridge"
+              }
+            }
           }
-        }
+        },
+        "description": "Get pipeline bridge jobs"
       }
     },
     "/job": {
@@ -28173,12 +29022,19 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get current job using job token",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Job"
+            }
+          },
+          "400": {
+            "description": "Bad request"
           }
-        }
+        },
+        "description": "Get current job using job token"
       }
     },
     "/job/allowed_agents": {
@@ -28205,12 +29061,19 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get current agents",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Job"
+            }
+          },
+          "400": {
+            "description": "Bad request"
           }
-        }
+        },
+        "description": "Retrieves a list of agents for the given job token"
       }
     },
     "/projects/{id}/jobs/{job_id}": {
@@ -28226,14 +29089,15 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "job_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "format": "int32",
+            "description": "The ID of a job"
           }
         ],
         "responses": {
@@ -28244,12 +29108,16 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a specific job of a project",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Job"
+            }
           }
-        }
+        },
+        "description": "Get a specific job of a project"
       }
     },
     "/projects/{id}/jobs/{job_id}/trace": {
@@ -28265,14 +29133,15 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "job_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "format": "int32",
+            "description": "The ID of a job"
           }
         ],
         "responses": {
@@ -28283,12 +29152,16 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a trace of a specific job of a project",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Job"
+            }
           }
-        }
+        },
+        "description": "Get a trace of a specific job of a project"
       }
     },
     "/projects/{id}/jobs/{job_id}/cancel": {
@@ -28304,14 +29177,15 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "job_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "format": "int32",
+            "description": "The ID of a job"
           }
         ],
         "responses": {
@@ -28322,15 +29196,19 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "201": {
-            "description": "Created"
+            "description": "Cancel a specific job of a project",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Job"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Cancel a specific job of a project"
       }
     },
     "/projects/{id}/jobs/{job_id}/retry": {
@@ -28346,14 +29224,15 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "job_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "format": "int32",
+            "description": "The ID of a build"
           }
         ],
         "responses": {
@@ -28364,15 +29243,19 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "201": {
-            "description": "Created"
+            "description": "Retry a specific build of a project",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Job"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "Retry a specific build of a project"
       }
     },
     "/projects/{id}/jobs/{job_id}/erase": {
@@ -28388,14 +29271,15 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "job_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "format": "int32",
+            "description": "The ID of a build"
           }
         ],
         "responses": {
@@ -28406,15 +29290,22 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "201": {
-            "description": "Created"
+            "description": "Erase job (remove artifacts and the trace)",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_Job"
+            }
           },
           "400": {
             "description": "Bad Request"
+          },
+          "409": {
+            "description": "Conflict"
           }
-        }
+        },
+        "description": "Erase job (remove artifacts and the trace)"
       }
     },
     "/projects/{id}/jobs/{job_id}/play": {
@@ -28430,30 +29321,34 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "job_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "format": "int32",
+            "description": "The ID of a Job"
           },
           {
-            "name": "body",
-            "in": "body",
+            "name": "job_variables_attributes[key]",
+            "in": "formData",
             "required": false,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "job_variables_attributes": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "An array containing the custom variables available to the job. Introduced in GitLab 14.9."
-                }
-              }
+            "description": "The name of the variable",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "job_variables_attributes[value]",
+            "in": "formData",
+            "required": false,
+            "description": "The value of the variable",
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
         ],
@@ -28465,15 +29360,19 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "201": {
-            "description": "Created"
+            "description": "Trigger an actionable job (manual, delayed, etc)",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_JobBasic"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "This feature was added in GitLab 8.11"
       }
     },
     "/keys/{id}": {
@@ -35625,6 +36524,22 @@
             "required": false,
             "description": "In GitLab 14.2 and later, returns a list of owned namespaces only",
             "type": "boolean"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of results per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -35638,7 +36553,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of namespaces the authenticated user has access to.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Namespace"
+              }
+            }
           }
         }
       }
@@ -35656,7 +36577,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "ID or URL-encoded path of the namespace."
           }
         ],
         "responses": {
@@ -35670,7 +36591,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Single namespace.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Namespace"
+            }
           }
         }
       }
@@ -35688,7 +36612,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "Namespace's path."
           },
           {
             "name": "parent_id",
@@ -35710,7 +36634,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Namespace existence check result.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_NamespaceExistence"
+            }
           }
         }
       }
@@ -37232,7 +38159,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "order_by",
@@ -37252,7 +38179,44 @@
             "name": "package_type",
             "in": "query",
             "required": false,
-            "description": "",
+            "description": "Return packages of a certain type. One of: maven, npm, conan, nuget, pypi, composer, generic, golang, debian, rubygems, helm, terraform_module, rpm.",
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "package_name",
+            "in": "query",
+            "required": false,
+            "description": "Return packages with this name.",
+            "type": "string"
+          },
+          {
+            "name": "include_versionless",
+            "in": "query",
+            "required": false,
+            "description": "Returns packages without a version.",
+            "type": "boolean"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Return packages with specified status. One of: default, hidden, processing, error, pending_destruction.",
             "type": "string"
           }
         ],
@@ -37267,7 +38231,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of packages for the project.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Package"
+              }
+            }
           }
         }
       }
@@ -37285,7 +38255,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group."
           },
           {
             "name": "exclude_subgroups",
@@ -37319,7 +38289,37 @@
             "name": "package_name",
             "in": "query",
             "required": false,
-            "description": "",
+            "description": "Return packages with this name.",
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "include_versionless",
+            "in": "query",
+            "required": false,
+            "description": "Returns packages without a version.",
+            "type": "boolean"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Return packages with specified status. One of: default, hidden, processing, error, pending_destruction.",
             "type": "string"
           }
         ],
@@ -37334,7 +38334,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of packages for the group.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Package"
+              }
+            }
           }
         }
       }
@@ -37352,14 +38358,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "package_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a package."
           }
         ],
         "responses": {
@@ -37373,7 +38379,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Single project package.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Package"
+            }
           }
         }
       },
@@ -37389,14 +38398,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "package_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a package."
           }
         ],
         "responses": {
@@ -37428,14 +38437,30 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "package_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a package."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -37449,7 +38474,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of files for the package.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_PackageFile"
+              }
+            }
           }
         }
       }
@@ -37467,21 +38498,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "package_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a package."
           },
           {
             "name": "package_file_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of a package file."
           }
         ],
         "responses": {
@@ -41697,7 +42728,8 @@
     },
     "/projects/{id}/templates/{type}": {
       "get": {
-        "summary": "Get all templates of a particular type",
+        "summary": "Get a list of templates available to this project",
+        "description": "This endpoint was introduced in GitLab 11.4",
         "operationId": "get_projects_id_templates_type",
         "tags": [
           "Project Templates"
@@ -41708,14 +42740,41 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "type",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The type (dockerfiles|gitignores|gitlab_ci_ymls|licenses|metrics_dashboard_ymls|issues|merge_requests) of the template",
+            "enum": [
+              "dockerfiles",
+              "gitignores",
+              "gitlab_ci_ymls",
+              "licenses",
+              "metrics_dashboard_ymls",
+              "issues",
+              "merge_requests"
+            ]
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "description": "Current page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "description": "Number of items per page"
           }
         ],
         "responses": {
@@ -41726,17 +42785,24 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a list of templates available to this project",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_TemplatesList"
+              }
+            }
           }
         }
       }
     },
     "/projects/{id}/templates/{type}/{name}": {
       "get": {
-        "summary": "Get one template of a particular type",
+        "summary": "Download a template available to this project",
+        "description": "This endpoint was introduced in GitLab 11.4",
         "operationId": "get_projects_id_templates_type_name",
         "tags": [
           "Project Templates"
@@ -41747,43 +42813,52 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "type",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The type (dockerfiles|gitignores|gitlab_ci_ymls|licenses|metrics_dashboard_ymls|issues|merge_requests) of the template",
+            "enum": [
+              "dockerfiles",
+              "gitignores",
+              "gitlab_ci_ymls",
+              "licenses",
+              "metrics_dashboard_ymls",
+              "issues",
+              "merge_requests"
+            ]
           },
           {
             "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the template, as obtained from the collection endpoint."
           },
           {
             "name": "fullname",
             "in": "query",
             "required": false,
-            "description": "The full name of the copyright holder to use when expanding placeholders in the template. Affects only licenses.",
+            "description": "The full name of the copyright holder to use when expanding placeholders in the template. Only affects licenses",
             "type": "string"
           },
           {
             "name": "project",
             "in": "query",
             "required": false,
-            "description": "The project name to use when expanding placeholders in the template. Affects only licenses.",
+            "description": "The project name to use when expanding placeholders in the template. Only affects licenses",
             "type": "string"
           },
           {
             "name": "source_template_project_id",
             "in": "query",
             "required": false,
-            "description": "The project ID where a given template is being stored. Helpful when multiple templates from different projects have the same name. If multiple templates have the same name, the match from closest ancestor is returned if source_template_project_id is not specified,",
+            "description": "The project id where a given template is being stored. This is useful when multiple templates from different projects have the same name",
             "type": "integer",
-            "format": "int64"
+            "format": "int32"
           }
         ],
         "responses": {
@@ -41794,10 +42869,13 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Download a template available to this project",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_License"
+            }
           }
         }
       }
@@ -46534,7 +47612,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "page_token",
@@ -46613,14 +47691,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The blob SHA (commit hash)."
           }
         ],
         "responses": {
@@ -46634,7 +47712,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Blob object from the repository.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Blob"
+            }
           }
         }
       }
@@ -46652,14 +47733,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "sha",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The blob SHA (commit hash)."
           }
         ],
         "responses": {
@@ -46673,7 +47754,7 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Raw blob contents from the repository (binary)."
           }
         }
       }
@@ -46691,7 +47772,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "path",
@@ -46719,7 +47800,7 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Archive of the repository (binary download)."
           }
         }
       }
@@ -46737,7 +47818,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "from",
@@ -46780,7 +47861,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Comparison result between two refs.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Compare"
+            }
           }
         }
       }
@@ -46877,7 +47961,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "refs",
@@ -46902,7 +47986,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Common ancestor commit.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Commit"
+            }
           }
         }
       }
@@ -46920,7 +48007,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "body",
@@ -46983,11 +48070,11 @@
           "404": {
             "description": "Not Found"
           },
-          "201": {
-            "description": "Created"
-          },
           "400": {
             "description": "Bad Request"
+          },
+          "200": {
+            "description": "Changelog section generated and committed successfully."
           }
         }
       },
@@ -47003,7 +48090,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project."
           },
           {
             "name": "version",
@@ -47060,7 +48147,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Generated changelog notes.",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Changelog"
+            }
           }
         }
       }
@@ -47711,7 +48801,25 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -47725,7 +48833,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Ci_ResourceGroup"
+              }
+            }
           }
         }
       }
@@ -47743,14 +48857,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user"
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the resource group"
           }
         ],
         "responses": {
@@ -47764,7 +48878,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_ResourceGroup"
+            }
           }
         }
       },
@@ -47780,14 +48897,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user"
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the resource group"
           },
           {
             "name": "body",
@@ -47815,7 +48932,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Ci_ResourceGroup"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -47836,14 +48956,32 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user"
           },
           {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The key of the resource group"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1,
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20,
+            "required": false
           }
         ],
         "responses": {
@@ -47857,7 +48995,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Ci_JobBasic"
+              }
+            }
           }
         }
       }
@@ -49851,6 +50995,22 @@
             "required": false,
             "description": "Filter by state. Supports issues and merge_requests scopes; other scopes are ignored.",
             "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of results per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -49864,7 +51024,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful. Returns an array of objects whose shape depends on the `scope` parameter (e.g., issues, merge_requests, milestones, projects, users, commits, blobs, notes, wiki_blobs).",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
           }
         }
       }
@@ -49882,7 +51048,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the group owned by the authenticated user."
           },
           {
             "name": "scope",
@@ -49925,6 +51091,22 @@
             "required": false,
             "description": "Filter by state. Supports issues and merge_requests only; other scopes are ignored.",
             "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of results per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -49938,7 +51120,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful. Returns an array of objects whose shape depends on the `scope` parameter (e.g., issues, merge_requests, milestones, projects, users, commits, blobs, notes, wiki_blobs).",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
           }
         }
       }
@@ -49956,7 +51144,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user."
           },
           {
             "name": "scope",
@@ -50006,6 +51194,22 @@
             "required": false,
             "description": "Filter by state. Supports the issues and merge_requests scopes; other scopes are ignored.",
             "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of results per page (default: 20, max: 100).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -50019,7 +51223,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Successful. Returns an array of objects whose shape depends on the `scope` parameter (e.g., issues, merge_requests, milestones, projects, users, commits, blobs, notes, wiki_blobs).",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
           }
         }
       }
@@ -56823,6 +58033,20 @@
         }
       }
     },
+    "API_Entities_TemplatesList": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "example": "mit"
+        },
+        "name": {
+          "type": "string",
+          "example": "MIT License"
+        }
+      },
+      "description": "API_Entities_TemplatesList model"
+    },
     "API_Entities_TreeObject": {
       "type": "object",
       "properties": {
@@ -58210,43 +59434,41 @@
     },
     "API_Entities_Diff": {
       "type": "object",
-      "description": "Diff for a single file in a commit",
       "properties": {
         "diff": {
           "type": "string",
-          "description": "The unified diff of the file changes"
+          "description": "The diff content."
         },
         "new_path": {
           "type": "string",
-          "example": "doc/update/5.4-to-6.0.md",
-          "description": "New file path"
+          "description": "The path of the file after the change."
         },
         "old_path": {
           "type": "string",
-          "example": "doc/update/5.4-to-6.0.md",
-          "description": "Old file path"
+          "description": "The path of the file before the change."
         },
         "a_mode": {
           "type": "string",
-          "example": "100755"
+          "description": "File mode before the change."
         },
         "b_mode": {
           "type": "string",
-          "example": "100644"
+          "description": "File mode after the change."
         },
         "new_file": {
           "type": "boolean",
-          "description": "Whether this is a new file"
+          "description": "Whether the file is newly created."
         },
         "renamed_file": {
           "type": "boolean",
-          "description": "Whether the file was renamed"
+          "description": "Whether the file was renamed."
         },
         "deleted_file": {
           "type": "boolean",
-          "description": "Whether the file was deleted"
+          "description": "Whether the file was deleted."
         }
-      }
+      },
+      "description": "API_Entities_Diff model"
     },
     "API_Entities_CommitStatus": {
       "type": "object",
@@ -60465,6 +61687,1614 @@
           "description": "Whether this is a project label (as opposed to a group label)"
         }
       }
+    },
+    "API_Entities_Epic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the epic."
+        },
+        "iid": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The internal ID of the epic within the group."
+        },
+        "group_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the group."
+        },
+        "parent_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the parent epic."
+        },
+        "parent_iid": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The internal ID of the parent epic."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the epic."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the epic."
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "opened",
+            "closed"
+          ],
+          "description": "The state of the epic."
+        },
+        "confidential": {
+          "type": "boolean",
+          "description": "Whether the epic is confidential."
+        },
+        "web_url": {
+          "type": "string",
+          "description": "The URL of the epic."
+        },
+        "references": {
+          "type": "object",
+          "properties": {
+            "short": {
+              "type": "string"
+            },
+            "relative": {
+              "type": "string"
+            },
+            "full": {
+              "type": "string"
+            }
+          },
+          "description": "Shorthand references for the epic."
+        },
+        "author": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "The start date of the epic."
+        },
+        "start_date_is_fixed": {
+          "type": "boolean",
+          "description": "Whether start_date is fixed."
+        },
+        "start_date_fixed": {
+          "type": "string",
+          "format": "date",
+          "description": "The fixed start date."
+        },
+        "start_date_from_milestones": {
+          "type": "string",
+          "format": "date",
+          "description": "The start date inherited from milestones."
+        },
+        "due_date": {
+          "type": "string",
+          "format": "date",
+          "description": "The due date of the epic."
+        },
+        "due_date_is_fixed": {
+          "type": "boolean",
+          "description": "Whether due_date is fixed."
+        },
+        "due_date_fixed": {
+          "type": "string",
+          "format": "date",
+          "description": "The fixed due date."
+        },
+        "due_date_from_milestones": {
+          "type": "string",
+          "format": "date",
+          "description": "The due date inherited from milestones."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The creation timestamp."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The last update timestamp."
+        },
+        "closed_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The closure timestamp."
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Labels assigned to the epic."
+        },
+        "upvotes": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Number of upvotes."
+        },
+        "downvotes": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Number of downvotes."
+        },
+        "color": {
+          "type": "string",
+          "description": "The color of the epic (hex value)."
+        },
+        "subscribed": {
+          "type": "boolean",
+          "description": "Whether the current user is subscribed to the epic."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL of the epic (alias of web_url)."
+        }
+      },
+      "description": "API_Entities_Epic model"
+    },
+    "API_Entities_Namespace": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the namespace."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the namespace."
+        },
+        "path": {
+          "type": "string",
+          "description": "The path of the namespace."
+        },
+        "kind": {
+          "type": "string",
+          "description": "The kind of namespace (user or group)."
+        },
+        "full_path": {
+          "type": "string",
+          "description": "The full path of the namespace."
+        },
+        "parent_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the parent namespace."
+        },
+        "avatar_url": {
+          "type": "string",
+          "description": "URL of the namespace avatar."
+        },
+        "web_url": {
+          "type": "string",
+          "description": "The URL of the namespace."
+        },
+        "members_count_with_descendants": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Total members including descendants (groups only)."
+        }
+      },
+      "description": "API_Entities_Namespace model"
+    },
+    "API_Entities_NamespaceExistence": {
+      "type": "object",
+      "properties": {
+        "exists": {
+          "type": "boolean",
+          "description": "Whether the namespace path already exists."
+        },
+        "suggests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Suggested alternative paths if the requested path already exists."
+        }
+      },
+      "description": "API_Entities_NamespaceExistence model"
+    },
+    "API_Entities_FeatureFlag_Scope": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the scope."
+        },
+        "environment_scope": {
+          "type": "string",
+          "description": "The environment scope (e.g. production, *, staging)."
+        }
+      },
+      "description": "API_Entities_FeatureFlag_Scope model"
+    },
+    "API_Entities_FeatureFlag_Strategy": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the strategy."
+        },
+        "name": {
+          "type": "string",
+          "description": "The strategy name (default, gradualRolloutUserId, userWithId, gitlabUserList, flexibleRollout)."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "The strategy parameters as a key-value object."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_FeatureFlag_Scope"
+          },
+          "description": "The environment scopes for this strategy."
+        }
+      },
+      "description": "API_Entities_FeatureFlag_Strategy model"
+    },
+    "API_Entities_FeatureFlag": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the feature flag."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the feature flag."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether the feature flag is active."
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the feature flag (new_version_flag or legacy_flag)."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The creation timestamp."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The last update timestamp."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Legacy scopes (empty for new_version_flag)."
+        },
+        "strategies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_FeatureFlag_Strategy"
+          },
+          "description": "The strategies applied to this feature flag."
+        }
+      },
+      "description": "API_Entities_FeatureFlag model"
+    },
+    "API_Entities_Compare": {
+      "type": "object",
+      "properties": {
+        "commit": {
+          "$ref": "#/definitions/API_Entities_Commit",
+          "description": "The HEAD commit of the comparison."
+        },
+        "commits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_Commit"
+          },
+          "description": "List of commits in the comparison range."
+        },
+        "diffs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_Diff"
+          },
+          "description": "List of file diffs."
+        },
+        "compare_timeout": {
+          "type": "boolean",
+          "description": "Whether the comparison timed out."
+        },
+        "compare_same_ref": {
+          "type": "boolean",
+          "description": "Whether from and to refer to the same ref."
+        },
+        "web_url": {
+          "type": "string",
+          "description": "URL to the comparison view."
+        }
+      },
+      "description": "API_Entities_Compare model"
+    },
+    "API_Entities_Changelog": {
+      "type": "object",
+      "properties": {
+        "notes": {
+          "type": "string",
+          "description": "The generated changelog notes in Markdown format."
+        }
+      },
+      "description": "API_Entities_Changelog model"
+    },
+    "API_Entities_Blob": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The file size in bytes."
+        },
+        "encoding": {
+          "type": "string",
+          "description": "The encoding of the content field (base64)."
+        },
+        "content": {
+          "type": "string",
+          "description": "The base64-encoded file content."
+        },
+        "sha": {
+          "type": "string",
+          "description": "The blob SHA."
+        }
+      },
+      "description": "API_Entities_Blob model"
+    },
+    "API_Entities_Package_Pipeline": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The pipeline ID."
+        },
+        "iid": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The pipeline IID."
+        },
+        "project_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The project ID."
+        },
+        "sha": {
+          "type": "string",
+          "description": "The commit SHA."
+        },
+        "ref": {
+          "type": "string",
+          "description": "The branch or tag ref."
+        },
+        "status": {
+          "type": "string",
+          "description": "The pipeline status."
+        },
+        "source": {
+          "type": "string",
+          "description": "The pipeline source (push, web, etc.)."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Pipeline creation timestamp."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Pipeline last update timestamp."
+        },
+        "web_url": {
+          "type": "string",
+          "description": "URL to the pipeline."
+        },
+        "user": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        }
+      },
+      "description": "API_Entities_Package_Pipeline model"
+    },
+    "API_Entities_PackageVersion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The package version ID."
+        },
+        "version": {
+          "type": "string",
+          "description": "The version string."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for this version."
+        },
+        "pipeline": {
+          "$ref": "#/definitions/API_Entities_Package_Pipeline"
+        }
+      },
+      "description": "API_Entities_PackageVersion model"
+    },
+    "API_Entities_Package": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The package ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "The package name."
+        },
+        "conan_package_name": {
+          "type": "string",
+          "description": "The Conan package name (Conan packages only)."
+        },
+        "version": {
+          "type": "string",
+          "description": "The package version."
+        },
+        "package_type": {
+          "type": "string",
+          "description": "The package type (npm, maven, conan, etc.)."
+        },
+        "status": {
+          "type": "string",
+          "description": "The package status."
+        },
+        "_links": {
+          "type": "object",
+          "properties": {
+            "web_path": {
+              "type": "string",
+              "description": "URL to the package in the UI."
+            },
+            "delete_api_path": {
+              "type": "string",
+              "description": "API path to delete the package."
+            }
+          },
+          "description": "Links for the package."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Package creation timestamp."
+        },
+        "last_downloaded_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last download timestamp."
+        },
+        "project_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The project ID."
+        },
+        "project_path": {
+          "type": "string",
+          "description": "The project path."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for the package."
+        },
+        "pipeline": {
+          "$ref": "#/definitions/API_Entities_Package_Pipeline"
+        },
+        "pipelines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_Package_Pipeline"
+          },
+          "description": "Pipelines associated with this package."
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_PackageVersion"
+          },
+          "description": "Other versions of this package."
+        }
+      },
+      "description": "API_Entities_Package model"
+    },
+    "API_Entities_PackageFile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The package file ID."
+        },
+        "package_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The parent package ID."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "File creation timestamp."
+        },
+        "file_name": {
+          "type": "string",
+          "description": "The filename."
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The file size in bytes."
+        },
+        "file_md5": {
+          "type": "string",
+          "description": "MD5 checksum of the file."
+        },
+        "file_sha1": {
+          "type": "string",
+          "description": "SHA1 checksum of the file."
+        },
+        "file_sha256": {
+          "type": "string",
+          "description": "SHA256 checksum of the file."
+        },
+        "pipelines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_Package_Pipeline"
+          },
+          "description": "Pipelines that produced this file."
+        }
+      },
+      "description": "API_Entities_PackageFile model"
+    },
+    "API_Entities_Dependency": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the dependency."
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the dependency."
+        },
+        "package_manager": {
+          "type": "string",
+          "description": "The package manager (bundler, composer, conan, go, gradle, maven, npm, nuget, pip, pipenv, yarn, sbt, setuptools)."
+        },
+        "dependency_file_path": {
+          "type": "string",
+          "description": "Path to the dependency file (e.g. Gemfile.lock)."
+        },
+        "vulnerabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Vulnerability name."
+              },
+              "severity": {
+                "type": "string",
+                "description": "Vulnerability severity (info, unknown, low, medium, high, critical)."
+              }
+            }
+          },
+          "description": "Known vulnerabilities for this dependency."
+        },
+        "licenses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "License name."
+              },
+              "url": {
+                "type": "string",
+                "description": "URL to license details."
+              }
+            }
+          },
+          "description": "Licenses associated with this dependency."
+        }
+      },
+      "description": "API_Entities_Dependency model"
+    },
+    "API_Entities_Ci_JobArtifactFile": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "example": "artifacts.zip"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1000
+        }
+      },
+      "description": "API_Entities_Ci_JobArtifactFile model"
+    },
+    "API_Entities_Ci_JobArtifact": {
+      "type": "object",
+      "properties": {
+        "file_type": {
+          "type": "string",
+          "example": "archive",
+          "enum": [
+            "archive",
+            "metadata",
+            "trace",
+            "junit",
+            "sast",
+            "dependency_scanning",
+            "container_scanning",
+            "dast",
+            "codequality",
+            "license_scanning",
+            "performance",
+            "metrics",
+            "metrics_referee",
+            "network_referee",
+            "lsif",
+            "dotenv",
+            "cobertura",
+            "terraform",
+            "accessibility",
+            "cluster_applications",
+            "secret_detection",
+            "requirements",
+            "coverage_fuzzing",
+            "browser_performance",
+            "load_performance",
+            "api_fuzzing",
+            "cluster_image_scanning",
+            "cyclonedx",
+            "requirements_v2"
+          ]
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1000
+        },
+        "filename": {
+          "type": "string",
+          "example": "artifacts.zip"
+        },
+        "file_format": {
+          "type": "string",
+          "example": "zip",
+          "enum": [
+            "raw",
+            "zip",
+            "gzip"
+          ]
+        }
+      },
+      "description": "API_Entities_Ci_JobArtifact model"
+    },
+    "API_Entities_Ci_Runner": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 8
+        },
+        "description": {
+          "type": "string",
+          "example": "test-1-20150125"
+        },
+        "ip_address": {
+          "type": "string",
+          "example": "127.0.0.1"
+        },
+        "active": {
+          "type": "boolean",
+          "example": true
+        },
+        "paused": {
+          "type": "boolean",
+          "example": false
+        },
+        "is_shared": {
+          "type": "boolean",
+          "example": true
+        },
+        "runner_type": {
+          "type": "string",
+          "example": "instance_type",
+          "enum": [
+            "instance_type",
+            "group_type",
+            "project_type"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "example": "test"
+        },
+        "online": {
+          "type": "boolean",
+          "example": true
+        },
+        "status": {
+          "type": "string",
+          "example": "online"
+        }
+      },
+      "description": "API_Entities_Ci_Runner model"
+    },
+    "API_Entities_Ci_Job": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "status": {
+          "type": "string",
+          "example": "waiting_for_resource"
+        },
+        "stage": {
+          "type": "string",
+          "example": "deploy"
+        },
+        "name": {
+          "type": "string",
+          "example": "deploy_to_production"
+        },
+        "ref": {
+          "type": "string",
+          "example": "main"
+        },
+        "tag": {
+          "type": "boolean"
+        },
+        "coverage": {
+          "type": "number",
+          "format": "float",
+          "example": 98.29
+        },
+        "allow_failure": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T15:51:21.880Z"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T17:54:30.733Z"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T17:54:31.198Z"
+        },
+        "duration": {
+          "type": "number",
+          "format": "float",
+          "example": 0.465,
+          "description": "Time spent running"
+        },
+        "queued_duration": {
+          "type": "number",
+          "format": "float",
+          "example": 0.123,
+          "description": "Time spent enqueued"
+        },
+        "user": {
+          "$ref": "#/definitions/API_Entities_User"
+        },
+        "commit": {
+          "$ref": "#/definitions/API_Entities_Commit"
+        },
+        "pipeline": {
+          "$ref": "#/definitions/API_Entities_Ci_PipelineBasic"
+        },
+        "failure_reason": {
+          "type": "string",
+          "example": "script_failure"
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://example.com/foo/bar/-/jobs/1"
+        },
+        "project": {
+          "type": "object",
+          "properties": {
+            "ci_job_token_scope_enabled": {
+              "type": "string",
+              "example": false
+            }
+          }
+        },
+        "artifacts_file": {
+          "$ref": "#/definitions/API_Entities_Ci_JobArtifactFile"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/API_Entities_Ci_JobArtifact"
+          }
+        },
+        "runner": {
+          "$ref": "#/definitions/API_Entities_Ci_Runner"
+        },
+        "artifacts_expire_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2016-01-19T09:05:50.355Z"
+        },
+        "tag_list": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "API_Entities_Ci_Job model"
+    },
+    "API_Entities_Ci_JobBasic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "status": {
+          "type": "string",
+          "example": "waiting_for_resource"
+        },
+        "stage": {
+          "type": "string",
+          "example": "deploy"
+        },
+        "name": {
+          "type": "string",
+          "example": "deploy_to_production"
+        },
+        "ref": {
+          "type": "string",
+          "example": "main"
+        },
+        "tag": {
+          "type": "boolean"
+        },
+        "coverage": {
+          "type": "number",
+          "format": "float",
+          "example": 98.29
+        },
+        "allow_failure": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T15:51:21.880Z"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T17:54:30.733Z"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T17:54:31.198Z"
+        },
+        "duration": {
+          "type": "number",
+          "format": "float",
+          "example": 0.465,
+          "description": "Time spent running"
+        },
+        "queued_duration": {
+          "type": "number",
+          "format": "float",
+          "example": 0.123,
+          "description": "Time spent enqueued"
+        },
+        "user": {
+          "$ref": "#/definitions/API_Entities_User"
+        },
+        "commit": {
+          "$ref": "#/definitions/API_Entities_Commit"
+        },
+        "pipeline": {
+          "$ref": "#/definitions/API_Entities_Ci_PipelineBasic"
+        },
+        "failure_reason": {
+          "type": "string",
+          "example": "script_failure"
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://example.com/foo/bar/-/jobs/1"
+        },
+        "project": {
+          "type": "object",
+          "properties": {
+            "ci_job_token_scope_enabled": {
+              "type": "string",
+              "example": false
+            }
+          }
+        }
+      },
+      "description": "API_Entities_Ci_JobBasic model"
+    },
+    "API_Entities_Ci_Bridge": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "example": 1
+        },
+        "status": {
+          "type": "string",
+          "example": "waiting_for_resource"
+        },
+        "stage": {
+          "type": "string",
+          "example": "deploy"
+        },
+        "name": {
+          "type": "string",
+          "example": "deploy_to_production"
+        },
+        "ref": {
+          "type": "string",
+          "example": "main"
+        },
+        "tag": {
+          "type": "boolean"
+        },
+        "coverage": {
+          "type": "number",
+          "format": "float",
+          "example": 98.29
+        },
+        "allow_failure": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T15:51:21.880Z"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T17:54:30.733Z"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2015-12-24T17:54:31.198Z"
+        },
+        "duration": {
+          "type": "number",
+          "format": "float",
+          "example": 0.465,
+          "description": "Time spent running"
+        },
+        "queued_duration": {
+          "type": "number",
+          "format": "float",
+          "example": 0.123,
+          "description": "Time spent enqueued"
+        },
+        "user": {
+          "$ref": "#/definitions/API_Entities_User"
+        },
+        "commit": {
+          "$ref": "#/definitions/API_Entities_Commit"
+        },
+        "pipeline": {
+          "$ref": "#/definitions/API_Entities_Ci_PipelineBasic"
+        },
+        "failure_reason": {
+          "type": "string",
+          "example": "script_failure"
+        },
+        "web_url": {
+          "type": "string",
+          "example": "https://example.com/foo/bar/-/jobs/1"
+        },
+        "project": {
+          "type": "object",
+          "properties": {
+            "ci_job_token_scope_enabled": {
+              "type": "string",
+              "example": false
+            }
+          }
+        },
+        "downstream_pipeline": {
+          "$ref": "#/definitions/API_Entities_Ci_PipelineBasic"
+        }
+      },
+      "description": "API_Entities_Ci_Bridge model"
+    },
+    "API_Entities_Badge": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "link_url": {
+          "type": "string"
+        },
+        "image_url": {
+          "type": "string"
+        },
+        "rendered_link_url": {
+          "type": "string"
+        },
+        "rendered_image_url": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        }
+      },
+      "description": "API_Entities_Badge model"
+    },
+    "API_Entities_BasicBadgeDetails": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "link_url": {
+          "type": "string"
+        },
+        "image_url": {
+          "type": "string"
+        },
+        "rendered_link_url": {
+          "type": "string"
+        },
+        "rendered_image_url": {
+          "type": "string"
+        }
+      },
+      "description": "API_Entities_BasicBadgeDetails model"
+    },
+    "API_Entities_Ci_Variable": {
+      "type": "object",
+      "properties": {
+        "variable_type": {
+          "type": "string",
+          "example": "env_var"
+        },
+        "key": {
+          "type": "string",
+          "example": "TEST_VARIABLE_1"
+        },
+        "value": {
+          "type": "string",
+          "example": "TEST_1"
+        },
+        "protected": {
+          "type": "boolean"
+        },
+        "masked": {
+          "type": "boolean"
+        },
+        "raw": {
+          "type": "boolean"
+        },
+        "environment_scope": {
+          "type": "string",
+          "example": "*"
+        }
+      },
+      "description": "API_Entities_Ci_Variable model"
+    },
+    "API_Entities_Platform_Kubernetes": {
+      "type": "object",
+      "properties": {
+        "api_url": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "authorization_type": {
+          "type": "string"
+        },
+        "ca_cert": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_Provider_Gcp": {
+      "type": "object",
+      "properties": {
+        "cluster_id": {
+          "type": "string"
+        },
+        "status_name": {
+          "type": "string"
+        },
+        "gcp_project_id": {
+          "type": "string"
+        },
+        "zone": {
+          "type": "string"
+        },
+        "machine_type": {
+          "type": "string"
+        },
+        "num_nodes": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_BasicGroupDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "web_url": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_ProjectIdentity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "name_with_namespace": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "path_with_namespace": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "API_Entities_ClusterGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "string"
+        },
+        "managed": {
+          "type": "string"
+        },
+        "provider_type": {
+          "type": "string"
+        },
+        "platform_type": {
+          "type": "string"
+        },
+        "environment_scope": {
+          "type": "string"
+        },
+        "cluster_type": {
+          "type": "string"
+        },
+        "namespace_per_environment": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "platform_kubernetes": {
+          "$ref": "#/definitions/API_Entities_Platform_Kubernetes"
+        },
+        "provider_gcp": {
+          "$ref": "#/definitions/API_Entities_Provider_Gcp"
+        },
+        "management_project": {
+          "$ref": "#/definitions/API_Entities_ProjectIdentity"
+        },
+        "group": {
+          "$ref": "#/definitions/API_Entities_BasicGroupDetails"
+        }
+      },
+      "description": "API_Entities_ClusterGroup model"
+    },
+    "API_Entities_Releases_Source": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "example": "zip"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "API_Entities_Releases_Link": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "direct_asset_url": {
+          "type": "string"
+        },
+        "external": {
+          "type": "boolean"
+        },
+        "link_type": {
+          "type": "string"
+        }
+      },
+      "description": "API_Entities_Releases_Link model"
+    },
+    "API_Entities_Releases_Evidence": {
+      "type": "object",
+      "properties": {
+        "sha": {
+          "type": "string"
+        },
+        "filepath": {
+          "type": "string"
+        },
+        "collected_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "API_Entities_Release": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "Release v1.0"
+        },
+        "tag_name": {
+          "type": "string",
+          "example": "v1.0"
+        },
+        "description": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "released_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "upcoming_release": {
+          "type": "boolean"
+        },
+        "description_html": {
+          "type": "string"
+        },
+        "author": {
+          "$ref": "#/definitions/API_Entities_UserBasic"
+        },
+        "commit": {
+          "$ref": "#/definitions/API_Entities_Commit"
+        },
+        "milestones": {
+          "$ref": "#/definitions/API_Entities_MilestoneWithStats"
+        },
+        "commit_path": {
+          "type": "string"
+        },
+        "tag_path": {
+          "type": "string"
+        },
+        "assets": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "sources": {
+              "$ref": "#/definitions/API_Entities_Releases_Source"
+            },
+            "links": {
+              "$ref": "#/definitions/API_Entities_Releases_Link"
+            }
+          }
+        },
+        "evidences": {
+          "$ref": "#/definitions/API_Entities_Releases_Evidence"
+        },
+        "_links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string"
+            },
+            "edit_url": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "API_Entities_Release model"
+    },
+    "API_Entities_WikiPage": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "example": "markdown"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "encoding": {
+          "type": "string"
+        }
+      },
+      "description": "API_Entities_WikiPage model"
+    },
+    "API_Entities_WikiAttachment": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string"
+        },
+        "file_path": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "link": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "markdown": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "API_Entities_WikiAttachment model"
+    },
+    "API_Entities_Ci_ResourceGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "key": {
+          "type": "string",
+          "example": "production"
+        },
+        "process_mode": {
+          "type": "string",
+          "example": "unordered"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "API_Entities_Ci_ResourceGroup model"
+    },
+    "API_Entities_ProtectedEnvironment": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "production"
+        },
+        "deploy_access_levels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "access_level": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "access_level_description": {
+                "type": "string"
+              },
+              "user_id": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "group_id": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        },
+        "required_approval_count": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "description": "API_Entities_ProtectedEnvironment model"
+    },
+    "API_Entities_GroupRepositoryStorageMove": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "state": {
+          "type": "string",
+          "example": "scheduled"
+        },
+        "source_storage_name": {
+          "type": "string",
+          "example": "default"
+        },
+        "destination_storage_name": {
+          "type": "string"
+        },
+        "group": {
+          "$ref": "#/definitions/API_Entities_BasicGroupDetails"
+        }
+      },
+      "description": "API_Entities_GroupRepositoryStorageMove model"
+    },
+    "API_Entities_GroupIteration": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "iid": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "group_id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "state": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "start_date": {
+          "type": "string"
+        },
+        "due_date": {
+          "type": "string"
+        },
+        "web_url": {
+          "type": "string"
+        }
+      },
+      "description": "API_Entities_GroupIteration model"
     }
   }
 }

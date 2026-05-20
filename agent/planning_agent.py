@@ -1110,6 +1110,12 @@ class PlanningAgent:
             "IMPORTANT: Do NOT check how arguments are wired between steps, what parameter names are used, "
             "or whether reference values are correct — argument-level wiring is verified in a separate pass "
             "after the plan is built.\n\n"
+            "foreach rule (CRITICAL — read before evaluating):\n"
+            "- A step with 'foreach: [\"Name1\", \"Name2\", ...]' runs ONCE PER ELEMENT and collects all results.\n"
+            "- This means a SINGLE lookup step with foreach set to a list of N names fully satisfies the "
+            "identifier-resolution requirement for ALL N entities. It is NOT missing N-1 steps.\n"
+            "- Only flag a missing lookup if there is NO step (with or without foreach) that can resolve "
+            "the needed identifier for one or more entities in the task.\n\n"
             'Respond with ONLY valid JSON:\n'
             '{"issues": ["description of gap or problem"], "ok": false}\n'
             'If the endpoint set is complete and correct: {"issues": [], "ok": true}'
