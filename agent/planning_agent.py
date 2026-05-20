@@ -86,7 +86,6 @@ class PlanningAgent:
         return list(self._run_log)
 
     async def _run_llm(self, label: str, prompt: str) -> str:
-        self._record(f"{label}.prompt", prompt)
         self._debug_print(label, prompt=prompt)
         if self.debug_prompts or self.debug_responses:
             print(f"[PlanningAgent] {label} calling LLM (prompt length: {len(prompt)} chars)...")
@@ -362,10 +361,7 @@ class PlanningAgent:
 
         if self.debug_responses:
             kept_count = len(endpoints) - len(excluded)
-            # reasoning = data.get("reasoning", "")
             print("\n[PlanningAgent] _exclude_unrelated_endpoints RESULT:")
-            # if reasoning:
-            #     print(f"  Reasoning: {reasoning}")
             print(f"  Excluded {len(excluded)}, keeping {kept_count} of {len(endpoints)} total")
             print("=" * 60 + "\n")
 
@@ -491,21 +487,25 @@ class PlanningAgent:
             "set foreach to the string 'LOOP_OVER_PRIOR' — the exact step reference will be resolved when the full plan is built.\n"
             "- Otherwise set foreach to null.\n\n"
             "Required resolvers:\n"
-            "List any prerequisite steps whose need is semantic rather than structural — i.e., steps that the swagger "
-            "parameter system cannot detect automatically. Common cases:\n"
+            "List any prerequisite steps whose need is semantic rather than structural. Common cases:\n"
             "- The task refers to 'me', 'my', or 'mine' → include a current-user lookup endpoint so the plan "
             "knows who the authenticated user is.\n"
-            "- The task names a resource by a plain display name (e.g. a project name, a username) but the goal "
-            "endpoint requires a numeric ID → include a search/lookup endpoint to resolve the name to an ID.\n"
-            "- The goal endpoint's output type depends on a prior step providing a specific identifier that "
-            "no swagger required parameter captures (e.g. contributor name → GitLab user ID).\n"
+            "- The task names a resource by a plain display name but the goal endpoint requires a numeric ID → "
+            "include a search/lookup endpoint to resolve the name to an ID.\n"
             "If no semantic prerequisite is needed, emit an empty list: [].\n"
             "For each resolver: endpoint_index is its index in the Available endpoints list above; "
             "satisfies_param is the parameter name in the goal (or a later step) that this resolver's output feeds.\n\n"
+            "CRITICAL — multiple entities of the same type:\n"
+            "- If the task names N entities that all need the same lookup (e.g. two users, three items), "
+            "include that resolver endpoint EXACTLY ONCE with foreach set to all their names: "
+            'foreach: ["Name1", "Name2", ...]. Do NOT list the same resolver endpoint multiple times.\n'
+            "- The foreach step runs once per element and collects all results as a list for the goal step to iterate over.\n\n"
             'Required output — ONLY valid JSON, examples:\n'
             '{"goal_index": 2, "literal_args": {"state": "opened"}, "foreach": null, "required_resolvers": []}\n'
-            'With resolver: {"goal_index": 4, "literal_args": {}, "foreach": null, '
-            '"required_resolvers": [{"endpoint_index": 1, "capability": "looks up current user identity", "satisfies_param": "author_id", "literal_args": {}}]}'
+            'Single resolver: {"goal_index": 4, "literal_args": {}, "foreach": null, '
+            '"required_resolvers": [{"endpoint_index": 1, "capability": "looks up current user identity", "satisfies_param": "author_id", "literal_args": {}, "foreach": null}]}\n'
+            'Multi-entity resolver: {"goal_index": 4, "literal_args": {}, "foreach": "LOOP_OVER_PRIOR", '
+            '"required_resolvers": [{"endpoint_index": 2, "capability": "looks up each entity by name", "satisfies_param": "entity_id", "literal_args": {}, "foreach": ["Alice", "Bob"]}]}'
         )
         response = await self._run_llm("_pick_goal", prompt)
 
@@ -594,12 +594,13 @@ class PlanningAgent:
             "- Specify which parameter name (from the missing list above) this resolver's output will satisfy.\n"
             "- If no endpoint can provide the needed value, return null for endpoint_index.\n\n"
             "Foreach (bulk operations only):\n"
-            "- If the task names multiple specific entities that all need this resolver to run once per entity, "
-            "set foreach to a list of those names and use {loop_item} as the argument value.\n"
+            "- If the task names multiple specific entities that all need this resolver (e.g. two users, three items), "
+            "set foreach to a list of ALL their names: foreach: [\"Name1\", \"Name2\", ...]. "
+            "Do NOT return this resolver with foreach=null and expect a second call — each resolver endpoint is used at most once.\n"
             "- Otherwise set foreach to null.\n\n"
             'Respond with ONLY valid JSON:\n'
             '{"endpoint_index": 3, "satisfies_param": "project_id", "literal_args": {"search": "dotfiles"}, "foreach": null, "capability": "searches for project by name to get its ID"}\n'
-            'Bulk example: {"endpoint_index": 2, "satisfies_param": "user_id", "literal_args": {}, "foreach": ["Alice", "Bob", "Carol"], "capability": "looks up each user by name"}\n'
+            'Bulk example: {"endpoint_index": 2, "satisfies_param": "entity_id", "literal_args": {}, "foreach": ["Alice", "Bob", "Carol"], "capability": "looks up each entity by name"}\n'
             'Or if nothing fits: {"endpoint_index": null, "satisfies_param": "", "literal_args": {}, "foreach": null, "capability": ""}'
         )
         response = await self._run_llm("_find_resolver", prompt)
@@ -849,24 +850,38 @@ class PlanningAgent:
             "  - 'reference': the value comes from a prior step's output via {step_id.result} or a field accessor like {step_id.result.field_name}\n\n"
             "Reference field accessor rule (CRITICAL):\n"
             "- When a prior step returns a JSON object and you need only one field from it, use dot-notation: {step_id.result.field_name}\n"
-            "  Example: if step_1 returns a project object and you need its default_branch, write {step_1.result.default_branch}\n"
+            "  Example: if step_1 returns an object and you need its default_branch, write {step_1.result.default_branch}\n"
             "- Use {step_id.result} (no field) ONLY when the prior step returns a plain scalar (string, number) or you genuinely need the entire object.\n"
             "- Never use {step_id.result} when you need a specific named field — always drill down with .field_name.\n"
             "- For JSON body arguments that embed multiple references (e.g. a body string), use the most specific accessor for each embedded reference.\n\n"
+            "Accessor chain tokens (usable in both foreach references and {step_id.result...} argument values):\n"
+            "  [*]              — wildcard: apply the rest of the chain to every element of a list\n"
+            "  [n]              — numeric index: take element n (0-based)\n"
+            "  [sort_desc:f]    — sort the list descending by field f (each element must be an object with that field)\n"
+            "  [:N]             — slice: keep only the first N elements\n"
+            "  .key             — field access on a dict\n"
+            "These tokens chain left-to-right:\n"
+            "  step_1.result[*].id                        → id from every element\n"
+            "  step_1.result[sort_desc:count][:5][*].id  → top-5 by 'count' field, then their ids\n"
+            "  step_1.result[sort_desc:count][0].id       → id of the single element with the highest 'count'\n"
+            "NEVER use invented syntax like max_by(field) — use [sort_desc:f][0] instead.\n"
+            "If the API does not support sorting by a required field as a query param, fetch with valid params "
+            "(e.g. per_page=100) and sort/slice client-side via [sort_desc:field] and [:N] in the accessor chain.\n\n"
             "Closed-enum rule:\n"
             "- If a parameter lists allowed values (in its description), treat that list as CLOSED.\n"
             "- ONLY use exact listed values — do not invent, paraphrase, or substitute.\n"
-            "- If the task requires an operation not expressible with documented values, use the nearest valid value "
-            "and add a post_processing instruction on that step to perform the remaining filtering/sorting.\n\n"
+            "- If the task requires sorting or filtering by a value not supported as a query param, "
+            "fetch with the closest valid param and apply accessor-chain sorting/slicing in the next step.\n\n"
             "Free-string parameter rule:\n"
             "- If a parameter is a free string (no enum, no documented example values), do NOT invent a value for it. "
             "Only include it if: (a) the task explicitly states the exact value, or (b) a prior step's output supplies it, or (c) you can look it up via another API endpoint first. \n\n"
             "If none of these apply and the parameter is optional and not necessary for the task, omit it entirely.\n\n"
-            
             "Foreach rule:\n"
             "- If a step needs to process each item from a prior step's list output individually "
             "(e.g., fetch details for each ID returned by a search or events step), set foreach to "
             "'step_N.result[*].field_name' where N is the prior step and field_name is the relevant field.\n"
+            "- To loop over a sorted or sliced subset, use accessor-chain tokens in the foreach reference. "
+            "Example: foreach: \"step_1.result[sort_desc:count][:5][*].id\" iterates only the top-5 items by 'count'.\n"
             "- If the wiring shows 'foreach: LOOP_OVER_PRIOR' or 'foreach: [...]' or 'foreach: \"...\"', "
             "resolve or copy that value to the correct step reference.\n"
             "- CRITICAL consistency rule: if any argument value in a step contains '{loop_item}', "
@@ -874,9 +889,6 @@ class PlanningAgent:
             "- foreach accepts a literal list ([\"Alice\", \"Bob\"]) or a reference string (\"step_1.result[*].id\").\n"
             "- In argument values, use {loop_item} as the placeholder for the current iterated element.\n"
             "- A foreach step runs N times and its output is automatically collected as a list.\n\n"
-            "Post-processing:\n"
-            "- If the API cannot fully satisfy the task (e.g. unsupported sort order), retrieve with valid params "
-            "and describe the remaining client-side operation in the step's post_processing field.\n\n"
         )
         response = await self._run_llm("_build_plan", prompt)
 
@@ -1010,12 +1022,17 @@ class PlanningAgent:
             "Produce a corrected plan that resolves all issues above. "
             "Keep steps that are already correct unchanged.\n\n"
             f"tool_name must be EXACTLY one of: {json.dumps(tool_names)}\n"
-            "- value_type is 'literal' for known values, 'reference' for {{step_id.result}} placeholders\n"
+            "- value_type is 'literal' for known values, 'reference' for {step_id.result} placeholders\n"
             "- argument names must ONLY be parameter names explicitly listed in the endpoint schema\n"
-            "- If a step has foreach set, preserve it. Use {{loop_item}} as the argument value for the iterated parameter.\n"
+            "- If a step has foreach set, preserve it. Use {loop_item} as the argument value for the iterated parameter. "
+            "The foreach field MUST be set on any step whose argument values contain {loop_item} — a step with {loop_item} but no foreach is always wrong.\n"
+            "- Accessor chain tokens available in foreach references and {step_id.result...} values: "
+            "[*] (wildcard over list), [n] (index), [sort_desc:f] (sort list desc by field f), [:N] (keep first N), .key (field). "
+            "Chain them: e.g. step_1.result[sort_desc:count][:5][*].id for top-5 by count. "
+            "Never use invented syntax like max_by(field) — use [sort_desc:f][0] instead.\n"
             "- If an issue requires adding a chain endpoint back, include it exactly as specified. "
-            "Do NOT substitute a different endpoint. If the endpoint has API limitations, handle them "
-            "with post_processing on that step.\n\n"
+            "Do NOT substitute a different endpoint. If the API does not support sorting by a required field, "
+            "fetch with valid params and apply [sort_desc:field] / [:N] in the accessor chain.\n\n"
             f"Respond with ONLY valid JSON matching this schema:\n{schema}"
         )
         response = await self._run_llm("_fix_plan", prompt)
@@ -1193,161 +1210,172 @@ class PlanningAgent:
         Given a natural language task, select the appropriate swagger file(s),
         parse them with prance, select the best API endpoints, and return a
         ToolBasedResponse containing a validated execution plan.
+
+        The entire planning pipeline is retried up to MAX_PLANNING_ATTEMPTS times
+        from scratch (fresh LLM calls for file selection, endpoint exclusion, chain
+        building, and plan building) before giving up.
         """
-        self._run_log = []
-        self._record("task", task)
+        MAX_PLANNING_ATTEMPTS = 3
+        last_error: Optional[Exception] = None
 
         index = self._load_index()
 
-        selected_files = await self._select_api_files(task, index)
-        self._record("selected_api_files", selected_files)
-        if not selected_files:
-            raise ValueError(f"No suitable API file found for task: {task!r}")
+        for planning_attempt in range(MAX_PLANNING_ATTEMPTS):
+            self._run_log = []
+            self._record("task", task)
+            if planning_attempt > 0:
+                self._record("planning_attempt", planning_attempt + 1)
 
-        all_endpoints: List[EndpointInfo] = []
-        for fname in selected_files:
-            spec = self._parse_swagger(fname)
-            all_endpoints.extend(self._extract_endpoints(spec, fname))
-
-        if not all_endpoints:
-            raise ValueError(
-                f"No endpoints extracted from selected swagger files."
-                f"\n\n[debug] selected_api_files: {selected_files}"
-            )
-
-        # 5b+5c: exclusion filter and detail expansion happen exactly once here.
-        # The resulting kept/detailed_list/api_hints_section are threaded through
-        # to _build_chain_backward and _check_chain so rebuilds never re-scan.
-        api_hints_section = self._build_hints_section(
-            all_endpoints, header="API context (use to understand data models and identifier types)"
-        )
-        excluded = await self._exclude_unrelated_endpoints(task, all_endpoints)
-        kept, detailed_list = self._expand_endpoint_details(all_endpoints, excluded)
-        self._record("kept_endpoints", [f"{ep.method} {ep.path}" for ep in kept])
-        if not kept:
-            raise ValueError(
-                f"All endpoints were excluded — cannot build a plan."
-                f"\n\n[debug] selected_api_files: {selected_files}"
-                f"\n[debug] total_endpoints_before_exclusion: {len(all_endpoints)}"
-            )
-
-        chain_steps = await self._build_chain_backward(task, kept, detailed_list, api_hints_section)
-        self._record("initial_chain", [
-            f"{cs.endpoint.method} {cs.endpoint.path} — {cs.capability}" for cs in chain_steps
-        ])
-        if not chain_steps:
-            raise ValueError(
-                f"No endpoints selected for this task."
-                + self._debug_context(selected_files, kept, [])
-            )
-
-        # Verify chain logic before building the plan so a bad chain never
-        # wastes an expensive _build_plan call.
-        MAX_CHAIN_ATTEMPTS = 2
-        accumulated_issues: list = []
-        for attempt in range(MAX_CHAIN_ATTEMPTS):
-            issues, ok = await self._check_chain(task, chain_steps, api_hints_section)
-            self._record(f"check_chain.attempt_{attempt + 1}", {"issues": issues, "ok": ok})
-            if ok or not issues:
-                break
-            for iss in issues:
-                if iss not in accumulated_issues:
-                    accumulated_issues.append(iss)
-            self._debug_print(
-                "plan",
-                response=f"chain attempt {attempt + 1}: rebuilding due to {len(accumulated_issues)} accumulated issue(s): {accumulated_issues}",
-            )
-            chain_steps = await self._build_chain_backward(
-                task, kept, detailed_list, api_hints_section, prior_issues=accumulated_issues
-            )
-            self._record(f"rebuild_chain.attempt_{attempt + 1}", [
-                f"{cs.endpoint.method} {cs.endpoint.path} — {cs.capability}" for cs in chain_steps
-            ])
-            if not chain_steps:
-                raise ValueError(
-                    f"Rebuild produced no chain steps."
-                    + self._debug_context(selected_files, kept, [])
-                )
-        else:
-            issues, ok = await self._check_chain(task, chain_steps, api_hints_section)
-            self._record("check_chain.final", {"issues": issues, "ok": ok})
-            if not ok and issues:
-                raise ValueError(
-                    f"Chain verification failed after {MAX_CHAIN_ATTEMPTS} rebuild(s):\n"
-                    + "\n".join(f"  - {iss}" for iss in issues)
-                    + self._debug_context(selected_files, kept, chain_steps)
-                )
-
-        # Step 1 check passed — build the plan using all kept endpoints so the
-        # LLM has full visibility and _fix_plan is never blocked by a missing tool.
-        plan_result = await self._build_plan(task, chain_steps, kept, detailed_list)
-        self._record("initial_plan_steps", [
-            step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
-            for step in plan_result.plan
-        ])
-
-        # Catch validation errors from the initial build so they feed into the fix loop
-        # rather than immediately aborting planning.
-        pending_validation_error: Optional[str] = None
-        try:
-            await self._validate_plan(plan_result, kept)
-        except ValueError as exc:
-            pending_validation_error = str(exc)
-            self._record("validate_plan.initial_error", pending_validation_error)
-
-        # Code-level chain compliance check: every chain endpoint must appear in the
-        # plan. The LLM sometimes substitutes a "better" endpoint despite the prompt
-        # instruction; injecting a concrete error here forces _fix_plan to restore it.
-        plan_tool_names = {
-            step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
-            for step in plan_result.plan
-        }
-        chain_violations = [
-            f"Chain endpoint '{cs.endpoint.method} {cs.endpoint.path}' was omitted from the plan "
-            f"and must be included. If this endpoint has API limitations (e.g. no branch filter), "
-            f"add a post_processing note on that step — do not substitute a different endpoint."
-            for cs in chain_steps
-            if f"{cs.endpoint.method} {cs.endpoint.path}" not in plan_tool_names
-        ]
-        if chain_violations:
-            violation_msg = "Chain compliance failure:\n" + "\n".join(f"  - {v}" for v in chain_violations)
-            self._record("chain_compliance_violations", chain_violations)
-            pending_validation_error = (
-                (pending_validation_error + "\n" if pending_validation_error else "") + violation_msg
-            )
-
-        # Step 2: verify argument-level wiring in the built plan, fix if needed.
-        # Validation errors from _validate_plan are merged with _check_plan issues
-        # so _fix_plan gets full context in one pass.
-        MAX_PLAN_FIX_ATTEMPTS = 2
-        for attempt in range(MAX_PLAN_FIX_ATTEMPTS):
-            issues, ok = await self._check_plan(task, plan_result, kept)
-            self._record(f"check_plan.attempt_{attempt + 1}", {"issues": issues, "ok": ok})
-            all_issues = list(issues)
-            if pending_validation_error:
-                all_issues.append(pending_validation_error)
-            if not all_issues or (ok and not pending_validation_error):
-                break
-            self._debug_print(
-                "plan",
-                response=f"plan fix attempt {attempt + 1}: {len(all_issues)} issue(s): {all_issues}",
-            )
-            plan_result = await self._fix_plan(task, plan_result, kept, all_issues)
-            self._record(f"fix_plan.attempt_{attempt + 1}", [
-                step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
-                for step in plan_result.plan
-            ])
-            pending_validation_error = None
             try:
-                await self._validate_plan(plan_result, kept)
+                selected_files = await self._select_api_files(task, index)
+                self._record("selected_api_files", selected_files)
+                if not selected_files:
+                    raise ValueError(f"No suitable API file found for task: {task!r}")
+
+                all_endpoints: List[EndpointInfo] = []
+                for fname in selected_files:
+                    spec = self._parse_swagger(fname)
+                    all_endpoints.extend(self._extract_endpoints(spec, fname))
+
+                if not all_endpoints:
+                    raise ValueError(
+                        f"No endpoints extracted from selected swagger files."
+                        f"\n\n[debug] selected_api_files: {selected_files}"
+                    )
+
+                # 5b+5c: exclusion filter and detail expansion happen once per attempt.
+                # The resulting kept/detailed_list/api_hints_section are threaded through
+                # to _build_chain_backward and _check_chain so rebuilds within this
+                # attempt never re-scan.
+                api_hints_section = self._build_hints_section(
+                    all_endpoints, header="API context (use to understand data models and identifier types)"
+                )
+                excluded = await self._exclude_unrelated_endpoints(task, all_endpoints)
+                kept, detailed_list = self._expand_endpoint_details(all_endpoints, excluded)
+                self._record("kept_endpoints", [f"{ep.method} {ep.path}" for ep in kept])
+                if not kept:
+                    raise ValueError(
+                        f"All endpoints were excluded — cannot build a plan."
+                        f"\n\n[debug] selected_api_files: {selected_files}"
+                        f"\n[debug] total_endpoints_before_exclusion: {len(all_endpoints)}"
+                    )
+
+                chain_steps = await self._build_chain_backward(task, kept, detailed_list, api_hints_section)
+                self._record("initial_chain", [
+                    f"{cs.endpoint.method} {cs.endpoint.path} — {cs.capability}" for cs in chain_steps
+                ])
+                if not chain_steps:
+                    raise ValueError(
+                        f"No endpoints selected for this task."
+                        + self._debug_context(selected_files, kept, [])
+                    )
+
+                # Verify chain logic before building the plan so a bad chain never
+                # wastes an expensive _build_plan call.
+                MAX_CHAIN_ATTEMPTS = 2
+                accumulated_issues: list = []
+                for attempt in range(MAX_CHAIN_ATTEMPTS):
+                    issues, ok = await self._check_chain(task, chain_steps, api_hints_section)
+                    self._record(f"check_chain.attempt_{attempt + 1}", {"issues": issues, "ok": ok})
+                    if ok or not issues:
+                        break
+                    for iss in issues:
+                        if iss not in accumulated_issues:
+                            accumulated_issues.append(iss)
+                    self._debug_print(
+                        "plan",
+                        response=f"chain attempt {attempt + 1}: rebuilding due to {len(accumulated_issues)} accumulated issue(s): {accumulated_issues}",
+                    )
+                    chain_steps = await self._build_chain_backward(
+                        task, kept, detailed_list, api_hints_section, prior_issues=accumulated_issues
+                    )
+                    if not chain_steps:
+                        raise ValueError(
+                            f"Rebuild produced no chain steps."
+                            + self._debug_context(selected_files, kept, [])
+                        )
+                else:
+                    issues, ok = await self._check_chain(task, chain_steps, api_hints_section)
+                    self._record("check_chain.final", {"issues": issues, "ok": ok})
+                    if not ok and issues:
+                        raise ValueError(
+                            f"Chain verification failed after {MAX_CHAIN_ATTEMPTS} rebuild(s):\n"
+                            + "\n".join(f"  - {iss}" for iss in issues)
+                            + self._debug_context(selected_files, kept, chain_steps)
+                        )
+
+                # Step 1 check passed — build the plan using all kept endpoints so the
+                # LLM has full visibility and _fix_plan is never blocked by a missing tool.
+                plan_result = await self._build_plan(task, chain_steps, kept, detailed_list)
+
+                # Catch validation errors from the initial build so they feed into the fix loop
+                # rather than immediately aborting planning.
+                pending_validation_error: Optional[str] = None
+                try:
+                    await self._validate_plan(plan_result, kept)
+                except ValueError as exc:
+                    pending_validation_error = str(exc)
+                    self._record("validate_plan.initial_error", pending_validation_error)
+
+                # Code-level chain compliance check: every chain endpoint must appear in the
+                # plan. The LLM sometimes substitutes a "better" endpoint despite the prompt
+                # instruction; injecting a concrete error here forces _fix_plan to restore it.
+                plan_tool_names = {
+                    step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
+                    for step in plan_result.plan
+                }
+                chain_violations = [
+                    f"Chain endpoint '{cs.endpoint.method} {cs.endpoint.path}' was omitted from the plan "
+                    f"and must be included. If this endpoint has API limitations (e.g. no branch filter), "
+                    f"add a post_processing note on that step — do not substitute a different endpoint."
+                    for cs in chain_steps
+                    if f"{cs.endpoint.method} {cs.endpoint.path}" not in plan_tool_names
+                ]
+                if chain_violations:
+                    violation_msg = "Chain compliance failure:\n" + "\n".join(f"  - {v}" for v in chain_violations)
+                    self._record("chain_compliance_violations", chain_violations)
+                    pending_validation_error = (
+                        (pending_validation_error + "\n" if pending_validation_error else "") + violation_msg
+                    )
+
+                # Step 2: verify argument-level wiring in the built plan, fix if needed.
+                # Validation errors from _validate_plan are merged with _check_plan issues
+                # so _fix_plan gets full context in one pass.
+                MAX_PLAN_FIX_ATTEMPTS = 2
+                for attempt in range(MAX_PLAN_FIX_ATTEMPTS):
+                    issues, ok = await self._check_plan(task, plan_result, kept)
+                    self._record(f"check_plan.attempt_{attempt + 1}", {"issues": issues, "ok": ok})
+                    all_issues = list(issues)
+                    if pending_validation_error:
+                        all_issues.append(pending_validation_error)
+                    if not all_issues or (ok and not pending_validation_error):
+                        break
+                    self._debug_print(
+                        "plan",
+                        response=f"plan fix attempt {attempt + 1}: {len(all_issues)} issue(s): {all_issues}",
+                    )
+                    plan_result = await self._fix_plan(task, plan_result, kept, all_issues)
+                    pending_validation_error = None
+                    try:
+                        await self._validate_plan(plan_result, kept)
+                    except ValueError as exc:
+                        pending_validation_error = str(exc)
+                        self._record(f"validate_plan.attempt_{attempt + 1}_error", pending_validation_error)
+
+                if pending_validation_error:
+                    raise ValueError(
+                        pending_validation_error
+                        + self._debug_context(selected_files, kept, chain_steps, plan_result)
+                    )
+
+                return plan_result
+
             except ValueError as exc:
-                pending_validation_error = str(exc)
-                self._record(f"validate_plan.attempt_{attempt + 1}_error", pending_validation_error)
+                last_error = exc
+                if planning_attempt < MAX_PLANNING_ATTEMPTS - 1:
+                    print(
+                        f"  Planning attempt {planning_attempt + 1}/{MAX_PLANNING_ATTEMPTS} failed, "
+                        f"retrying from scratch: {exc}"
+                    )
 
-        if pending_validation_error:
-            raise ValueError(
-                pending_validation_error
-                + self._debug_context(selected_files, kept, chain_steps, plan_result)
-            )
-
-        return plan_result
+        raise last_error

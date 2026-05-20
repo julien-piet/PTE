@@ -86,7 +86,15 @@ class ExecutionAgent:
 
     @staticmethod
     def _follow_accessor(obj: Any, accessor: str) -> Any:
-        """Navigate a dot/bracket accessor chain into obj, e.g. '.default_branch', '[0].id', '[*].id'."""
+        """Navigate a dot/bracket accessor chain into obj, e.g. '.default_branch', '[0].id', '[*].id'.
+
+        Supported tokens:
+          [*]             wildcard — map remaining chain over each list element
+          [n]             numeric index
+          [sort_desc:f]   sort list descending by field f (dicts) or value (scalars)
+          [:N]            take first N elements (slice)
+          .key            dict field access
+        """
         pos = 0
         length = len(accessor)
         while pos < length:
@@ -99,6 +107,29 @@ class ExecutionAgent:
                 if remaining:
                     return [ExecutionAgent._follow_accessor(item, remaining) for item in obj]
                 return list(obj)
+            # [sort_desc:field] — sort list descending by a named field (or value for scalars)
+            m = re.match(r'\[sort_desc:(\w+)\]', accessor[pos:])
+            if m:
+                field = m.group(1)
+                pos += len(m.group(0))
+                if isinstance(obj, list):
+                    try:
+                        obj = sorted(
+                            obj,
+                            key=lambda x: (x.get(field, 0) if isinstance(x, dict) else x),
+                            reverse=True,
+                        )
+                    except (TypeError, AttributeError):
+                        pass
+                continue
+            # [:N] slice — take first N elements
+            m = re.match(r'\[:(\d+)\]', accessor[pos:])
+            if m:
+                n = int(m.group(1))
+                pos += len(m.group(0))
+                if isinstance(obj, list):
+                    obj = obj[:n]
+                continue
             # [n] numeric index
             m = re.match(r'\[(\d+)\]', accessor[pos:])
             if m:

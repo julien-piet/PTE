@@ -1,0 +1,256 @@
+MR COMMENT TASKS — DETAILED ROOT CAUSE ANALYSIS
+================================================
+Tasks: 389, 390, 391, 392, 393
+All use eval_type: program_html
+Status across runs:
+  A (2026-04-20): 389 PASS, 390 FAIL, 391 PASS, 392 PASS, 393 FAIL
+  B (2026-05-14): all 5 FAIL
+  C (2026-05-18): all 5 FAIL
+
+--------------------------------------------------------------------------------
+HOW THESE TASKS ARE EVALUATED (program_html)
+--------------------------------------------------------------------------------
+
+The eval does NOT just check the API response. It:
+  1. Runs the agent (API calls, note posted)
+  2. Opens a fresh Playwright browser session, logs in to GitLab
+  3. Navigates to the hardcoded eval URL (a specific MR page)
+  4. Extracts content using a JS locator from the DOM
+  5. Checks the extracted text against required_contents
+
+This is important: the note must BOTH be posted via API AND be visible in the
+live GitLab web UI for the eval to pass.
+
+--------------------------------------------------------------------------------
+EVAL SPEC PER TASK
+--------------------------------------------------------------------------------
+
+[389] URL: primer/design/-/merge_requests/450
+      Locator: "" (empty — gets full document.body.outerText)
+      Check: must_include: ["Thanks, working on reviews"]
+
+[390] URL: a11yproject/a11yproject.com/-/merge_requests/1531
+      Locator: document.querySelector('[id="notes-list"').lastElementChild
+                 .querySelector('.timeline-discussion-body').outerText
+      Check: exact_match: "lgtm"
+
+[391] URL: a11yproject/a11yproject.com/-/merge_requests/1265
+      Locator: same notes-list locator
+      Check: exact_match: "close because non reproducible"
+
+[392] URL: a11yproject/a11yproject.com/-/merge_requests/1071
+      Locator: same notes-list locator
+      Check: exact_match: "Good idea"
+
+[393] URL: byteblaze/empathy-prompts/-/merge_requests/19
+      Locator: same notes-list locator
+      Check: exact_match: "lgtm"
+
+--------------------------------------------------------------------------------
+TASK-BY-TASK ROOT CAUSE
+--------------------------------------------------------------------------------
+
+--- [393] PERSISTENT FAILURE (all 3 runs) — Root cause: MR not found ---
+
+Search `GET /projects/byteblaze/empathy-prompts/merge_requests?search=broken+links`
+returns []. The actual MR is iid=19, but its title does not contain "broken links".
+The planner fails to find the MR in all 3 runs without exception.
+
+  All runs: step_1 → [] (empty)
+            step_2 → Error: step produced no extractable value
+
+Fix needed: The planner must find MR 19 without relying on search="broken links".
+Options:
+  a. Call GET /projects/{id}/merge_requests (no search) and scan all open MRs
+  b. Try multiple search terms (e.g., "links", "link", "fix")
+  c. If MR count is small, just retrieve all and filter on the agent side
+
+--- [392] PERSISTENT FAILURE (all 3 runs) — Root cause: wrong MR found by search ---
+
+The task intent says "color ulitity" (a typo for "color utility"). The eval expects
+a note on MR 1071 "Add color utility classes" in a11yproject/a11yproject.com.
+
+Across all 3 runs, search="color" (B, C) or search="color utility" (A) returns
+the WRONG first result:
+  search="color":          → result[0] = iid 1485 "update or remove 404 links"
+  search="color utility":  → result[0] = iid 1145 "Add a11y-contrast tool"
+
+The correct MR (iid=1071 "Add color utility classes") is returned in position [1]
+when searching "color utility", but the planner always picks result[0].
+
+  Run A: Posted "Good idea" to iid=1145 (wrong MR), yet PASSED
+         Reason: MR 1071 already had a "Good idea" note in the shared
+         (non-reset) test instance, so the eval found it even though the
+         agent posted elsewhere.
+  Runs B+C: Fresh per-task GitLab instances (multi-docker). No pre-existing
+            note on MR 1071. Agent posts to wrong MR. Eval fails.
+
+Fix needed: Two problems to solve together:
+  1. Search strategy: "color utility classes" (exact title) would rank 1071
+     higher. Or, check all results for the best match instead of taking [0].
+  2. The planner should look for the MR whose title most closely matches the
+     description "color ulitity" → "Add color utility classes".
+
+--- [390] PERSISTENT FAILURE (all 3 runs) — Root cause: DOM selector/lastElementChild ---
+
+The note IS posted correctly to MR 1531 in all 3 runs (API confirms success).
+The eval navigates to MR 1531 and uses:
+  lastElementChild of notes-list → .timeline-discussion-body → outerText
+  exact_match: "lgtm"
+
+This has ALWAYS failed (all 3 runs). Root cause options:
+
+  Option A — lastElementChild is a system note:
+    GitLab MRs have activity events (pipeline status, branch pushes, reviewer
+    assignments, etc.) mixed into the notes-list alongside user comments.
+    In a fresh Docker instance, these system notes are created when the fixture
+    is loaded. If a system note has a later timestamp than the user comment,
+    it becomes lastElementChild and has no .timeline-discussion-body → TypeError
+    → locator fails → eval fails.
+
+  Option B — CSS selector is malformed:
+    The locator string contains `[id="notes-list"` with no closing `]`.
+    In strict CSS parsers this is a SyntaxError. Playwright propagates this as
+    a page.evaluate() exception → locator fails → eval fails.
+    However, Chromium may parse this leniently and accept it, given that 391
+    and 392 appear to have passed in run A using the same selector.
+
+  Option C — "lgtm" note text in GitLab renders differently:
+    The note body is "lgtm" but the UI might surround it with extra text or
+    GitLab might interpret it as something else. Unlikely.
+
+Most likely: A combination of Option A (system notes) and the fresh Docker
+instances in B/C not having pre-existing state.
+
+Fix needed (eval infrastructure): Change the locator to find the LAST USER
+COMMENT, not the last element in notes-list. Something like:
+  querySelectorAll('.timeline-entry:not(.system-note)') → last item → .body.outerText
+Or use CSS selector `:not(.system-note)` to skip system events.
+
+--- [389] RAN A: PASS → B, C: FAIL — Root cause: async rendering + plan bug in B ---
+
+Run B specific failure:
+  Plan has step_1 as `GET .../merge_requests/{merge_request_iid}/notes` with
+  hardcoded `merge_request_iid="1"` → HTTP 404. Note is never posted.
+  Eval URL is MR 450 with no new note from this run → fails.
+  Root cause: Planner generated a nonsensical first step (fetching notes for
+  a literal MR iid=1, which doesn't exist).
+
+Run C failure:
+  The agent correctly finds MR 450 (Octovisuals Page) and posts the note.
+  API confirms: {id: 310828, body: "Thanks, working on reviews", noteable_iid: 450}
+  Yet the eval fails. Since the locator is EMPTY (full page body text), the
+  evaluator gets document.body.outerText without any special wait for comments.
+  GitLab comments are rendered by Vue.js AFTER networkidle fires. The evaluator
+  sees the page skeleton but not the comments → "Thanks, working on reviews"
+  is absent from outerText → must_include fails.
+
+Run A specific pass:
+  The note from that run (or a previous test run on the shared instance) was
+  already rendered on MR 450 when the evaluator ran. No async rendering issue
+  because the note pre-existed.
+
+Fix needed:
+  Planner: avoid hardcoding MR iid=1 (B regression, already different in C).
+  Eval infrastructure: for empty locator on MR pages, add a wait for the comments
+  section to be rendered before extracting outerText (equivalent to the wait
+  already done when locator contains "notes-list").
+
+--- [391] RUN A: PASS → B, C: FAIL — Root cause: same async rendering / system note issue ---
+
+The note IS posted correctly to MR 1265 in B and C (API confirms success for both).
+Both B and C use a direct 2-step plan:
+  GET MR by search="focus edge cases" → finds iid 1265 ✓
+  POST note "close because non reproducible" to MR 1265 ✓
+
+Yet the eval fails. The locator `lastElementChild.querySelector('.timeline-discussion-body')`
+is used with exact_match "close because non reproducible".
+
+Run A passed with the same 2-step plan and the same note body. The difference:
+  Run A used a SHARED single-docker GitLab instance. The note either persisted
+  from a previous run or was already there. Possibly the MR had no system notes
+  as lastElementChild in that instance state.
+  Runs B+C use fresh per-task multi-docker instances. Either:
+    - lastElementChild is a system note (newer timestamp than user note), OR
+    - Vue.js async rendering issue (note exists but isn't in DOM yet)
+
+The fact that 390 (exact_match: "lgtm") ALWAYS fails and 391 (longer body)
+alternates suggests the system note issue is more likely: for 390 the system
+note happens to always be last; for 391 it was not in run A but is in B+C
+(fresh Docker state differs).
+
+Fix needed (eval infrastructure): same as task 390 — skip system notes when
+looking for lastElementChild, or add a wait for the specific user comment to
+appear in the DOM.
+
+--------------------------------------------------------------------------------
+CROSS-CUTTING ROOT CAUSES (what actually needs to change)
+--------------------------------------------------------------------------------
+
+1. EVAL INFRASTRUCTURE BUG — system notes as lastElementChild (affects 390, 391)
+
+   The JS locator `notes-list lastElementChild .timeline-discussion-body` is
+   fragile — it assumes the last item in the notes list is always a user comment.
+   In fresh GitLab Docker instances, MR activity events (system notes) may have
+   timestamps AFTER user notes and appear as lastElementChild.
+
+   Fix: Update the locator to `.timeline-entry:not(.system-note) + ...` or use
+   `querySelectorAll` to find the last non-system note. Alternatively, look for
+   the note by body content instead of by position.
+
+2. EVAL INFRASTRUCTURE BUG — async comment rendering not waited for (affects 389, C)
+
+   The evaluator waits for notes-list only when the locator string contains
+   "notes-list". For empty locators (task 389), it calls `document.body.outerText`
+   immediately after networkidle, before Vue.js renders comments.
+
+   Fix: Either always wait for notes-list, or add an explicit wait in the
+   evaluator for MR comment tasks with empty locators.
+
+3. PLANNER BUG (run B, task 389) — hardcoded wrong MR iid
+
+   B's planner generated step_1 as GET notes for `merge_request_iid="1"` (literal
+   "1"). This is a nonsensical plan. C's planner generates a correct 3-step plan
+   for the same task. This specific B regression appears resolved in C.
+
+4. SEARCH RETURNS WRONG MR (task 392) — search term doesn't match MR title well
+
+   `search="color"` → first result is "update or remove 404 links" (iid=1485)
+   `search="color utility"` → first result is "Add a11y-contrast tool" (iid=1145)
+   Correct MR is at position [1] when searching "color utility".
+
+   Fix: The planner should either:
+     a. Use the more specific search term "color utility classes", OR
+     b. Not blindly pick result[0] — look for best title match, OR
+     c. Use a narrower search that eliminates the false positive
+
+5. MR SEARCH RETURNS EMPTY (task 393) — title mismatch between task description and actual title
+
+   "fixing the broken links" doesn't match any MR title in byteblaze/empathy-prompts.
+   MR 19 exists but has a different title. The agent needs a fallback: list all
+   open MRs (no search filter) and pick the most relevant one.
+
+   Fix: When search returns empty, retry with a broader query or paginate through
+   all MRs in the repo instead of returning an error.
+
+--------------------------------------------------------------------------------
+SEVERITY RANKING AND RECOMMENDATIONS
+--------------------------------------------------------------------------------
+
+  P1 (eval infrastructure — fixes 2+ tasks):
+    → Fix lastElementChild locator to skip system notes [390, 391]
+    → Add wait for comments when locator is empty [389]
+
+  P2 (planner — fixes 1 task each):
+    → [393] Implement fallback when MR search returns [] — list all MRs
+    → [392] Pick best matching MR from search results, not just result[0]
+
+  P3 (already resolved or unclear):
+    → B's task 389 hardcoded iid=1 — appears fixed in C
+
+Expected outcome after P1+P2 fixes:
+  Tasks 389, 391 would pass (note is posted correctly, eval would find it)
+  Task 392 would pass if search improved or result selection fixed
+  Task 393 would pass if fallback search added
+  Task 390 may still fail if its specific system note issue is persistent
+    (needs the P1 locator fix to definitively resolve)

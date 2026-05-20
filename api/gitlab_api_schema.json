@@ -1153,7 +1153,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get the current appearance",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Appearance"
+            }
           }
         }
       },
@@ -1172,7 +1175,56 @@
               "type": "object",
               "properties": {
                 "title": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Instance title on the sign in / sign up page"
+                },
+                "short_title": {
+                  "type": "string",
+                  "description": "Short title for Progressive Web App"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Markdown text shown on the sign in / sign up page"
+                },
+                "logo": {
+                  "type": "string",
+                  "description": "Instance image used on the sign in / sign up page"
+                },
+                "header_logo": {
+                  "type": "string",
+                  "description": "Instance image used for the main navigation bar"
+                },
+                "favicon": {
+                  "type": "string",
+                  "description": "Instance favicon in .ico/.png format"
+                },
+                "new_project_guidelines": {
+                  "type": "string",
+                  "description": "Markdown text shown on the new project page"
+                },
+                "profile_image_guidelines": {
+                  "type": "string",
+                  "description": "Markdown text shown on the profile page below Public Avatar"
+                },
+                "header_message": {
+                  "type": "string",
+                  "description": "Message within the system header bar"
+                },
+                "footer_message": {
+                  "type": "string",
+                  "description": "Message within the system footer bar"
+                },
+                "message_background_color": {
+                  "type": "string",
+                  "description": "Background color for the system header / footer bar"
+                },
+                "message_font_color": {
+                  "type": "string",
+                  "description": "Font color for the system header / footer bar"
+                },
+                "email_header_and_footer_enabled": {
+                  "type": "boolean",
+                  "description": "Add header and footer to all outgoing emails if enabled"
                 }
               }
             }
@@ -1189,7 +1241,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Modify appearance",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Appearance"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -2481,7 +2536,23 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -2495,7 +2566,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List project issue boards",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Board"
+              }
+            }
           }
         }
       },
@@ -2511,7 +2588,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "body",
@@ -2542,7 +2619,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Create an issue board",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Board"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -2563,14 +2643,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           }
         ],
         "responses": {
@@ -2584,7 +2664,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Show a single issue board",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Board"
+            }
           }
         }
       },
@@ -2600,14 +2683,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "body",
@@ -2654,7 +2737,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Update an issue board",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Board"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -2673,14 +2759,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           }
         ],
         "responses": {
@@ -2694,7 +2780,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Delete an issue board"
           }
         }
       }
@@ -2712,14 +2798,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           }
         ],
         "responses": {
@@ -2733,7 +2819,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List board lists in a project issue board",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_BoardList"
+              }
+            }
           }
         }
       },
@@ -2749,14 +2841,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "body",
@@ -2795,7 +2887,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Create a board list",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_BoardList"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -2816,21 +2911,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "list_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board list"
           }
         ],
         "responses": {
@@ -2844,7 +2939,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Show a single board list",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_BoardList"
+            }
           }
         }
       },
@@ -2860,21 +2958,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "list_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board list"
           },
           {
             "name": "body",
@@ -2906,7 +3004,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Reorder a list in a board",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_BoardList"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -2925,21 +3026,21 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "board_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board"
           },
           {
             "name": "list_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the board list"
           }
         ],
         "responses": {
@@ -2953,7 +3054,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Delete a board list from a board"
           }
         }
       }
@@ -28474,6 +28575,22 @@
             "required": false,
             "description": "Keyword to filter labels by. Introduced in GitLab 13.6",
             "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -28487,7 +28604,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List labels",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Label"
+              }
+            }
           }
         }
       },
@@ -28503,7 +28626,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "body",
@@ -28548,7 +28671,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Create a new label",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -28569,14 +28695,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a project's label"
           },
           {
             "name": "include_ancestor_groups",
@@ -28597,7 +28723,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a single project label",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           }
         }
       },
@@ -28613,14 +28742,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a project's label"
           }
         ],
         "responses": {
@@ -28634,7 +28763,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Delete a label"
           }
         }
       },
@@ -28650,14 +28779,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a project's label"
           },
           {
             "name": "body",
@@ -28702,7 +28831,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Edit an existing label",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -28723,14 +28855,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a project's label"
           }
         ],
         "responses": {
@@ -28744,7 +28876,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Promote a project label to a group label",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -28765,14 +28900,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a project's label"
           }
         ],
         "responses": {
@@ -28786,7 +28921,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Subscribe to a label",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -28807,14 +28945,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "label_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or title of a project's label"
           }
         ],
         "responses": {
@@ -28828,7 +28966,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Unsubscribe from a label",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Label"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -34941,7 +35082,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "iids[]",
@@ -34981,6 +35122,22 @@
             "required": false,
             "description": "Include group milestones from parent group and its ancestors. Introduced in GitLab 13.4",
             "type": "boolean"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -34994,7 +35151,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List project milestones",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Milestone"
+              }
+            }
           }
         }
       },
@@ -35010,7 +35173,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "body",
@@ -35053,7 +35216,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Create new milestone",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Milestone"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -35074,14 +35240,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the project milestone"
           }
         ],
         "responses": {
@@ -35095,7 +35261,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get single milestone",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Milestone"
+            }
           }
         }
       },
@@ -35111,14 +35280,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the project milestone"
           },
           {
             "name": "body",
@@ -35162,7 +35331,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Edit milestone",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Milestone"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -35181,14 +35353,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the project milestone"
           }
         ],
         "responses": {
@@ -35202,7 +35374,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Delete project milestone"
           }
         }
       }
@@ -35220,14 +35392,30 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the project milestone"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -35241,7 +35429,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get all issues assigned to a single milestone",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Issue"
+              }
+            }
           }
         }
       }
@@ -35259,14 +35453,30 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the project milestone"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -35280,7 +35490,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get all merge requests assigned to a single milestone",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_MergeRequest"
+              }
+            }
           }
         }
       }
@@ -35298,14 +35514,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the project milestone"
           }
         ],
         "responses": {
@@ -35318,11 +35534,11 @@
           "404": {
             "description": "Not Found"
           },
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
+          "200": {
+            "description": "Promote project milestone to a group milestone",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_MilestoneWithStats"
+            }
           }
         }
       }
@@ -35340,14 +35556,30 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "milestone_id",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID of the project milestone"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20).",
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -35361,7 +35593,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get all burndown chart events for a single milestone",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_BurndownEvent"
+              }
+            }
           }
         }
       }
@@ -37265,6 +37503,7 @@
     "/projects/{id}/pages": {
       "delete": {
         "summary": "Unpublish pages",
+        "description": "Remove pages. The user must have administrator access. This feature was introduced in GitLab 12.6",
         "operationId": "delete_projects_id_pages",
         "tags": [
           "Pages"
@@ -37275,7 +37514,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project owned by the authenticated user"
           }
         ],
         "responses": {
@@ -37289,7 +37528,7 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Unpublish pages"
           }
         }
       }
@@ -51482,28 +51721,64 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "order_by",
             "in": "query",
             "required": false,
-            "description": "Return tags ordered by name, updated, or version. Default is updated.",
-            "type": "string"
+            "description": "Return tags ordered by `name`, `updated`, `version` fields.",
+            "type": "string",
+            "default": "updated",
+            "enum": [
+              "name",
+              "updated",
+              "version"
+            ]
           },
           {
             "name": "sort",
             "in": "query",
             "required": false,
-            "description": "Return tags sorted in asc or desc order. Default is desc.",
-            "type": "string"
+            "description": "Return tags sorted in updated by `asc` or `desc` order.",
+            "type": "string",
+            "default": "desc",
+            "enum": [
+              "asc",
+              "desc"
+            ]
           },
           {
             "name": "search",
             "in": "query",
             "required": false,
-            "description": "Return list of tags matching the search criteria. You can use ^term and term$ to find tags that begin and end with term respectively. No other regular expressions are supported.",
+            "description": "Return list of tags matching the search criteria",
             "type": "string"
+          },
+          {
+            "name": "page_token",
+            "in": "query",
+            "required": false,
+            "description": "Name of tag to start the pagination from",
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int32",
+            "default": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page",
+            "type": "integer",
+            "format": "int32",
+            "default": 20
           }
         ],
         "responses": {
@@ -51516,8 +51791,20 @@
           "404": {
             "description": "Not Found"
           },
+          "422": {
+            "description": "Unprocessable entity"
+          },
+          "503": {
+            "description": "Service unavailable"
+          },
           "200": {
-            "description": "Successful"
+            "description": "Get a project repository tags",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Tag"
+              }
+            }
           }
         }
       },
@@ -51533,7 +51820,7 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "body",
@@ -51544,15 +51831,18 @@
               "properties": {
                 "tag_name": {
                   "type": "string",
-                  "description": "The name of a tag"
+                  "description": "The name of the tag",
+                  "example": "v.1.0.0"
                 },
                 "ref": {
                   "type": "string",
-                  "description": "Create tag using commit SHA, another tag name, or branch name"
+                  "description": "The commit sha or branch name",
+                  "example": "2695effb5807a22ff3d138d593fd856244e155e7"
                 },
                 "message": {
                   "type": "string",
-                  "description": "Creates annotated tag"
+                  "description": "Specifying a message creates an annotated tag",
+                  "example": "Release 1.0.0"
                 }
               },
               "required": [
@@ -51573,7 +51863,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Create a new repository tag",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Tag"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -51594,14 +51887,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "tag_name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the tag"
           }
         ],
         "responses": {
@@ -51615,7 +51908,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a single repository tag",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Tag"
+            }
           }
         }
       },
@@ -51631,14 +51927,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "tag_name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the tag"
           }
         ],
         "responses": {
@@ -51651,8 +51947,11 @@
           "404": {
             "description": "Not Found"
           },
+          "412": {
+            "description": "Precondition Failed"
+          },
           "204": {
-            "description": "No Content"
+            "description": "Delete a repository tag"
           }
         }
       }
@@ -51670,14 +51969,14 @@
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The ID or URL-encoded path of the project"
           },
           {
             "name": "tag_name",
             "in": "path",
             "required": true,
             "type": "string",
-            "description": ""
+            "description": "The name of the tag"
           }
         ],
         "responses": {
@@ -51691,7 +51990,10 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get a tag's signature",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_TagSignature"
+            }
           }
         }
       }
@@ -51748,6 +52050,20 @@
             "required": false,
             "description": "The type of to-do item. Can be either Issue, MergeRequest, Commit, Epic, DesignManagement::Design, AlertManagement::Alert or Namespace",
             "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Current page number (default: 1).",
+            "type": "integer"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of items per page (default: 20).",
+            "type": "integer"
           }
         ],
         "responses": {
@@ -51761,7 +52077,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "List of to-do items",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Todo"
+              }
+            }
           }
         }
       }
@@ -51778,8 +52100,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "format": "int32",
+            "description": "The ID of the to-do item"
           }
         ],
         "responses": {
@@ -51793,10 +52116,10 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
+            "description": "The to-do item marked as done",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Todo"
+            }
           }
         }
       }
@@ -51816,14 +52139,8 @@
           "403": {
             "description": "Forbidden"
           },
-          "404": {
-            "description": "Not Found"
-          },
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
+          "204": {
+            "description": "All to-do items marked as done. No content returned."
           }
         }
       }
@@ -51840,30 +52157,30 @@
             "name": "page",
             "in": "query",
             "required": false,
-            "description": "Page to retrieve. Defaults to 1.",
+            "description": "Current page number",
             "type": "integer",
-            "format": "int64"
+            "format": "int32"
           },
           {
             "name": "per_page",
             "in": "query",
             "required": false,
-            "description": "Number of records to return per page. Defaults to 20.",
+            "description": "Number of items per page",
             "type": "integer",
-            "format": "int64"
+            "format": "int32"
           },
           {
             "name": "search",
             "in": "query",
             "required": false,
-            "description": "Search topics against their name.",
+            "description": "Return list of topics matching the search criteria",
             "type": "string"
           },
           {
             "name": "without_projects",
             "in": "query",
             "required": false,
-            "description": "Limit results to topics without assigned projects.",
+            "description": "Return list of topics without assigned projects",
             "type": "boolean"
           }
         ],
@@ -51878,9 +52195,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get topics",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API_Entities_Projects_Topic"
+              }
+            }
           }
-        }
+        },
+        "description": "This feature was introduced in GitLab 14.5."
       },
       "post": {
         "summary": "Create a project topic",
@@ -51907,7 +52231,7 @@
                 "avatar": {
                   "type": "string",
                   "format": "binary",
-                  "description": "Avatar"
+                  "description": "Avatar image for topic"
                 },
                 "description": {
                   "type": "string",
@@ -51932,12 +52256,16 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Create a topic",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Projects_Topic"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "This feature was introduced in GitLab 14.5."
       }
     },
     "/topics/{id}": {
@@ -51952,8 +52280,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "description": "ID of project topic",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -51967,9 +52296,13 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Get topic",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Projects_Topic"
+            }
           }
-        }
+        },
+        "description": "This feature was introduced in GitLab 14.5."
       },
       "put": {
         "summary": "Update a project topic",
@@ -51982,8 +52315,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "description": "ID of project topic",
+            "format": "int32"
           },
           {
             "name": "body",
@@ -51995,7 +52329,7 @@
                 "avatar": {
                   "type": "string",
                   "format": "binary",
-                  "description": "Avatar"
+                  "description": "Avatar image for topic"
                 },
                 "description": {
                   "type": "string",
@@ -52024,12 +52358,16 @@
             "description": "Not Found"
           },
           "200": {
-            "description": "Successful"
+            "description": "Update a topic",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Projects_Topic"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "This feature was introduced in GitLab 14.5."
       },
       "delete": {
         "summary": "Delete a project topic",
@@ -52042,8 +52380,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "description": ""
+            "type": "integer",
+            "description": "ID of project topic",
+            "format": "int32"
           }
         ],
         "responses": {
@@ -52057,9 +52396,10 @@
             "description": "Not Found"
           },
           "204": {
-            "description": "No Content"
+            "description": "Delete a topic"
           }
-        }
+        },
+        "description": "This feature was introduced in GitLab 14.9."
       }
     },
     "/topics/merge": {
@@ -52106,12 +52446,16 @@
             "description": "Not Found"
           },
           "201": {
-            "description": "Created"
+            "description": "Merge topics",
+            "schema": {
+              "$ref": "#/definitions/API_Entities_Projects_Topic"
+            }
           },
           "400": {
             "description": "Bad Request"
           }
-        }
+        },
+        "description": "This feature was introduced in GitLab 15.4."
       }
     },
     "/usage_data/metric_definitions": {
@@ -56374,45 +56718,71 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the milestone"
         },
         "iid": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32",
+          "description": "The internal ID of the milestone within the project"
         },
         "project_id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the project the milestone belongs to"
         },
         "group_id": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the group the milestone belongs to (group milestones only)"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "The title of the milestone"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "The description of the milestone"
         },
         "state": {
-          "type": "string"
+          "type": "string",
+          "description": "The state of the milestone",
+          "enum": [
+            "active",
+            "closed"
+          ]
         },
         "created_at": {
-          "type": "string"
+          "type": "string",
+          "format": "date-time",
+          "description": "The datetime the milestone was created"
         },
         "updated_at": {
-          "type": "string"
+          "type": "string",
+          "format": "date-time",
+          "description": "The datetime the milestone was last updated"
         },
         "due_date": {
-          "type": "string"
+          "type": "string",
+          "format": "date",
+          "description": "The due date of the milestone (YYYY-MM-DD)"
         },
         "start_date": {
-          "type": "string"
+          "type": "string",
+          "format": "date",
+          "description": "The start date of the milestone (YYYY-MM-DD)"
         },
         "expired": {
-          "type": "string"
+          "type": "boolean",
+          "description": "Whether the milestone due date has passed"
         },
         "web_url": {
-          "type": "string"
+          "type": "string",
+          "description": "The URL of the milestone"
         }
-      }
+      },
+      "description": "API_Entities_Milestone model"
     },
     "API_Entities_NamespaceBasic": {
       "type": "object",
@@ -58237,38 +58607,69 @@
       "description": "A to-do item",
       "properties": {
         "id": {
-          "type": "integer"
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the to-do item"
         },
         "project": {
+          "description": "The project this to-do item belongs to",
           "$ref": "#/definitions/API_Entities_BasicProjectDetails"
         },
         "author": {
+          "description": "The author of the to-do item",
           "$ref": "#/definitions/API_Entities_UserBasic"
         },
         "action_name": {
           "type": "string",
+          "description": "The action that triggered the to-do item",
+          "enum": [
+            "assigned",
+            "mentioned",
+            "build_failed",
+            "marked",
+            "approval_required",
+            "unmergeable",
+            "directly_addressed",
+            "merge_train_removed",
+            "member_access_requested"
+          ],
           "example": "marked"
         },
         "target_type": {
           "type": "string",
+          "description": "The type of the target. Can be Issue, MergeRequest, Commit, Epic, DesignManagement::Design, AlertManagement::Alert or Namespace",
           "example": "Issue"
         },
         "target": {
+          "description": "The target object of the to-do item",
           "$ref": "#/definitions/API_Entities_Issue"
         },
         "target_url": {
-          "type": "string"
+          "type": "string",
+          "description": "The URL of the target object"
         },
         "body": {
-          "type": "string"
+          "type": "string",
+          "description": "The title or content of the target object"
         },
         "state": {
           "type": "string",
+          "description": "The state of the to-do item. Can be pending or done",
+          "enum": [
+            "pending",
+            "done"
+          ],
           "example": "pending"
         },
         "created_at": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The datetime the to-do item was created"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The datetime the to-do item was last updated"
         }
       }
     },
@@ -59653,6 +60054,417 @@
         }
       },
       "description": "API_Entities_SamlGroupLink model (GitLab EE only)"
+    },
+    "API_Entities_TagRelease": {
+      "type": "object",
+      "properties": {
+        "tag_name": {
+          "type": "string",
+          "description": "The name of the release",
+          "example": "1.0.0"
+        },
+        "description": {
+          "type": "string",
+          "description": "Release notes for the tag",
+          "example": "Amazing release. Wow"
+        }
+      },
+      "description": "API_Entities_TagRelease model"
+    },
+    "API_Entities_Tag": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the tag",
+          "example": "v1.0.0"
+        },
+        "message": {
+          "type": "string",
+          "description": "The message for the annotated tag",
+          "example": "Release v1.0.0"
+        },
+        "target": {
+          "type": "string",
+          "description": "The commit SHA the tag points to",
+          "example": "2695effb5807a22ff3d138d593fd856244e155e7"
+        },
+        "commit": {
+          "description": "The commit object the tag points to",
+          "$ref": "#/definitions/API_Entities_Commit"
+        },
+        "release": {
+          "description": "The release associated with this tag",
+          "$ref": "#/definitions/API_Entities_TagRelease"
+        },
+        "protected": {
+          "type": "boolean",
+          "description": "Whether the tag is protected",
+          "example": true
+        }
+      },
+      "description": "API_Entities_Tag model"
+    },
+    "API_Entities_TagSignature": {
+      "type": "object",
+      "properties": {
+        "signature_type": {
+          "type": "string",
+          "description": "The type of the signature. Can be PGP, X509, or SSH",
+          "example": "PGP"
+        },
+        "signature": {
+          "type": "string",
+          "description": "The signature content"
+        }
+      },
+      "description": "API_Entities_TagSignature model"
+    },
+    "API_Entities_Appearance": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Instance title on the sign in / sign up page"
+        },
+        "short_title": {
+          "type": "string",
+          "description": "Short title for Progressive Web App"
+        },
+        "description": {
+          "type": "string",
+          "description": "Markdown text shown on the sign in / sign up page"
+        },
+        "logo": {
+          "type": "string",
+          "description": "Instance image used on the sign in / sign up page"
+        },
+        "header_logo": {
+          "type": "string",
+          "description": "Instance image used for the main navigation bar"
+        },
+        "favicon": {
+          "type": "string",
+          "description": "Instance favicon in .ico/.png format"
+        },
+        "new_project_guidelines": {
+          "type": "string",
+          "description": "Markdown text shown on the new project page"
+        },
+        "profile_image_guidelines": {
+          "type": "string",
+          "description": "Markdown text shown on the profile page below Public Avatar"
+        },
+        "header_message": {
+          "type": "string",
+          "description": "Message within the system header bar"
+        },
+        "footer_message": {
+          "type": "string",
+          "description": "Message within the system footer bar"
+        },
+        "message_background_color": {
+          "type": "string",
+          "description": "Background color for the system header / footer bar"
+        },
+        "message_font_color": {
+          "type": "string",
+          "description": "Font color for the system header / footer bar"
+        },
+        "email_header_and_footer_enabled": {
+          "type": "boolean",
+          "description": "Add header and footer to all outgoing emails if enabled"
+        }
+      },
+      "description": "API_Entities_Appearance model"
+    },
+    "API_Entities_BoardLabel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the label"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the label"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the label"
+        },
+        "description_html": {
+          "type": "string",
+          "description": "The HTML-rendered description of the label"
+        },
+        "text_color": {
+          "type": "string",
+          "description": "The text color for the label"
+        },
+        "color": {
+          "type": "string",
+          "description": "The background color of the label"
+        }
+      },
+      "description": "API_Entities_BoardLabel model"
+    },
+    "API_Entities_BoardList": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the board list"
+        },
+        "label": {
+          "description": "The label associated with this board list",
+          "$ref": "#/definitions/API_Entities_BoardLabel"
+        },
+        "position": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The position of the list in the board"
+        }
+      },
+      "description": "API_Entities_BoardList model"
+    },
+    "API_Entities_Board": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the board"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the board"
+        },
+        "hide_backlog_list": {
+          "type": "boolean",
+          "description": "Whether the backlog list is hidden"
+        },
+        "hide_closed_list": {
+          "type": "boolean",
+          "description": "Whether the closed list is hidden"
+        },
+        "project": {
+          "description": "The project the board belongs to",
+          "$ref": "#/definitions/API_Entities_BasicProjectDetails"
+        },
+        "lists": {
+          "type": "array",
+          "description": "The lists in the board",
+          "items": {
+            "$ref": "#/definitions/API_Entities_BoardList"
+          }
+        }
+      },
+      "description": "API_Entities_Board model"
+    },
+    "API_Entities_MilestoneWithStats": {
+      "type": "object",
+      "description": "API_Entities_MilestoneWithStats model",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the milestone"
+        },
+        "iid": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The internal ID of the milestone within the project"
+        },
+        "project_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the project the milestone belongs to"
+        },
+        "group_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the group the milestone belongs to"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the milestone"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the milestone"
+        },
+        "state": {
+          "type": "string",
+          "description": "The state of the milestone",
+          "enum": [
+            "active",
+            "closed"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The datetime the milestone was created"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The datetime the milestone was last updated"
+        },
+        "due_date": {
+          "type": "string",
+          "format": "date",
+          "description": "The due date of the milestone (YYYY-MM-DD)"
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "The start date of the milestone (YYYY-MM-DD)"
+        },
+        "expired": {
+          "type": "boolean",
+          "description": "Whether the milestone due date has passed"
+        },
+        "web_url": {
+          "type": "string",
+          "description": "The URL of the milestone"
+        },
+        "issue_stats": {
+          "type": "object",
+          "description": "Issue statistics for the milestone",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Total number of issues assigned to the milestone"
+            },
+            "closed": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Number of closed issues assigned to the milestone"
+            }
+          }
+        }
+      }
+    },
+    "API_Entities_BurndownEvent": {
+      "type": "object",
+      "description": "A burndown chart event for a milestone",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The datetime the event was created"
+        },
+        "weight": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The weight of the issue related to this event"
+        },
+        "action": {
+          "type": "string",
+          "description": "The action type of the event",
+          "enum": [
+            "added",
+            "removed",
+            "milestone_activated",
+            "milestone_stopped"
+          ]
+        }
+      }
+    },
+    "API_Entities_Projects_Topic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the topic"
+        },
+        "name": {
+          "type": "string",
+          "description": "Slug (name) of the topic"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the topic"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the topic"
+        },
+        "total_projects_count": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Total number of projects assigned to the topic"
+        },
+        "avatar_url": {
+          "type": "string",
+          "description": "URL of the topic's avatar image"
+        }
+      },
+      "description": "API_Entities_Projects_Topic model"
+    },
+    "API_Entities_Label": {
+      "type": "object",
+      "description": "API_Entities_Label model",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The ID of the label"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the label"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the label"
+        },
+        "description_html": {
+          "type": "string",
+          "description": "The HTML-rendered description of the label"
+        },
+        "text_color": {
+          "type": "string",
+          "description": "The text color of the label"
+        },
+        "color": {
+          "type": "string",
+          "description": "The background color of the label in hex notation"
+        },
+        "open_issues_count": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Count of open issues with this label (only with with_counts=true)"
+        },
+        "closed_issues_count": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Count of closed issues with this label (only with with_counts=true)"
+        },
+        "open_merge_requests_count": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Count of open merge requests with this label (only with with_counts=true)"
+        },
+        "subscribed": {
+          "type": "boolean",
+          "description": "Whether the authenticated user is subscribed to this label"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The priority of the label. Null if not set"
+        },
+        "is_project_label": {
+          "type": "boolean",
+          "description": "Whether this is a project label (as opposed to a group label)"
+        }
+      }
     }
   }
 }
