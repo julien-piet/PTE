@@ -44,16 +44,7 @@ from eval.docker import workers_new as _workers_new
 from scripts.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
 
 
-from eval.program_html_evaluator import DEFAULT_BASE_URLS as _EVALUATOR_URLS
-
-# Map server names to the same URLs used by the evaluator's placeholder dict.
-_DEFAULT_BASE_URLS: dict = {
-    "gitlab":         _EVALUATOR_URLS["__GITLAB__"],
-    "shopping":       _EVALUATOR_URLS["__SHOPPING__"],
-    "shopping_admin": _EVALUATOR_URLS["__SHOPPING_ADMIN__"],
-    "reddit":         _EVALUATOR_URLS["__REDDIT__"],
-    "shopping_extra": _EVALUATOR_URLS["__SHOPPING_EXTRA__"]
-}
+from config.base_urls import SERVER_URLS as _DEFAULT_BASE_URLS
 
 _WEBARENA_TASKS_FILE = "test_files/webarena-verified.json"
 
@@ -113,7 +104,7 @@ class TaskBatchRunner:
         self.skip_execution = skip_execution
         self.debug = debug
         self.multi_docker = multi_docker
-        self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, "http://localhost:8023")
+        self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, _DEFAULT_BASE_URLS["gitlab"])
         self.num_workers = _workers_new.num_workers() if multi_docker else 1
         self._glpat: Optional[str] = None
         self._shopping_token: Optional[str] = None
@@ -443,7 +434,7 @@ def main():
         "--base-url", default=None,
         help=(
             "Base URL of the server (ignored when --multi-docker is set). "
-            "Defaults are pulled from DEFAULT_BASE_URLS in eval/program_html_evaluator.py "
+            "Defaults are pulled from SERVER_URLS in config/base_urls.py "
             "so you only need this flag to override them."
         ),
     )

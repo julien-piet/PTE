@@ -16,10 +16,12 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+from config.base_urls import SERVER_URLS as _SERVER_URLS
+
 PROJECT_ROOT = Path(__file__).parent.parent
 SERVER_ENV = PROJECT_ROOT / "config" / ".server_env"
 
-GITLAB_URL = "http://localhost:8023"
+GITLAB_URL = _SERVER_URLS["gitlab"]
 USERNAME = "byteblaze"
 PASSWORD = "hello1234"
 TOKEN_NAME = "benchmark-runner"

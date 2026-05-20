@@ -53,7 +53,9 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
-GITLAB_BASE = "http://localhost:8023"
+from config.base_urls import SERVER_URLS as _SERVER_URLS
+
+GITLAB_BASE = _SERVER_URLS["gitlab"]
 BYTEBLAZE_USERNAME = "byteblaze"
 BYTEBLAZE_PASSWORD = "hello1234"
 

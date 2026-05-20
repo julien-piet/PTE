@@ -15,19 +15,9 @@ from typing import Any, Dict, List, Optional
 
 from playwright.sync_api import Page
 
+from config.base_urls import SERVER_URLS as _SERVER_URLS
 
-# ---------------------------------------------------------------------------
-# Default base URL mapping for placeholder substitution
-# Override by passing base_urls= to ProgramHtmlEvaluator.__init__
-# ---------------------------------------------------------------------------
-DEFAULT_BASE_URLS: Dict[str, str] = {
-    "__GITLAB__": "http://localhost:8023",
-    "__REDDIT__": "http://localhost:9999",
-    "__SHOPPING__": "http://localhost:7770",
-    "__SHOPPING_EXTRA__": "http://localhost:7790",
-    "__SHOPPING_ADMIN__": "http://ec2-18-218-205-96.us-east-2.compute.amazonaws.com:8082/admin",
-    "__MAP__": "http://localhost:3000",
-}
+DEFAULT_BASE_URLS: dict = {f"__{k.upper()}__": v for k, v in _SERVER_URLS.items()}
 
 
 class ProgramHtmlEvaluator:
@@ -299,7 +289,7 @@ class ProgramHtmlEvaluator:
         Otherwise navigate to the subreddit's /new sort and return the first post.
         """
         import re as _re
-        reddit_base = self.base_urls.get("__REDDIT__", "http://localhost:9999")
+        reddit_base = self.base_urls.get("__REDDIT__", DEFAULT_BASE_URLS["__REDDIT__"])
 
         # If last_url is already a post URL (/f/{forum}/{id}/{slug}), use it directly.
         # This handles create_post tasks where final_url is the newly created post.

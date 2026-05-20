@@ -22,11 +22,13 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
+from config.base_urls import SERVER_URLS as _SERVER_URLS
+
 PROJECT_ROOT = Path(__file__).parent.parent
 ENV_FILE = PROJECT_ROOT / "config" / ".env"
 SERVER_ENV = PROJECT_ROOT / "config" / ".server_env"
 
-SHOPPING_BASE_URL = "http://localhost:7770"
+SHOPPING_BASE_URL = _SERVER_URLS["shopping"]
 
 
 def _get_admin_token(base_url: str, username: str, password: str) -> str:

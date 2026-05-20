@@ -43,6 +43,7 @@ if str(project_root) not in sys.path:
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from api import gitlab_pw
+from config.base_urls import SERVER_URLS as _SERVER_URLS
 from eval.program_html_evaluator import ProgramHtmlEvaluator, DEFAULT_BASE_URLS
 from eval.url_match_evaluator import UrlMatchEvaluator
 from eval.gitlab_state_reset import GitLabStateReset
@@ -68,7 +69,7 @@ def _resolve_placeholder(url: str) -> str:
 def _login_for_task(
     page,
     task: Dict[str, Any],
-    gitlab_base_url: str = "http://localhost:8023",
+    gitlab_base_url: str = _SERVER_URLS["gitlab"],
 ) -> bool:
     """
     Log in to the appropriate site for the given task.
@@ -87,7 +88,7 @@ def _login_for_task(
         import time as _login_time
         username, password = gitlab_pw.get_default_gitlab_credentials()
 
-        if gitlab_base_url != "http://localhost:8023":
+        if gitlab_base_url != _SERVER_URLS["gitlab"]:
             # Non-default port: navigate directly instead of relying on the
             # module-level LOGIN_URL constant (which is baked in as 8023).
             login_url = f"{gitlab_base_url}/users/sign_in"
@@ -282,7 +283,7 @@ class BaseAgentRunner:
         headless: bool = True,
         enable_reset: bool = True,
         force_reset: bool = False,
-        gitlab_base_url: str = "http://localhost:8023",
+        gitlab_base_url: str = _SERVER_URLS["gitlab"],
     ):
         self.headless = headless
         self.enable_reset = enable_reset
@@ -509,7 +510,7 @@ class AgentRunner(BaseAgentRunner):
         force_reset: bool = False,
         api_dir: str = "api",
         env_file: str = "config/.server_env",
-        gitlab_base_url: str = "http://localhost:8023",
+        gitlab_base_url: str = _SERVER_URLS["gitlab"],
     ):
         super().__init__(
             headless=headless,

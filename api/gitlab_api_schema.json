@@ -14812,7 +14812,8 @@
           "200": {
             "schema": {
               "$ref": "#/definitions/API_Entities_Label"
-            }
+            },
+            "description": "OK"
           }
         }
       }
@@ -14859,7 +14860,8 @@
           "200": {
             "schema": {
               "$ref": "#/definitions/API_Entities_Label"
-            }
+            },
+            "description": "OK"
           }
         }
       }
@@ -16239,7 +16241,8 @@
           "200": {
             "schema": {
               "$ref": "#/definitions/API_Entities_GroupRepositoryStorageMove"
-            }
+            },
+            "description": "OK"
           }
         }
       }
@@ -16347,7 +16350,8 @@
           "200": {
             "schema": {
               "$ref": "#/definitions/API_Entities_GroupRepositoryStorageMove"
-            }
+            },
+            "description": "OK"
           }
         }
       }
@@ -16811,7 +16815,8 @@
           "200": {
             "schema": {
               "$ref": "#/definitions/API_Entities_WikiAttachment"
-            }
+            },
+            "description": "OK"
           }
         }
       }
