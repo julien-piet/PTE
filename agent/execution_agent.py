@@ -33,6 +33,11 @@ class _MissingDependency(Exception):
 
 class _HttpError(Exception):
     """Raised when a curl call returns a non-2xx HTTP status."""
+
+class _AlreadyExistsBody(dict):
+    """Dict subclass returned by _run_curl for HTTP 409 already-exists responses.
+    Stored directly without LLM parsing so downstream steps are never blocked
+    by a None output, even when they declare a depends_on on this step."""
 from agent.common.configurator import Configurator
 from agent.planner import ExecutionContext
 from agent.providers.provider import ModelProvider
@@ -135,7 +140,10 @@ class ExecutionAgent:
             if m:
                 pos += len(m.group(0))
                 if isinstance(obj, list):
-                    obj = obj[int(m.group(1))]
+                    idx = int(m.group(1))
+                    if idx >= len(obj):
+                        return None
+                    obj = obj[idx]
                 # If obj is a dict (fan-out already distributed this item), skip the
                 # bracket index — the dict IS the item, so just continue down the chain.
                 elif not isinstance(obj, dict):
@@ -184,15 +192,24 @@ class ExecutionAgent:
         navigation fails or no accessor is present.
         """
         if isinstance(value, str):
-            # Substitute {loop_item} / {loop_item.field} when inside a foreach iteration
+            # Substitute {loop_item}, {loop_item.field}, {loop_item[n].field}, etc.
             if "__loop_item__" in outputs:
                 def _sub_loop(m: re.Match) -> str:
                     item = outputs["__loop_item__"]
-                    field = m.group(1)
-                    if field and isinstance(item, dict):
-                        item = item.get(field, item)
+                    accessor = m.group(1)  # everything after "loop_item": "", ".field", "[0].id", etc.
+                    if accessor:
+                        result = ExecutionAgent._follow_accessor(item, accessor)
+                        if result is None and not isinstance(item, (dict, list)):
+                            # loop_item is already a scalar — the accessor was redundant
+                            # (foreach extracted the leaf value, e.g. [*].id, but the
+                            # argument still references {loop_item.id}). Use item directly.
+                            pass
+                        elif result is None:
+                            return "null"
+                        else:
+                            item = result
                     return json.dumps(item) if isinstance(item, (dict, list)) else str(item)
-                value = re.sub(r"\{loop_item(?:\.(\w+))?\}", _sub_loop, value)
+                value = re.sub(r"\{loop_item([^}]*)\}", _sub_loop, value)
 
             def _sub(m: re.Match) -> str:
                 step_id, accessor = m.group(1), m.group(2)
@@ -223,11 +240,12 @@ class ExecutionAgent:
         method, path_template = tool_name.split(" ", 1)
         method = method.upper()
 
-        # Resolve all argument values (substituting {step_id.result} references)
-        args: Dict[str, Any] = {
-            arg.name: self._resolve(arg.value, outputs)
-            for arg in step.arguments
-        }
+        # Resolve all argument values, substituting {step_id.result} and {loop_item} references.
+        # Bare-reference normalization (missing {}) is enforced at the Argument model level.
+        def _normalize(arg) -> Any:
+            return self._resolve(arg.value, outputs)
+
+        args: Dict[str, Any] = {arg.name: _normalize(arg) for arg in step.arguments}
 
         # Detect path parameters from {name} tokens in the URL template
         path_param_names = set(re.findall(r"\{(\w+)\}", path_template))
@@ -286,7 +304,15 @@ class ExecutionAgent:
     def _run_curl(self, cmd: List[str]) -> Any:
         # Append -w "\n%{http_code}" so the status code appears on the last line
         cmd = cmd[:-1] + ["-w", "\n%{http_code}", cmd[-1]]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        for attempt in range(3):
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                break
+            except subprocess.TimeoutExpired:
+                if attempt < 2:
+                    continue
+                raise _HttpError("Request timed out after 3 attempts")
+
         output = result.stdout
         # Split off the status code line appended by -w
         *body_lines, status_line = output.rsplit("\n", 1)
@@ -298,13 +324,16 @@ class ExecutionAgent:
         except json.JSONDecodeError:
             body = raw
 
-        # 304 Not Modified is treated as success: the resource is already in the
-        # desired state (e.g. project already starred), so the operation is idempotent.
-        if not (200 <= status_code < 300) and status_code != 304:
-            raise _HttpError(
-                f"HTTP {status_code}: {json.dumps(body) if isinstance(body, dict) else body}"
-            )
-        return body
+        if 200 <= status_code < 300 or status_code == 304:
+            return body
+        # 409 Conflict: resource already exists — idempotent success.
+        # Return a marked dict so _execute_step can skip LLM parsing and store
+        # a non-None value, keeping dependent steps unblocked.
+        if status_code == 409:
+            return _AlreadyExistsBody(body if isinstance(body, dict) else {})
+        raise _HttpError(
+            f"HTTP {status_code}: {json.dumps(body) if isinstance(body, dict) else body}"
+        )
 
     # ── Inter-step output parsing ────────────────────────────────────────────
 
@@ -347,6 +376,16 @@ class ExecutionAgent:
         accessor_guidance = ""
         unique_accessors = list(dict.fromkeys(all_accessors))
         if unique_accessors:
+            # If every accessor has a structural path after .result (e.g. [0].field,
+            # [sort_desc:f][0].id, .key), _follow_accessor handles all the navigation
+            # correctly on the raw output — skip the LLM entirely. The LLM is only
+            # needed for bare {step.result} references that require semantic extraction.
+            structural_path_re = re.compile(
+                r"\{" + re.escape(step.step_id) + r"\.result[.\[]"
+            )
+            if all(structural_path_re.match(acc) for acc in unique_accessors):
+                return raw_output
+
             lines = []
             for acc in unique_accessors:
                 # Extract the field path after .result (e.g. ".default_branch" → "default_branch")
@@ -400,22 +439,49 @@ class ExecutionAgent:
         try:
             loop = asyncio.get_event_loop()
 
+            # Conditional step: evaluate an equality condition and store the chosen branch.
+            if getattr(step, "step_type", "tool_call") == "conditional":
+                lhs, _, rhs = self._resolve(step.condition, ctx.step_outputs).partition(" == ")
+                result = lhs.strip() == rhs.strip()
+                value = self._resolve(step.if_true if result else step.if_false, ctx.step_outputs)
+                raw_outputs[step.step_id] = value
+                ctx.mark_completed(step.step_id, value)
+                branch = "true" if result else "false"
+                print(f"{prefix} ✓ {step.step_id} done (conditional → {branch}: {value!r})")
+                return
+
             # Guard: if any argument references a prior step's output that could
             # not be extracted (stored as None), abort before making any curl call.
             for arg in (step.arguments or []):
-                m = re.search(r"\{(\w+)\.result", str(arg.value))
+                arg_str = json.dumps(arg.value) if isinstance(arg.value, (dict, list)) else str(arg.value)
+                m = re.search(r"\{(\w+)\.result", arg_str)
                 if m:
                     ref_id = m.group(1)
-                    if ref_id in ctx.step_outputs and ctx.step_outputs[ref_id] is None:
+                    if ref_id not in ctx.step_outputs:
+                        continue
+                    val = ctx.step_outputs[ref_id]
+                    if val is None:
                         raise _MissingDependency(
                             f"step '{ref_id}' produced no extractable value for argument '{arg.name}'"
                         )
+                    # Also guard against indexing into an empty list, e.g. {step_2.result[0].id}
+                    # when step_2 returned [].
+                    if isinstance(val, list) and len(val) == 0:
+                        idx_m = re.search(r"\{" + ref_id + r"\.result\[(\d+)\]", arg_str)
+                        if idx_m:
+                            raise _MissingDependency(
+                                f"step '{ref_id}' returned an empty list; "
+                                f"argument '{arg.name}' cannot index into it"
+                            )
 
             # Foreach: step declares an explicit iteration list — run once per element
             # and collect all results as a list stored in ctx.step_outputs.
             foreach_val = getattr(step, "foreach", None)
             if foreach_val is not None:
-                items = self._resolve_foreach(foreach_val, ctx.step_outputs)
+                # Use raw_outputs (full curl responses) so accessor chains like
+                # [sort_desc:field][:N][*].id operate on the complete API data,
+                # not on the LLM-extracted subset stored in ctx.step_outputs.
+                items = self._resolve_foreach(foreach_val, raw_outputs)
                 if not items:
                     raw_outputs[step.step_id] = []
                     ctx.mark_completed(step.step_id, [])
@@ -448,11 +514,15 @@ class ExecutionAgent:
             fan_out_values: Optional[List[Any]] = None
             for arg in (step.arguments or []):
                 if arg.name in path_param_names:
-                    # Check the raw stored output (not _resolve, which stringifies lists)
-                    m = re.search(r"\{(\w+)\.result", str(arg.value))
+                    # Check the raw stored output (not _resolve, which stringifies lists).
+                    # Only fan-out for bare {step.result} or [*] wildcard patterns —
+                    # [N] index and [sort_desc:...] patterns resolve to a single item.
+                    m = re.search(r"\{(\w+)\.result([^}]*)\}", str(arg.value))
                     ref_step_id = m.group(1) if m else None
+                    accessor_path = m.group(2) if m else ""
                     raw_val = ctx.step_outputs.get(ref_step_id) if ref_step_id else None
-                    if isinstance(raw_val, list):
+                    is_multi = not accessor_path or "[*]" in accessor_path
+                    if isinstance(raw_val, list) and is_multi:
                         fan_out_ref_step = ref_step_id
                         fan_out_values = raw_val
                         break
@@ -513,18 +583,23 @@ class ExecutionAgent:
             # Always preserve the full raw response for final answer generation
             raw_outputs[step.step_id] = raw
 
-            # If downstream steps reference this result, parse it down to what they need
-            dependent_steps = [s for s in plan if step.step_id in (getattr(s, "depends_on", []) or [])]
-            if dependent_steps:
-                print(f"{prefix} Parsing {step.step_id} output for {len(dependent_steps)} dependent step(s)...")
-                parsed = await self._parse_step_output(step, raw, dependent_steps)
-                # Explicitly store None so the downstream guard can detect parse failure.
-                ctx.step_outputs[step.step_id] = parsed
-                ctx.mark_completed(step.step_id, parsed)
+            if isinstance(raw, _AlreadyExistsBody):
+                # 409 already-exists: store the body directly (non-None) so that
+                # any step with depends_on this one is never blocked by the guard.
+                ctx.mark_completed(step.step_id, dict(raw))
+                print(f"{prefix} ✓ {step.step_id} done (already exists, skipping parse)")
             else:
-                ctx.mark_completed(step.step_id, raw)
-
-            print(f"{prefix} ✓ {step.step_id} done")
+                # If downstream steps reference this result, parse it down to what they need
+                dependent_steps = [s for s in plan if step.step_id in (getattr(s, "depends_on", []) or [])]
+                if dependent_steps:
+                    print(f"{prefix} Parsing {step.step_id} output for {len(dependent_steps)} dependent step(s)...")
+                    parsed = await self._parse_step_output(step, raw, dependent_steps)
+                    # Explicitly store None so the downstream guard can detect parse failure.
+                    ctx.step_outputs[step.step_id] = parsed
+                    ctx.mark_completed(step.step_id, parsed)
+                else:
+                    ctx.mark_completed(step.step_id, raw)
+                print(f"{prefix} ✓ {step.step_id} done")
         except _MissingDependency as e:
             ctx.mark_failed(step.step_id, str(e))
             print(f"{prefix} ✗ {step.step_id} skipped: {e}")

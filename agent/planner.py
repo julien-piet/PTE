@@ -1,11 +1,12 @@
 # tracks which steps are ready, completed, failed, and manages dependencies between steps
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Sequence, Set, Tuple, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Sequence, Set, Tuple, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # =======================
@@ -18,6 +19,38 @@ def _tool_name_str(tn: Any) -> str:
 def _abbr(v: Any, max_len: int = 50) -> str:
     s = str(v)
     return s if len(s) <= max_len else s[:max_len] + "…"
+
+
+# =======================
+# Conditional step (no HTTP call — evaluates a condition and stores a string result)
+# =======================
+class ConditionalStep(BaseModel):
+    step_type: Literal["conditional"] = "conditional"
+    step_id: str = Field(description="Unique identifier for this step")
+    condition: str = Field(
+        description=(
+            "Equality expression to evaluate, using {step_id.result} references. "
+            "Format: '{left} == {right}'. References are resolved before comparison. "
+            "Example: '{step_3.result[0].author.username} == {step_2.result[0].author.username}'"
+        )
+    )
+    if_true: str = Field(
+        description="String value to store as this step's result when condition is true. May contain {step_id.result} references."
+    )
+    if_false: str = Field(
+        description="String value to store as this step's result when condition is false. May contain {step_id.result} references."
+    )
+    depends_on: List[str] = Field(
+        default_factory=list,
+        description="List of step_ids that must complete before this step.",
+    )
+    hints: str = Field(default="", description="Optional human-readable notes.")
+    # Stubs so generic plan-walking code (pretty_print, etc.) doesn't need special-casing
+    tool_name: None = None
+    arguments: list = Field(default_factory=list)
+    foreach: None = None
+    base_url: str = ""
+    returns: str = ""
 
 
 # =======================
@@ -56,24 +89,61 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
     class Argument(BaseModel):
         name: str = Field(description="Name of the argument parameter")
         value: Union[str, int, float, bool, dict, list] = Field(
-            description="Value of the argument. Can be a literal value or placeholder like '{step_1.result}'"
+            description=(
+                "Value of the argument. Literals can be any JSON type. "
+                "References must be a string placeholder like '{step_1.result}' or '{loop_item}'."
+            )
         )
-        value_type: str = Field(
+        value_type: Literal["literal", "reference"] = Field(
             default="literal",
-            description="Type of value: 'literal' for direct values, 'reference' for dependency references"
+            description="Type of value: 'literal' for direct values, 'reference' for dependency references",
         )
-        # value_source: str = Field(
-        #     description=(
-        #         "Justification for why this value is valid. "
-        #         "Must be one of: 'from_task' (value comes directly from the user's request), "
-        #         "'documented_enum' (value is an explicit enum/accepted literal in the API docs), "
-        #         "'documented_literal' (value is a documented constant for this parameter), "
-        #         "'from_prior_step' (value is obtained from a prior step's output via {step_id.result}). "
-        #         "If none of these apply, the plan is invalid — add a lookup step instead."
-        #     )
-        # )
+
+        @model_validator(mode="before")
+        @classmethod
+        def normalize_reference(cls, data: Any) -> Any:
+            if not isinstance(data, dict):
+                return data
+            if data.get("value_type") != "reference":
+                return data
+            v = data.get("value", "")
+            if not isinstance(v, str):
+                raise ValueError(
+                    f"Argument '{data.get('name', '?')}': value_type is 'reference' "
+                    f"but value is {type(v).__name__}, not a string."
+                )
+            # Auto-wrap bare references that are missing braces:
+            # "step_1.result[0].id" → "{step_1.result[0].id}"
+            if not v.startswith("{") and re.match(r"\w+\.result", v):
+                data["value"] = "{" + v + "}"
+            return data
+
+        @model_validator(mode="after")
+        def no_embedded_conditionals(self) -> "Argument":
+            if not isinstance(self.value, str):
+                return self
+            v = self.value
+            # Bare step_N.result references without braces indicate the LLM forgot
+            # to wrap them — or worse, embedded a conditional expression as a string.
+            if re.search(r'\bstep_\w+\.result\b', v) and '{' not in v:
+                raise ValueError(
+                    f"Argument '{self.name}': value contains bare step references without "
+                    f"braces (e.g. 'step_3.result.field' must be '{{step_3.result.field}}'). "
+                    f"If branching logic is needed, use a step with step_type='conditional' "
+                    f"and reference its output with '{{step_N.result}}'."
+                )
+            # Detect if/then/else conditional logic embedded as a literal string.
+            if re.search(r'\bthen\b.+\belse\b', v, re.IGNORECASE) or \
+               re.search(r'\bif\b.+\bthen\b', v, re.IGNORECASE):
+                raise ValueError(
+                    f"Argument '{self.name}': value contains conditional logic as a literal "
+                    f"string ('{v[:80]}...'). Add a step with step_type='conditional' before "
+                    f"this step to evaluate the condition, then reference its output here."
+                )
+            return self
 
     class ExecutionStep(BaseModel):
+        step_type: Literal["tool_call"] = Field(default="tool_call", description="Step type discriminator")
         step_id: str = Field(description="Unique identifier for this step")
         tool_name: ToolEnum = Field(description="Name of the tool to execute (one of the allowed tools)")
         arguments: List[Argument] = Field(
@@ -105,12 +175,26 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             ),
         )
 
+        @model_validator(mode="after")
+        def foreach_required_when_loop_item_used(self) -> "ExecutionStep":
+            uses_loop_item = any(
+                "{loop_item" in str(arg.value)
+                for arg in (self.arguments or [])
+            )
+            if uses_loop_item and self.foreach is None:
+                raise ValueError(
+                    f"Step '{self.step_id}' uses {{loop_item}} in arguments but 'foreach' is not set. "
+                    "Set foreach to the source of iteration "
+                    "(e.g. 'step_1.result[*].id' or a literal list)."
+                )
+            return self
+
     class ToolBasedResponse(BaseModel):
         tool_call_required: Literal[True]
         response: Literal[""] = ""  # Must be empty string
-        plan: List[ExecutionStep] = Field(
+        plan: List[Annotated[Union[ConditionalStep, ExecutionStep], Field(discriminator="step_type")]] = Field(
             min_length=1,
-            description="Execution plan with at least one step"
+            description="Execution plan with at least one step",
         )
 
     return AgentModelBundle(
@@ -139,7 +223,7 @@ def explain_plan_errors(plan: List["BaseModel"]) -> Tuple[bool, Optional[str]]:
         sid = getattr(step, "step_id", None)
         if not sid:
             return False, f"Step at index {idx} is missing step_id"
-        if not getattr(step, "tool_name", None):
+        if getattr(step, "step_type", "tool_call") != "conditional" and not getattr(step, "tool_name", None):
             return False, f"Step '{sid}' missing tool_name"
         step_ids.append(sid)
 
@@ -233,38 +317,45 @@ def pretty_print_plan(
         lines.append("=" * 60)
 
     for i, step in enumerate(plan, 1):
-        tn = _tool_name_str(getattr(step, "tool_name", ""))
         lines.append(f"\nStep {i}: {step.step_id}")
-        lines.append(f"  Tool: {tn}")
-
-        # Arguments
-        args = getattr(step, "arguments", []) or []
-        if args:
-            lines.append("  Arguments:")
-            for arg in args:
-                name = getattr(arg, "name", "<unnamed>")
-                v = getattr(arg, "value", None)
-                vt = getattr(arg, "value_type", "literal")
-                lines.append(f"    - {name}: {_abbr(v, max_value_len)} ({vt})")
+        if getattr(step, "step_type", "tool_call") == "conditional":
+            lines.append(f"  Type: conditional")
+            lines.append(f"  Condition : {step.condition}")
+            lines.append(f"  If true   : {step.if_true}")
+            lines.append(f"  If false  : {step.if_false}")
         else:
-            lines.append("  Arguments: None")
+            tn = _tool_name_str(getattr(step, "tool_name", ""))
+            lines.append(f"  Tool: {tn}")
 
-        # Dependencies
+        # Dependencies (all step types)
         deps = getattr(step, "depends_on", []) or []
         if deps:
             lines.append("  Depends on: " + ", ".join(deps))
         else:
             lines.append("  Depends on: None (can execute immediately)")
 
-        # Foreach
-        foreach_val = getattr(step, "foreach", None)
-        if foreach_val is not None:
-            lines.append(f"  Foreach: {foreach_val}")
+        if getattr(step, "step_type", "tool_call") != "conditional":
+            # Arguments
+            args = getattr(step, "arguments", []) or []
+            if args:
+                lines.append("  Arguments:")
+                for arg in args:
+                    name = getattr(arg, "name", "<unnamed>")
+                    v = getattr(arg, "value", None)
+                    vt = getattr(arg, "value_type", "literal")
+                    lines.append(f"    - {name}: {_abbr(v, max_value_len)} ({vt})")
+            else:
+                lines.append("  Arguments: None")
 
-        # Returns
-        returns = getattr(step, "returns", "")
-        if returns:
-            lines.append(f"  Returns: {returns}")
+            # Foreach
+            foreach_val = getattr(step, "foreach", None)
+            if foreach_val is not None:
+                lines.append(f"  Foreach: {foreach_val}")
+
+            # Returns
+            returns = getattr(step, "returns", "")
+            if returns:
+                lines.append(f"  Returns: {returns}")
 
         # Hints
         hints = getattr(step, "hints", "")
