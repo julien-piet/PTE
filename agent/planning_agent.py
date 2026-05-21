@@ -133,7 +133,7 @@ class PlanningAgent:
             self._record(f"{label}.llm_error", err_msg)
             raise
         output = result.output
-        self._record(f"{label}.response", output.model_dump() if hasattr(output, "model_dump") else output)
+        self._record(f"{label}.response", output.model_dump(mode="json") if hasattr(output, "model_dump") else output)
         self._debug_print(label, response=str(output))
         return output
 
@@ -852,6 +852,17 @@ class PlanningAgent:
             "- foreach accepts a literal list ([\"Alice\", \"Bob\"]) or a reference string (\"step_1.result[*].id\").\n"
             "- In argument values, use {loop_item} as the placeholder for the current iterated element.\n"
             "- A foreach step runs N times and its output is automatically collected as a list.\n\n"
+            "Conditional step rule:\n"
+            "- When a task requires branching (e.g. 'if the last comment is from the author reply X, otherwise reply Y'), "
+            "add a step with step_type='conditional' BEFORE the action step.\n"
+            "- Set condition to an equality expression using {step_id.result} references: "
+            "'{step_3.result[0].author.username} == {step_2.result[0].author.username}'\n"
+            "- Set if_true and if_false to the string values to produce for each branch. "
+            "Both may contain {step_id.result} references.\n"
+            "- The conditional step stores the chosen string as its output. "
+            "Reference it in the next step's arguments as '{step_N.result}'.\n"
+            "- NEVER embed conditional logic (if/else/then) as a literal string inside an argument value. "
+            "Always use a conditional step instead.\n\n"
         )
         # pydantic_ai validates against bundle.ToolBasedResponse (including our model_validators)
         # and auto-retries on schema violations — no manual JSON parsing needed.
@@ -859,28 +870,20 @@ class PlanningAgent:
         if not validate_plan(plan_result.plan):
             raise ValueError("LLM produced an invalid plan.")
 
-        # Annotate each plan step with returns/base_url from the full kept endpoint map
+        # Annotate each tool_call step with returns/base_url; skip conditional steps.
         endpoint_map = {f"{ep.method} {ep.path}": ep for ep in kept}
         _fallback = EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
-        annotated_steps = [
-            step.model_copy(update={
-                "returns": endpoint_map.get(
-                    step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                    _fallback,
-                ).response_schema,
-                "base_url": "|".join([
-                    endpoint_map.get(
-                        step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                        _fallback,
-                    ).api,
-                    endpoint_map.get(
-                        step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                        _fallback,
-                    ).base_path,
-                ]),
-            })
-            for step in plan_result.plan
-        ]
+        annotated_steps = []
+        for step in plan_result.plan:
+            if getattr(step, "step_type", "tool_call") == "conditional":
+                annotated_steps.append(step)
+                continue
+            tn = step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
+            ep = endpoint_map.get(tn, _fallback)
+            annotated_steps.append(step.model_copy(update={
+                "returns": ep.response_schema,
+                "base_url": "|".join([ep.api, ep.base_path]),
+            }))
         return plan_result.model_copy(update={"plan": annotated_steps})
 
     # ------------------------------------------------------------------
@@ -906,14 +909,26 @@ class PlanningAgent:
 
     @staticmethod
     def _format_plan_text(plan_result) -> str:
-        return "\n\n".join(
-            f"  step_id: {step.step_id}\n"
-            f"  tool: {step.tool_name.value if hasattr(step.tool_name, 'value') else str(step.tool_name)}\n"
-            f"  arguments: {[{'name': a.name, 'value': a.value, 'value_type': a.value_type} for a in (step.arguments or [])]}\n"
-            f"  depends_on: {step.depends_on or []}\n"
-            f"  hints: {step.hints or ''}"
-            for step in plan_result.plan
-        )
+        parts = []
+        for step in plan_result.plan:
+            if getattr(step, "step_type", "tool_call") == "conditional":
+                parts.append(
+                    f"  step_id: {step.step_id}\n"
+                    f"  step_type: conditional\n"
+                    f"  condition: {step.condition}\n"
+                    f"  if_true: {step.if_true}\n"
+                    f"  if_false: {step.if_false}\n"
+                    f"  depends_on: {step.depends_on or []}"
+                )
+            else:
+                parts.append(
+                    f"  step_id: {step.step_id}\n"
+                    f"  tool: {step.tool_name.value if hasattr(step.tool_name, 'value') else str(step.tool_name)}\n"
+                    f"  arguments: {[{'name': a.name, 'value': a.value, 'value_type': a.value_type} for a in (step.arguments or [])]}\n"
+                    f"  depends_on: {step.depends_on or []}\n"
+                    f"  hints: {step.hints or ''}"
+                )
+        return "\n\n".join(parts)
 
     async def _check_plan(
         self, task: str, plan_result, kept: List[EndpointInfo]
@@ -971,6 +986,9 @@ class PlanningAgent:
             "[*] (wildcard over list), [n] (index), [sort_desc:f] (sort list desc by field f), [:N] (keep first N), .key (field). "
             "Chain them: e.g. step_1.result[sort_desc:count][:5][*].id for top-5 by count. "
             "Never use invented syntax like max_by(field) — use [sort_desc:f][0] instead.\n"
+            "- To implement branching logic, add a step with step_type='conditional' before the action step. "
+            "Set condition='{left} == {right}', if_true=<value>, if_false=<value>. "
+            "Never write if/else/then as a literal string inside an argument value.\n"
             "- If an issue requires adding a chain endpoint back, include it exactly as specified. "
             "Do NOT substitute a different endpoint. If the API does not support sorting by a required field, "
             "fetch with valid params and apply [sort_desc:field] / [:N] in the accessor chain.\n\n"
@@ -982,25 +1000,17 @@ class PlanningAgent:
 
         endpoint_map = {f"{ep.method} {ep.path}": ep for ep in kept}
         _fallback = EndpointInfo(api="", method="", path="", summary="", description="", parameters=[])
-        annotated = [
-            step.model_copy(update={
-                "returns": endpoint_map.get(
-                    step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                    _fallback,
-                ).response_schema,
-                "base_url": "|".join([
-                    endpoint_map.get(
-                        step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                        _fallback,
-                    ).api,
-                    endpoint_map.get(
-                        step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name),
-                        _fallback,
-                    ).base_path,
-                ]),
-            })
-            for step in fixed.plan
-        ]
+        annotated = []
+        for step in fixed.plan:
+            if getattr(step, "step_type", "tool_call") == "conditional":
+                annotated.append(step)
+                continue
+            tn = step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
+            ep = endpoint_map.get(tn, _fallback)
+            annotated.append(step.model_copy(update={
+                "returns": ep.response_schema,
+                "base_url": "|".join([ep.api, ep.base_path]),
+            }))
         return fixed.model_copy(update={"plan": annotated})
 
     async def _check_chain(
@@ -1060,6 +1070,9 @@ class PlanningAgent:
         step_ids_seen = []
 
         for step in plan:
+            if getattr(step, "step_type", "tool_call") == "conditional":
+                step_ids_seen.append(step.step_id)
+                continue
             tool_name = step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
             ep = endpoint_map.get(tool_name)
             param_map = {}
@@ -1130,7 +1143,8 @@ class PlanningAgent:
         ]
         if plan_result is not None:
             plan_steps = [
-                step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
+                f"[conditional:{step.step_id}]" if getattr(step, "step_type", "tool_call") == "conditional"
+                else (step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name))
                 for step in plan_result.plan
             ]
             lines.append(f"[debug] plan_steps: {plan_steps}")
@@ -1254,6 +1268,7 @@ class PlanningAgent:
                 plan_tool_names = {
                     step.tool_name.value if hasattr(step.tool_name, "value") else str(step.tool_name)
                     for step in plan_result.plan
+                    if getattr(step, "step_type", "tool_call") != "conditional"
                 }
                 chain_violations = [
                     f"Chain endpoint '{cs.endpoint.method} {cs.endpoint.path}' was omitted from the plan "

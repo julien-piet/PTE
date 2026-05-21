@@ -140,7 +140,10 @@ class ExecutionAgent:
             if m:
                 pos += len(m.group(0))
                 if isinstance(obj, list):
-                    obj = obj[int(m.group(1))]
+                    idx = int(m.group(1))
+                    if idx >= len(obj):
+                        return None
+                    obj = obj[idx]
                 # If obj is a dict (fan-out already distributed this item), skip the
                 # bracket index — the dict IS the item, so just continue down the chain.
                 elif not isinstance(obj, dict):
@@ -196,9 +199,15 @@ class ExecutionAgent:
                     accessor = m.group(1)  # everything after "loop_item": "", ".field", "[0].id", etc.
                     if accessor:
                         result = ExecutionAgent._follow_accessor(item, accessor)
-                        if result is None:
+                        if result is None and not isinstance(item, (dict, list)):
+                            # loop_item is already a scalar — the accessor was redundant
+                            # (foreach extracted the leaf value, e.g. [*].id, but the
+                            # argument still references {loop_item.id}). Use item directly.
+                            pass
+                        elif result is None:
                             return "null"
-                        item = result
+                        else:
+                            item = result
                     return json.dumps(item) if isinstance(item, (dict, list)) else str(item)
                 value = re.sub(r"\{loop_item([^}]*)\}", _sub_loop, value)
 
@@ -430,22 +439,49 @@ class ExecutionAgent:
         try:
             loop = asyncio.get_event_loop()
 
+            # Conditional step: evaluate an equality condition and store the chosen branch.
+            if getattr(step, "step_type", "tool_call") == "conditional":
+                lhs, _, rhs = self._resolve(step.condition, ctx.step_outputs).partition(" == ")
+                result = lhs.strip() == rhs.strip()
+                value = self._resolve(step.if_true if result else step.if_false, ctx.step_outputs)
+                raw_outputs[step.step_id] = value
+                ctx.mark_completed(step.step_id, value)
+                branch = "true" if result else "false"
+                print(f"{prefix} ✓ {step.step_id} done (conditional → {branch}: {value!r})")
+                return
+
             # Guard: if any argument references a prior step's output that could
             # not be extracted (stored as None), abort before making any curl call.
             for arg in (step.arguments or []):
-                m = re.search(r"\{(\w+)\.result", str(arg.value))
+                arg_str = json.dumps(arg.value) if isinstance(arg.value, (dict, list)) else str(arg.value)
+                m = re.search(r"\{(\w+)\.result", arg_str)
                 if m:
                     ref_id = m.group(1)
-                    if ref_id in ctx.step_outputs and ctx.step_outputs[ref_id] is None:
+                    if ref_id not in ctx.step_outputs:
+                        continue
+                    val = ctx.step_outputs[ref_id]
+                    if val is None:
                         raise _MissingDependency(
                             f"step '{ref_id}' produced no extractable value for argument '{arg.name}'"
                         )
+                    # Also guard against indexing into an empty list, e.g. {step_2.result[0].id}
+                    # when step_2 returned [].
+                    if isinstance(val, list) and len(val) == 0:
+                        idx_m = re.search(r"\{" + ref_id + r"\.result\[(\d+)\]", arg_str)
+                        if idx_m:
+                            raise _MissingDependency(
+                                f"step '{ref_id}' returned an empty list; "
+                                f"argument '{arg.name}' cannot index into it"
+                            )
 
             # Foreach: step declares an explicit iteration list — run once per element
             # and collect all results as a list stored in ctx.step_outputs.
             foreach_val = getattr(step, "foreach", None)
             if foreach_val is not None:
-                items = self._resolve_foreach(foreach_val, ctx.step_outputs)
+                # Use raw_outputs (full curl responses) so accessor chains like
+                # [sort_desc:field][:N][*].id operate on the complete API data,
+                # not on the LLM-extracted subset stored in ctx.step_outputs.
+                items = self._resolve_foreach(foreach_val, raw_outputs)
                 if not items:
                     raw_outputs[step.step_id] = []
                     ctx.mark_completed(step.step_id, [])
