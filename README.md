@@ -27,33 +27,32 @@ agent_llm_provider: openai        # Options: openai, anthropic, google, google-g
 agent_llm_model: gpt-4.1          # Must match a model listed under the provider
 ```
 
-### 2. API keys — `config/.env`
+### 2. API keys, credentials, and auth tokens — `config/.env` / `config/.server_env`
 
-Copy the example file and fill in the key for your active provider:
+See [config/README.md](config/README.md) for full setup instructions, including LLM API keys, site credentials, `REMOTE_HOST`, and server auth tokens.
+
+---
+
+## Initializing the Environment
+
+Before running the agent or any tests, start the supporting services:
 
 ```bash
-cp config/.env.example config/.env
+python3 initialize.py username@red5k.cs.berkeley.edu
 ```
 
+This script:
+1. Opens SSH port-forwarding tunnels to the remote worker machine (single-instance and multi-docker).
+2. Starts the Shopping Extra API on port 7790.
+3. Health-checks all configured servers (GitLab, Shopping, Reddit, Shopping Extra).
+4. Stays alive until Ctrl-C, then shuts everything down cleanly.
+
+The remote host can also be set in `config/.env` as `REMOTE_HOST` instead of passing it on the command line.
+
+```bash
+# Skip the Shopping Extra API (e.g. for GitLab-only runs):
+python3 initialize.py --no-shopping-extra username@red5k.cs.berkeley.edu
 ```
-OPENAI_API_KEY=sk-proj-...       # if using openai
-ANTHROPIC_API_KEY=sk-ant-...     # if using anthropic
-GEMINI_API_KEY=AIza...           # if using google-gla
-```
-
-### 3. Server auth tokens — `config/.server_env`
-
-Required for the agent to make authenticated API calls to the benchmark servers. This file is **not committed** — create it once locally:
-
-```
-GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
-CUSTOMER_AUTH_TOKEN=<customer JWT>
-ADMIN_AUTH_TOKEN=<admin JWT>
-```
-
-To get a GitLab token: go to `http://localhost:8023/-/user_settings/personal_access_tokens`, log in as `byteblaze` / `hello1234`, and create a token with the `api` scope.
-
-> Note: if the GitLab Docker container is reset, you will need to create a new token.
 
 ---
 
@@ -65,11 +64,7 @@ The agent makes direct HTTP/REST calls — no MCP servers needed.
 python3 -m agent.agent
 ```
 
-Or run a batch of tasks:
-
-```bash
-python3 scripts/run_tasks_batch.py
-```
+Or run the full benchmark evaluation suite — see [eval/README.md](eval/README.md) for all options (filtering by site, task ID, custom agents, result logging, and more).
 
 ---
 
@@ -77,6 +72,8 @@ python3 scripts/run_tasks_batch.py
 
 ```
 PTE/
+├── initialize.py               # One-shot env setup: SSH tunnels + Shopping Extra API + health checks
+│
 ├── agent/                      # Plan → execute pipeline (see agent/README.md)
 │   ├── agent.py                # Top-level entry point: wires PlanningAgent + ExecutionAgent
 │   ├── planning_agent.py       # Selects API endpoints via LLM and builds execution plan
@@ -88,9 +85,8 @@ PTE/
 │   └── providers/              # LLM backends: openai.py, anthropic.py, google.py
 │
 ├── api/                        # API schemas and server-specific prompts (see api/README.md)
-│   ├── index.json              # Agent's initial lookup to find relevant API files
-│   ├── gitlab_api_schema.json  # Swagger 2.0 schema for GitLab
-│   ├── shopping_api_schema.json
+│   ├── schemas/                # Swagger/OpenAPI schema files (GitLab, Shopping, etc.)
+│   ├── servers/                # Local API servers (e.g. shopping_extra.py on port 7790)
 │   ├── api_server_prompts.py   # Per-server planning hints
 │   ├── gitlab_pw/              # Playwright-style API definitions (used by eval)
 │   ├── reddit_pw/
@@ -103,20 +99,21 @@ PTE/
 │
 ├── config/                     # All configuration files (see config/README.md)
 │   ├── config.yaml             # LLM provider/model selection
+│   ├── servers.py              # Server URL and credential definitions (SERVERS, SERVER_URLS)
 │   ├── .env.example            # Template — copy to .env and fill in keys
-│   ├── .env                    # LLM API keys (not committed)
-│   └── .server_env             # Server auth tokens (not committed)
+│   ├── .env                    # LLM API keys + REMOTE_HOST (not committed)
+│   ├── .server_env             # Server auth tokens (not committed)
+│   └── init_tokens/            # Token-refresh scripts (GitLab, Shopping)
 │
 ├── eval/                       # Benchmark evaluation harness (see eval/README.md)
 │   ├── run_program_html_benchmark.py
-│   ├── agent_runner.py / agent_runner_template.py
-│   ├── docker/                 # Worker management for parallel Docker eval runs
-│   └── tests/                  # pytest test files for all three eval types
+│   ├── docker/
+│   │   ├── port_forwarding/    # SSH port-forwarding scripts (single + multi-docker)
+│   │   └── workers_new.py      # Multi-docker worker pool
+│   └── tests/                  # pytest test files (gitlab, shopping, conftest)
 │
 └── scripts/                    # Utility scripts
-    ├── run_tasks_batch.py       # Run a batch of tasks with plan + execute
-    ├── run_planning_batch.py    # Planning only (no execution)
-    └── docker_parallel/         # Multi-Docker setup guide (see docker_parallel/README.md)
+    └── run_tasks_batch_new.py  # Run a batch of tasks with plan + execute
 ```
 
 ---
@@ -135,4 +132,4 @@ Go to `api/`, duplicate `api/template.py`, and follow the instructions at the to
 | [config/README.md](config/README.md) | `config.yaml` options, LLM API key setup, and server auth token setup |
 | [api/README.md](api/README.md) | API schema files, server-specific prompts, and Playwright API directories |
 | [eval/README.md](eval/README.md) | Full benchmark evaluation guide: running tests, filtering, custom agents, scoring, and common failures |
-| [scripts/docker_parallel/README.md](scripts/docker_parallel/README.md) | Running multiple Docker instances: VS Code port config, managing workers, and port forwarding |
+| [eval/docker/port_forwarding/README.md](eval/docker/port_forwarding/README.md) | Running multiple Docker instances: VS Code port config, managing workers, and port forwarding |

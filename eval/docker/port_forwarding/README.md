@@ -38,14 +38,19 @@ NEW version:
 
 ## Port Forwarding
 
-Run from the `PTE/scripts/docker_parallel` directory:
+Scripts read `REMOTE_HOST` from `config/.env` automatically — no argument needed:
 
 ```bash
-./port_forwarding_new.sh annabella@red5k.cs.berkeley.edu
+./eval/docker/port_forwarding/port_forwarding_new.sh
 ```
 
+Or pass a server explicitly to override:
 
+```bash
+./eval/docker/port_forwarding/port_forwarding_new.sh user@red5k.cs.berkeley.edu
+```
 
+---
 
 Old docker image use these.
 
@@ -62,8 +67,6 @@ Old docker image use these.
 
 ## Port Forwarding
 
-Run from the `PTE/scripts/docker_parallel` directory:
-
 ```bash
-./port_forwarding_old.sh annabella@red5k.cs.berkeley.edu
+./eval/docker/port_forwarding/port_forwarding_old.sh
 ```

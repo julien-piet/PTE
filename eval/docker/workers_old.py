@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import subprocess
 import time
 from contextlib import asynccontextmanager
@@ -7,14 +8,19 @@ from typing import Optional
 
 import requests
 
-# parallelizing
-SERVER = "annabella@red5k.cs.berkeley.edu"
 ORCH = "/scr2/webagent/webarena_orchestrator/orchestrator.py"
+
+
+def _server() -> str:
+    host = os.environ.get("REMOTE_HOST")
+    if not host:
+        raise RuntimeError("REMOTE_HOST not set — add it to config/.env (e.g. annabella@red5k.cs.berkeley.edu)")
+    return host
 
 
 def num_workers() -> int:
     result = subprocess.run(
-        ["ssh", SERVER, f"python3 {ORCH} num_workers"],
+        ["ssh", _server(), f"python3 {ORCH} num_workers"],
         text=True,
         capture_output=True,
     )
@@ -28,7 +34,7 @@ def num_workers() -> int:
 
 def acquire_worker(task_id: str) -> dict:
     result = subprocess.run(
-        ["ssh", SERVER, f"python3 {ORCH} acquire --task-id {task_id}"],
+        ["ssh", _server(), f"python3 {ORCH} acquire --task-id {task_id}"],
         text=True,
         capture_output=True,
     )
@@ -60,7 +66,7 @@ def release_worker(worker_id: int, read_only: bool = False, force_restart: Optio
             cmd += " --read-only"
     elif read_only:
         cmd += " --read-only"
-    subprocess.run(["ssh", SERVER, cmd], check=False)
+    subprocess.run(["ssh", _server(), cmd], check=False)
 
 
 def wait_for_gitlab(gitlab_url: str, timeout: int = 120, interval: int = 5) -> None:
@@ -149,7 +155,7 @@ async def worker_session(
                        False → never restart on release.
     """
     # Import here to avoid a circular import at module load time.
-    from eval.docker.gitlab_init import get_glpat
+    from api.gitlab_pw.tokens import get_glpat
 
     worker = await acquire_worker_with_retry(
         task_id, max_attempts=max_attempts, wait=wait, acquire_lock=acquire_lock

@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 
 from playwright.sync_api import Page
 
-from config.base_urls import SERVER_URLS as _SERVER_URLS
+from config.servers import SERVER_URLS as _SERVER_URLS
 
 DEFAULT_BASE_URLS: dict = {f"__{k.upper()}__": v for k, v in _SERVER_URLS.items()}
 

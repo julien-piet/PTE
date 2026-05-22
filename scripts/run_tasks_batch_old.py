@@ -41,10 +41,10 @@ from typing import Any, Dict, List, Optional
 from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
-from eval.docker.workers import num_workers, worker_session
+from eval.docker.workers_old import num_workers, worker_session
 
 
-from config.base_urls import SERVER_URLS as _DEFAULT_BASE_URLS
+from config.servers import SERVER_URLS as _DEFAULT_BASE_URLS
 
 _DEFAULT_TASK_FILES: dict = {
     "gitlab":         "test_files/gitlab_tasks_old.json",
@@ -113,7 +113,7 @@ class TaskBatchRunner:
 
     def initialize(self):
         if not self.multi_docker and self.server == "gitlab":
-            from eval.docker.gitlab_init import get_glpat
+            from api.gitlab_pw.tokens import get_glpat
             self._glpat = get_glpat(self.base_url, "agent-local")
         mode = "multi-docker" if self.multi_docker else f"single ({self.base_url})"
         print(f"Config: server={self.server!r}, workers={self.num_workers}, mode={mode}")
@@ -407,7 +407,7 @@ def main():
         "--base-url", default=None,
         help=(
             "Base URL of the server (ignored when --multi-docker is set). "
-            "Defaults are pulled from SERVER_URLS in config/base_urls.py "
+            "Defaults are pulled from SERVER_URLS in config/servers.py "
             "so you only need this flag to override them."
         ),
     )

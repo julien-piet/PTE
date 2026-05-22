@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER="$1"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/../../../config/.env"
+
+SERVER="${1:-}"
+if [[ -z "$SERVER" ]] && [[ -f "$ENV_FILE" ]]; then
+  SERVER=$(grep -E '^REMOTE_HOST=' "$ENV_FILE" | head -1 | cut -d= -f2-)
+fi
+if [[ -z "$SERVER" ]]; then
+  echo "Error: no server specified. Pass user@host as an argument or set REMOTE_HOST in config/.env." >&2
+  exit 1
+fi
 ORCH="/scr2/webagent/webarena_orchestrator/orchestrator.py"
 TOTAL_WORKERS=$(ssh "$SERVER" python3 "$ORCH" num_workers)
 

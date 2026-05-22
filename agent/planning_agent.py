@@ -147,7 +147,7 @@ class PlanningAgent:
     # Step 1: load swagger index and api hints
     # ------------------------------------------------------------------
     def _load_index(self) -> dict:
-        index_path = self.api_dir / "index.json"
+        index_path = self.api_dir / "schemas" / "index.json"
         with open(index_path) as f:
             return json.load(f)
 
@@ -239,7 +239,7 @@ class PlanningAgent:
     # Step 3: parse swagger file with prance
     # ------------------------------------------------------------------
     def _parse_swagger(self, filename: str) -> dict:
-        filepath = (self.api_dir / filename).absolute()
+        filepath = (self.api_dir / "schemas" / filename).absolute()
         parser = prance.BaseParser(str(filepath), lazy=False)
         return parser.specification
 
@@ -680,27 +680,19 @@ class PlanningAgent:
     # ------------------------------------------------------------------
     # Step 5e: Read current-user context from env vars for the APIs in use
     # ------------------------------------------------------------------
-    def _load_user_context_config(self) -> dict:
-        path = Path("config/server_user_info.json")
-        if not path.exists():
-            return {}
-        with open(path) as f:
-            return json.load(f)
-
     def _get_user_context(self, api_files: set) -> str:
-        config = self._load_user_context_config()
+        from config.servers import SERVERS
         lines = []
-        for fragment, entry in config.items():
+        for fragment, entry in SERVERS.items():
             if not any(fragment in f.lower() for f in api_files):
                 continue
-            label = entry.get("label", fragment)
-            entries = []
-            for var_def in entry.get("vars", []):
-                val = os.environ.get(var_def["env"])
-                if val:
-                    entries.append(f"  - {var_def['label']}: {val}")
-            if entries:
-                lines.append(f"{label}:\n" + "\n".join(entries))
+            username_env = entry.get("username_env")
+            if not username_env:
+                continue
+            val = os.environ.get(username_env)
+            if val:
+                label = entry.get("label", fragment)
+                lines.append(f"{label}:\n  - username: {val}")
 
         if not lines:
             return ""

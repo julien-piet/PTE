@@ -53,7 +53,7 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
-from config.base_urls import SERVER_URLS as _SERVER_URLS
+from config.servers import SERVER_URLS as _SERVER_URLS
 
 GITLAB_BASE = _SERVER_URLS["gitlab"]
 BYTEBLAZE_USERNAME = "byteblaze"

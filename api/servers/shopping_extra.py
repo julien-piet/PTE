@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from typing import Dict, Optional
 from urllib.parse import quote_plus, urljoin
 
@@ -8,8 +12,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from playwright.sync_api import sync_playwright
 
-from shopping_pw import add_product_to_wishlist, get_default_customer_credentials, login_customer
-from shopping_pw.constants import BASE_URL
+from api.shopping_pw import add_product_to_wishlist, get_default_customer_credentials, login_customer
+from api.shopping_pw.constants import BASE_URL
 
 app = FastAPI(
     title="Shopping Extra API",

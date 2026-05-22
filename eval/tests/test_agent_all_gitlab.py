@@ -5,7 +5,7 @@
 # program_html eval types).
 #
 # Tasks run concurrently up to num_workers() at a time, matching the
-# parallelism of run_tasks_batch.py.
+# parallelism of scripts/run_tasks_batch_new.py.
 #
 # Run all 186 tasks:
 #   python3 -m pytest eval/tests/test_agent_all_gitlab.py -v
@@ -40,7 +40,7 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from agent.auth import StaticAuth
-from config.base_urls import SERVER_URLS as _SERVER_URLS
+from config.servers import SERVER_URLS as _SERVER_URLS
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
 from eval.tests.agent_test_utils import extract_agent_details, task_status
@@ -60,8 +60,8 @@ if str(PROJECT_ROOT) not in sys.path:
 # ---------------------------------------------------------------------------
 
 # TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
-TASK_FILE = Path(__file__).parent / "webarena_verified_string_match.json" #string match only
-TASK_FILE2 = Path(__file__).parent / "webarena_verified_program_html.json"
+TASK_FILE = Path(__file__).parent / "test_files" / "webarena_verified_string_match.json" #string match only
+TASK_FILE2 = Path(__file__).parent / "test_files" / "webarena_verified_program_html.json"
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:

@@ -56,5 +56,5 @@ Runtime server hints live outside the agent code so adding a new server never re
 |---|---|
 | `api/index.json` | Maps Swagger filenames to short descriptions — used by the LLM to select which schema files to load. |
 | `api/api_hints.json` + `api/api_server_prompts.py` | Per-schema prompt hints injected into planning steps to guide the LLM on API-specific conventions. |
-| `config/server_user_info.json` | Maps API filename fragments to env-var definitions for current-user context (e.g. username). Add an entry here to support a new server's user context without touching `planning_agent.py`. |
+| `config/servers.py` | Canonical server definitions (URL, label, username env var). User context for planning is derived from here; add a new server entry to support its user context automatically. |
 | `config/.server_env` | Auth tokens for all servers. Read by `AuthRegistry.build_default()`. |
