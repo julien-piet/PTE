@@ -55,9 +55,9 @@ _DEFAULT_TASK_FILES: dict = {
 
 
 @asynccontextmanager
-async def _local_session(server_url: str, glpat: Optional[str]):
+async def _local_session(server_url: str):
     """Stub worker session for a single local server instance."""
-    yield {"worker_id": "local", "gitlab_url": server_url, "glpat": glpat}
+    yield {"worker_id": "local", "server_url": server_url}
 
 
 def _serialize_plan(plan) -> list:
@@ -106,17 +106,13 @@ class TaskBatchRunner:
         self.multi_docker = multi_docker
         self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, _DEFAULT_BASE_URLS["gitlab"])
         self.num_workers = _workers_new.num_workers() if multi_docker else 1
-        self._glpat: Optional[str] = None
         self._shopping_token: Optional[str] = None
 
         self.results: List[Dict[str, Any]] = []
         self._acquire_lock: asyncio.Lock = asyncio.Lock()
 
     def initialize(self):
-        if not self.multi_docker and self.server == "gitlab":
-            from eval.docker.gitlab_init import get_glpat
-            self._glpat = get_glpat(self.base_url, "agent-local")
-        if self.server in ("shopping", "shopping_admin"):
+        if not self.multi_docker and self.server in ("shopping", "shopping_admin"):
             print("Refreshing shopping auth tokens...")
             self._shopping_token = _refresh_shopping_tokens(base_url=self.base_url)
         from agent.common.configurator import Configurator
@@ -189,24 +185,34 @@ class TaskBatchRunner:
                     read_only=True,
                 )
             else:
-                worker_ctx = _local_session(self.base_url, self._glpat)
+                worker_ctx = _local_session(self.base_url)
 
             async with worker_ctx as w:
                 worker_id = w["worker_id"]
-                gitlab_url = w["gitlab_url"]
-                glpat = w["glpat"]
+                server_url = w["server_url"]
 
-                # Inject auth into the execution agent.
+                # Inject auth into the execution agent using the worker's server URL.
                 if agent.execution_agent is not None:
-                    if self.server == "gitlab" and glpat:
-                        agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
-                    elif self.server in ("shopping", "shopping_admin") and self._shopping_token:
-                        agent.execution_agent.auth = StaticAuth({"Authorization": f"Bearer {self._shopping_token}"})
+                    if self.server == "gitlab":
+                        # Single-docker: registry already read GITLAB_TOKEN from .server_env.
+                        # Multi-docker: inject the per-worker GLPAT obtained by worker_session.
+                        glpat = w.get("glpat")
+                        if glpat:
+                            agent.execution_agent.auth = StaticAuth({"PRIVATE-TOKEN": glpat})
+                    elif self.server in ("shopping", "shopping_admin"):
+                        # Multi-docker: fresh token per worker from that worker's URL.
+                        # Single-docker: reuse the token pre-fetched in initialize().
+                        token = (
+                            _refresh_shopping_tokens(base_url=server_url)
+                            if self.multi_docker
+                            else self._shopping_token
+                        )
+                        if token:
+                            agent.execution_agent.auth = StaticAuth({"Authorization": f"Bearer {token}"})
                     agent.execution_agent.task_id = str(task_id)
 
                 # ── Plan + Execute ────────────────────────────────────────────
-                # NOTE: gitlab_url is used here since it was hardcoded in the original version for all servers. Probably need to be changed in the future.
-                run_servers: Dict[str, str] = {self.server: gitlab_url}
+                run_servers: Dict[str, str] = {self.server: server_url}
                 if self.server == "shopping":
                     run_servers["shopping_extra"] = _DEFAULT_BASE_URLS["shopping_extra"]
                 execution_result = await agent.run_task(prompt, servers=run_servers)
