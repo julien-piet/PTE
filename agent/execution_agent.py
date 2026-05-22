@@ -245,8 +245,6 @@ class ExecutionAgent:
         def _normalize(arg) -> Any:
             return self._resolve(arg.value, outputs)
 
-        args: Dict[str, Any] = {arg.name: _normalize(arg) for arg in step.arguments}
-
         # Detect path parameters from {name} tokens in the URL template
         path_param_names = set(re.findall(r"\{(\w+)\}", path_template))
 
@@ -254,30 +252,24 @@ class ExecutionAgent:
         query_params: Dict[str, Any] = {}
         body: Optional[Any] = None
 
-        for name, value in args.items():
+        for arg in step.arguments:
+            name = arg.name
+            value = _normalize(arg)
+            pin = getattr(arg, "param_in", None)
+
+            # URL template always wins for path params
             if name in path_param_names:
                 path_params[name] = str(value)
-            elif name == "body" and isinstance(value, dict):
-                # Explicit body object — use as-is
+            elif pin == "body":
                 body = value
+            elif pin in ("query", "formData", "header"):
+                query_params[name] = value
             elif method in ("POST", "PUT", "PATCH"):
-                # NOTE: Some Shopping Website endpoints expect the body Swagger/OpenAPI auto-generated
-                # body parameter names (e.g. "PostV1CartsMineItemsBody", "PutV1CustomersCustomerIdBody") 
-                # to be wrapped in a specific key (e.g., "cartItem"), but the auto-generated
-                # names already include this wrapper, so we should use the value directly.
-                if isinstance(value, dict) and re.match(
-                    r"^(Post|Put|Patch|Delete)V\d+.*Body$", name
-                ):
-                    body = value
-                else:
-                    # Fallback to default behavior
-                    # Non-path args for mutating methods → merge into JSON body
-                    if body is None:
-                        body = {}
-                    if isinstance(body, dict):
-                        body[name] = value
+                if body is None:
+                    body = {}
+                if isinstance(body, dict):
+                    body[name] = value
             else:
-                # GET / DELETE → query string
                 query_params[name] = value
 
         # Build final URL — step.base_url wins, fall back to init-time base_url

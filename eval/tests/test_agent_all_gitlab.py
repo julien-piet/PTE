@@ -140,7 +140,7 @@ def test_agent_accomplishes_gitlab_tasks(
     tasks = _load_tasks(request.config)
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
-    base_url = request.config.getoption("--base-url", default=_SERVER_URLS["gitlab"])
+    base_url = request.config.getoption("--base-url") or _SERVER_URLS["gitlab"]
 
     if multi_docker:
         n_workers = _workers_new.num_workers()

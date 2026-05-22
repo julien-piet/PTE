@@ -98,6 +98,16 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             default="literal",
             description="Type of value: 'literal' for direct values, 'reference' for dependency references",
         )
+        param_in: Optional[Literal["path", "query", "body", "formData", "header"]] = Field(
+            default=None,
+            description=(
+                "Where this argument is sent in the HTTP request, taken from the swagger 'in' field. "
+                "'body' means the value is the entire request body. "
+                "'path' means substituted into the URL. "
+                "'query' means appended as a query parameter. "
+                "Always set this from the endpoint's parameter definition."
+            ),
+        )
 
         @model_validator(mode="before")
         @classmethod
