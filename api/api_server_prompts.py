@@ -148,21 +148,12 @@ You do NOT know your own user ID or username — if the task requires acting on 
 Do NOT pass string aliases like 'self', 'me', or 'current_user' for parameters that require an ID/username — add a prior step to look up the real value instead.
 You do NOT know the user IDs or usernames of any other users — if the task requires acting on another user, you MUST first resolve that user's info using a lookup endpoint before calling endpoints with any form of {{id}} or {{username}} parameter.
 
-Contributors are Git commit authors derived from repository history, not GitLab user accounts — they may have no GitLab account, a deleted/blocked account, or a mismatched email. Never assume a contributor name or email can be resolved to a GitLab user record.
-
 When determining default_branch for a repository, do NOT assume it is always 'main' or 'master'. Look up the default branch instead.
 
-For Project Templates. Use this json schema to search through available built-in templates. Otherwise, leave template_name blank. 
+For Project Templates. Use this json schema to search through available built-in templates. Otherwise, leave template_name blank.
 
 {json.dumps(project_templates, indent=2)}
 
-When finding repositories a user contributed to:                                                                                                                   
-- "Contributions" include commits pushed to projects the user does NOT own or have membership in (e.g. forks, external repos they pushed to).                      
-- `GET /events` only returns recent activity and may miss older or less-active contributions.                                                                      
-- `GET /users/{{user_id}}/projects` and `GET /projects?membership=true` only return repos the user owns or is a member of — these WILL miss                          
-contributed-but-not-joined repos.                                                                                                                                  
-- To find all contributed repos, use `GET /projects/{{id}}/repository/contributors` on candidate projects, or check `GET /users/{{user_id}}/contributed_projects` which
-returns projects the user has pushed commits to regardless of membership.                                                                                         
 """
 
 SHOPPING_HINTS = f"""
