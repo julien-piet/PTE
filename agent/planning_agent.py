@@ -489,7 +489,7 @@ class PlanningAgent:
             "- Otherwise set foreach to null.\n\n"
             "Required resolvers:\n"
             "List any prerequisite steps whose need is semantic rather than structural. Common cases:\n"
-            "- The task refers to 'me', 'my', or 'mine' → include a current-user lookup endpoint so the plan "
+            "- The task refers to 'me' or 'my' → include a current-user lookup endpoint so the plan "
             "knows who the authenticated user is.\n"
             "- The task names a resource by a plain display name but the goal endpoint requires a numeric ID → "
             "include a search/lookup endpoint to resolve the name to an ID.\n"
@@ -680,28 +680,25 @@ class PlanningAgent:
     # ------------------------------------------------------------------
     # Step 5e: Read current-user context from env vars for the APIs in use
     # ------------------------------------------------------------------
-    def _get_user_context(self, api_files: set) -> str:
-        API_ENV_MAP = {
-            "gitlab": ("GitLab", [
-                ("GITLAB_USERNAME", "username"),
-            ]),
-            "reddit": ("Reddit", [
-                ("REDDIT_USERNAME", "username"),
-            ]),
-            "shopping": ("Shopping", [
-                ("SHOPPING_USERNAME", "username"),
-            ]),
-        }
+    def _load_user_context_config(self) -> dict:
+        path = Path("config/server_user_info.json")
+        if not path.exists():
+            return {}
+        with open(path) as f:
+            return json.load(f)
 
+    def _get_user_context(self, api_files: set) -> str:
+        config = self._load_user_context_config()
         lines = []
-        for fragment, (label, var_defs) in API_ENV_MAP.items():
+        for fragment, entry in config.items():
             if not any(fragment in f.lower() for f in api_files):
                 continue
+            label = entry.get("label", fragment)
             entries = []
-            for var_name, human_label in var_defs:
-                val = os.environ.get(var_name)
+            for var_def in entry.get("vars", []):
+                val = os.environ.get(var_def["env"])
                 if val:
-                    entries.append(f"  - {human_label}: {val}")
+                    entries.append(f"  - {var_def['label']}: {val}")
             if entries:
                 lines.append(f"{label}:\n" + "\n".join(entries))
 
@@ -810,8 +807,9 @@ class PlanningAgent:
             f"- tool_name must be EXACTLY one of: {json.dumps(tool_names)}\n"
             "  Do NOT substitute actual IDs or path values into tool_name — keep template placeholders like {{id}} as-is.\n"
             "  Path parameters (e.g. id='a11yproject/myrepo') go in the arguments list, NOT in tool_name.\n"
-            "- arguments is a list of {name, value, value_type} objects\n"
+            "- arguments is a list of {name, value, value_type, param_in} objects\n"
             '- value_type is "literal" for known values, "reference" for {step_id.result} placeholders\n'
+            '- param_in must be set from the swagger "in" field for that parameter: "path", "query", "body", "formData", or "header"\n'
             "- CRITICAL: argument names must ONLY be parameter names explicitly listed in the endpoint's schema above. "
             "Never invent or guess parameter names. If a parameter name is not in the schema, the task cannot be done with that endpoint.\n\n"
             "Argument sourcing — every argument value must come from exactly one of:\n"
@@ -835,7 +833,7 @@ class PlanningAgent:
             "  step_1.result[sort_desc:count][0].id       → id of the single element with the highest 'count'\n"
             "NEVER use invented syntax like max_by(field) — use [sort_desc:f][0] instead.\n"
             "If the API does not support sorting by a required field as a query param, fetch with valid params "
-            "(e.g. per_page=100) and sort/slice client-side via [sort_desc:field] and [:N] in the accessor chain.\n\n"
+            "(using the endpoint's documented pagination parameter, e.g. limit or page_size) and sort/slice client-side via [sort_desc:field] and [:N] in the accessor chain.\n\n"
             "Closed-enum rule:\n"
             "- If a parameter lists allowed values (in its description), treat that list as CLOSED.\n"
             "- ONLY use exact listed values — do not invent, paraphrase, or substitute.\n"
@@ -954,14 +952,14 @@ class PlanningAgent:
             "that cannot be inferred from a prior step or the task description?\n\n"
             "2. Type mismatch in reference wiring: does each {step_N.result} reference supply "
             "the correct resource type for the parameter it feeds? "
-            "(e.g., a step returning a user_id list must NOT feed into a project {id} parameter — "
-            "only a step returning project data can do that)\n\n"
+            "(e.g., a step returning user IDs must NOT feed into a parameter that expects a different resource's ID — "
+            "only a step returning that resource type can do that)\n\n"
             "3. Parameter value correctness: are literal argument values valid for their parameter "
             "according to the endpoint description? (wrong enum, wrong format, user display name "
             "used where a machine identifier is needed, etc.)\n\n"
             "4. Task accomplishment: does the plan as a whole accomplish the stated task?\n\n"
             "Return a JSON object with fields: issues (list of strings) and ok (bool).\n"
-            "Example with issues: {\"issues\": [\"step_2 arg 'id' wires step_1.result (user_id) into a project {id} — type mismatch\"], \"ok\": false}\n"
+            "Example with issues: {\"issues\": [\"step_2 arg 'id' wires step_1.result (user_id) into an item {id} — type mismatch\"], \"ok\": false}\n"
             "If no issues: {\"issues\": [], \"ok\": true}"
         )
         result: _CheckResult = await self._run_agent("_check_plan", prompt, _CheckResult)
@@ -985,6 +983,7 @@ class PlanningAgent:
             "Keep steps that are already correct unchanged.\n\n"
             f"tool_name must be EXACTLY one of: {json.dumps(tool_names)}\n"
             "- value_type is 'literal' for known values, 'reference' for {step_id.result} placeholders\n"
+            "- param_in must be set from the swagger 'in' field: 'path', 'query', 'body', 'formData', or 'header'\n"
             "- argument names must ONLY be parameter names explicitly listed in the endpoint schema\n"
             "- If a step has foreach set, preserve it. Use {loop_item} as the argument value for the iterated parameter. "
             "The foreach field MUST be set on any step whose argument values contain {loop_item} — a step with {loop_item} but no foreach is always wrong.\n"

@@ -1,0 +1,20 @@
+{
+  "gitlab": {
+    "label": "GitLab",
+    "vars": [
+      {"env": "GITLAB_USERNAME", "label": "username"}
+    ]
+  },
+  "reddit": {
+    "label": "Reddit",
+    "vars": [
+      {"env": "REDDIT_USERNAME", "label": "username"}
+    ]
+  },
+  "shopping": {
+    "label": "Shopping",
+    "vars": [
+      {"env": "SHOPPING_USERNAME", "label": "username"}
+    ]
+  }
+}
