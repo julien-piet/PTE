@@ -22,9 +22,9 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
-from config.base_urls import SERVER_URLS as _SERVER_URLS
+from config.servers import SERVER_URLS as _SERVER_URLS
 
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 ENV_FILE = PROJECT_ROOT / "config" / ".env"
 SERVER_ENV = PROJECT_ROOT / "config" / ".server_env"
 

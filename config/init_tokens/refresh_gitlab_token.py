@@ -2,7 +2,7 @@
 Refresh the GITLAB_TOKEN in config/.server_env.
 
 Usage:
-    python3 scripts/refresh_gitlab_token.py
+    python3 config/init_tokens/refresh_gitlab_token.py
 
 Logs in as byteblaze, creates a new PAT named 'benchmark-runner',
 and overwrites GITLAB_TOKEN in config/.server_env.
@@ -16,7 +16,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-from config.base_urls import SERVER_URLS as _SERVER_URLS
+from config.servers import SERVER_URLS as _SERVER_URLS
 
 PROJECT_ROOT = Path(__file__).parent.parent
 SERVER_ENV = PROJECT_ROOT / "config" / ".server_env"

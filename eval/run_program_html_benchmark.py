@@ -43,14 +43,14 @@ if str(project_root) not in sys.path:
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from api import gitlab_pw
-from config.base_urls import SERVER_URLS as _SERVER_URLS
+from config.servers import SERVER_URLS as _SERVER_URLS
 from eval.program_html_evaluator import ProgramHtmlEvaluator, DEFAULT_BASE_URLS
 from eval.url_match_evaluator import UrlMatchEvaluator
 from eval.gitlab_state_reset import GitLabStateReset
 
 # Load API keys and site credentials from config/.env automatically.
 # This means any BaseAgentRunner subclass gets all keys without extra setup.
-_env_path = Path(__file__).parent / "config" / ".env"
+_env_path = Path(__file__).parent.parent / "config" / ".env"
 if _env_path.exists():
     load_dotenv(dotenv_path=_env_path, override=False)
 

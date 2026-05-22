@@ -8,6 +8,7 @@
 
 import asyncio
 import json
+import os
 import subprocess
 import time
 from contextlib import asynccontextmanager
@@ -15,8 +16,14 @@ from typing import Optional
 
 import requests
 
-SERVER = "annabella@red5k.cs.berkeley.edu"
 ORCH = "/scr2/webagent-verified/webarena_orchestrator/orchestrator.py"
+
+
+def _server() -> str:
+    host = os.environ.get("REMOTE_HOST")
+    if not host:
+        raise RuntimeError("REMOTE_HOST not set — add it to config/.env (e.g. annabella@red5k.cs.berkeley.edu)")
+    return host
 
 # Maps server name → the URL field returned by the orchestrator's acquire command.
 _URL_FIELD = {
@@ -29,7 +36,7 @@ _URL_FIELD = {
 
 def num_workers() -> int:
     result = subprocess.run(
-        ["ssh", SERVER, f"python3 {ORCH} num_workers"],
+        ["ssh", _server(), f"python3 {ORCH} num_workers"],
         text=True,
         capture_output=True,
     )
@@ -43,7 +50,7 @@ def num_workers() -> int:
 
 def acquire_worker(task_id: str) -> dict:
     result = subprocess.run(
-        ["ssh", SERVER, f"python3 {ORCH} acquire --task-id {task_id}"],
+        ["ssh", _server(), f"python3 {ORCH} acquire --task-id {task_id}"],
         text=True,
         capture_output=True,
     )
@@ -75,7 +82,7 @@ def release_worker(worker_id: int, read_only: bool = False, force_restart: Optio
             cmd += " --read-only"
     elif read_only:
         cmd += " --read-only"
-    subprocess.run(["ssh", SERVER, cmd], check=False)
+    subprocess.run(["ssh", _server(), cmd], check=False)
 
 def wait_for_server(url: str, timeout: int = 120, interval: int = 5) -> None:
     """Poll server URL until HTTP 200 or timeout."""
@@ -187,7 +194,7 @@ async def worker_session(
             print(f"  {server} on worker {worker_id} is ready")
 
             if server == "gitlab":
-                from eval.docker.gitlab_init import get_glpat
+                from api.gitlab_pw.tokens import get_glpat
                 glpat = await asyncio.to_thread(get_glpat, server_url, f"agent-task-{task_id}")
                 print(f"  GLPAT obtained for worker {worker_id}")
 

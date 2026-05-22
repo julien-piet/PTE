@@ -45,7 +45,7 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from agent.auth import StaticAuth
-from config.base_urls import SERVER_URLS as _SERVER_URLS
+from config.servers import SERVER_URLS as _SERVER_URLS
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
 from eval.tests.agent_test_utils import extract_agent_details, task_status
@@ -65,7 +65,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # Task loading
 # ---------------------------------------------------------------------------
 
-TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_shopping.json"
+TASK_FILE = Path(__file__).parent / "test_files" / "raw_webarena_tasks_all_shopping.json"
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:
@@ -155,7 +155,7 @@ def test_agent_accomplishes_shopping_tasks(
     else:
         n_workers = 1
 
-    from scripts.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
+    from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
 
     # For single-docker, pre-fetch the token once from the known server URL.
     # For multi-docker, each worker gets a fresh token from its own URL inside run_one().

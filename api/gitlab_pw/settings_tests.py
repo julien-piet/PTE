@@ -331,7 +331,7 @@ class IntegrationGetGlpatTest(unittest.TestCase):
         print(f"\n  [INTEGRATION] Targeting GitLab at: {gitlab_url}")
 
         # Import get_glpat AFTER removing the stub so it gets real playwright.
-        from eval.docker.gitlab_init import get_glpat  # noqa: PLC0415
+        from api.gitlab_pw.tokens import get_glpat  # noqa: PLC0415
 
         try:
             token = get_glpat(gitlab_url, token_name="integration-test-token")

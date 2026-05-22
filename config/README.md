@@ -5,7 +5,7 @@
 Controls which LLM provider and model the agent uses.
 
 ```yaml
-agent_llm_provider: anthropic        # Options: anthropic, openai, google, google-gla
+agent_llm_provider: anthropic        # Options: anthropic, openai, google-gla
 agent_llm_model: claude-opus-4-6     # Must match a model listed under the provider below
 ```
 
@@ -13,22 +13,54 @@ Supported provider/model combinations are listed in the `llm_providers` section 
 
 ---
 
-## `config/.env` — LLM API keys
+## `config/.env` — API keys and site credentials
 
-Required for whichever provider is set in `config.yaml`.
+Copy from the template and fill in your values:
 
 ```
-# Anthropic
-ANTHROPIC_API_KEY=sk-ant-...
-
-# OpenAI
-OPENAI_API_KEY=sk-proj-...
-
-# Google / Gemini
-GOOGLE_API_KEY=AIza...
+cp config/.env.example config/.env
 ```
+
+Loaded automatically by the benchmark runner at test startup.
+
+### LLM provider keys
 
 Only the key for your active provider needs to be set.
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-proj-...
+GEMINI_API_KEY=AIza...
+```
+
+### WebArena site credentials
+
+Defaults match the standard WebArena Docker setup — only change these if your deployment uses different credentials.
+
+```
+GITLAB_USERNAME=byteblaze
+GITLAB_PASSWORD=hello1234
+
+REDDIT_USERNAME=MarvelsGrantMan136
+REDDIT_PASSWORD=test1234
+
+SHOPPING_USERNAME=emma.lopez@gmail.com
+SHOPPING_PASSWORD=Password.123
+SHOPPING_ADMIN_USER=admin
+SHOPPING_ADMIN_PASS=admin1234
+```
+
+`SHOPPING_ADMIN_USER` / `SHOPPING_ADMIN_PASS` are used to fetch a fresh admin Bearer token at eval startup.
+
+### Multi-docker orchestrator
+
+Required when running with `--multi-docker`.
+
+```
+REMOTE_HOST=yourname@red5k.cs.berkeley.edu
+```
+
+SSH target for the remote worker-pool orchestrator.
 
 ---
 
@@ -45,12 +77,7 @@ ADMIN_AUTH_TOKEN=<admin JWT token>
 # GitLab server — Personal Access Token (PAT)
 # Create at: http://<gitlab-host>/-/user_settings/personal_access_tokens
 GITLAB_TOKEN=glpat-...
-
-<!-- # Reddit server — session cookie tokens
-REDDIT_TOKEN=<reddit session token>
-REDDIT_PHPBB_SESSION=<phpbb session token> -->
 ```
 
 `CUSTOMER_AUTH_TOKEN` and `ADMIN_AUTH_TOKEN` are used by the shopping server.
 `GITLAB_TOKEN` is sent as a `PRIVATE-TOKEN` header.
-<!-- `REDDIT_TOKEN` and `REDDIT_PHPBB_SESSION` are sent together as a `Cookie` header. -->

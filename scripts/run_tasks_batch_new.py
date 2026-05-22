@@ -41,10 +41,10 @@ from agent.agent import Agent
 from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker import workers_new as _workers_new
-from scripts.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
+from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
 
 
-from config.base_urls import SERVER_URLS as _DEFAULT_BASE_URLS
+from config.servers import SERVER_URLS as _DEFAULT_BASE_URLS
 
 _WEBARENA_TASKS_FILE = "test_files/webarena-verified.json"
 
@@ -440,7 +440,7 @@ def main():
         "--base-url", default=None,
         help=(
             "Base URL of the server (ignored when --multi-docker is set). "
-            "Defaults are pulled from SERVER_URLS in config/base_urls.py "
+            "Defaults are pulled from SERVER_URLS in config/servers.py "
             "so you only need this flag to override them."
         ),
     )
