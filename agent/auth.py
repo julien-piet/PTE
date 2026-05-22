@@ -170,17 +170,11 @@ class AuthRegistry:
                 HeaderAuth(env, "GITLAB_TOKEN", "PRIVATE-TOKEN"),
             )
 
-        # Shopping — customer Bearer token (default) and admin Bearer token
-        if env.get("CUSTOMER_AUTH_TOKEN"):
-            registry.register(
-                "shopping",
-                HeaderAuth(env, "CUSTOMER_AUTH_TOKEN", "Authorization", prefix="Bearer "),
-            )
-        if env.get("ADMIN_AUTH_TOKEN"):
-            registry.register(
-                "shopping_admin",
-                HeaderAuth(env, "ADMIN_AUTH_TOKEN", "Authorization", prefix="Bearer "),
-            )
+        # Shopping — token expires ~1h so it is always fetched fresh at runtime and
+        # injected via StaticAuth. Register a no-op placeholder so agent.initialize()
+        # accepts these server names without requiring stale tokens in .server_env.
+        registry.register("shopping", StaticAuth({}))
+        registry.register("shopping_admin", StaticAuth({}))
 
         # Shopping Extra — no auth required (public FastAPI endpoints)
         registry.register("shopping_extra", StaticAuth({}))

@@ -148,7 +148,7 @@ def test_agent_accomplishes_shopping_tasks(
     tasks = _load_tasks(request.config)
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
-    base_url = request.config.getoption("--base-url", default=_SERVER_URLS["shopping"])
+    base_url = request.config.getoption("--base-url") or _SERVER_URLS["shopping"]
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
@@ -156,7 +156,13 @@ def test_agent_accomplishes_shopping_tasks(
         n_workers = 1
 
     from scripts.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
-    shopping_token = _refresh_shopping_tokens(base_url=_SERVER_URLS["shopping"])
+
+    # For single-docker, pre-fetch the token once from the known server URL.
+    # For multi-docker, each worker gets a fresh token from its own URL inside run_one().
+    single_docker_token: Optional[str] = None
+    if not multi_docker:
+        print("Refreshing shopping auth tokens...")
+        single_docker_token = _refresh_shopping_tokens(base_url=base_url)
 
     print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
 
@@ -186,9 +192,15 @@ def test_agent_accomplishes_shopping_tasks(
                         await runner._init_agent()
 
                         if runner._agent.execution_agent is not None:
-                            runner._agent.execution_agent.auth = StaticAuth(
-                                {"Authorization": f"Bearer {shopping_token}"}
+                            token = (
+                                _refresh_shopping_tokens(base_url=runner.base_url)
+                                if multi_docker
+                                else single_docker_token
                             )
+                            if token:
+                                runner._agent.execution_agent.auth = StaticAuth(
+                                    {"Authorization": f"Bearer {token}"}
+                                )
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 
                         run_task = task

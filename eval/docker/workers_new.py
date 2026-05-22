@@ -211,7 +211,11 @@ async def worker_session(
         ) from last_exc
 
     try:
-        yield {"worker_id": worker_id, "gitlab_url": server_url, "glpat": glpat}
+        url_key = _URL_FIELD[server]
+        session: dict = {"worker_id": worker_id, url_key: server_url, "server_url": server_url}
+        if server == "gitlab":
+            session["glpat"] = glpat
+        yield session
     finally:
         print(f"  Releasing worker {worker_id}")
         release_worker(worker_id, read_only=read_only)

@@ -85,11 +85,12 @@ def pytest_addoption(parser):
     parser.addoption(
         "--base-url",
         type=str,
-        default=_SERVER_URLS["gitlab"],
+        default=None,
         metavar="URL",
         help=(
-            "Base URL of the GitLab instance the agent talks to. "
-            f"Default: {_SERVER_URLS['gitlab']}"
+            "Base URL of the server the agent talks to. "
+            "Defaults to the canonical URL for --server (e.g. shopping → "
+            f"{_SERVER_URLS['shopping']}, gitlab → {_SERVER_URLS['gitlab']})."
         ),
     )
     parser.addoption(
@@ -183,10 +184,11 @@ def agent_runner(request, session_event_loop):
         runner_cls = AgentRunner
 
     force_reset = request.config.getoption("--force-reset", default=False)
-    base_url = request.config.getoption("--base-url", default=_SERVER_URLS["gitlab"])
+    server = request.config.getoption("--server", default="gitlab")
+    base_url = request.config.getoption("--base-url") or _SERVER_URLS.get(server, _SERVER_URLS["gitlab"])
     runner = runner_cls(headless=True, enable_reset=True, force_reset=force_reset,
                         gitlab_base_url=base_url)
-    runner.server = request.config.getoption("--server", default="gitlab")
+    runner.server = server
     runner.base_url = base_url
 
     session_event_loop.run_until_complete(runner._init_agent())

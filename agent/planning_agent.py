@@ -109,9 +109,15 @@ class PlanningAgent:
             print(response)
             print("=" * 60 + "\n")
 
+    # Labels whose response data is too verbose to be worth storing in the run log.
+    _SKIP_LOG_LABELS: frozenset = frozenset({
+        "_exclude_unrelated_endpoints.response",
+    })
+
     def _record(self, label: str, data) -> None:
         """Always append a structured entry to _run_log, regardless of debug flags."""
-        self._run_log.append({"label": label, "data": data})
+        if label not in self._SKIP_LOG_LABELS:
+            self._run_log.append({"label": label, "data": data})
 
     @property
     def last_run_log(self) -> list:
