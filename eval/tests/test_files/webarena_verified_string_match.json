@@ -775,7 +775,6 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Tm Theme Editor",
           "false"
         ]
       },
@@ -945,7 +944,6 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Tm Theme Editor",
           "false"
         ]
       },

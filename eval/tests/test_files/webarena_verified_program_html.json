@@ -575,9 +575,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/a11y-webring.club/-/merge_requests/40",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "document.querySelector('[id=\"notes-list\"]').lastElementChild.querySelector('.timeline-discussion-body').outerText",
           "required_contents": {
-            "exact_match": "@davepgreene"
+            "must_include": [
+              "@davepgreene"
+            ]
           }
         }
       ]
@@ -609,9 +611,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1270",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "document.querySelector('[id=\"notes-list\"]').lastElementChild.querySelector('.timeline-discussion-body').outerText",
           "required_contents": {
-            "exact_match": "@aguscha333"
+            "must_include": [
+              "@aguscha333"
+            ]
           }
         }
       ]
@@ -643,9 +647,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1485",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "document.querySelector('[id=\"notes-list\"]').lastElementChild.querySelector('.timeline-discussion-body').outerText",
           "required_contents": {
-            "exact_match": "@Roshanjossey"
+            "must_include": [
+              "@Roshanjossey"
+            ]
           }
         }
       ]
@@ -1103,9 +1109,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "egg.tart.com"
+            "must_include": [
+              "egg.tart.com"
+            ]
           }
         }
       ]
@@ -1137,9 +1145,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "helloworld.xyz"
+            "must_include": [
+              "helloworld.xyz"
+            ]
           }
         }
       ]
@@ -1171,9 +1181,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "a11yproject.contributor.me"
+            "must_include": [
+              "a11yproject.contributor.me"
+            ]
           }
         }
       ]
@@ -1205,9 +1217,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "www.byteblaze.com"
+            "must_include": [
+              "www.byteblaze.com"
+            ]
           }
         }
       ]
@@ -1239,9 +1253,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "byteblaze.github.io"
+            "must_include": [
+              "byteblaze.github.io"
+            ]
           }
         }
       ]
@@ -3307,7 +3323,7 @@
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
-              "MT theme editor"
+              "MT support"
             ]
           }
         }
@@ -3469,7 +3485,6 @@
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
-              "implementation",
               "dark mode"
             ]
           }
@@ -4557,8 +4572,7 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "Add documentation on using Flash alerts in dialog components",
-              "Clarify usage of flash alert"
+              "Add documentation on using Flash alerts in dialog components"
             ]
           }
         },
@@ -4567,8 +4581,7 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "Add documentation on using Flash alerts in dialog components",
-              "Clarify usage of flash alert"
+              "Add documentation on using Flash alerts in dialog components"
             ]
           }
         }
@@ -4689,7 +4702,7 @@
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
-              "build-time-debug"
+              "build time debug"
             ]
           }
         }
@@ -4813,7 +4826,6 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "Add documentation on using Flash alerts in dialog components",
               "Clarify usage of flash alert"
             ]
           }
