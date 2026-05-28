@@ -39,6 +39,11 @@ SERVERS: dict = {
         "label":        "Shopping Extra",
         "username_env": None,
     },
+    "reddit_extra": {
+        "url":          "http://127.0.0.1:7791",
+        "label":        "Reddit Extra",
+        "username_env": None,
+    },
 }
 
 # Convenience alias used throughout the codebase

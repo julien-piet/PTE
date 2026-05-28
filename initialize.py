@@ -31,6 +31,7 @@ PROJECT_ROOT = Path(__file__).parent
 PORT_FORWARD_SINGLE = PROJECT_ROOT / "eval" / "docker" / "port_forwarding" / "port_forwarding_single.sh"
 PORT_FORWARD_MULTI  = PROJECT_ROOT / "eval" / "docker" / "port_forwarding" / "port_forwarding_new.sh"
 SHOPPING_EXTRA_SCRIPT = PROJECT_ROOT / "api" / "servers" / "shopping_extra.py"
+REDDIT_EXTRA_SCRIPT   = PROJECT_ROOT / "api" / "servers" / "reddit.py"
 
 load_dotenv(PROJECT_ROOT / "config" / ".env")
 
@@ -125,6 +126,24 @@ def start_shopping_extra() -> None:
         sys.exit(1)
 
 
+def start_reddit_extra() -> None:
+    if not REDDIT_EXTRA_SCRIPT.exists():
+        print(f"✗ Reddit extra script not found: {REDDIT_EXTRA_SCRIPT}", file=sys.stderr)
+        sys.exit(1)
+    print("Starting Reddit Extra API on port 7791...")
+    proc = subprocess.Popen(
+        [sys.executable, str(REDDIT_EXTRA_SCRIPT)],
+        cwd=str(PROJECT_ROOT),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    _procs.append(proc)
+    time.sleep(1)
+    if proc.poll() is not None:
+        print("✗ Reddit Extra API failed to start", file=sys.stderr)
+        sys.exit(1)
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
@@ -141,6 +160,12 @@ def main():
         action="store_true",
         default=False,
         help="Skip the Shopping Extra API server (e.g. for GitLab-only runs).",
+    )
+    parser.add_argument(
+        "--no-reddit-extra",
+        action="store_true",
+        default=False,
+        help="Skip the Reddit Extra API server (e.g. for non-Reddit runs).",
     )
     args = parser.parse_args()
 
@@ -163,7 +188,11 @@ def main():
     if not args.no_shopping_extra:
         start_shopping_extra()
 
-    # 3. Health checks
+    # 3. Reddit Extra API
+    if not args.no_reddit_extra:
+        start_reddit_extra()
+
+    # 4. Health checks
     sys.path.insert(0, str(PROJECT_ROOT))
     from config.servers import SERVER_URLS
 
@@ -175,6 +204,8 @@ def main():
     ]
     if not args.no_shopping_extra:
         checks.append(("http://127.0.0.1:7790/docs", "Shopping Extra"))
+    if not args.no_reddit_extra:
+        checks.append(("http://127.0.0.1:7791/docs", "Reddit Extra"))
 
     all_ok = all(_wait_for_http(url, label) for url, label in checks)
 

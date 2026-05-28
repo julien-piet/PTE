@@ -30,7 +30,7 @@ _URL_FIELD = {
     "gitlab":         "gitlab_url",
     "shopping":       "shopping_url",
     # "shopping_admin": "shopping_admin_url",
-    # "reddit":         "reddit_url",
+    "reddit":         "reddit_url",
 }
 
 

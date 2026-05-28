@@ -1,5 +1,7 @@
 """Reddit comment operations helpers."""
 
+import re
+import requests as _http
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -22,6 +24,16 @@ class Comment:
     post_id: str
     subreddit: str
     url: str
+    score: int = 0
+
+
+@dataclass
+class ReplyToCommentResult:
+    """Result of replying to a comment."""
+
+    success: bool
+    comment_url: Optional[str] = None
+    error_message: Optional[str] = None
 
 
 @dataclass
@@ -247,7 +259,7 @@ def get_comments_on_post(
     post_id: str,
 ) -> List[Comment]:
     """
-    Get all comments on a post.
+    Get all comments on a post, including their net vote score.
 
     Args:
         page: Playwright Page instance
@@ -255,26 +267,35 @@ def get_comments_on_post(
         post_id: ID of the post
 
     Returns:
-        List of Comment objects
+        List of Comment objects (score > 0 means more upvotes, score < 0 means more downvotes)
     """
     post_url = get_post_url(subreddit, post_id)
     page.goto(post_url, wait_until="networkidle")
 
     comments: List[Comment] = []
 
-    # Find all comment elements - selectors may vary by Reddit instance
-    comment_elements = page.query_selector_all(".comment, [data-comment-id], article.comment")
+    # Comments use <article class="comment" id="comment_{id}"> (underscore separator)
+    comment_elements = page.query_selector_all("article.comment[id^='comment_']")
 
-    for idx, elem in enumerate(comment_elements):
-        # Extract comment info
-        body_elem = elem.query_selector(".comment-body, .content, p")
+    for elem in comment_elements:
+        article_id = elem.get_attribute("id") or ""
+        comment_id = article_id.replace("comment_", "") if article_id else ""
+
+        # Body: .comment__body contains the markdown-rendered text
+        body_elem = elem.query_selector(".comment__body")
         body = body_elem.inner_text().strip() if body_elem else ""
 
-        author_elem = elem.query_selector(".author, .username, a[href*='/user/']")
+        # Author: first user link inside the comment header
+        author_elem = elem.query_selector("a[href*='/user/'] strong")
         author = author_elem.inner_text().strip() if author_elem else ""
 
-        # Try to get comment ID from data attribute or generate one
-        comment_id = elem.get_attribute("data-comment-id") or elem.get_attribute("id") or str(idx)
+        # Score from the vote form data attribute
+        vote_form = elem.query_selector(f"form[data-vote-id-value='{comment_id}']")
+        score_str = vote_form.get_attribute("data-vote-score-value") if vote_form else "0"
+        try:
+            score = int(score_str or 0)
+        except ValueError:
+            score = 0
 
         comments.append(Comment(
             id=comment_id,
@@ -282,7 +303,111 @@ def get_comments_on_post(
             author=author,
             post_id=post_id,
             subreddit=subreddit,
-            url=f"{post_url}#comment-{comment_id}",
+            url=f"{REDDIT_DOMAIN}/f/{subreddit}/{post_id}/-/comment/{comment_id}",
+            score=score,
         ))
 
     return comments
+
+
+def reply_to_comment(
+    page: Page,
+    post_url: str,
+    comment_id: str,
+    reply_text: str,
+) -> ReplyToCommentResult:
+    """
+    Reply to a specific comment on a post.
+
+    Uses the Postmill form API directly (fetches the CSRF-token form, then
+    POSTs the reply) so no UI-selector guessing is required.
+
+    Args:
+        page: Playwright Page instance (provides the authenticated session cookie)
+        post_url: Full URL of the post containing the comment
+        comment_id: Numeric ID of the comment to reply to
+        reply_text: Text content of the reply
+
+    Returns:
+        ReplyToCommentResult with success status and URL
+    """
+    # Extract forum + post_id from post_url: …/f/{forum}/{post_id}/…
+    url_parts = post_url.rstrip("/").split("/")
+    try:
+        f_idx = url_parts.index("f")
+        forum = url_parts[f_idx + 1]
+        post_id = url_parts[f_idx + 2]
+    except (ValueError, IndexError):
+        return ReplyToCommentResult(
+            success=False,
+            error_message=f"Could not parse forum/post_id from URL: {post_url}",
+        )
+
+    # Pull PHPSESSID from the browser context so we can reuse it in requests
+    cookies = page.context.cookies()
+    phpsessid = next((c["value"] for c in cookies if c["name"] == "PHPSESSID"), None)
+    if not phpsessid:
+        return ReplyToCommentResult(
+            success=False,
+            error_message="No PHPSESSID cookie found in browser context",
+        )
+
+    session = _http.Session()
+    session.cookies.set("PHPSESSID", phpsessid)
+
+    # Fetch the inline reply form — it carries the CSRF token and the form action URL
+    form_url = f"{REDDIT_DOMAIN}/comment_form/{forum}/{post_id}/{comment_id}"
+    form_resp = session.get(form_url)
+    if form_resp.status_code != 200:
+        return ReplyToCommentResult(
+            success=False,
+            error_message=f"Failed to fetch comment form (HTTP {form_resp.status_code})",
+        )
+
+    form_html = form_resp.text
+
+    # Extract form action
+    action_m = re.search(r'<form[^>]+action="([^"]+)"', form_html)
+    if not action_m:
+        return ReplyToCommentResult(
+            success=False,
+            error_message="Form action not found in reply form HTML",
+        )
+    form_action = action_m.group(1)
+
+    # Collect hidden inputs (includes CSRF token) and select defaults
+    post_data: dict = {}
+    for tag in re.finditer(r'<input([^>]*)>', form_html):
+        attrs = tag.group(1)
+        t_m = re.search(r'type="([^"]+)"', attrs)
+        if not t_m or t_m.group(1) != "hidden":
+            continue
+        name_m = re.search(r'name="([^"]+)"', attrs)
+        val_m = re.search(r'value="([^"]*)"', attrs)
+        if name_m:
+            post_data[name_m.group(1)] = val_m.group(1) if val_m else ""
+    for sel in re.finditer(r'<select[^>]+name="([^"]+)"[^>]*>(.*?)</select>', form_html, re.DOTALL):
+        opt_m = re.search(r'<option[^>]+value="([^"]*)"', sel.group(2))
+        post_data[sel.group(1)] = opt_m.group(1) if opt_m else ""
+
+    # Locate the comment body field (e.g. "reply_to_comment_1235250[comment]")
+    body_field_m = re.search(r'name="([^"]*\[comment\][^"]*)"', form_html)
+    body_field = (
+        body_field_m.group(1) if body_field_m
+        else f"reply_to_comment_{comment_id}[comment]"
+    )
+    post_data[body_field] = reply_text
+
+    # POST the reply; a successful submission redirects (302) to the new comment
+    reply_url = (REDDIT_DOMAIN + form_action) if form_action.startswith("/") else form_action
+    resp = session.post(reply_url, data=post_data, allow_redirects=False)
+
+    if resp.status_code in (301, 302):
+        loc = resp.headers.get("Location", "")
+        comment_url = (REDDIT_DOMAIN + loc) if loc.startswith("/") else loc
+        return ReplyToCommentResult(success=True, comment_url=comment_url)
+
+    return ReplyToCommentResult(
+        success=False,
+        error_message=f"Reply submission returned HTTP {resp.status_code} (expected 302 redirect)",
+    )

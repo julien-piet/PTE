@@ -152,6 +152,41 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
                 )
             return self
 
+        @model_validator(mode="after")
+        def validate_accessor_syntax(self) -> "Argument":
+            if not isinstance(self.value, str):
+                return self
+            # Mask inner {step.result} refs so filter values like =={step_1.result.id}
+            # don't interfere with token parsing of the outer accessor chain.
+            masked = re.sub(r'\{[^{}]*\}', '__REF__', self.value)
+            for m in re.finditer(r'\{(\w+)\.result([^{}]*)\}', masked):
+                accessor = m.group(2)
+                if not accessor:
+                    continue
+                pos = 0
+                while pos < len(accessor):
+                    if re.match(r'\.\w+', accessor[pos:]):
+                        pos += re.match(r'\.\w+', accessor[pos:]).end()
+                    elif accessor[pos:pos + 3] == '[*]':
+                        pos += 3
+                    elif re.match(r'\[\?\(@\.\w+(?:\.\w+)*(?:==|\*=)[^\]]*\)\]', accessor[pos:]):
+                        pos += re.match(r'\[\?\(@\.\w+(?:\.\w+)*(?:==|\*=)[^\]]*\)\]', accessor[pos:]).end()
+                    elif re.match(r'\[sort_desc:\w+\]', accessor[pos:]):
+                        pos += re.match(r'\[sort_desc:\w+\]', accessor[pos:]).end()
+                    elif re.match(r'\[:\d+\]', accessor[pos:]):
+                        pos += re.match(r'\[:\d+\]', accessor[pos:]).end()
+                    elif re.match(r'\[\d+\]', accessor[pos:]):
+                        pos += re.match(r'\[\d+\]', accessor[pos:]).end()
+                    else:
+                        bad = accessor[pos:pos + 40]
+                        raise ValueError(
+                            f"Argument '{self.name}': unrecognized accessor token '{bad}' in "
+                            f"'{accessor}'. Supported tokens: .key  [*]  [?(@.field==value)]  [?(@.field*=value)]  "
+                            f"[n]  [sort_desc:f]  [:N]. "
+                            f"For filtering use [?(@.field==value)] or [?(@.field*=value)], not [field==value] or JSONPath variants."
+                        )
+            return self
+
     class ExecutionStep(BaseModel):
         step_type: Literal["tool_call"] = Field(default="tool_call", description="Step type discriminator")
         step_id: str = Field(description="Unique identifier for this step")
