@@ -102,6 +102,7 @@ PROGRAM_HTML_TASKS: List[Dict[str, Any]] = _load_program_html_tasks()
 def _make_failure_message(
     task: Dict[str, Any],
     html_detail: Optional[Dict[str, Any]],
+    agent_error: Optional[str] = None,
 ) -> str:
     """Build a multi-line failure message with per-check details."""
     lines = [
@@ -110,6 +111,11 @@ def _make_failure_message(
         f"  sites  : {task.get('sites', [])}",
         f"  start  : {task.get('start_url', '')}",
     ]
+
+    # Surface agent error as context (e.g. 409 fork-already-exists) without
+    # letting it hide the per-check eval breakdown.
+    if agent_error:
+        lines.append(f"  agent_error: {agent_error}")
 
     if not html_detail:
         return "\n".join(lines)
@@ -182,9 +188,10 @@ def test_agent_accomplishes_program_html_task(
         agent_runner.run_agent_on_task(task)
     )
 
-    if error:
-        pytest.fail(
-            f"Task {task['task_id']}: agent returned an error: {error}"
-        )
-
-    assert passed, _make_failure_message(task, html_detail)
+    # For program_html tasks the eval result is the source of truth.  An agent
+    # error (e.g. 409 "fork already exists", execution_failed) does NOT
+    # auto-fail the test when the eval passed — the action may have already
+    # succeeded before the error was raised.  When the eval also failed, the
+    # agent error is included as context in the assertion message so the full
+    # per-check breakdown remains visible.
+    assert passed, _make_failure_message(task, html_detail, agent_error=error)
