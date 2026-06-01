@@ -36,6 +36,18 @@ Supported reset scenarios
    filtered by target branch) so the agent can open a new one without hitting
    the "MR already exists" HTTP 409.
 
+5. **Delete group** (tasks 799-803):
+   Delete a group created by a prior run (e.g. "n-lab") so the agent can
+   create it fresh without hitting "path has already been taken."
+
+6. **Remove member** (tasks 567, 576, 578):
+   Remove users added by a prior run from a project so the agent can add
+   them again at the correct access level.
+
+7. **Ensure MR open with reviewer** (task 357):
+   Reopen a closed MR and/or re-add a reviewer if they were removed, so the
+   read-only "review dashboard" task always sees the expected MRs.
+
 Usage
 -----
     from gitlab_state_reset import GitLabStateReset
@@ -69,9 +81,23 @@ BYTEBLAZE_PASSWORD = "hello1234"
 #
 # Fork cleanup: {"type": "fork_delete", "fork_path": "byteblaze/slug"}
 #   Deletes byteblaze's fork.  If it doesn't exist, this is a no-op.
+#
+# Ensure MR open with reviewer: {"type": "ensure_mr_open_with_reviewer", "project": "ns/repo", "mr_iid": N, "reviewer": "username"}
+#   Reopens the MR if it was closed (merged MRs cannot be reopened — a warning
+#   is logged instead).  Also re-adds the reviewer if they were removed.
 # ---------------------------------------------------------------------------
 
 TASK_RESET_CONFIG: Dict[int, List[Dict[str, Any]]] = {
+    # -----------------------------------------------------------------------
+    # Task 357 — "Go to the merge requests requiring my review" (read-only)
+    # Ensures both review-assigned MRs are open and byteblaze is still a
+    # reviewer.  Another task could accidentally close them, breaking the
+    # string_match ground truth ("WIP - Post: Pitfalls..." / "feat: add WCAG levels").
+    # -----------------------------------------------------------------------
+    357: [
+        {"type": "ensure_mr_open_with_reviewer", "project": "a11yproject/a11yproject.com", "mr_iid": 1490, "reviewer": "byteblaze"},
+        {"type": "ensure_mr_open_with_reviewer", "project": "a11yproject/a11yproject.com", "mr_iid": 1270, "reviewer": "byteblaze"},
+    ],
     # -----------------------------------------------------------------------
     # Milestone creation tasks (590-594)
     # Delete any pre-existing milestone whose title contains the keyword so
@@ -150,6 +176,103 @@ TASK_RESET_CONFIG: Dict[int, List[Dict[str, Any]]] = {
         {"type": "fork_delete", "fork_path": "byteblaze/nvidia-patch"},
         {"type": "fork_delete", "fork_path": "byteblaze/viewgrades-scraper"},
     ],
+    # -----------------------------------------------------------------------
+    # Star top-N tasks (523-527)
+    # Unstar all of byteblaze's currently starred repos so the star counts
+    # reflect only this run's actions, keeping the ground-truth repo names
+    # consistent with the eval's required_contents.
+    # -----------------------------------------------------------------------
+    523: [{"type": "unstar_all"}],
+    524: [{"type": "unstar_all"}],
+    525: [{"type": "unstar_all"}],
+    526: [{"type": "unstar_all"}],
+    527: [{"type": "unstar_all"}],
+    # -----------------------------------------------------------------------
+    # Project creation tasks (560, 742, 745-756)
+    # Delete any pre-existing project so the agent can create it fresh.
+    # All projects are created under byteblaze's namespace, so fork_delete works.
+    # -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Task 258 — "Open the public projects listing" (read-only)
+    # Deletes all byteblaze fork/eval-created projects so they don't
+    # dominate the activity-sorted page 1 of GET /projects?visibility=public,
+    # allowing primer/design and a11yproject.com (both active as of the run)
+    # to surface and satisfy must_include.
+    # -----------------------------------------------------------------------
+    258: [
+        # Forks created by tasks 394-398
+        {"type": "fork_delete", "fork_path": "byteblaze/metaseq"},
+        {"type": "fork_delete", "fork_path": "byteblaze/MetaSeq"},
+        {"type": "fork_delete", "fork_path": "byteblaze/PyTorch-GAN"},
+        {"type": "fork_delete", "fork_path": "byteblaze/pytorch-gan"},
+        {"type": "fork_delete", "fork_path": "byteblaze/2019-nCov"},
+        {"type": "fork_delete", "fork_path": "byteblaze/2019-ncov"},
+        {"type": "fork_delete", "fork_path": "byteblaze/SimCache"},
+        {"type": "fork_delete", "fork_path": "byteblaze/simcache"},
+        {"type": "fork_delete", "fork_path": "byteblaze/dots"},
+        {"type": "fork_delete", "fork_path": "byteblaze/CacheEval"},
+        {"type": "fork_delete", "fork_path": "byteblaze/cacheeval"},
+        {"type": "fork_delete", "fork_path": "byteblaze/viewgrades-scraper"},
+        {"type": "fork_delete", "fork_path": "byteblaze/nvidia-patch"},
+        {"type": "fork_delete", "fork_path": "byteblaze/chatgpt"},
+        {"type": "fork_delete", "fork_path": "byteblaze/ChatGPT"},
+        # Eval-created projects (same as their own task resets)
+        {"type": "fork_delete", "fork_path": "byteblaze/nolan_academy_awards"},
+        {"type": "fork_delete", "fork_path": "byteblaze/planner"},
+        {"type": "fork_delete", "fork_path": "byteblaze/awesome-llms"},
+        {"type": "fork_delete", "fork_path": "byteblaze/llm_bulk_inference"},
+        {"type": "fork_delete", "fork_path": "byteblaze/awesome_web_agents"},
+        {"type": "fork_delete", "fork_path": "byteblaze/web_agent_android_xl"},
+        {"type": "fork_delete", "fork_path": "byteblaze/project_site"},
+        {"type": "fork_delete", "fork_path": "byteblaze/agi_index"},
+        {"type": "fork_delete", "fork_path": "byteblaze/AGISite"},
+        {"type": "fork_delete", "fork_path": "byteblaze/agi_site"},
+        {"type": "fork_delete", "fork_path": "byteblaze/web_agent"},
+        {"type": "fork_delete", "fork_path": "byteblaze/web_agent_android_xs"},
+        {"type": "fork_delete", "fork_path": "byteblaze/web_agent_nodejs"},
+        {"type": "fork_delete", "fork_path": "byteblaze/web_agent_index"},
+        {"type": "fork_delete", "fork_path": "byteblaze/11711_gitlab"},
+    ],
+    560: [{"type": "fork_delete", "fork_path": "byteblaze/nolan_academy_awards"}],
+    742: [{"type": "fork_delete", "fork_path": "byteblaze/planner"}],
+    745: [{"type": "fork_delete", "fork_path": "byteblaze/awesome-llms"}],
+    746: [{"type": "fork_delete", "fork_path": "byteblaze/llm_bulk_inference"}],
+    747: [{"type": "fork_delete", "fork_path": "byteblaze/awesome_web_agents"}],
+    748: [{"type": "fork_delete", "fork_path": "byteblaze/web_agent_android_xl"}],
+    749: [{"type": "fork_delete", "fork_path": "byteblaze/project_site"}],
+    750: [{"type": "fork_delete", "fork_path": "byteblaze/agi_index"}],
+    751: [{"type": "fork_delete", "fork_path": "byteblaze/AGISite"},
+          {"type": "fork_delete", "fork_path": "byteblaze/agi_site"}],
+    752: [{"type": "fork_delete", "fork_path": "byteblaze/web_agent"}],
+    753: [{"type": "fork_delete", "fork_path": "byteblaze/web_agent_android_xs"}],
+    754: [{"type": "fork_delete", "fork_path": "byteblaze/web_agent_nodejs"}],
+    755: [{"type": "fork_delete", "fork_path": "byteblaze/web_agent_index"}],
+    756: [{"type": "fork_delete", "fork_path": "byteblaze/11711_gitlab"}],
+    # -----------------------------------------------------------------------
+    # Group creation tasks (799-803)
+    # Delete any pre-existing group so the agent can create it fresh.
+    # -----------------------------------------------------------------------
+    799: [{"type": "delete_group", "group_path": "n-lab"}],
+    800: [{"type": "delete_group", "group_path": "x-lab"}],
+    801: [{"type": "delete_group", "group_path": "crew"}],
+    802: [{"type": "delete_group", "group_path": "coding_friends"}],
+    803: [{"type": "delete_group", "group_path": "webagent"}],
+    # -----------------------------------------------------------------------
+    # Member invitation tasks (567, 576, 578)
+    # Remove previously-added members so the agent can add them fresh.
+    # -----------------------------------------------------------------------
+    567: [
+        {"type": "remove_member", "project": "byteblaze/gimmiethat.space", "username": "lahwaacz"},
+        {"type": "remove_member", "project": "byteblaze/gimmiethat.space", "username": "bblanchon"},
+    ],
+    576: [
+        {"type": "remove_member", "project": "byteblaze/a11y-webring.club", "username": "abisubramanya27"},
+        {"type": "remove_member", "project": "byteblaze/a11y-webring.club", "username": "lahwaacz"},
+    ],
+    578: [
+        {"type": "remove_member", "project": "byteblaze/millennials-to-snake-people", "username": "yjlou"},
+        {"type": "remove_member", "project": "byteblaze/millennials-to-snake-people", "username": "a11yproject"},
+    ],
 }
 
 
@@ -213,6 +336,16 @@ class GitLabStateReset:
                     self._close_mrs_by_source_branch(
                         token, op["project"], op["source_branch"],
                         target_branch=op.get("target_branch"),
+                    )
+                elif op_type == "unstar_all":
+                    self._unstar_all_projects(token)
+                elif op_type == "delete_group":
+                    self._delete_group(token, op["group_path"])
+                elif op_type == "remove_member":
+                    self._remove_member(token, op["project"], op["username"])
+                elif op_type == "ensure_mr_open_with_reviewer":
+                    self._ensure_mr_open_with_reviewer(
+                        token, op["project"], op["mr_iid"], op["reviewer"]
                     )
                 else:
                     print(f"   ⚠️  [reset] Unknown op type: {op_type!r}")
@@ -557,6 +690,197 @@ class GitLabStateReset:
 
         if closed_count == 0:
             print(f"   ✓  [reset] No open MRs from {source_branch!r} in {project_path}")
+
+    # ------------------------------------------------------------------
+    # Star cleanup
+    # ------------------------------------------------------------------
+
+    def _unstar_all_projects(self, token: str) -> None:
+        """
+        Unstar every project currently starred by byteblaze.
+
+        Uses GET /users/{id}/starred_projects to list them, then
+        DELETE /projects/{id}/star to remove each star.  Idempotent —
+        if byteblaze has no starred projects this is a no-op.
+        """
+        # Resolve byteblaze's numeric user ID (required by the starred_projects endpoint)
+        user_list, status = self._api(
+            "GET", f"/users?username={self._username}", token=token
+        )
+        if not isinstance(user_list, list) or not user_list:
+            print(f"   ⚠️  [reset] Could not resolve user ID for {self._username!r} (HTTP {status})")
+            return
+        user_id = user_list[0]["id"]
+
+        unstarred_count = 0
+        page = 1
+        while True:
+            starred, _ = self._api(
+                "GET",
+                f"/users/{user_id}/starred_projects?per_page=100&page={page}",
+                token=token,
+            )
+            if not isinstance(starred, list) or not starred:
+                break
+            for proj in starred:
+                proj_id = proj["id"]
+                _, del_status = self._api(
+                    "DELETE",
+                    f"/projects/{proj_id}/star",
+                    token=token,
+                    expected_statuses=(200, 304, 404),
+                )
+                if del_status in (200, 304):
+                    unstarred_count += 1
+            if len(starred) < 100:
+                break
+            page += 1
+
+        if unstarred_count > 0:
+            print(f"   ✅ [reset] Unstarred {unstarred_count} project(s) for {self._username}")
+        else:
+            print(f"   ✓  [reset] No starred projects to remove for {self._username}")
+
+    def _ensure_mr_open_with_reviewer(
+        self, token: str, project_path: str, mr_iid: int, reviewer_username: str
+    ) -> None:
+        """
+        Ensure a specific MR is open and reviewer_username is listed as a reviewer.
+
+        - If the MR is closed: reopens it via state_event="reopen".
+        - If the MR is merged: logs a warning (merged MRs cannot be reopened via API).
+        - If reviewer_username is not in the current reviewer list: adds them.
+        """
+        encoded_project = urllib.parse.quote(project_path, safe="")
+
+        proj_data, status = self._api("GET", f"/projects/{encoded_project}", token=token)
+        if not proj_data or "id" not in proj_data:
+            print(f"   ⚠️  [reset] Project {project_path!r} not found (HTTP {status})")
+            return
+        project_id = proj_data["id"]
+
+        mr_data, status = self._api(
+            "GET", f"/projects/{project_id}/merge_requests/{mr_iid}", token=token
+        )
+        if not mr_data or "iid" not in mr_data:
+            print(f"   ⚠️  [reset] MR !{mr_iid} not found in {project_path} (HTTP {status})")
+            return
+
+        mr_state = mr_data.get("state", "")
+        current_reviewer_ids = [r["id"] for r in mr_data.get("reviewers", [])]
+        current_reviewer_names = [r["username"] for r in mr_data.get("reviewers", [])]
+
+        updates: Dict[str, Any] = {}
+
+        # Reopen if closed (merged MRs cannot be reopened)
+        if mr_state == "closed":
+            updates["state_event"] = "reopen"
+        elif mr_state == "merged":
+            print(
+                f"   ⚠️  [reset] MR !{mr_iid} ({project_path}) is merged — "
+                f"cannot reopen; string_match ground truth for task 357 may fail"
+            )
+            return
+
+        # Add reviewer if missing
+        if reviewer_username not in current_reviewer_names:
+            user_list, _ = self._api(
+                "GET", f"/users?username={reviewer_username}", token=token
+            )
+            if isinstance(user_list, list) and user_list:
+                updates["reviewer_ids"] = current_reviewer_ids + [user_list[0]["id"]]
+
+        if not updates:
+            print(
+                f"   ✓  [reset] MR !{mr_iid} ({project_path}) already open "
+                f"with {reviewer_username} as reviewer"
+            )
+            return
+
+        _, upd_status = self._api(
+            "PUT",
+            f"/projects/{project_id}/merge_requests/{mr_iid}",
+            body=updates,
+            token=token,
+            expected_statuses=(200, 201, 404),
+        )
+        if upd_status in (200, 201):
+            actions = []
+            if "state_event" in updates:
+                actions.append(f"reopened (was {mr_state})")
+            if "reviewer_ids" in updates:
+                actions.append(f"added {reviewer_username} as reviewer")
+            print(f"   ✅ [reset] MR !{mr_iid} ({project_path}): {', '.join(actions)}")
+        else:
+            print(f"   ⚠️  [reset] Failed to update MR !{mr_iid}: HTTP {upd_status}")
+
+    def _delete_group(self, token: str, group_path: str) -> None:
+        """
+        Delete a GitLab group by its path (e.g. "n-lab").
+
+        Does nothing if the group doesn't exist. Only deletes groups owned by
+        byteblaze (verified via the `owner_id` or namespace check).
+        """
+        encoded_path = urllib.parse.quote(group_path, safe="")
+        group_data, status = self._api("GET", f"/groups/{encoded_path}", token=token)
+        if status == 404 or group_data is None or "id" not in group_data:
+            print(f"   ✓  [reset] Group {group_path!r} does not exist — nothing to delete")
+            return
+
+        group_id = group_data["id"]
+        _, del_status = self._api(
+            "DELETE",
+            f"/groups/{group_id}",
+            token=token,
+            expected_statuses=(200, 202, 204, 404),
+        )
+        if del_status in (200, 202, 204):
+            print(f"   ✅ [reset] Deleted group {group_path!r}")
+            # Give GitLab a moment to finish processing the deletion
+            time.sleep(2)
+        elif del_status == 404:
+            pass  # Already gone
+        else:
+            print(f"   ⚠️  [reset] Unexpected status {del_status} when deleting group {group_path!r}")
+
+    def _remove_member(self, token: str, project_path: str, username: str) -> None:
+        """
+        Remove a member from a project by username.
+
+        Does nothing if the user is not a member. Does not remove the project
+        owner (byteblaze) even if passed.
+        """
+        if username.lower() == self._username.lower():
+            print(f"   ⚠️  [reset] Refusing to remove project owner {username!r}")
+            return
+
+        encoded_project = urllib.parse.quote(project_path, safe="")
+
+        proj_data, status = self._api("GET", f"/projects/{encoded_project}", token=token)
+        if not proj_data or "id" not in proj_data:
+            print(f"   ⚠️  [reset] Project {project_path!r} not found (HTTP {status})")
+            return
+        project_id = proj_data["id"]
+
+        # Resolve username → user_id
+        user_list, _ = self._api("GET", f"/users?username={urllib.parse.quote(username)}", token=token)
+        if not isinstance(user_list, list) or not user_list:
+            print(f"   ✓  [reset] User {username!r} not found — skipping member removal")
+            return
+        user_id = user_list[0]["id"]
+
+        _, del_status = self._api(
+            "DELETE",
+            f"/projects/{project_id}/members/{user_id}",
+            token=token,
+            expected_statuses=(200, 204, 404),
+        )
+        if del_status in (200, 204):
+            print(f"   ✅ [reset] Removed {username!r} from {project_path}")
+        elif del_status == 404:
+            print(f"   ✓  [reset] {username!r} was not a member of {project_path}")
+        else:
+            print(f"   ⚠️  [reset] Unexpected status {del_status} removing {username!r} from {project_path}")
 
     def _find_owned_project_by_slug(self, token: str, slug: str) -> Optional[Dict]:
         """

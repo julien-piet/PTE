@@ -120,6 +120,16 @@ def pytest_addoption(parser):
             f"at --base-url (default: {_SERVER_URLS['gitlab']})."
         ),
     )
+    parser.addoption(
+        "--resume",
+        action="store_true",
+        default=False,
+        help=(
+            "Resume a previously interrupted run. Reads the file specified by --output "
+            "and skips any task_ids that already appear in it, so only incomplete tasks "
+            "are re-run. Has no effect when --output is not set."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +244,18 @@ def result_log(request):
     logs_dir.mkdir(exist_ok=True)
 
     out_path = logs_dir / output_name
+
+    # When --resume is set, merge new entries with any prior results so that
+    # tasks skipped by _load_tasks are preserved in the output file.
+    resume = request.config.getoption("--resume", default=False)
+    if resume and out_path.exists():
+        try:
+            prior = json.loads(out_path.read_text()).get("results", [])
+            new_ids = {e["task_id"] for e in entries}
+            entries = [e for e in prior if e["task_id"] not in new_ids] + entries
+        except Exception:
+            pass
+
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "total": len(entries),

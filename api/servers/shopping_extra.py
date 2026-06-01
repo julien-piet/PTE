@@ -43,7 +43,7 @@ async def fuzzy_search(q: str) -> Dict[str, str]:
     """
     url = f"{BASE_URL}/catalogsearch/result/?q={quote_plus(q)}"
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
         response = await client.get(url)
         response.raise_for_status()
 

@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # ---------------------------------------------------------------------------
 # Path setup
 # ---------------------------------------------------------------------------
-project_root = Path(__file__).parent
+project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
@@ -135,8 +135,8 @@ def _login_for_task(
 
     if "shopping" in sites:
         from api.shopping_pw import login as shopping_login
-        username = os.getenv("SHOPPING_USER", "customer@example.com")
-        password = os.getenv("SHOPPING_PASS", "secret")
+        username = os.getenv("SHOPPING_USER", "emma.lopez@gmail.com")
+        password = os.getenv("SHOPPING_PASS", "Password.123")
         result = shopping_login.login_customer(page, username, password)
         return result.success
 
@@ -440,15 +440,22 @@ class BaseAgentRunner:
             await _asyncio2.sleep(8)
 
         # ---- Step 1: run the agent ----
+        agent_error: Optional[str] = None
         try:
             agent_result = await self._run_task(task)
         except Exception as exc:
             import traceback
             traceback.print_exc()
-            return False, None, str(exc), None
+            agent_error = str(exc)
+            agent_result = {"success": False, "error": agent_error, "final_url": None, "answer": None}
 
         if not agent_result.get("success", True) and agent_result.get("error"):
-            return False, None, agent_result["error"], None
+            agent_error = agent_result["error"]
+
+        # For non-program_html tasks short-circuit immediately on agent failure —
+        # there is nothing to check without a final_url or answer.
+        if agent_error and "program_html" not in eval_types:
+            return False, None, agent_error, None
 
         final_url: Optional[str] = agent_result.get("final_url")
 
@@ -481,7 +488,11 @@ class BaseAgentRunner:
             #      agent, program_html alone provides equivalent (and stronger)
             #      signal.
             passed = html_passed
-            return passed, agent_result, None, html_detail
+            # If the agent errored but the eval still passed (e.g. comment was
+            # posted before the error), report the pass.  If both failed, surface
+            # the agent error so it's visible in the results.
+            error_to_report = None if passed else agent_error
+            return passed, agent_result, error_to_report, html_detail
 
         if "url_match" in eval_types:
             passed = self._evaluate_url_match(task, agent_result)
@@ -544,7 +555,9 @@ class AgentRunner(BaseAgentRunner):
 
         print("🔧 Initializing agent...")
         self._agent = Agent(api_dir=self.api_dir, env_file=self.env_file)
-        self._agent.initialize({getattr(self, "server", "gitlab"): getattr(self, "base_url", "")})
+        server_name = getattr(self, "server", "gitlab")
+        base_url = getattr(self, "base_url", self.gitlab_base_url)
+        self._agent.initialize({server_name: base_url})
         print("✓ Agent initialized\n")
 
     # ------------------------------------------------------------------
@@ -584,7 +597,9 @@ class AgentRunner(BaseAgentRunner):
         )
         prompt = f"Project path: {repo_path}\n\nTask: {intent}" if repo_path else intent
 
-        result = await self._agent.run_task(prompt)
+        server_name = getattr(self, "server", "gitlab")
+        server_url = getattr(self, "base_url", self.gitlab_base_url)
+        result = await self._agent.run_task(prompt, servers={server_name: server_url})
         agent_result = {
             "success": True,
             "final_url": None,
@@ -601,18 +616,28 @@ class AgentRunner(BaseAgentRunner):
     # Batch runner
     # ------------------------------------------------------------------
 
-    async def run(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def run(
+        self,
+        tasks: List[Dict[str, Any]],
+        output_path: Optional[str] = None,
+        start_from: int = 0,
+    ) -> Dict[str, Any]:
         print("\n" + "=" * 70)
         print("AGENT: Plan + Execute with MCP Tools (program_html enabled)")
         print("=" * 70)
 
+        if start_from:
+            print(f"▶️  Resuming from task index {start_from} (skipping first {start_from} tasks)")
+            tasks = tasks[start_from:]
+
         if self.agent is None:
             await self._init_agent()
 
+        total_tasks = len(tasks)
         for i, task in enumerate(tasks, 1):
             self.results["total"] += 1
             eval_label = ", ".join(task["eval"]["eval_types"])
-            print(f"\n[{i}/{len(tasks)}] Task {task['task_id']} [{eval_label}]: {task['intent'][:55]}...")
+            print(f"\n[{i}/{total_tasks}] Task {task['task_id']} [{eval_label}]: {task['intent'][:55]}...")
 
             passed, agent_result, error, html_detail = await self.run_agent_on_task(task)
 
@@ -644,7 +669,28 @@ class AgentRunner(BaseAgentRunner):
 
             self.results["details"].append(detail)
 
+            # Incrementally flush results after every task so progress
+            # is preserved if the run is interrupted.
+            if output_path:
+                _flush_partial_results(self.results, output_path)
+
         return self.results
+
+
+# ---------------------------------------------------------------------------
+# Incremental save helper
+# ---------------------------------------------------------------------------
+
+def _flush_partial_results(results: Dict[str, Any], output_path: str) -> None:
+    """Write current results to disk so progress survives interruption."""
+    report = {
+        "timestamp": datetime.now().isoformat(),
+        "test_type": "agent_only_program_html_partial",
+        "task_count": results["total"],
+        "results": results,
+    }
+    with open(output_path, "w") as f:
+        json.dump(report, f, indent=2)
 
 
 # ---------------------------------------------------------------------------
@@ -739,6 +785,10 @@ async def main():
                         help="Run with visible browser windows")
     parser.add_argument("--no-reset", action="store_true",
                         help="Disable pre-task GitLab state reset (for debugging)")
+    parser.add_argument(
+        "--start-from", type=int, default=0,
+        help="Skip the first N tasks (0-indexed) to resume an interrupted run",
+    )
 
     args = parser.parse_args()
 
@@ -770,7 +820,11 @@ async def main():
         else:
             print("⚠️  Pre-task state reset: DISABLED")
         agent_runner = AgentRunner(headless=headless, enable_reset=enable_reset)
-        agent_results = await agent_runner.run(tasks)
+        agent_results = await agent_runner.run(
+            tasks,
+            output_path=args.output,
+            start_from=args.start_from,
+        )
 
     # Report
     if baseline_results and agent_results:

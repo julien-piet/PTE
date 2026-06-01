@@ -59,9 +59,27 @@ if str(PROJECT_ROOT) not in sys.path:
 # Task loading
 # ---------------------------------------------------------------------------
 
-# TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
 TASK_FILE = Path(__file__).parent / "test_files" / "gitlab_verified_string_match.json"
 TASK_FILE2 = Path(__file__).parent / "test_files" / "gitlab_verified_program_html.json"
+
+LOGS_DIR = Path(__file__).parent / "logs"
+
+
+def _load_completed_ids(output_name: Optional[str]) -> set:
+    """
+    Return the set of task_ids already saved in the output file.
+    Used by --resume to skip tasks that were completed in a prior run.
+    """
+    if not output_name:
+        return set()
+    out_path = LOGS_DIR / output_name
+    if not out_path.exists():
+        return set()
+    try:
+        data = json.loads(out_path.read_text())
+        return {r["task_id"] for r in data.get("results", [])}
+    except Exception:
+        return set()
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:
@@ -73,10 +91,37 @@ def _load_tasks(config=None) -> List[Dict[str, Any]]:
             ids = {int(x.strip()) for x in task_id.split(",")}
             tasks = [t for t in tasks if t.get("task_id") in ids]
         else:
+            resume = config.getoption("--resume", default=False)
+            if resume:
+                output_name = config.getoption("--output", default=None)
+                completed = _load_completed_ids(output_name)
+                if completed:
+                    print(f"\n[resume] Skipping {len(completed)} already-completed tasks: {sorted(completed)}")
+                    tasks = [t for t in tasks if t.get("task_id") not in completed]
             limit = config.getoption("--task-limit", default=None)
             if limit is not None:
                 tasks = tasks[:limit]
     return tasks
+
+
+def _flush_results(output_name: Optional[str], result_log: List[Dict[str, Any]], interrupted: bool = False) -> None:
+    """Write current result_log snapshot to the output file (atomic via temp file)."""
+    if not output_name:
+        return
+    LOGS_DIR.mkdir(exist_ok=True)
+    out_path = LOGS_DIR / output_name
+    summary = {
+        "generated_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        "interrupted": interrupted,
+        "total": len(result_log),
+        "passed": sum(1 for e in result_log if e.get("passed")),
+        "failed": sum(1 for e in result_log if not e.get("passed")),
+        "results": list(result_log),
+    }
+    # Write atomically via a temp file so a kill mid-write doesn't corrupt data.
+    tmp_path = out_path.with_suffix(".tmp")
+    tmp_path.write_text(json.dumps(summary, indent=2))
+    tmp_path.replace(out_path)
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +187,7 @@ def test_agent_accomplishes_gitlab_tasks(
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
     base_url = request.config.getoption("--base-url") or _SERVER_URLS["gitlab"]
+    output_name = request.config.getoption("--output", default=None)
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
@@ -153,7 +199,9 @@ def test_agent_accomplishes_gitlab_tasks(
     async def run_all() -> tuple:
         sem = asyncio.Semaphore(n_workers)
         remaining = len(tasks)
-        remaining_lock = asyncio.Lock()
+        # Lock protecting result_log mutations and incremental file flushes.
+        record_lock = asyncio.Lock()
+        failures: List[str] = []
 
         async def run_one(task: Dict[str, Any]) -> Dict[str, Any]:
             async with sem:
@@ -189,15 +237,10 @@ def test_agent_accomplishes_gitlab_tasks(
 
                         passed, agent_result, error, html_detail = await runner.run_agent_on_task(task)
 
-                        async with remaining_lock:
-                            nonlocal remaining
-                            remaining -= 1
-                            print(f"\n[{remaining} tasks remaining] Task {task['task_id']} done ({'PASS' if passed and not error else 'FAIL'})")
-
                         details = extract_agent_details(runner)
                         status = task_status(passed, error, details["plan_steps"])
 
-                        return {
+                        result = {
                             "task": task,
                             "passed": passed,
                             "agent_result": agent_result,
@@ -211,7 +254,7 @@ def test_agent_accomplishes_gitlab_tasks(
                             "status": status,
                         }
                 except Exception as e:
-                    return {
+                    result = {
                         "task": task,
                         "passed": False,
                         "agent_result": None,
@@ -224,84 +267,81 @@ def test_agent_accomplishes_gitlab_tasks(
                         "status": "failed",
                     }
 
+                # Record result and flush to disk immediately after each task.
+                async with record_lock:
+                    nonlocal remaining
+                    remaining -= 1
+                    task_obj = result["task"]
+                    r_passed = result["passed"]
+                    r_error = result["error"]
+                    r_agent = result["agent_result"]
+
+                    entry = {
+                        "task_id":        task_obj["task_id"],
+                        "intent":         task_obj.get("intent", ""),
+                        "eval_types":     task_obj.get("eval", {}).get("eval_types", []),
+                        "passed":         r_passed and not r_error,
+                        "status":         result.get("status"),
+                        "answer":         r_agent.get("answer") if r_agent else None,
+                        "error":          r_error,
+                        "worker_id":      result.get("worker_id"),
+                        "plan":           result.get("plan"),
+                        "plan_step_count": len(result["plan"]) if result.get("plan") else None,
+                        "execution":      result.get("execution"),
+                        "parsed_outputs": result.get("parsed_outputs"),
+                        "planning_log":   result.get("planning_log"),
+                    }
+                    result_log.append(entry)
+                    _flush_results(output_name, result_log, interrupted=False)
+
+                    outcome = "PASS" if r_passed and not r_error else "FAIL"
+                    print(f"\n[{remaining} tasks remaining] Task {task_obj['task_id']} done ({outcome})")
+
+                    if r_error:
+                        failures.append(f"Task {task_obj['task_id']}: agent error: {r_error}")
+                    elif not r_passed:
+                        failures.append(_make_failure_message(task_obj, r_agent, result["html_detail"]))
+
+                return result
+
         futures = [asyncio.ensure_future(run_one(t)) for t in tasks]
         try:
-            return list(await asyncio.gather(*futures)), False
+            all_results = list(await asyncio.gather(*futures))
+            return all_results, failures, False
         except BaseException:
             print("\nInterrupted — cancelling remaining tasks and releasing workers...")
             for f in futures:
                 f.cancel()
             all_results = await asyncio.gather(*futures, return_exceptions=True)
             partial = [r for r in all_results if isinstance(r, dict)]
-            return partial, True
+            return partial, failures, True
 
     interrupted = False
+    failures: List[str] = []
     try:
-        results, interrupted = session_event_loop.run_until_complete(run_all())
+        _, failures, interrupted = session_event_loop.run_until_complete(run_all())
     except KeyboardInterrupt:
-        # Cancel all pending tasks and collect whatever already completed.
         print("\nKeyboardInterrupt — collecting partial results...")
         for task in asyncio.all_tasks(session_event_loop):
             task.cancel()
-        all_done = session_event_loop.run_until_complete(
+        session_event_loop.run_until_complete(
             asyncio.gather(*asyncio.all_tasks(session_event_loop), return_exceptions=True)
         )
-        results = [r for r in all_done if isinstance(r, dict)]
         interrupted = True
 
-    failures = []
-    for r in results:
-        task = r["task"]
-        passed = r["passed"]
-        error = r["error"]
-
-        result_log.append({
-            "task_id":        task["task_id"],
-            "intent":         task.get("intent", ""),
-            "eval_types":     task.get("eval", {}).get("eval_types", []),
-            "passed":         passed and not error,
-            "status":         r.get("status"),
-            "answer":         r["agent_result"].get("answer") if r["agent_result"] else None,
-            "error":          error,
-            "worker_id":      r.get("worker_id"),
-            "plan":           r.get("plan"),
-            "plan_step_count": len(r["plan"]) if r.get("plan") else None,
-            "execution":      r.get("execution"),
-            "parsed_outputs": r.get("parsed_outputs"),
-            "planning_log":   r.get("planning_log"),
-        })
-
-        if error:
-            failures.append(f"Task {task['task_id']}: agent error: {error}")
-        elif not passed:
-            failures.append(_make_failure_message(task, r["agent_result"], r["html_detail"]))
-
     if interrupted:
-        # Write whatever completed to disk immediately, then exit cleanly.
-        output_name = request.config.getoption("--output", default=None)
-        if output_name and result_log:
-            import json as _json
-            from datetime import datetime, timezone
-            from pathlib import Path as _Path
-            logs_dir = _Path(__file__).parent / "logs"
-            logs_dir.mkdir(exist_ok=True)
-            out_path = logs_dir / output_name
-            summary = {
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "interrupted": True,
-                "total": len(result_log),
-                "passed": sum(1 for e in result_log if e["passed"]),
-                "failed": sum(1 for e in result_log if not e["passed"]),
-                "results": result_log,
-            }
-            out_path.write_text(_json.dumps(summary, indent=2))
-            print(f"\n📄 Partial results ({len(result_log)} tasks) written to {out_path}")
+        _flush_results(output_name, result_log, interrupted=True)
+        n = len(result_log)
+        if output_name and n:
+            print(f"\n📄 Partial results ({n} tasks) written to {LOGS_DIR / output_name}")
         pytest.exit("Interrupted by user", returncode=1)
 
-    total = len(results)
-    passed_count = sum(1 for r in results if r["passed"] and not r["error"])
-    failed_count = total - passed_count
-    print(f"\nResults: {passed_count}/{total} passed, {failed_count}/{total} failed")
+    # Final flush (marks interrupted=False).
+    _flush_results(output_name, result_log, interrupted=False)
+
+    passed_count = sum(1 for e in result_log if e.get("passed"))
+    total = len(result_log)
+    print(f"\nResults: {passed_count}/{total} passed, {total - passed_count}/{total} failed")
 
     if failures:
         pytest.fail("\n\n".join(failures))
