@@ -60,12 +60,13 @@ if str(PROJECT_ROOT) not in sys.path:
 # ---------------------------------------------------------------------------
 
 # TASK_FILE = Path(__file__).parent / "raw_webarena_tasks_all_gitlab.json"
-TASK_FILE = Path(__file__).parent / "test_files" / "webarena_verified_string_match.json" #string match only
-TASK_FILE2 = Path(__file__).parent / "test_files" / "webarena_verified_program_html.json"
+TASK_FILE = Path(__file__).parent / "test_files" / "gitlab_verified_string_match.json"
+TASK_FILE2 = Path(__file__).parent / "test_files" / "gitlab_verified_program_html.json"
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:
-    tasks = json.loads(TASK_FILE.read_text()) + json.loads(TASK_FILE2.read_text())
+    # tasks = json.loads(TASK_FILE.read_text()) + json.loads(TASK_FILE2.read_text())
+    tasks = json.loads(TASK_FILE2.read_text())
     if config is not None:
         task_id = config.getoption("--task-id", default=None)
         if task_id is not None:

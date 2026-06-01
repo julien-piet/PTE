@@ -165,6 +165,12 @@ GET /search ranks by keyword frequency across title and body, not by relevance o
 Always inspect the full result list and select the correct post by matching on its title, author, or subreddit rather than assuming rank order reflects intent.
 
 Forum names are case-sensitive and must match exactly. When a forum name is not explicitly given or you are unsure of the exact casing, call GET /list_forums first to retrieve the canonical name before using it in any other endpoint. The user's phrasing may not match the canonical name exactly — apply best-guess fuzzy matching and pick the closest match rather than failing on an exact lookup (e.g. "Worcester" → "WorcesterMA", "relations" → "relationship_advice").
+
+Reddit URLs encode structured data in their path segments. When a URL is provided, parse it directly to extract identifiers rather than making additional API calls to look them up:
+- Post URLs follow the pattern /f/<forum>/<post_id>/<slug> — extract forum and post_id from the path.
+- Comment URLs follow the pattern /f/<forum>/<post_id>/-/comment/<comment_id> — extract all three identifiers from the path.
+- User profile URLs follow the pattern /u/<username> — extract username from the path.
+Use these extracted values as literal arguments in subsequent steps. Only fall back to a lookup endpoint if the URL is not available or the required identifier cannot be read from the path.
 """
 
 SHOPPING_HINTS = f"""
