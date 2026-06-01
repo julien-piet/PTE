@@ -65,7 +65,12 @@ def acquire_worker(task_id: str) -> dict:
     return data
 
 
-def release_worker(worker_id: int, read_only: bool = False, force_restart: Optional[bool] = None):
+def release_worker(
+    worker_id: int,
+    read_only: bool = False,
+    force_restart: Optional[bool] = None,
+    server: Optional[str] = None,
+):
     """
     Release a worker back to the orchestrator.
 
@@ -75,6 +80,9 @@ def release_worker(worker_id: int, read_only: bool = False, force_restart: Optio
         force_restart: If set, overrides read_only logic entirely.
                        True  → always restart the instance on release.
                        False → never restart the instance on release (same as read_only=True).
+        server:        If set (and read_only is False and force_restart is not False),
+                       passes --server so only that service is restarted instead of the
+                       full worker stack.
     """
     cmd = f"python3 {ORCH} release --worker-id {worker_id}"
     if force_restart is not None:
@@ -82,6 +90,8 @@ def release_worker(worker_id: int, read_only: bool = False, force_restart: Optio
             cmd += " --read-only"
     elif read_only:
         cmd += " --read-only"
+    elif server is not None:
+        cmd += f" --server {server}"
     subprocess.run(["ssh", _server(), cmd], check=False)
 
 def wait_for_server(url: str, timeout: int = 120, interval: int = 5) -> None:
@@ -225,4 +235,4 @@ async def worker_session(
         yield session
     finally:
         print(f"  Releasing worker {worker_id}")
-        release_worker(worker_id, read_only=read_only)
+        release_worker(worker_id, read_only=read_only, server=None if read_only else server)
