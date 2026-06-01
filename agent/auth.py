@@ -179,15 +179,12 @@ class AuthRegistry:
         # Shopping Extra — no auth required (public FastAPI endpoints)
         registry.register("shopping_extra", StaticAuth({}))
 
-        # Reddit — cookie-based auth (token + phpbb session)
-        # Add REDDIT_TOKEN and REDDIT_PHPBB_SESSION to .server_env when ready.
-        if env.get("REDDIT_TOKEN"):
-            registry.register(
-                "reddit",
-                CookieAuth(env, {
-                    "token": "REDDIT_TOKEN",
-                    "phpbb3_session": "REDDIT_PHPBB_SESSION",
-                }),
-            )
+        # Reddit Extra — no auth required (handles auth internally via Playwright)
+        registry.register("reddit_extra", StaticAuth({}))
+
+        # Reddit — session fetched fresh at runtime by run_tasks_batch_new and injected
+        # via StaticAuth per task. Register a placeholder unconditionally so
+        # agent.initialize() passes without needing REDDIT_PHPSESSID in .server_env.
+        registry.register("reddit", StaticAuth({}))
 
         return registry

@@ -94,11 +94,12 @@ class ExecutionAgent:
         """Navigate a dot/bracket accessor chain into obj, e.g. '.default_branch', '[0].id', '[*].id'.
 
         Supported tokens:
-          [*]             wildcard — map remaining chain over each list element
-          [n]             numeric index
-          [sort_desc:f]   sort list descending by field f (dicts) or value (scalars)
-          [:N]            take first N elements (slice)
-          .key            dict field access
+          [*]                   wildcard — map remaining chain over each list element
+          [?(@.field==value)]   filter — keep only list elements where dict[field] == value
+          [n]                   numeric index
+          [sort_desc:f]         sort list descending by field f (dicts) or value (scalars)
+          [:N]                  take first N elements (slice)
+          .key                  dict field access
         """
         pos = 0
         length = len(accessor)
@@ -112,6 +113,43 @@ class ExecutionAgent:
                 if remaining:
                     return [ExecutionAgent._follow_accessor(item, remaining) for item in obj]
                 return list(obj)
+            # [?(@.field==value)]  exact match filter
+            # [?(@.field*=value)]  contains (substring) filter — use when the search term
+            #                      is a user-provided fragment, not a full field value
+            m = re.match(r'\[\?\(@\.(\w+(?:\.\w+)*)(==|\*=)([^\]]+)\)\]', accessor[pos:])
+            if m:
+                field_path = m.group(1)
+                operator   = m.group(2)
+                raw_val    = m.group(3).strip()
+                # Strip surrounding quotes: planner emits "value" or 'value' in JSONPath syntax
+                if (raw_val.startswith('"') and raw_val.endswith('"')) or \
+                   (raw_val.startswith("'") and raw_val.endswith("'")):
+                    raw_val = raw_val[1:-1]
+                pos += len(m.group(0))
+                def _get_nested(d: Any, path: str) -> Any:
+                    for part in path.split("."):
+                        if not isinstance(d, dict):
+                            return None
+                        d = d.get(part)
+                    return d
+                def _matches(item: Any, fp: str = field_path, rv: str = raw_val, op: str = operator) -> bool:
+                    actual = _get_nested(item, fp)
+                    if actual is None:
+                        return False
+                    if op == "*=":
+                        return rv.lower() in str(actual).lower()
+                    try:
+                        return actual == type(actual)(rv)
+                    except (ValueError, TypeError):
+                        return str(actual) == rv
+                # Auto-unwrap wrapper dicts like {"posts": [...]} before filtering
+                if isinstance(obj, dict):
+                    list_vals = [v for v in obj.values() if isinstance(v, list)]
+                    if list_vals:
+                        obj = list_vals[0]
+                if isinstance(obj, list):
+                    obj = [item for item in obj if _matches(item)]
+                continue
             # [sort_desc:field] — sort list descending by a named field (or value for scalars)
             m = re.match(r'\[sort_desc:(\w+)\]', accessor[pos:])
             if m:
@@ -190,6 +228,10 @@ class ExecutionAgent:
         Follows any accessor chain after .result (e.g. {step_1.result.default_branch})
         by navigating into the stored value. Falls back to the stored value as-is if
         navigation fails or no accessor is present.
+
+        Nested references inside accessor chains (e.g. {step_2.result.entries[id=={step_1.result.id}]})
+        are resolved by first substituting all inner {step.result} references so that
+        _follow_accessor receives a fully concrete accessor string.
         """
         if isinstance(value, str):
             # Substitute {loop_item}, {loop_item.field}, {loop_item[n].field}, etc.
@@ -211,6 +253,8 @@ class ExecutionAgent:
                     return json.dumps(item) if isinstance(item, (dict, list)) else str(item)
                 value = re.sub(r"\{loop_item([^}]*)\}", _sub_loop, value)
 
+            _null_hits: list = []  # tracks accessor failures for null-resolution detection
+
             def _sub(m: re.Match) -> str:
                 step_id, accessor = m.group(1), m.group(2)
                 out = outputs.get(step_id)
@@ -221,8 +265,24 @@ class ExecutionAgent:
                     navigated = self._follow_accessor(out, accessor)
                     if navigated is not None:
                         out = navigated
+                    else:
+                        _null_hits.append(m.group(0))
+                        return "null"  # accessor failed — don't embed full object in URL
                 return json.dumps(out) if isinstance(out, (dict, list)) else str(out)
-            return re.sub(r"\{(\w+)\.result([^}]*)\}", _sub, value)
+
+            # Use [^{}]* (exclude both brace types) so only "leaf" references — those
+            # whose accessor contains no nested {…} — are substituted per pass.
+            # Iterate until stable so inner refs resolve first, then outer ones can use
+            # the concrete values (e.g. [forum.id=={step_1.result.id}] → [forum.id==10079]).
+            _LEAF_REF = re.compile(r"\{(\w+)\.result([^{}]*)\}")
+            for _ in range(10):
+                prev = value
+                value = _LEAF_REF.sub(_sub, value)
+                if value == prev:
+                    break
+
+            if _null_hits:
+                return None  # signal failed accessor resolution to callers
         if isinstance(value, dict):
             return {k: self._resolve(v, outputs) for k, v in value.items()}
         if isinstance(value, list):
@@ -261,7 +321,17 @@ class ExecutionAgent:
             if name in path_param_names:
                 path_params[name] = str(value)
             elif pin == "body":
-                body = value
+                # If the arg is literally named "body" and the value is a dict/list,
+                # treat it as the entire request body. Otherwise treat it as a named
+                # body field and merge — this handles the case where the planner emits
+                # individual body-property args each tagged param_in="body".
+                if name == "body" and isinstance(value, (dict, list)):
+                    body = value
+                else:
+                    if body is None:
+                        body = {}
+                    if isinstance(body, dict):
+                        body[name] = value
             elif pin in ("query", "formData", "header"):
                 query_params[name] = value
             elif method in ("POST", "PUT", "PATCH"):
@@ -375,7 +445,10 @@ class ExecutionAgent:
             structural_path_re = re.compile(
                 r"\{" + re.escape(step.step_id) + r"\.result[.\[]"
             )
-            if all(structural_path_re.match(acc) for acc in unique_accessors):
+            # [*] wildcard returns a list — can't be used as-is for a single-value
+            # argument. Let the LLM parse step run so hints can guide selection.
+            has_wildcard = any(r"\[\*\]" in acc or "[*]" in acc for acc in unique_accessors)
+            if not has_wildcard and all(structural_path_re.match(acc) for acc in unique_accessors):
                 return raw_output
 
             lines = []
@@ -464,6 +537,15 @@ class ExecutionAgent:
                             raise _MissingDependency(
                                 f"step '{ref_id}' returned an empty list; "
                                 f"argument '{arg.name}' cannot index into it"
+                            )
+                    # Guard against deep accessor failures, e.g. [?(@.title==X)][0].field
+                    # where the filter matches nothing — _resolve returns None in this case.
+                    if re.search(r'\{' + re.escape(ref_id) + r'\.result[^}]*\[', arg_str):
+                        resolved = self._resolve(arg.value, ctx.step_outputs)
+                        if resolved is None:
+                            raise _MissingDependency(
+                                f"argument '{arg.name}': accessor on step '{ref_id}' output "
+                                f"resolved to null — no matching value found"
                             )
 
             # Foreach: step declares an explicit iteration list — run once per element

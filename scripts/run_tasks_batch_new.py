@@ -1,13 +1,15 @@
 # scripts/run_tasks_batch_new.py
 #
-# Batch task runner for webarena-verified.json format.
-# Reads from server-specific subsets of test_files/webarena-verified.json
-# (gitlab_tasks_new.json or shopping_tasks_new.json) based on --server.
+# Batch task runner. Reads from eval/tests/test_files/webarena-verified.json
+# and filters tasks to the site matching --server.
 #
-# Run all gitlab tasks (180 tasks):
+# Run all gitlab tasks:
 #   python3 -m scripts.run_tasks_batch_new --server gitlab
 #
-# Run all shopping tasks (187 tasks):
+# Run all reddit tasks:
+#   python3 -m scripts.run_tasks_batch_new --server reddit
+#
+# Run all shopping tasks:
 #   python3 -m scripts.run_tasks_batch_new --server shopping
 #
 # Smoke test (first 5 tasks):
@@ -42,16 +44,16 @@ from agent.auth import StaticAuth
 from agent.planner import pretty_print_plan, pretty_print_execution
 from eval.docker import workers_new as _workers_new
 from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
+from config.init_tokens.refresh_reddit_session import refresh_session as _refresh_reddit_session
 
+
+from dotenv import load_dotenv as _load_dotenv
 
 from config.servers import SERVER_URLS as _DEFAULT_BASE_URLS
 
-_WEBARENA_TASKS_FILE = "test_files/webarena-verified.json"
+_load_dotenv("config/.env")
 
-_DEFAULT_TASK_FILES: dict = {
-    "gitlab":   "test_files/gitlab_tasks_new.json",
-    "shopping": "test_files/shopping_tasks_new.json",
-}
+_WEBARENA_TASKS_FILE = "eval/tests/test_files/webarena-verified.json"
 
 
 @asynccontextmanager
@@ -107,6 +109,7 @@ class TaskBatchRunner:
         self.base_url = base_url or _DEFAULT_BASE_URLS.get(server, _DEFAULT_BASE_URLS["gitlab"])
         self.num_workers = _workers_new.num_workers() if multi_docker else 1
         self._shopping_token: Optional[str] = None
+        self._reddit_session: Optional[str] = None
 
         self.results: List[Dict[str, Any]] = []
         self._acquire_lock: asyncio.Lock = asyncio.Lock()
@@ -115,6 +118,9 @@ class TaskBatchRunner:
         if not self.multi_docker and self.server in ("shopping", "shopping_admin"):
             print("Refreshing shopping auth tokens...")
             self._shopping_token = _refresh_shopping_tokens(base_url=self.base_url)
+        if not self.multi_docker and self.server == "reddit":
+            print("Refreshing Reddit session...")
+            self._reddit_session = _refresh_reddit_session(base_url=self.base_url)
         from agent.common.configurator import Configurator
         _cfg = Configurator()
         mode = "multi-docker" if self.multi_docker else f"single ({self.base_url})"
@@ -128,6 +134,10 @@ class TaskBatchRunner:
 
         with open(self.tasks_file) as f:
             all_tasks = json.load(f)
+
+        # Filter to the target server's site.
+        all_tasks = [t for t in all_tasks if self.server in t.get("sites", [])]
+        print(f"  Filtered to {self.server!r} site: {len(all_tasks)} tasks")
 
         if self.task_ids is not None:
             id_set = set(self.task_ids)
@@ -171,6 +181,8 @@ class TaskBatchRunner:
 
         if self.server == "shopping":
             init_servers["shopping_extra"] = _DEFAULT_BASE_URLS["shopping_extra"]
+        if self.server == "reddit":
+            init_servers["reddit_extra"] = _DEFAULT_BASE_URLS["reddit_extra"]
 
         agent.initialize(init_servers)
 
@@ -209,12 +221,27 @@ class TaskBatchRunner:
                         )
                         if token:
                             agent.execution_agent.auth = StaticAuth({"Authorization": f"Bearer {token}"})
+                    elif self.server == "reddit":
+                        session = (
+                            _refresh_reddit_session(base_url=server_url)
+                            if self.multi_docker
+                            else self._reddit_session
+                        )
+                        if session:
+                            agent.execution_agent.auth = StaticAuth({
+                                "Cookie": f"PHPSESSID={session}",
+                                "X-Experimental-API": "1",
+                            })
                     agent.execution_agent.task_id = str(task_id)
 
                 # ── Plan + Execute ────────────────────────────────────────────
                 run_servers: Dict[str, str] = {self.server: server_url}
                 if self.server == "shopping":
                     run_servers["shopping_extra"] = _DEFAULT_BASE_URLS["shopping_extra"]
+                if self.server == "reddit":
+                    # Route all reddit_api_schema.json calls to the Playwright server
+                    # (the schema filename contains "reddit" so it matches this key)
+                    run_servers["reddit"] = _DEFAULT_BASE_URLS["reddit_extra"]
                 execution_result = await agent.run_task(prompt, servers=run_servers)
 
                 plan_response = agent.last_plan_response
@@ -391,7 +418,7 @@ def main():
     )
     parser.add_argument(
         "--tasks-file", default=None,
-        help="Path to tasks JSON file. Defaults per --server: gitlab→gitlab_tasks_new.json, shopping→shopping_tasks_new.json, else webarena-verified.json."
+        help=f"Path to tasks JSON file (default: {_WEBARENA_TASKS_FILE}). Always filtered to --server site."
     )
     parser.add_argument(
         "--output", "-o", dest="output_file", default="logs/task_results.json",
@@ -445,7 +472,7 @@ def main():
         ),
     )
     args = parser.parse_args()
-    tasks_file = args.tasks_file or _DEFAULT_TASK_FILES.get(args.server, _WEBARENA_TASKS_FILE)
+    tasks_file = args.tasks_file or _WEBARENA_TASKS_FILE
 
     try:
         runner = TaskBatchRunner(

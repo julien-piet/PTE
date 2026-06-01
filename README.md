@@ -13,7 +13,8 @@ A LangGraph-based agent that plans and executes tasks using direct HTTP API call
    ```bash
    pip install -r config/pip_requirements.txt
    ```
-
+4. **WebArena Setup**:
+see https://github.com/ServiceNow/webarena-verified
 ---
 
 ## Configuration

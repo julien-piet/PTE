@@ -27,29 +27,40 @@ from .posts import (
     Post,
     CreatePostResult,
     DeletePostResult,
+    VotePostResult,
+    EditPostResult,
     create_post,
     create_post_with_title_and_text,
     delete_post,
     delete_post_by_url,
     delete_all_posts_by_username,
     get_posts_by_username,
+    vote_post,
+    edit_post,
+    get_forum_posts,
+    get_post,
+    search_posts,
 )
 from .forums import (
     Forum,
     CreateForumResult,
+    SubscribeForumResult,
     create_forum,
     get_forum_info,
     forum_exists,
+    subscribe_to_forum,
 )
 from .comments import (
     Comment,
     CommentResult,
     DeleteCommentResult,
+    ReplyToCommentResult,
     comment_on_post,
     comment_on_post_by_url,
     delete_all_comments_on_post,
     delete_all_comments_on_post_by_user,
     get_comments_on_post,
+    reply_to_comment,
 )
 from .messages import (
     Message,
@@ -66,6 +77,7 @@ from .users import (
     ResetEmailResult,
     UpdateEmailResult,
     UserInfo,
+    UpdateBiographyResult,
     block_user,
     unblock_user,
     reset_email,
@@ -73,6 +85,7 @@ from .users import (
     get_user_info,
     user_exists,
     get_blocked_users,
+    update_biography,
 )
 
 __all__ = [
@@ -103,6 +116,8 @@ __all__ = [
     "Post",
     "CreatePostResult",
     "DeletePostResult",
+    "VotePostResult",
+    "EditPostResult",
     # Post functions
     "create_post",
     "create_post_with_title_and_text",
@@ -110,22 +125,32 @@ __all__ = [
     "delete_post_by_url",
     "delete_all_posts_by_username",
     "get_posts_by_username",
+    "vote_post",
+    "edit_post",
+    "get_forum_posts",
+    "get_post",
+    "search_posts",
     # Forum dataclasses
     "Forum",
     "CreateForumResult",
+    "SubscribeForumResult",
     # Forum functions
     "create_forum",
     "get_forum_info",
     "forum_exists",
+    "subscribe_to_forum",
     # Comment dataclasses
     "Comment",
     "CommentResult",
     "DeleteCommentResult",
+    "ReplyToCommentResult",
     # Comment functions
     "comment_on_post",
+    "comment_on_post_by_url",
     "delete_all_comments_on_post",
     "delete_all_comments_on_post_by_user",
     "get_comments_on_post",
+    "reply_to_comment",
     # Message dataclasses
     "Message",
     "MessageResult",
@@ -141,6 +166,7 @@ __all__ = [
     "ResetEmailResult",
     "UpdateEmailResult",
     "UserInfo",
+    "UpdateBiographyResult",
     # User functions
     "block_user",
     "unblock_user",
@@ -149,4 +175,5 @@ __all__ = [
     "get_user_info",
     "user_exists",
     "get_blocked_users",
+    "update_biography",
 ]

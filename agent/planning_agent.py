@@ -273,7 +273,7 @@ class PlanningAgent:
                     props.extend(sub.get("properties", {}).keys())
             return props[:max_props]
 
-        def _props_str(schema_obj: dict) -> str:
+        def _props_str(schema_obj: dict, depth: int = 0) -> str:
             ref = schema_obj.get("$ref", "")
             if ref:
                 def_name = ref.split("/definitions/", 1)[-1]
@@ -281,10 +281,23 @@ class PlanningAgent:
                 props = _collect_props(definition)
                 return f"{def_name}{{{', '.join(props)}}}" if props else def_name
             if schema_obj.get("type") == "array":
-                inner = _props_str(schema_obj.get("items", {}))
-                return f"[{inner}]" if inner else ""
-            props = _collect_props(schema_obj)
-            return f"{{{', '.join(props)}}}" if props else ""
+                inner = _props_str(schema_obj.get("items", {}), depth + 1)
+                return f"[{inner}]" if inner else "[]"
+            props_dict = schema_obj.get("properties", {})
+            if not props_dict:
+                return ""
+            if depth >= 1:
+                # At depth 1+, just list property names (avoid infinite nesting)
+                return f"{{{', '.join(list(props_dict.keys())[:12])}}}"
+            # At depth 0: expand array-valued properties one level to show item shape
+            parts = []
+            for k, v in list(props_dict.items())[:12]:
+                if isinstance(v, dict) and v.get("type") == "array":
+                    inner = _props_str(v.get("items", {}), depth + 1)
+                    parts.append(f"{k}: [{inner}]" if inner else k)
+                else:
+                    parts.append(k)
+            return f"{{{', '.join(parts)}}}" if parts else ""
 
         shape = _props_str(schema)
         if shape:
@@ -395,6 +408,33 @@ class PlanningAgent:
                 ptype = p.get("type", "")
                 pdesc = p.get("description", "")
                 enums = p.get("enum", [])
+
+                # Body parameter with nested schema: expand properties so the planner
+                # knows the full body object shape and creates one body argument with
+                # a dict value rather than separate per-field arguments.
+                if pin == "body" and "schema" in p:
+                    schema = p["schema"]
+                    schema_required = set(schema.get("required", []))
+                    schema_props = schema.get("properties", {})
+                    if schema_props:
+                        line = f"  - {pname} (in={pin}, required={required}, type=object)"
+                        if pdesc:
+                            line += f"\n    description: {pdesc}"
+                        line += "\n    properties:"
+                        for prop_name, prop_info in schema_props.items():
+                            prop_req = prop_name in schema_required
+                            prop_type = prop_info.get("type", "")
+                            prop_desc = prop_info.get("description", "")
+                            prop_enums = prop_info.get("enum", [])
+                            prop_line = f"\n      - {prop_name} (required={prop_req}, type={prop_type})"
+                            if prop_enums:
+                                prop_line += f", allowed values: {prop_enums}"
+                            if prop_desc:
+                                prop_line += f": {prop_desc}"
+                            line += prop_line
+                        params.append(line)
+                        continue
+
                 line = f"  - {pname} (in={pin}, required={required}, type={ptype})"
                 if enums:
                     line += f", allowed values: {enums}"
@@ -502,7 +542,7 @@ class PlanningAgent:
             'foreach: ["Name1", "Name2", ...]. Do NOT list the same resolver endpoint multiple times.\n'
             "- The foreach step runs once per element and collects all results as a list for the goal step to iterate over.\n\n"
             "Return a JSON object with fields: goal_index, literal_args, foreach, required_resolvers.\n"
-            "Examples (goal_index=2, no resolvers): goal_index=2, literal_args={\"state\": \"opened\"}, foreach=null, required_resolvers=[]\n"
+            "Examples (goal_index=2, no resolvers): goal_index=2, literal_args={\"limit\": 25}, foreach=null, required_resolvers=[]\n"
             "Example with resolver: required_resolvers=[{endpoint_index: 1, capability: \"...\", satisfies_param: \"author_id\", literal_args: {}, foreach: null}]\n"
             "Example multi-entity: foreach=\"LOOP_OVER_PRIOR\", required_resolvers=[{..., foreach: [\"Alice\", \"Bob\"]}]"
         )
@@ -809,20 +849,24 @@ class PlanningAgent:
             "  - 'reference': the value comes from a prior step's output via {step_id.result} or a field accessor like {step_id.result.field_name}\n\n"
             "Reference field accessor rule (CRITICAL):\n"
             "- When a prior step returns a JSON object and you need only one field from it, use dot-notation: {step_id.result.field_name}\n"
-            "  Example: if step_1 returns an object and you need its default_branch, write {step_1.result.default_branch}\n"
+            "  Example: if step_1 returns an object and you need its name field, write {step_1.result.name}\n"
             "- Use {step_id.result} (no field) ONLY when the prior step returns a plain scalar (string, number) or you genuinely need the entire object.\n"
             "- Never use {step_id.result} when you need a specific named field — always drill down with .field_name.\n"
             "- For JSON body arguments that embed multiple references (e.g. a body string), use the most specific accessor for each embedded reference.\n\n"
             "Accessor chain tokens (usable in both foreach references and {step_id.result...} argument values):\n"
-            "  [*]              — wildcard: apply the rest of the chain to every element of a list\n"
-            "  [n]              — numeric index: take element n (0-based)\n"
-            "  [sort_desc:f]    — sort the list descending by field f (each element must be an object with that field)\n"
-            "  [:N]             — slice: keep only the first N elements\n"
-            "  .key             — field access on a dict\n"
+            "  [*]                  — wildcard: apply the rest of the chain to every element of a list\n"
+            "  [?(@.field==value)]  — filter: keep only list elements where field EXACTLY equals value (use for IDs, slugs, or values you know precisely)\n"
+            "  [?(@.field*=value)]  — contains filter: keep list elements where field contains value as a substring (use for titles, names, or user-provided search terms that may appear inside a longer string)\n"
+            "  [n]                  — numeric index: take element n (0-based)\n"
+            "  [sort_desc:f]        — sort the list descending by field f (each element must be an object with that field)\n"
+            "  [:N]                 — slice: keep only the first N elements\n"
+            "  .key                 — field access on a dict\n"
             "These tokens chain left-to-right:\n"
-            "  step_1.result[*].id                        → id from every element\n"
-            "  step_1.result[sort_desc:count][:5][*].id  → top-5 by 'count' field, then their ids\n"
-            "  step_1.result[sort_desc:count][0].id       → id of the single element with the highest 'count'\n"
+            "  step_1.result[*].id                                        → id from every element\n"
+            "  step_1.result[sort_desc:count][:5][*].id                  → top-5 by 'count' field, then their ids\n"
+            "  step_1.result[sort_desc:count][0].id                       → id of the single element with the highest 'count'\n"
+            "  step_1.result[?(@.category.id=={step_2.result.id})][0].slug → first entry where category.id matches a prior step's value\n"
+            "  step_1.result[?(@.title*=keyword)][0].url                 → first item whose title contains 'keyword'\n"
             "NEVER use invented syntax like max_by(field) — use [sort_desc:f][0] instead.\n"
             "If the API does not support sorting by a required field as a query param, fetch with valid params "
             "(using the endpoint's documented pagination parameter, e.g. limit or page_size) and sort/slice client-side via [sort_desc:field] and [:N] in the accessor chain.\n\n"
@@ -849,10 +893,10 @@ class PlanningAgent:
             "- In argument values, use {loop_item} as the placeholder for the current iterated element.\n"
             "- A foreach step runs N times and its output is automatically collected as a list.\n\n"
             "Conditional step rule:\n"
-            "- When a task requires branching (e.g. 'if the last comment is from the author reply X, otherwise reply Y'), "
+            "- When a task requires branching (e.g. 'if condition A is true do X, otherwise do Y'), "
             "add a step with step_type='conditional' BEFORE the action step.\n"
             "- Set condition to an equality expression using {step_id.result} references: "
-            "'{step_3.result[0].author.username} == {step_2.result[0].author.username}'\n"
+            "'{step_3.result.status} == {step_2.result.status}'\n"
             "- Set if_true and if_false to the string values to produce for each branch. "
             "Both may contain {step_id.result} references.\n"
             "- The conditional step stores the chosen string as its output. "
@@ -1038,7 +1082,7 @@ class PlanningAgent:
             "Ask yourself:\n"
             "1. Does the last endpoint produce the final result the task asks for?\n"
             "2. Is there any data or identifier the task needs that NO endpoint in this set can provide? "
-            "(e.g. the task asks to filter commits by author but there is no user-lookup endpoint to resolve the author name)\n"
+            "(e.g. the task requires a resource identifier but no endpoint in this set can provide it)\n"
             "3. Is any endpoint clearly wrong or irrelevant for this task?\n"
             "4. Is the execution order conceptually correct?\n\n"
             "IMPORTANT: Do NOT check how arguments are wired between steps, what parameter names are used, "

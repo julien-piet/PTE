@@ -68,8 +68,10 @@ class Selectors:
     # Post creation form
     POST_TITLE_INPUT = "#submission_title"
     POST_BODY_INPUT = "#submission_body"
+    POST_URL_INPUT = "#submission_url"
     POST_FORUM_SELECT = "#submission_forum"
     POST_SUBMIT_BUTTON = 'button:has-text("Create submission")'
+    EDIT_POST_SUBMIT_BUTTON = 'button:has-text("Edit submission")'
 
     # Forum creation form
     FORUM_NAME_INPUT = "#forum_name"

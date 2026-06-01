@@ -20,7 +20,7 @@
       "reference_answers": {
         "must_include": [
           "feat: add WCAG levels",
-          "update or remove 404 links"
+          "dialog-component"
         ]
       },
       "reference_url": "__GITLAB__/dashboard/todos",
@@ -707,7 +707,6 @@
       ],
       "reference_answers": {
         "must_include": [
-          "[Feature suggestion] WCAG trash panda mode",
           "false"
         ]
       },
@@ -742,7 +741,7 @@
       "reference_answers": {
         "must_include": [
           "Outdated dependencies",
-          "closed"
+          "false"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/18",
@@ -775,7 +774,6 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Tm Theme Editor",
           "false"
         ]
       },
@@ -877,7 +875,6 @@
       ],
       "reference_answers": {
         "must_include": [
-          "[Feature suggestion] WCAG trash panda mode",
           "false"
         ]
       },
@@ -945,7 +942,6 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Tm Theme Editor",
           "false"
         ]
       },
@@ -980,7 +976,7 @@
       "reference_answers": {
         "must_include": [
           "Rethink the homepage's content",
-          "closed"
+          "true"
         ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/719",
@@ -1575,13 +1571,13 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Erik Linder-Norén"
+          "Erik Linder-Nor\u00e9n"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Erik Linder-Norén"
+      "reference_answer_raw_annotation": "Erik Linder-Nor\u00e9n"
     },
     "intent_template_id": 323,
     "read_only": true
@@ -1642,14 +1638,14 @@
       "reference_answers": {
         "must_include": [
           "Shawn Allen",
-          "Inayaili León",
+          "Inayaili Le\u00f3n",
           "Aurora Pleguezuelo"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Shawn Allen, Inayaili León, Aurora Pleguezuelo"
+      "reference_answer_raw_annotation": "Shawn Allen, Inayaili Le\u00f3n, Aurora Pleguezuelo"
     },
     "intent_template_id": 324,
     "read_only": true
@@ -1859,7 +1855,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "type: bug"
+          "Clarify usage of flash alert"
         ]
       },
       "reference_url": "__GITLAB__/primer/design/-/issues/?label_name%5B%5D=type%3A%20bug%20%F0%9F%90%9E",

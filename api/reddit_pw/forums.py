@@ -37,6 +37,15 @@ class CreateForumResult:
     error_message: Optional[str] = None
 
 
+@dataclass
+class SubscribeForumResult:
+    """Result of subscribing or unsubscribing from a forum."""
+
+    success: bool
+    already_subscribed: bool = False
+    error_message: Optional[str] = None
+
+
 def create_forum(
     page: Page,
     forum_name: str,
@@ -150,6 +159,40 @@ def get_forum_info(page: Page, forum_name: str) -> Optional[Forum]:
         sidebar=sidebar,
         url=page.url,
     )
+
+
+def subscribe_to_forum(page: Page, forum_name: str) -> SubscribeForumResult:
+    """
+    Subscribe to a forum.
+
+    Navigates to the forum page and clicks the Subscribe button if not already subscribed.
+
+    Args:
+        page: Playwright Page instance
+        forum_name: Name of the forum to subscribe to
+
+    Returns:
+        SubscribeForumResult with success status
+    """
+    forum_url = get_forum_url(forum_name)
+    page.goto(forum_url, wait_until="networkidle")
+
+    # Check if already subscribed (button shows "Unsubscribe" / has unsubscribe class)
+    unsubscribe_btn = page.query_selector("button.subscribe-button--unsubscribe")
+    if unsubscribe_btn:
+        return SubscribeForumResult(success=True, already_subscribed=True)
+
+    # Click the subscribe button
+    subscribe_btn_selector = "button.subscribe-button--subscribe, button.subscribe-button"
+    try:
+        page.wait_for_selector(subscribe_btn_selector, timeout=5000)
+        page.click(subscribe_btn_selector)
+        page.wait_for_load_state("networkidle")
+        return SubscribeForumResult(success=True)
+    except TimeoutError:
+        return SubscribeForumResult(success=False, error_message=f"Subscribe button not found on /f/{forum_name}")
+    except Exception as e:
+        return SubscribeForumResult(success=False, error_message=str(e))
 
 
 def forum_exists(page: Page, forum_name: str) -> bool:

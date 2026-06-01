@@ -465,7 +465,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/accessible-html-content-patterns/-/blob/main/LICENSE",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Faccessible-html-content-patterns/repository/files/LICENSE/raw?ref=main', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "Apache License",
@@ -575,9 +575,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/a11y-webring.club/-/merge_requests/40",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "document.querySelector('[id=\"notes-list\"]').lastElementChild.querySelector('.timeline-discussion-body').outerText",
           "required_contents": {
-            "exact_match": "@davepgreene"
+            "must_include": [
+              "@davepgreene"
+            ]
           }
         }
       ]
@@ -609,9 +611,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1270",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/174/merge_requests/1270/notes?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const notes = await r.json(); const mine = notes.filter(n => n.author && n.author.username === 'byteblaze'); return mine.map(n => n.body).join('\\n'); } catch(e) { return ''; } })()",
           "required_contents": {
-            "exact_match": "@aguscha333"
+            "must_include": [
+              "@aguscha333"
+            ]
           }
         }
       ]
@@ -643,9 +647,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1485",
-          "locator": "document.querySelector('[id=\"notes-list\"').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/174/merge_requests/1485/notes?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const notes = await r.json(); const mine = notes.filter(n => n.author && n.author.username === 'byteblaze'); return mine.map(n => n.body).join('\\n'); } catch(e) { return ''; } })()",
           "required_contents": {
-            "exact_match": "@Roshanjossey"
+            "must_include": [
+              "@Roshanjossey"
+            ]
           }
         }
       ]
@@ -847,7 +853,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/index.html",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "<title>GIVE ME SPACE</title>"
@@ -883,7 +889,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/index.html",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "<title>Welcome to my site</title>"
@@ -918,8 +924,8 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/index.html",
-          "locator": "",
+          "url": "__GITLAB__/byteblaze/gimmiethat.space",
+          "locator": "(async () => { const proj = 'byteblaze%2Fgimmiethat.space'; const r = await fetch('/api/v4/projects/' + proj + '/repository/branches', {credentials: 'include'}); const branches = await r.json(); if (!Array.isArray(branches)) return ''; for (const b of branches) { if (b.name === 'main') continue; const fr = await fetch('/api/v4/projects/' + proj + '/repository/files/index.html/raw?ref=' + encodeURIComponent(b.name), {credentials: 'include'}); if (fr.ok) { const c = await fr.text(); if (c.toLowerCase().includes('<title>not an interesting site</title>')) return c; } } return ''; })()",
           "required_contents": {
             "must_include": [
               "<title>Not an interesting site</title>"
@@ -955,7 +961,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/title-update/index.html",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=title-update', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "<title>Title Wanted</title>"
@@ -991,7 +997,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/index.html",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "<title>Hello</title>"
@@ -1029,7 +1035,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/dashboard/issues?scope=all&state=opened&assignee_username=Roshanjossey",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/174/issues?assignee_username=Roshanjossey&state=opened&per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const i = await r.json(); return i.map(x => x.title).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "404s, bad host, timeouts, bad urls for URLs linked from website"
@@ -1067,7 +1073,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/dashboard/issues?scope=all&state=opened&assignee_username=Seirdy",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/byteblaze%2Fa11y-webring.club/issues?assignee_username=Seirdy&state=opened&per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const i = await r.json(); return i.map(x => x.title).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "linking to an accessibility statement"
@@ -1103,9 +1109,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "egg.tart.com"
+            "must_include": [
+              "egg.tart.com"
+            ]
           }
         }
       ]
@@ -1137,9 +1145,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "helloworld.xyz"
+            "must_include": [
+              "helloworld.xyz"
+            ]
           }
         }
       ]
@@ -1171,9 +1181,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "a11yproject.contributor.me"
+            "must_include": [
+              "a11yproject.contributor.me"
+            ]
           }
         }
       ]
@@ -1205,9 +1217,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "www.byteblaze.com"
+            "must_include": [
+              "www.byteblaze.com"
+            ]
           }
         }
       ]
@@ -1239,9 +1253,11 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze",
-          "locator": "document.querySelector('.profile-header [itemprop=\"url\"]').outerText",
+          "locator": "",
           "required_contents": {
-            "exact_match": "byteblaze.github.io"
+            "must_include": [
+              "byteblaze.github.io"
+            ]
           }
         }
       ]
@@ -1454,7 +1470,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/solarized-prism-theme/-/project_members",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/byteblaze%2Fsolarized-prism-theme/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "yjlou"
@@ -1585,9 +1601,9 @@
     "geolocation": null,
     "intent_template": "{{name}} wants to check my dotfile configurations. Please invite him to the repo as a guest.",
     "instantiation_dict": {
-      "name": "Jakub Klinkovský"
+      "name": "Jakub Klinkovsk\u00fd"
     },
-    "intent": "Jakub Klinkovský wants to check my dotfile configurations. Please invite him to the repo as a guest.",
+    "intent": "Jakub Klinkovsk\u00fd wants to check my dotfile configurations. Please invite him to the repo as a guest.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -1670,7 +1686,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/dashboard/projects",
-          "locator": "document.querySelector('[data-qa-selector=\"projects_list\"]').outerText",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects?owned=true&per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.map(x => x.name).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "create-react-app",
@@ -1931,12 +1947,12 @@
     "intent_template": "Follow {{account_list}} on Gitlab",
     "instantiation_dict": {
       "account_list": [
-        "Jakub Klinkovský",
+        "Jakub Klinkovsk\u00fd",
         "Koushik",
         "Vinta Chen"
       ]
     },
-    "intent": "Follow [\"Jakub Klinkovský\", \"Koushik\", \"Vinta Chen\"] on Gitlab",
+    "intent": "Follow [\"Jakub Klinkovsk\u00fd\", \"Koushik\", \"Vinta Chen\"] on Gitlab",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -1975,10 +1991,10 @@
       "account_list": [
         "Jakub K",
         "ghost",
-        "Benoît Blanchon"
+        "Beno\u00eet Blanchon"
       ]
     },
-    "intent": "Follow [\"Jakub K\", \"ghost\", \"Benoît Blanchon\"] on Gitlab",
+    "intent": "Follow [\"Jakub K\", \"ghost\", \"Beno\u00eet Blanchon\"] on Gitlab",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2212,7 +2228,6 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "Inception",
               "The Dark Knight Rises",
               "Interstellar",
               "Dunkirk",
@@ -2255,10 +2270,10 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "1993–2003: Early career and breakthrough",
-              "2003–2013: Widespread recognition",
-              "2014–2019: Established Hollywood auteur",
-              "2020–present"
+              "Memento",
+              "The Dark Knight",
+              "Inception",
+              "Oppenheimer"
             ]
           }
         }
@@ -2338,7 +2353,6 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "Batman Begins",
               "The Dark Knight",
               "Inception",
               "The Dark Knight Rises",
@@ -2364,10 +2378,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Jakub Klinkovský and Benoît Blanchon",
+      "collaborator_account_list": "Jakub Klinkovsk\u00fd and Beno\u00eet Blanchon",
       "repo": "gimmiethat.space"
     },
-    "intent": "Invite Jakub Klinkovský and Benoît Blanchon as collaborator(s) to gimmiethat.space repo",
+    "intent": "Invite Jakub Klinkovsk\u00fd and Beno\u00eet Blanchon as collaborator(s) to gimmiethat.space repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2378,7 +2392,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/project_members",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "@lahwaacz",
@@ -2440,10 +2454,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Benoît and Abishek",
+      "collaborator_account_list": "Beno\u00eet and Abishek",
       "repo": "my HTML5 markup extention"
     },
-    "intent": "Invite Benoît and Abishek as collaborator(s) to my HTML5 markup extention repo",
+    "intent": "Invite Beno\u00eet and Abishek as collaborator(s) to my HTML5 markup extention repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2454,7 +2468,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/accessible-html-content-patterns/-/project_members",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/byteblaze%2Faccessible-html-content-patterns/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "@bblanchon",
@@ -2478,10 +2492,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Jakub K, Alex Dills, Alex Hutnik and Benoît Blanchon",
+      "collaborator_account_list": "Jakub K, Alex Dills, Alex Hutnik and Beno\u00eet Blanchon",
       "repo": "my time tracking tool project"
     },
-    "intent": "Invite Jakub K, Alex Dills, Alex Hutnik and Benoît Blanchon as collaborator(s) to my time tracking tool project repo",
+    "intent": "Invite Jakub K, Alex Dills, Alex Hutnik and Beno\u00eet Blanchon as collaborator(s) to my time tracking tool project repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2804,7 +2818,7 @@
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
-              "Feb 5, 2023"
+              "Feb 4, 2023"
             ]
           }
         }
@@ -2863,7 +2877,7 @@
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
-              "Mar 8, 2023"
+              "Mar 7, 2023"
             ]
           }
         }
@@ -2981,7 +2995,7 @@
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
-              "May 21, 2044"
+              "May 20, 2044"
             ]
           }
         }
@@ -3224,7 +3238,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/root/metaseq/-/issues",
-          "locator": "document.querySelector('#content-body').outerText",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/root%2Fmetaseq/issues?state=opened&per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const i = await r.json(); return i.map(x => x.title).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "llama"
@@ -3304,10 +3318,10 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues",
-          "locator": "document.querySelector('#content-body').outerText",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/byteblaze%2Fa11y-syntax-highlighting/issues?state=opened&per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const i = await r.json(); return i.map(x => x.title).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
-              "MT theme editor"
+              "MT support"
             ]
           }
         }
@@ -3466,10 +3480,9 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/solarized-prism-theme/-/issues",
-          "locator": "document.querySelector('#content-body').outerText",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/projects/byteblaze%2Fsolarized-prism-theme/issues?state=opened&per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const i = await r.json(); return i.map(x => x.title).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
-              "implementation",
               "dark mode"
             ]
           }
@@ -3545,7 +3558,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/LICENSE",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/LICENSE/raw?ref=main', {credentials: 'include'}); return await r.text(); })()",
           "required_contents": {
             "must_include": [
               "MIT license",
@@ -3555,7 +3568,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/dotfiles/-/raw/main/LICENSE",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fdotfiles/repository/files/LICENSE/raw?ref=main', {credentials: 'include'}); return await r.text(); })()",
           "required_contents": {
             "must_include": [
               "MIT license",
@@ -3593,7 +3606,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/planner",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fplanner', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "private"
@@ -3602,7 +3615,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/planner/-/project_members",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fplanner/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); })()",
           "required_contents": {
             "must_include": [
               "@abisubramanya27",
@@ -3781,7 +3794,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/llm_bulk_inference",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fllm_bulk_inference', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -3790,7 +3803,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/llm_bulk_inference/-/project_members",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fllm_bulk_inference/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); })()",
           "required_contents": {
             "must_include": [
               "@primer",
@@ -3830,7 +3843,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/awesome_web_agents",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fawesome_web_agents', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -3839,7 +3852,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/awesome_web_agents/-/commits",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fawesome_web_agents/repository/commits?per_page=10', {credentials: 'include'}); if (!r.ok) return ''; const c = await r.json(); return c.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
               "Initial commit"
@@ -3848,7 +3861,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/awesome_web_agents/-/project_members",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fawesome_web_agents/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); })()",
           "required_contents": {
             "must_include": [
               "@abisubramanya27",
@@ -3887,7 +3900,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/web_agent_android_xl",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_android_xl', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -3896,7 +3909,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/web_agent_android_xl/-/commits",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_android_xl/repository/commits?per_page=10', {credentials: 'include'}); if (!r.ok) return ''; const c = await r.json(); return c.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
               "Initialized from 'Android' project template"
@@ -3905,7 +3918,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/web_agent_android_xl/-/project_members",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_android_xl/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); })()",
           "required_contents": {
             "must_include": [
               "@primer",
@@ -3945,7 +3958,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/project_site",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fproject_site', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -3954,7 +3967,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/project_site/-/commits",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fproject_site/repository/commits?per_page=10', {credentials: 'include'}); if (!r.ok) return ''; const c = await r.json(); return c.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
               "Initialized from 'NodeJS Express' project template"
@@ -3963,7 +3976,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/project_site/-/project_members",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fproject_site/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); })()",
           "required_contents": {
             "must_include": [
               "@primer",
@@ -4003,7 +4016,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/agi_index",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fagi_index', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -4012,7 +4025,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/agi_index",
-          "locator": "document.querySelector('.home-panel-description-markdown').outerText",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fagi_index', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.description || ''; })()",
           "required_contents": {
             "must_include": [
               [
@@ -4024,10 +4037,10 @@
         },
         {
           "url": "__GITLAB__/byteblaze/agi_index/-/project_members",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fagi_index/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); })()",
           "required_contents": {
             "must_include": [
-              "Vinta Chen"
+              "@vinta"
             ]
           }
         }
@@ -4062,7 +4075,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/AGISite",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2FAGISite', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -4071,7 +4084,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/AGISite",
-          "locator": "document.querySelector('.home-panel-description-markdown').outerText",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2FAGISite', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.description || ''; })()",
           "required_contents": {
             "must_include": [
               [
@@ -4083,7 +4096,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/AGISite/-/project_members",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2FAGISite/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); })()",
           "required_contents": {
             "must_include": [
               "@Seirdy",
@@ -4121,7 +4134,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/web_agent",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -4130,7 +4143,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/web_agent/-/commits",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent/repository/commits?per_page=10', {credentials: 'include'}); if (!r.ok) return ''; const c = await r.json(); return c.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
               "Initial commit"
@@ -4167,7 +4180,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/web_agent_android_xs",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_android_xs', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -4176,7 +4189,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/web_agent_android_xs/-/commits",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_android_xs/repository/commits?per_page=10', {credentials: 'include'}); if (!r.ok) return ''; const c = await r.json(); return c.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
               "Initialized from 'Android' project template"
@@ -4213,7 +4226,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/web_agent_nodejs",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_nodejs', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -4222,7 +4235,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/web_agent_nodejs/-/commits",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_nodejs/repository/commits?per_page=10', {credentials: 'include'}); if (!r.ok) return ''; const c = await r.json(); return c.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
               "Initialized from 'NodeJS Express' project template"
@@ -4259,7 +4272,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/web_agent_index",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_index', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -4268,7 +4281,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/web_agent_index",
-          "locator": "document.querySelector('.home-panel-description-markdown').outerText",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent_index', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.description || ''; })()",
           "required_contents": {
             "must_include": [
               [
@@ -4308,7 +4321,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/11711_gitlab",
-          "locator": "document.querySelector('.visibility-icon').getAttribute('title')",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2F11711_gitlab', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.visibility || ''; })()",
           "required_contents": {
             "must_include": [
               "Private"
@@ -4317,7 +4330,7 @@
         },
         {
           "url": "__GITLAB__/byteblaze/11711_gitlab",
-          "locator": "document.querySelector('.home-panel-description-markdown').outerText",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2F11711_gitlab', {credentials: 'include'}); if (!r.ok) return ''; const p = await r.json(); return p.description || ''; })()",
           "required_contents": {
             "must_include": [
               [
@@ -4357,7 +4370,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/groups/n-lab/-/group_members",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/groups/n-lab/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "@patou",
@@ -4397,7 +4410,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/groups/x-lab/-/group_members",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/groups/x-lab/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "@JonasVautherin",
@@ -4438,7 +4451,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/groups/crew/-/group_members",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/groups/crew/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "@ASWATFZLLC",
@@ -4478,7 +4491,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/groups/coding_friends/-/group_members",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/groups/coding_friends/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "@qhduan",
@@ -4516,7 +4529,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/groups/webagent/-/group_members",
-          "locator": "",
+          "locator": "(async () => { try { const r = await fetch('/api/v4/groups/webagent/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); } catch(e) { return ''; } })()",
           "required_contents": {
             "must_include": [
               "@pandey2000",
@@ -4554,21 +4567,19 @@
       "program_html": [
         {
           "url": "__GITLAB__/dashboard/issues?scope=all&state=opened&assignee_username=byteblaze",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/180/issues?assignee_username=byteblaze&state=opened&per_page=100', {credentials: 'include'}); const i = await r.json(); return i.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
-              "Add documentation on using Flash alerts in dialog components",
-              "Clarify usage of flash alert"
+              "Add documentation on using Flash alerts in dialog components"
             ]
           }
         },
         {
           "url": "__GITLAB__/dashboard/issues?scope=all&state=opened&assignee_username=primer",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/180/issues?assignee_username=primer&state=opened&per_page=100', {credentials: 'include'}); const i = await r.json(); return i.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
-              "Add documentation on using Flash alerts in dialog components",
-              "Clarify usage of flash alert"
+              "Add documentation on using Flash alerts in dialog components"
             ]
           }
         }
@@ -4689,7 +4700,7 @@
           "locator": "document.querySelector('#content-body').outerText",
           "required_contents": {
             "must_include": [
-              "build-time-debug"
+              "build time debug"
             ]
           }
         }
@@ -4810,10 +4821,9 @@
       "program_html": [
         {
           "url": "__GITLAB__/dashboard/issues?scope=all&state=opened&assignee_username=byteblaze",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/180/issues?assignee_username=byteblaze&state=opened&per_page=100', {credentials: 'include'}); const i = await r.json(); return i.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
-              "Add documentation on using Flash alerts in dialog components",
               "Clarify usage of flash alert"
             ]
           }
@@ -4849,7 +4859,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/dashboard/issues?scope=all&state=opened&assignee_username=byteblaze",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/174/issues?assignee_username=byteblaze&state=opened&per_page=100', {credentials: 'include'}); const i = await r.json(); return i.map(x => x.title).join(', '); })()",
           "required_contents": {
             "must_include": [
               "404s, bad host, timeouts, bad urls for URLs linked from website"
