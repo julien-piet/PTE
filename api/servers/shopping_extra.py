@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from typing import Dict, Optional
-from urllib.parse import quote_plus, urljoin
+from typing import List, Optional
+from urllib.parse import quote_plus, urljoin, urlparse
 
 import httpx
 import uvicorn
@@ -22,6 +22,20 @@ app = FastAPI(
 )
 
 
+# ── Auth helper ───────────────────────────────────────────────────────────────
+
+def _make_browser_page(playwright):
+    """Create a browser page authenticated as the default storefront customer."""
+    browser = playwright.chromium.launch(headless=True)
+    page = browser.new_page()
+    email, password = get_default_customer_credentials()
+    login_result = login_customer(page, email, password)
+    if not login_result.success:
+        browser.close()
+        raise RuntimeError(f"Login failed: {login_result.error_message or 'Unknown error'}")
+    return browser, page
+
+
 class AddToWishlistResponse(BaseModel):
     success: bool
     product_url: str
@@ -35,11 +49,18 @@ class AddToWishlistRequest(BaseModel):
     quantity: int = 1
 
 
-@app.get("/fuzzy_search", response_model=Dict[str, str])
-async def fuzzy_search(q: str) -> Dict[str, str]:
+class ProductSearchResult(BaseModel):
+    rank: int
+    name: str
+    url: str
+    sku: Optional[str] = None
+
+
+@app.get("/fuzzy_search", response_model=List[ProductSearchResult])
+async def fuzzy_search(q: str) -> List[ProductSearchResult]:
     """
-    Search the shopping website and return an ordered dict of rank → product name
-    as they appear in the search results UI (e.g. {"1": "Echo Dot", "2": "..."}).
+    Search the shopping website and return an ordered list of products with
+    their rank, name, URL, and SKU (if available).
     """
     url = f"{BASE_URL}/catalogsearch/result/?q={quote_plus(q)}"
 
@@ -49,11 +70,24 @@ async def fuzzy_search(q: str) -> Dict[str, str]:
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    names = [
-        name for tag in soup.select("a.product-item-link")
-        if (name := tag.get_text(strip=True))
-    ]
-    return {str(i + 1): name for i, name in enumerate(names)}
+    results = []
+    for i, item in enumerate(soup.select("li.product-item"), start=1):
+        link_tag = item.select_one("a.product-item-link")
+        if not link_tag:
+            continue
+        name = link_tag.get_text(strip=True)
+        raw_url = link_tag.get("href", "")
+        parsed = urlparse(raw_url)
+        product_url = parsed.path.lstrip("/")
+        if product_url.endswith(".html"):
+            product_url = product_url[:-5]
+
+        form_tag = item.select_one("form[data-role='tocart-form']")
+        sku = form_tag.get("data-product-sku") if form_tag else None
+
+        results.append(ProductSearchResult(rank=i, name=name, url=product_url, sku=sku))
+
+    return results
 
 
 @app.post("/add_to_wishlist", response_model=AddToWishlistResponse)
@@ -69,25 +103,17 @@ def add_to_wishlist(payload: AddToWishlistRequest) -> AddToWishlistResponse:
     if not product_url.startswith(("http://", "https://")):
         normalized_product_url = urljoin(f"{BASE_URL}/", product_url.lstrip("/"))
 
-    default_email, default_password = get_default_customer_credentials()
-
-    email = default_email
-    password = default_password
-
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
         try:
-            login_result = login_customer(page, email, password)
-            if not login_result.success:
-                return AddToWishlistResponse(
-                    success=False,
-                    product_url=normalized_product_url,
-                    requested_quantity=quantity,
-                    wishlist_count_after=None,
-                    error_message=f"Login failed: {login_result.error_message or 'Unknown error'}",
-                )
-
+            browser, page = _make_browser_page(p)
+        except RuntimeError as exc:
+            return AddToWishlistResponse(
+                success=False,
+                product_url=normalized_product_url,
+                requested_quantity=quantity,
+                error_message=str(exc),
+            )
+        try:
             result = add_product_to_wishlist(
                 page=page,
                 product_url=normalized_product_url,

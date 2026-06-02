@@ -12,7 +12,7 @@
         "/fuzzy_search": {
             "get": {
                 "summary": "Fuzzy search for products",
-                "description": "Search the shopping website and return a ranked dict of product names (rank → name) as they appear in the search results UI, sorted by relevance.",
+                "description": "Search the shopping website and return an ordered list of products with rank, name, URL, and SKU, sorted by relevance.",
                 "operationId": "fuzzy_search",
                 "parameters": [
                     {
@@ -26,11 +26,30 @@
                 "produces": ["application/json"],
                 "responses": {
                     "200": {
-                        "description": "Ranked dict of product names matching the query, e.g. {\"1\": \"Echo Dot\", \"2\": \"...\"}",
+                        "description": "Ordered list of products matching the query",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": ["rank", "name", "url"],
+                                "properties": {
+                                    "rank": {
+                                        "type": "integer",
+                                        "description": "1-based position in the search results"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Product display name"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "description": "Product URL slug without leading slash or .html extension"
+                                    },
+                                    "sku": {
+                                        "type": "string",
+                                        "description": "Product SKU, if available"
+                                    }
+                                }
                             }
                         }
                     }
