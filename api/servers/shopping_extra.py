@@ -79,8 +79,6 @@ async def fuzzy_search(q: str) -> List[ProductSearchResult]:
         raw_url = link_tag.get("href", "")
         parsed = urlparse(raw_url)
         product_url = parsed.path.lstrip("/")
-        if product_url.endswith(".html"):
-            product_url = product_url[:-5]
 
         form_tag = item.select_one("form[data-role='tocart-form']")
         sku = form_tag.get("data-product-sku") if form_tag else None

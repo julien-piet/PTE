@@ -201,7 +201,7 @@ Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1
 
 CRITICAL — Search Strategy for Product Names:
   - When you need to find a product by name, use the `GET /fuzzy_search` endpoint (Shopping Extra API) with the product name as the `q` parameter.
-  - This returns an ordered list of product names (Not SKUs) exactly as they appear on the shopping website. The item you are looking for may not be the top ranked item in the list, so make sure you check all returned results carefully.
+  - This returns an ordered list of product names, product SKUs, and urls, exactly as they appear on the shopping website. The item you are looking for may not be the top ranked item in the list, so make sure you check all returned results carefully.
   - Use the returned product names to look up further details via `GET /V1/products` filtering by `name` with `eq` conditionType.
 
 CRITICAL — POST/PUT request body structure:
