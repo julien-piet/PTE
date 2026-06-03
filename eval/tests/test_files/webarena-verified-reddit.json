@@ -47,7 +47,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -97,7 +98,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -147,7 +149,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -197,7 +200,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -247,7 +251,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -286,7 +291,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -325,7 +331,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -378,7 +385,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -419,7 +427,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -460,7 +469,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -501,7 +511,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -542,7 +553,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -583,7 +595,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -624,7 +637,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -663,7 +677,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -702,7 +717,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -741,7 +757,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -780,7 +797,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -819,7 +837,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -862,7 +881,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -905,7 +925,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -950,7 +971,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -995,7 +1017,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1040,7 +1063,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1085,7 +1109,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1130,7 +1155,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1176,7 +1202,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1222,7 +1249,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1268,7 +1296,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1314,7 +1343,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1360,7 +1390,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1404,7 +1435,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1448,7 +1480,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1492,7 +1525,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1536,7 +1570,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1582,7 +1617,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1627,7 +1663,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1672,7 +1709,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1717,7 +1755,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1762,7 +1801,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1807,7 +1847,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1866,7 +1907,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1922,7 +1964,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -1978,7 +2021,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2034,7 +2078,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2090,7 +2135,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2133,7 +2179,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2176,7 +2223,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2219,7 +2267,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2262,7 +2311,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2305,7 +2355,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2350,7 +2401,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2395,7 +2447,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2440,7 +2493,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2485,7 +2539,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2530,7 +2585,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2575,7 +2631,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2620,7 +2677,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2665,7 +2723,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2710,7 +2769,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2755,7 +2815,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2802,7 +2863,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2849,7 +2911,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2896,7 +2959,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2943,7 +3007,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -2990,7 +3055,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3036,7 +3102,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3082,7 +3149,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3128,7 +3196,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3174,7 +3243,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3220,7 +3290,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3267,7 +3338,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3314,7 +3386,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3361,7 +3434,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3408,7 +3482,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3455,7 +3530,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3501,7 +3577,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3547,7 +3624,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3593,7 +3671,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3639,7 +3718,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3685,7 +3765,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3728,7 +3809,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3771,7 +3853,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3814,7 +3897,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3854,7 +3938,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3904,7 +3989,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -3964,7 +4050,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4034,7 +4121,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4114,7 +4202,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4164,7 +4253,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4224,7 +4314,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4334,7 +4425,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4374,7 +4466,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4404,7 +4497,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -4534,7 +4628,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4574,7 +4669,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4604,7 +4700,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": true
   },
   {
     "sites": [
@@ -4644,7 +4741,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4684,7 +4782,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4724,7 +4823,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4854,7 +4954,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4896,7 +4997,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4938,7 +5040,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -4980,7 +5083,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -5022,7 +5126,8 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   },
   {
     "sites": [
@@ -5064,6 +5169,7 @@
         }
       }
     ],
-    "revision": 2
+    "revision": 2,
+    "read_only": false
   }
 ]
