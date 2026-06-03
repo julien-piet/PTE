@@ -491,6 +491,91 @@ def delete_all_access_tokens(page: Page) -> DeleteResult:
     )
 
 
+@dataclass
+class RssTokenResult:
+    """Result of a get/reset RSS token operation."""
+
+    success: bool
+    token: Optional[str] = None
+    error_message: Optional[str] = None
+
+
+def get_rss_token(page: Page) -> RssTokenResult:
+    """
+    Read the current RSS/feed token from the user's profile page.
+
+    Args:
+        page: Playwright Page instance (must be logged in)
+
+    Returns:
+        RssTokenResult with the current token value
+    """
+    page.goto(PROFILE_URL, wait_until="domcontentloaded", timeout=60000)
+
+    try:
+        page.wait_for_selector("#rss-token", timeout=5000)
+        token = page.input_value("#rss-token")
+        if not token:
+            return RssTokenResult(success=False, error_message="RSS token field empty")
+        return RssTokenResult(success=True, token=token)
+    except TimeoutError:
+        return RssTokenResult(success=False, error_message="RSS token field not found on profile page")
+
+
+def reset_rss_token(page: Page) -> RssTokenResult:
+    """
+    Reset (regenerate) the RSS/feed token and return the new value.
+
+    Navigates to the profile page, clicks "Reset RSS token", confirms the
+    modal if one appears, then reads the new token value.
+
+    Args:
+        page: Playwright Page instance (must be logged in)
+
+    Returns:
+        RssTokenResult with the newly generated token value
+    """
+    page.goto(PROFILE_URL, wait_until="domcontentloaded", timeout=60000)
+
+    reset_btn_selector = "a[data-confirm], button[data-confirm]"
+    # More specific: the reset RSS token link/button near the rss-token input
+    rss_reset_selector = "a[href*='reset_rss_token'], button[data-url*='reset_rss_token']"
+
+    try:
+        page.wait_for_selector("#rss-token", timeout=5000)
+    except TimeoutError:
+        return RssTokenResult(success=False, error_message="RSS token section not found on profile page")
+
+    # Find the reset button in the RSS token section
+    reset_btn = page.locator(rss_reset_selector)
+    if reset_btn.count() == 0:
+        # Fall back: look for any link/button near the rss-token input
+        reset_btn = page.locator(".rss-feed .btn, .rss-token-reset, [data-testid='reset-rss-token']")
+    if reset_btn.count() == 0:
+        return RssTokenResult(success=False, error_message="Reset RSS token button not found")
+
+    reset_btn.first.click()
+
+    # Handle confirmation dialog (browser native or modal)
+    try:
+        page.wait_for_selector(".modal.show, .modal[aria-modal='true']", timeout=2000)
+        confirm_btn = page.locator(".modal .btn-danger, .modal .js-modal-action-primary").first
+        confirm_btn.click()
+    except TimeoutError:
+        pass  # No modal — browser native confirm was auto-accepted or not present
+
+    page.wait_for_load_state("networkidle", timeout=15000)
+
+    try:
+        page.wait_for_selector("#rss-token", timeout=5000)
+        token = page.input_value("#rss-token")
+        if not token:
+            return RssTokenResult(success=False, error_message="RSS token field empty after reset")
+        return RssTokenResult(success=True, token=token)
+    except TimeoutError:
+        return RssTokenResult(success=False, error_message="RSS token field not found after reset")
+
+
 def delete_account(page: Page, password: str) -> DeleteResult:
     """
     Delete the current user's account.
