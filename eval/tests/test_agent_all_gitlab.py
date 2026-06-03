@@ -187,6 +187,11 @@ def test_agent_accomplishes_gitlab_tasks(
     multi_docker = request.config.getoption("--multi-docker", default=False)
     base_url = request.config.getoption("--base-url") or _SERVER_URLS["gitlab"]
     output_name = request.config.getoption("--output", default=None)
+    if not output_name:
+        # Always save logs — auto-generate a timestamped filename when --output
+        # is not explicitly provided so no run is ever lost.
+        from datetime import datetime, timezone
+        output_name = datetime.now(timezone.utc).strftime("gitlab_%Y%m%d_%H%M%S.json")
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
@@ -337,10 +342,11 @@ def test_agent_accomplishes_gitlab_tasks(
 
     # Final flush (marks interrupted=False).
     _flush_results(output_name, result_log, interrupted=False)
+    print(f"\n📄 Results saved to {LOGS_DIR / output_name}")
 
     passed_count = sum(1 for e in result_log if e.get("passed"))
     total = len(result_log)
-    print(f"\nResults: {passed_count}/{total} passed, {total - passed_count}/{total} failed")
+    print(f"Results: {passed_count}/{total} passed, {total - passed_count}/{total} failed")
 
     if failures:
         pytest.fail("\n\n".join(failures))

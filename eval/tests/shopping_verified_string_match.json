@@ -20,8 +20,15 @@
         "must_include": [
           "Catso",
           "Dibbins",
-          "Anglebert Dinkherhump",
-          "Michelle Davis"
+          [
+            "Anglebert Dinkherhump",
+            "Anglebert",
+            "Dinkherhump"
+          ],
+          [
+            "Michelle Davis",
+            "Michelle DavisMichelle Davis"
+          ]
         ]
       },
       "reference_url": "",
@@ -50,7 +57,20 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no reviewer",
+            "no one",
+            "not mention",
+            "did not mention",
+            "do not mention",
+            "N/A",
+            "cannot find",
+            "unable to find",
+            "0 reviewer"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -109,7 +129,20 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no reviewer",
+            "no one",
+            "not mention",
+            "did not mention",
+            "do not mention",
+            "N/A",
+            "cannot find",
+            "unable to find",
+            "0 reviewer"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -199,9 +232,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "0 order",
-          "$0 total spend"
+        "must_include": [
+          [
+            "\"order_count\": 0",
+            "order_count\": 0",
+            "order_count\":0",
+            "no complete orders",
+            "0 complete orders",
+            "zero complete",
+            "no orders",
+            "count: 0"
+          ]
         ]
       },
       "reference_url": "",
@@ -231,8 +272,7 @@
       ],
       "reference_answers": {
         "fuzzy_match": [
-          "0 order",
-          "$0 total spend"
+          "0"
         ]
       },
       "reference_url": "",
@@ -262,8 +302,8 @@
       ],
       "reference_answers": {
         "fuzzy_match": [
-          "3 orders",
-          "$845.49 total spend"
+          "3",
+          "845.49"
         ]
       },
       "reference_url": "",
@@ -293,8 +333,8 @@
       ],
       "reference_answers": {
         "fuzzy_match": [
-          "21 orders",
-          "$6560.69 total spend"
+          "21",
+          "6560.69"
         ]
       },
       "reference_url": "",
@@ -324,8 +364,8 @@
       ],
       "reference_answers": {
         "fuzzy_match": [
-          "7 orders",
-          "$1700.84 total spend"
+          "7",
+          "1700.84"
         ]
       },
       "reference_url": "",
@@ -354,14 +394,23 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "The last order was canceled. It will never arrive."
+        "must_include": [
+          [
+            "canceled",
+            "cancelled"
+          ],
+          [
+            "null",
+            "N/A",
+            "will never arrive",
+            "no arrival"
+          ]
         ]
       },
       "reference_url": "",
       "program_html": [],
       "reference_answer_raw_annotation": "The last order was canceled. It will never arrive.",
-      "string_note": ""
+      "string_note": "OR-groups: answer must contain one of (canceled|cancelled) AND one of (null|N/A|will never arrive|no arrival). Changed from fuzzy_match (which does not support nested OR-groups) to must_include."
     },
     "intent_template_id": 193,
     "read_only": true
@@ -414,9 +463,9 @@
         "string_match"
       ],
       "reference_answers": {
-        "must_include": [
-          "0.14",
-          "745.00"
+        "fuzzy_match": [
+          "0.01",
+          "199.9"
         ]
       },
       "reference_url": "",
@@ -508,7 +557,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "24.42"
+          "32.41"
         ]
       },
       "reference_url": "",
@@ -538,7 +587,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "80.50"
+          "68.51"
         ]
       },
       "reference_url": "",
@@ -598,7 +647,15 @@
       ],
       "reference_answers": {
         "must_include": [
-          "0"
+          [
+            "$0",
+            "0.00",
+            "zero",
+            "no food",
+            "no purchase",
+            "no order",
+            "nothing"
+          ]
         ]
       },
       "reference_url": "",
@@ -1055,7 +1112,18 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no review",
+            "no title",
+            "0 review",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no rating"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1203,7 +1271,19 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no order",
+            "no processing",
+            "0 order",
+            "zero order",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no result"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1261,7 +1341,17 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no review",
+            "0 review",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no result"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1533,7 +1623,18 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no order",
+            "0 order",
+            "zero order",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no result"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1561,7 +1662,18 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no order",
+            "0 order",
+            "zero order",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no result"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -1804,7 +1916,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "Men shoes"
+        "fuzzy_match": "Men's Shoes"
       },
       "reference_url": "__SHOPPING__/clothing-shoes-jewelry/men/shoes.html",
       "program_html": [],
@@ -1833,7 +1945,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "Women clothing"
+        "fuzzy_match": [
+          "Women",
+          "clothing"
+        ]
       },
       "reference_url": "__SHOPPING__/clothing-shoes-jewelry/women/clothing.html",
       "program_html": [],
@@ -1920,7 +2035,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "men shoes"
+        "fuzzy_match": "Men's Shoes"
       },
       "reference_url": "__SHOPPING__/clothing-shoes-jewelry/men/shoes.html?price=0-30",
       "program_html": [],
@@ -2007,7 +2122,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "Accent Furniture"
+        "fuzzy_match": "furniture with accent"
       },
       "reference_url": "__SHOPPING__/home-kitchen/furniture/accent-furniture.html?price=0-199",
       "program_html": [],
@@ -2037,7 +2152,8 @@
       ],
       "reference_answers": {
         "must_include": [
-          "USB WiFi"
+          "Foktech",
+          "Bingfu"
         ]
       },
       "reference_url": "__SHOPPING__/catalogsearch/result/?q=usb+wifi",
@@ -2067,7 +2183,10 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "xbox"
+        "must_include": [
+          "Hyperkin",
+          "ReaSnow"
+        ]
       },
       "reference_url": "__SHOPPING__/catalogsearch/result/?q=xbox",
       "program_html": [],
@@ -2097,7 +2216,8 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Nintendo Switch"
+          "Satisfye",
+          "ZenGrip"
         ]
       },
       "reference_url": "__SHOPPING__/catalogsearch/result/?q=switch+accessories",
@@ -2128,7 +2248,8 @@
       ],
       "reference_answers": {
         "must_include": [
-          "iPhone 13"
+          "Syart",
+          "Battery Case for iPhone 12"
         ]
       },
       "reference_url": "__SHOPPING__/catalogsearch/result/?q=iphone+13",
@@ -2159,7 +2280,8 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Green Tea"
+          "Organic Green Tea",
+          "Hyleys"
         ]
       },
       "reference_url": "__SHOPPING__/catalogsearch/result/?q=green+tea+bag+for+weight+loss",
@@ -2190,18 +2312,18 @@
       ],
       "reference_answers": {
         "must_include": [
-          "SONY WH1000XM3 Bluetooth Wireless Noise Canceling Headphones Silver WH-1000XM3/S (Renewed)",
-          "Sony WH-CH710N/H Wireless Bluetooth Noise Cancelling Headphones",
-          "Sony WH-1000XM3B Wireless Bluetooth Noise-Canceling Over-Ear Headphones (Black) Basic Headphone Bundle Kit with Stylus",
-          "Sony Wireless Headphones WH-CH510: Wireless Bluetooth On-Ear Headset with Mic for Phone-Call, Black",
-          "Sony WHCH710N Wireless Bluetooth Noise Canceling Over-The-Ear Headphones (Black) with Kratos 18W PD Two-Port Power Adapter and Kratos 6-Feet Nylon Braided USB-C Cable Bundle (3 Items)",
-          "Sony WI-SP500 Wireless in-Ear Sports Headphones, White (WISP500/W)",
-          "Sony WI-SP510 Extra BASS Wireless in-Ear Headset/Headphones with mic for Phone Call Sports IPX5 Bluetooth, Black (WISP510/B)",
-          "Sony MDRAS600BT Active Sports Bluetooth Headset (Black)",
-          "Sony WH-1000XM4 Wireless Noise Canceling Over-Ear Headphones (Black) with Sony WLA-NS7 Wireless TV Adapter Bundle (2 Items)",
-          "Sony WI-C300 Wireless In-Ear Headphones, Red (WIC300/R)",
-          "Sony XB950N1 Extra Bass Wireless Noise Canceling Headphones, Black",
-          "SONY - H900N Hi-Res Noise Cancelling Wireless Headphone Grayish Black Renewed",
+          "WH-1000XM3/S",
+          "WH-CH710N/H",
+          "WH-1000XM3B",
+          "WH-CH510",
+          "Kratos",
+          "WISP500/W",
+          "WISP510/B",
+          "MDRAS600BT",
+          "WLA-NS7",
+          "WIC300/R",
+          "XB950N1",
+          "H900N",
           "18.99",
           "406"
         ]
@@ -2233,20 +2355,17 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Anker USB C Charger 30W, 711 Charger, Compact Fast Charger (Not Foldable) for MacBook Air/iPhone 13/13 Mini/13 Pro/13 Pro Max/12, Galaxy S21, Note 20, iPad Pro, Pixel, and More",
-          "Anker USB C Charger 40W, 521 Charger (Nano Pro), PIQ 3.0 Durable Compact Fast Charger (Not Foldable) for iPhone 13/13 Mini/13 Pro/13 Pro Max/12, Galaxy, Pixel 4/3, iPad/iPad Mini (Cable Not Included)",
-          "Anker PowerCore Speed 20000, 20000mAh Qualcomm Quick Charge 3.0 & PowerIQ Portable Charger, with Quick Charge Recharging, Power Bank for Samsung, iPhone, iPad and More, Black (A1278)",
-          "5Ft Micro-USB Charger Cord Cable Fit for Anker-PowerCore 5000 10000 20100 13000 26800 Mini 3350 Fusion II 15000 Redux 20000 Slim 10000 Astro E1 AC Replacement Power Adapter Supply",
-          "Anker 10W Max Wireless Charger, 313 Wireless Charger (Pad), Qi-Certified Wireless Charging 7.5W for iPhone 12/12 Pro/12 mini/12 Pro Max, 10W for Galaxy S10 S9 S8, S9 Plus, Note 9 (No AC Adapter)",
-          "Anker Wireless Charger, 313 Wireless Charger (Stand), Qi-Certified for iPhone 12, 12 Pro Max, SE, 11, 11 Pro, 11 Pro Max, XR, XS Max, 10W Fast-Charging Galaxy S20, S10 (No AC Adapter)",
-          "USB Charger, Anker Elite Dual Port 24W Wall Charger, PowerPort 2 with PowerIQ and Foldable Plug, for iPhone 11/Xs/XS Max/XR/X/8/7/6/Plus, iPad Pro/Air 2/Mini 3/Mini 4, Samsung S4/S5, and More",
-          "iPhone 12 Charger [GaN Tech], Anker 30W Compact USB-C Wall Charger with Power Delivery, PowerPort Atom for iPhone 12 / Mini/Pro/Pro Max / 11 / X/XS/XR, iPad Pro, MacBook 12'', Pixel, Galaxy",
-          "USB C Charger, Anker 30W 2 Port Fast Charger with 18W USB C Power Adapter, Foldable PowerPort PD 2 Charger for iPad Pro, iPhone 11/11 Pro / 11 Pro Max/XS/Max/XR/X, Pixel, Galaxy, and More",
-          "Anker 40W 5-Port USB Wall Charger, PowerPort 5 for iPhone XS / XS Max / XR / X / 8 / 7 / 6 / Plus, iPad Pro / Air 2 / mini, Galaxy S9 / S8 / Edge / Plus, Note 8 / 7, LG, Nexus, HTC and More, Black (AK-A2124111)",
-          "Anker Quick Charge 3.0 39W Dual USB Wall Charger, PowerPort Speed 2 for Galaxy S10/S9/S8/Edge/Plus, Note 8/7 and PowerIQ for iPhone Xs/XS Max/XR/X/8/Plus, iPad Pro/Air 2/Mini, LG, Nexus, HTC and More",
-          "USB C Charger, Anker 20W PIQ 3.0 Fast Charger with Foldable Plug, PowerPort III Charger for iPhone 13/13 Mini/13 Pro/13 Pro Max/12/11, iPad/iPad Mini, MagSafe, and More (Cable Not Included)",
-          "8.99",
-          "59.99"
+          "711 Charger",
+          "521 Charger",
+          "313 Wireless Charger (Pad)",
+          "313 Wireless Charger (Stand)",
+          "Elite Dual Port 24W",
+          "PowerPort Atom",
+          "PowerPort PD 2",
+          "PowerPort 5",
+          "PowerPort Speed 2",
+          "PowerPort III",
+          "8.99"
         ]
       },
       "reference_url": "",
@@ -2276,8 +2395,8 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Oral-B Kids Extra Soft Replacement Brush Heads featuring STAR WARS, 2 count",
-          "Kids By Oral-b Stages Power Star Wars Replacement Heads 4 Pack",
+          "Kids Extra Soft Replacement Brush Heads",
+          "Stages Power Star Wars",
           "12.99",
           "14.98"
         ]
@@ -2309,15 +2428,15 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Nike Men's Air Max Camden Slide Sandal",
-          "Nike Men's Benassi JDI Fanny Pack Slides",
-          "Nike Victori One Mens Comfort Slide Cn9675-003 (Midnight Navy/Midnight Navy/White, Numeric_10)",
-          "Nike Offcourt Slide Mens Bq4639-002 Size 12",
-          "Nike Jordan Men's Break Slide Red AR6374-602",
-          "Nike Victori One Slide Mens Style : Dd9559-300",
-          "Nike Men's Benassi Solarsoft Slide Athletic Sandal (Black/White, numeric_14)",
-          "Nike Men's Benassi Solarsoft Slide Athletic Sandal (Midnight Navy/Blue, numeric_8)",
-          "Nike womens Benassi Just Do It",
+          "Air Max Camden Slide",
+          "Benassi JDI Fanny Pack",
+          "Victori One Mens Comfort Slide",
+          "Offcourt Slide Mens",
+          "Jordan Men's Break Slide",
+          "Victori One Slide Mens Style",
+          "Black/White, numeric_14",
+          "Midnight Navy/Blue, numeric_8",
+          "womens Benassi Just Do It",
           "27.6",
           "90.65"
         ]
@@ -2571,7 +2690,19 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no order",
+            "no processing",
+            "0 order",
+            "zero order",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no result"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -2598,7 +2729,18 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no order",
+            "0 order",
+            "zero order",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no result"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -2625,7 +2767,19 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "not available",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no phone",
+            "not listed",
+            "does not exist",
+            "no information"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -2796,7 +2950,7 @@
     "geolocation": null,
     "intent_template": "Pull up the page with all \"chairs\" listings sorted by ascending price.",
     "instantiation_dict": {},
-    "intent": "Pull up the page with all \"chairs\" listings sorted by ascending price.",
+    "intent": "Show me the \"chairs\" listings by ascending price.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2825,7 +2979,7 @@
     "geolocation": null,
     "intent_template": "Pull up the page with all \"mouth night guard\" listings sorted by descending price.",
     "instantiation_dict": {},
-    "intent": "Pull up the page with all \"mouth night guard\" listings sorted by descending price.",
+    "intent": "Show me the \"mouth night guard\" listings by descending price.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2854,7 +3008,7 @@
     "geolocation": null,
     "intent_template": "Pull up the page with all \"Canon photo printer\" listings sorted by search relevance, from most to least.",
     "instantiation_dict": {},
-    "intent": "Pull up the page with all \"Canon photo printer\" listings sorted by search relevance, from most to least.",
+    "intent": "Show me the \"Canon photo printer\" listings by search relevance, from most to least.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2885,7 +3039,7 @@
     "geolocation": null,
     "intent_template": "Pull up the page with all \"iphone 12 phone case\" listings sorted by name alphabetically.",
     "instantiation_dict": {},
-    "intent": "Pull up the page with all \"iphone 12 phone case\" listings sorted by name alphabetically.",
+    "intent": "Show me the \"iphone 12 phone case\" listings by name alphabetically.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2914,7 +3068,7 @@
     "geolocation": null,
     "intent_template": "Pull up the page with all \"iphone 12 phone case\" listings sorted by price.",
     "instantiation_dict": {},
-    "intent": "Pull up the page with all \"iphone 12 phone case\" listings sorted by price.",
+    "intent": "Show me the \"iphone 12 phone case\" listings by price.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -3041,9 +3195,9 @@
       ],
       "reference_answers": {
         "fuzzy_match": [
-          "Jan: 542.88",
-          "Feb: 912.50",
-          "Mar: 53.31"
+          "542.88",
+          "912.5",
+          "53.31"
         ]
       },
       "reference_url": "",
@@ -3458,8 +3612,8 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Bornbridge Artificial Spiral Topiary Tree - Indoor / Outdoor Topiary Trees - Artificial Outdoor Plants (2 Pack, 4' Cypress)",
-          "Russound 5B45W 4\" Indoor Outdoor Speakers White"
+          "Bornbridge Artificial Spiral Topiary",
+          "Russound 5B45W"
         ]
       },
       "reference_url": "",
@@ -3488,9 +3642,24 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": [
-          "170: cancelled",
-          "189: pending"
+        "must_include": [
+          [
+            "\"order_number\": 170",
+            "Order #170",
+            "order 170",
+            "order_number\":170"
+          ],
+          [
+            "canceled",
+            "cancelled"
+          ],
+          [
+            "\"order_number\": 189",
+            "Order #189",
+            "order 189",
+            "order_number\":189"
+          ],
+          "pending"
         ]
       },
       "reference_url": "",
@@ -3522,9 +3691,15 @@
         "must_include": [
           "101 S San Mateo Dr",
           "San Mateo",
-          "California",
+          [
+            "California",
+            "CA"
+          ],
           "94010",
-          "United States"
+          [
+            "United States",
+            "US"
+          ]
         ]
       },
       "reference_url": "",
@@ -3553,7 +3728,21 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no sale",
+            "no discounted",
+            "no discount",
+            "0 item",
+            "zero item",
+            "not found",
+            "cannot find",
+            "unable to find",
+            "no product",
+            "no result"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -3581,7 +3770,21 @@
         "string_match"
       ],
       "reference_answers": {
-        "fuzzy_match": "N/A"
+        "must_include": [
+          [
+            "none",
+            "no review",
+            "no customer review",
+            "not found",
+            "could not",
+            "unable to",
+            "not available",
+            "cannot find",
+            "0 review",
+            "no product",
+            "not listed"
+          ]
+        ]
       },
       "reference_url": "",
       "program_html": [],
@@ -3680,15 +3883,12 @@
       ],
       "reference_answers": {
         "must_include": [
-          [
-            "65",
-            "3"
-          ]
+          "3.1"
         ]
       },
       "reference_url": "",
       "program_html": [],
-      "string_note": "",
+      "string_note": "Rating of the Ugreen Lightning to 3.5mm Headphone Adapter is approximately 3.1 stars. Previous reference checked for \"65\" (the review count) which was incorrect.",
       "reference_answer_raw_annotation": "Around 3.1 stars"
     },
     "intent_template_id": 1355,

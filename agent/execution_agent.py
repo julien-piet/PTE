@@ -284,7 +284,7 @@ class ExecutionAgent:
 
         # Assemble curl command
         cmd = ["curl", "-g", "-s", "-X", method, "-H", "Content-Type: application/json"]
-        for hname, hval in self.auth.get_headers().items():
+        for hname, hval in self.auth.get_headers(url=url).items():
             cmd += ["-H", f"{hname}: {hval}"]
         if body is not None:
             cmd += ["-d", json.dumps(body)]
@@ -371,19 +371,45 @@ class ExecutionAgent:
             # If every accessor has a structural path after .result (e.g. [0].field,
             # [sort_desc:f][0].id, .key), _follow_accessor handles all the navigation
             # correctly on the raw output — skip the LLM entirely. The LLM is only
-            # needed for bare {step.result} references that require semantic extraction.
+            # needed for bare {step.result} references that require semantic extraction,
+            # OR when a downstream hint describes a content transformation to apply.
             structural_path_re = re.compile(
                 r"\{" + re.escape(step.step_id) + r"\.result[.\[]"
             )
-            if all(structural_path_re.match(acc) for acc in unique_accessors):
+            _transform_keywords = {"decode", "encode", "base64", "replace", "transform", "modify"}
+            _has_transform_hint = any(
+                any(kw in (getattr(ds, "hints", "") or "").lower() for kw in _transform_keywords)
+                for ds in dependent_steps
+            )
+            if all(structural_path_re.match(acc) for acc in unique_accessors) and not _has_transform_hint:
                 return raw_output
+
+            # Map each accessor to the hint of the step that uses it (first match wins)
+            _acc_to_hint: dict[str, str] = {}
+            for ds in dependent_steps:
+                ds_hint = getattr(ds, "hints", "") or ""
+                for a in (ds.arguments or []):
+                    serialized = json.dumps(a.value) if isinstance(a.value, (dict, list)) else (a.value if isinstance(a.value, str) else "")
+                    for acc in re.findall(r"\{" + step.step_id + r"\.result[^}]*\}", serialized):
+                        if acc not in _acc_to_hint:
+                            _acc_to_hint[acc] = ds_hint
 
             lines = []
             for acc in unique_accessors:
                 # Extract the field path after .result (e.g. ".default_branch" → "default_branch")
                 m = re.match(r"\{" + step.step_id + r"\.result\.?(.*)\}", acc)
                 field_path = m.group(1) if m and m.group(1) else None
-                if field_path:
+                acc_hint = _acc_to_hint.get(acc, "")
+                if acc_hint and any(kw in acc_hint.lower() for kw in _transform_keywords):
+                    if field_path:
+                        lines.append(
+                            f"  '{acc}' → read the value at field '{field_path}', apply the transformation described in the downstream hint, and return the transformed result"
+                        )
+                    else:
+                        lines.append(
+                            f"  '{acc}' → apply the transformation described in the downstream hint to the full value and return the transformed result"
+                        )
+                elif field_path:
                     lines.append(f"  '{acc}' → extract the value at field '{field_path}' (must be a scalar string/number, not an object)")
                 else:
                     lines.append(f"  '{acc}' → extract the full value")
@@ -402,6 +428,7 @@ class ExecutionAgent:
             f"- If the dependent step needs a structured sub-object, return that object.\n"
             f"- If the dependent step uses the value as a path parameter and multiple values are needed, return a JSON array. The engine will call the step once per item.\n"
             f"- If the response is a list and only one specific item is needed, extract only that item or field.\n"
+            f"- If a downstream hint describes a transformation (e.g. decode base64, replace text, re-encode), apply that transformation to the extracted field value and return the transformed result — not the original raw value.\n"
             f"- Set found=false only if the required value is genuinely absent from the response."
         )
         self._debug(f"Parsing output of {step.step_id}:\n{prompt}")

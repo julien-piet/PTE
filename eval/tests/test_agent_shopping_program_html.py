@@ -45,9 +45,10 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from agent.auth import StaticAuth
+from agent.auth import RoutingAuth, RefreshableAuth
 from config.servers import SERVER_URLS as _SERVER_URLS
-from config.init_tokens.refresh_shopping_customer_token import refresh_customer_token as _refresh_shopping_tokens
+from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_admin_tokens
+from config.init_tokens.refresh_shopping_customer_token import refresh_customer_token as _refresh_shopping_customer_tokens
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
 from eval.tests.agent_test_utils import extract_agent_details, task_status
@@ -235,24 +236,26 @@ def test_agent_accomplishes_shopping_tasks(
     base_url = request.config.getoption("--base-url") or _SERVER_URLS["shopping"]
 
     # Resolve output path once — _flush_result writes here after every task.
+    # Always save results: use --output filename if provided, otherwise default.
     output_name = request.config.getoption("--output", default=None)
-    out_path: Optional[Path] = None
-    if output_name:
-        out_path = Path(__file__).parent / "logs" / output_name
+    if not output_name:
+        output_name = "shopping_program_html_results.json"
+    out_path = Path(__file__).parent / "logs" / output_name
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
     else:
         n_workers = 1
 
-    single_docker_token: Optional[str] = None
+    single_admin_token: Optional[str] = None
+    single_customer_token: Optional[str] = None
     if not multi_docker:
         print("Refreshing shopping auth tokens...")
-        single_docker_token = _refresh_shopping_tokens(base_url=base_url)
+        single_admin_token = _refresh_shopping_admin_tokens(base_url=base_url)
+        single_customer_token = _refresh_shopping_customer_tokens(base_url=base_url)
 
     print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
-    if out_path:
-        print(f"Results written incrementally to {out_path} — safe to Ctrl+C and resume with --resume")
+    print(f"Results written incrementally to {out_path} — safe to Ctrl+C and resume with --resume")
 
     async def run_all() -> list:
         sem = asyncio.Semaphore(n_workers)
@@ -281,15 +284,35 @@ def test_agent_accomplishes_shopping_tasks(
                         await runner._init_agent()
 
                         if runner._agent.execution_agent is not None:
-                            token = (
-                                _refresh_shopping_tokens(base_url=runner.base_url)
-                                if multi_docker
-                                else single_docker_token
+                            if multi_docker:
+                                admin_token    = _refresh_shopping_admin_tokens(base_url=runner.base_url)
+                                customer_token = _refresh_shopping_customer_tokens(base_url=runner.base_url)
+                            else:
+                                admin_token    = single_admin_token
+                                customer_token = single_customer_token
+
+                            # Use RoutingAuth so the agent always has an admin
+                            # token (for catalog/orders/customers) but switches
+                            # to the customer token for endpoints that reject
+                            # admin tokens. Both tokens auto-refresh when they
+                            # are within 5 minutes of expiry.
+                            _base = runner.base_url
+                            admin_auth = RefreshableAuth(
+                                initial_token=admin_token,
+                                refresh_fn=lambda: _refresh_shopping_admin_tokens(base_url=_base),
                             )
-                            if token:
-                                runner._agent.execution_agent.auth = StaticAuth(
-                                    {"Authorization": f"Bearer {token}"}
-                                )
+                            customer_auth = RefreshableAuth(
+                                initial_token=customer_token,
+                                refresh_fn=lambda: _refresh_shopping_customer_tokens(base_url=_base),
+                            )
+                            runner._agent.execution_agent.auth = RoutingAuth(
+                                default=admin_auth,
+                                overrides=[
+                                    ("/carts/mine",   customer_auth),
+                                    ("/customers/me", customer_auth),
+                                    (":7790/",        customer_auth),  # shopping_extra server
+                                ],
+                            )
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 
                         run_task = task
@@ -379,8 +402,7 @@ def test_agent_accomplishes_shopping_tasks(
             failures.append(_make_failure_message(task, r["agent_result"], r["html_detail"]))
 
     if interrupted:
-        if out_path:
-            print(f"\n📄 Results saved to {out_path} — re-run with --resume to continue.")
+        print(f"\n📄 Results saved to {out_path} — re-run with --resume to continue.")
         pytest.exit("Interrupted by user", returncode=1)
 
     total = len(results)

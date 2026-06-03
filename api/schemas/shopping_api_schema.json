@@ -1081,7 +1081,7 @@
                 "tags": [
                     "eavAttributeSetRepositoryV1"
                 ],
-                "description": "Retrieve list of Attribute Sets This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#AttributeSetRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Retrieve list of Attribute Sets This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#AttributeSetRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1EavAttributesetsList",
                 "consumes": [
                     "application/json",
@@ -1592,7 +1592,7 @@
                 "tags": [
                     "customerGroupRepositoryV1"
                 ],
-                "description": "Retrieve customer groups. The list of groups can be filtered to exclude the NOT_LOGGED_IN group using the first parameter and/or it can be filtered by tax class. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#GroupRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Retrieve customer groups. The list of groups can be filtered to exclude the NOT_LOGGED_IN group using the first parameter and/or it can be filtered by tax class. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#GroupRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1CustomerGroupsSearch",
                 "consumes": [
                     "application/json",
@@ -2587,7 +2587,7 @@
                 "tags": [
                     "customerCustomerRepositoryV1"
                 ],
-                "description": "Retrieve customers which match a specified criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#CustomerRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Retrieve customers which match a specified criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#CustomerRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1CustomersSearch",
                 "consumes": [
                     "application/json",
@@ -4418,7 +4418,10 @@
                     {
                         "name": "searchCriteria[requestName]",
                         "in": "query",
-                        "type": "string"
+                        "type": "string",
+                        "required": true,
+                        "default": "quick_search_container",
+                        "description": "Must be \"quick_search_container\". Required \u2014 omitting causes a 500 error."
                     },
                     {
                         "name": "searchCriteria[filterGroups][0][filters][0][field]",
@@ -9754,7 +9757,7 @@
                 "tags": [
                     "quoteCartRepositoryV1"
                 ],
-                "description": "Enables administrative users to list carts that match specified search criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#CartRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Enables administrative users to list carts that match specified search criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#CartRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1CartsSearch",
                 "consumes": [
                     "application/json",
@@ -11716,7 +11719,7 @@
                 "tags": [
                     "quotePaymentMethodManagementV1"
                 ],
-                "description": "Lists available payment methods for a specified shopping cart. This call returns an array of objects, but detailed information about each object’s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#PaymentMethodManagementInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Lists available payment methods for a specified shopping cart. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#PaymentMethodManagementInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1CartsCartIdPaymentmethods",
                 "consumes": [
                     "application/json",
@@ -11877,7 +11880,7 @@
                 "tags": [
                     "quotePaymentMethodManagementV1"
                 ],
-                "description": "Lists available payment methods for a specified shopping cart. This call returns an array of objects, but detailed information about each object’s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#PaymentMethodManagementInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Lists available payment methods for a specified shopping cart. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#PaymentMethodManagementInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1CartsMinePaymentmethods",
                 "consumes": [
                     "application/json",
@@ -12033,7 +12036,7 @@
                 "tags": [
                     "quoteGuestPaymentMethodManagementV1"
                 ],
-                "description": "List available payment methods for a specified shopping cart. This call returns an array of objects, but detailed information about each object’s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#GuestPaymentMethodManagementInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "List available payment methods for a specified shopping cart. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#GuestPaymentMethodManagementInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1GuestcartsCartIdPaymentmethods",
                 "consumes": [
                     "application/json",
@@ -13367,7 +13370,7 @@
                 "tags": [
                     "salesOrderRepositoryV1"
                 ],
-                "description": "Lists orders that match specified search criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#OrderRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Lists orders that match specified search criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#OrderRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1Orders",
                 "consumes": [
                     "application/json",
@@ -14008,7 +14011,7 @@
                 "tags": [
                     "salesOrderItemRepositoryV1"
                 ],
-                "description": "Lists order items that match specified search criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#OrderItemRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Lists order items that match specified search criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#OrderItemRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1OrdersItems",
                 "consumes": [
                     "application/json",
@@ -14135,7 +14138,7 @@
                 "tags": [
                     "salesInvoiceRepositoryV1"
                 ],
-                "description": "Lists invoices that match specified search criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#InvoiceRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Lists invoices that match specified search criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#InvoiceRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1Invoices",
                 "consumes": [
                     "application/json",
@@ -14912,7 +14915,7 @@
                 "tags": [
                     "salesCreditmemoRepositoryV1"
                 ],
-                "description": "Lists credit memos that match specified search criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#CreditmemoRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Lists credit memos that match specified search criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#CreditmemoRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1Creditmemos",
                 "consumes": [
                     "application/json",
@@ -15171,7 +15174,7 @@
                 "tags": [
                     "salesShipmentRepositoryV1"
                 ],
-                "description": "Lists shipments that match specified search criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#ShipmentRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Lists shipments that match specified search criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#ShipmentRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1Shipments",
                 "consumes": [
                     "application/json",
@@ -15764,7 +15767,7 @@
                 "tags": [
                     "salesTransactionRepositoryV1"
                 ],
-                "description": "Lists transactions that match specified search criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#TransactionRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Lists transactions that match specified search criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#TransactionRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1Transactions",
                 "consumes": [
                     "application/json",
@@ -21990,7 +21993,7 @@
                 "tags": [
                     "salesRuleRuleRepositoryV1"
                 ],
-                "description": "Retrieve sales rules that match te specified criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#RuleRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Retrieve sales rules that match te specified criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#RuleRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1SalesRulesSearch",
                 "consumes": [
                     "application/json",
@@ -22332,7 +22335,7 @@
                 "tags": [
                     "salesRuleCouponRepositoryV1"
                 ],
-                "description": "Retrieve a coupon using the specified search criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#CouponRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Retrieve a coupon using the specified search criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#CouponRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1CouponsSearch",
                 "consumes": [
                     "application/json",
@@ -23070,7 +23073,7 @@
                 "tags": [
                     "taxTaxRateRepositoryV1"
                 ],
-                "description": "Search TaxRates This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#TaxRateRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Search TaxRates This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#TaxRateRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1TaxRatesSearch",
                 "consumes": [
                     "application/json",
@@ -23393,7 +23396,7 @@
                 "tags": [
                     "taxTaxRuleRepositoryV1"
                 ],
-                "description": "Search TaxRules This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#TaxRuleRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Search TaxRules This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#TaxRuleRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1TaxRulesSearch",
                 "consumes": [
                     "application/json",
@@ -23727,7 +23730,7 @@
                 "tags": [
                     "taxTaxClassRepositoryV1"
                 ],
-                "description": "Retrieve tax classes which match a specific criteria. This call returns an array of objects, but detailed information about each object’s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#TaxClassRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
+                "description": "Retrieve tax classes which match a specific criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#TaxClassRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1TaxClassesSearch",
                 "consumes": [
                     "application/json",
@@ -25429,7 +25432,7 @@
                 },
                 "dob": {
                     "type": "string",
-                    "description": "In keeping with current security and privacy best practices, be sure you are aware of any potential legal and security risks associated with the storage of customers’ full date of birth (month, day, year) along with other personal identifiers (e.g., full name) before collecting or processing such data."
+                    "description": "In keeping with current security and privacy best practices, be sure you are aware of any potential legal and security risks associated with the storage of customers\u2019 full date of birth (month, day, year) along with other personal identifiers (e.g., full name) before collecting or processing such data."
                 },
                 "email": {
                     "type": "string",
@@ -29697,7 +29700,7 @@
                 },
                 "customer_dob": {
                     "type": "string",
-                    "description": "In keeping with current security and privacy best practices, be sure you are aware of any potential legal and security risks associated with the storage of customers’ full date of birth (month, day, year) along with other personal identifiers (e.g., full name) before collecting or processing such data."
+                    "description": "In keeping with current security and privacy best practices, be sure you are aware of any potential legal and security risks associated with the storage of customers\u2019 full date of birth (month, day, year) along with other personal identifiers (e.g., full name) before collecting or processing such data."
                 },
                 "customer_email": {
                     "type": "string",
