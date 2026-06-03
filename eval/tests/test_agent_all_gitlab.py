@@ -83,7 +83,8 @@ def _load_completed_ids(output_name: Optional[str]) -> set:
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:
-    tasks = json.loads(TASK_FILE.read_text()) + json.loads(TASK_FILE2.read_text())
+    # tasks = json.loads(TASK_FILE.read_text()) + json.loads(TASK_FILE2.read_text())
+    tasks = json.loads(TASK_FILE2.read_text())
     if config is not None:
         task_id = config.getoption("--task-id", default=None)
         if task_id is not None:

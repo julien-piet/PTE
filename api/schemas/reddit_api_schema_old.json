@@ -1,0 +1,2513 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Reddit-like REST API",
+    "description": "API for a Reddit-like platform (Postmill). Two types of endpoints are documented here:\n\n**REST API endpoints** (basePath: /api): JSON endpoints that require `X-Experimental-API: 1` header. Paths starting with /comments, /forums, /submissions, /users are REST endpoints served under /api.\n\n**Non-REST form endpoints** (basePath: /): HTML form-based endpoints served at the server root. Paths like /sv/{id}.json, /f/{forum}/subscribe.json, /submit/{forum}, /user/{username}/..., etc. are NOT under /api. Do NOT prepend /api to these paths. They use session cookie auth and CSRF tokens (no X-Experimental-API header needed).\n\nFor non-REST endpoints, always use a two-step CSRF flow: GET the source page to extract the CSRF token, then POST with that token. See the REDDIT_HINTS prompt for patterns.",
+    "version": "v1",
+    "contact": {
+      "name": "Postmill API"
+    }
+  },
+  "host": "localhost",
+  "basePath": "/api",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "securityDefinitions": {
+    "sessionCookie": {
+      "type": "apiKey",
+      "name": "Cookie",
+      "in": "header",
+      "description": "PHP session cookie (PHPSESSID=<value>) obtained from the /login_check endpoint."
+    },
+    "experimentalApiHeader": {
+      "type": "apiKey",
+      "name": "X-Experimental-API",
+      "in": "header",
+      "description": "Must be set to the value `1` on every request. Required to enable the API; absent requests return HTTP 403."
+    }
+  },
+  "security": [
+    {
+      "sessionCookie": []
+    },
+    {
+      "experimentalApiHeader": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Comments",
+      "description": "Operations for listing, reading, and updating comments on submissions"
+    },
+    {
+      "name": "Forums",
+      "description": "Operations for reading, creating, and updating forums (communities/subreddits)"
+    },
+    {
+      "name": "Submissions",
+      "description": "Operations for listing, reading, creating, updating, and deleting submissions (posts)"
+    },
+    {
+      "name": "Users",
+      "description": "Operations for reading user profiles, managing preferences, and listing user activity"
+    }
+  ],
+  "paths": {
+    "/comment_form/{forum_name}/{submission_id}/{comment_id}": {
+      "get": {
+        "summary": "Get inline comment reply form (HTML fragment)",
+        "description": "Returns an HTML form fragment for replying to a specific comment. Use this to obtain the CSRF token and form action required by POST /f/{forum_name}/{submission_id}/-/comment/{comment_id}. The form contains: (1) hidden inputs — scrape name+value; (2) a select named reply_to_comment_{comment_id}[userFlag] — use value 'none'; (3) a textarea named reply_to_comment_{comment_id}[comment] — set to your reply text; (4) a text input named reply_to_comment_{comment_id}[email] — leave empty (honeypot). The CSRF token is in the hidden input named 'reply_to_comment_{comment_id}[_token]'. Also read the form's action attribute — it is always '/f/{forum_name}/{submission_id}/-/comment/{comment_id}' (slug is literal dash '-').",
+        "operationId": "getCommentReplyForm",
+        "tags": ["Comments"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "submission_id", "in": "path", "required": true, "type": "integer"},
+          {"name": "comment_id", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "HTML form fragment. Parse all name/value attributes from <input> and <select> elements to get the fields needed for the POST."}
+        }
+      }
+    },
+    "/f/{forum_name}/{submission_id}/-/comment/{comment_id}": {
+      "post": {
+        "summary": "Submit a reply to a comment (non-REST form POST)",
+        "description": "Posts a threaded reply to a specific comment. TWO-STEP FLOW REQUIRED:\n1. GET /comment_form/{forum_name}/{submission_id}/{comment_id} to obtain the CSRF token.\n2. POST here (urlencoded) with exactly these four fields — all prefixed with 'reply_to_comment_{comment_id}':\n   - reply_to_comment_{comment_id}[comment]: your reply text (textarea — not a hidden input)\n   - reply_to_comment_{comment_id}[userFlag]: 'none'\n   - reply_to_comment_{comment_id}[email]: '' (empty, honeypot)\n   - reply_to_comment_{comment_id}[_token]: CSRF token from the hidden input in step 1\n\nThe path slug is always '-' (literal dash). Do not try to use the actual post slug here.",
+        "operationId": "postCommentReply",
+        "tags": ["Comments"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "submission_id", "in": "path", "required": true, "type": "integer"},
+          {"name": "comment_id", "in": "path", "required": true, "type": "integer", "description": "The parent comment ID to reply to."}
+        ],
+        "responses": {
+          "302": {"description": "Success. Location header points to the new comment's permalink, e.g. /f/{forum}/{sub_id}/{slug}/comment/{new_comment_id}."},
+          "200": {"description": "Validation error — form re-rendered with error messages in HTML."}
+        }
+      }
+    },
+    "/f/{forum_name}/{submission_id}/-/comment/{comment_id}/delete_own": {
+      "post": {
+        "summary": "Delete own comment (non-REST form POST)",
+        "description": "Deletes a comment owned by the authenticated user. TWO-STEP FLOW REQUIRED:\n1. GET /f/{forum_name}/{submission_id}/-/comment/{comment_id} and find the form with action containing 'delete_own' to extract the 'token' field value.\n2. POST here with that token.\n\nRequired fields (urlencoded):\n- token: CSRF token scraped from the delete_own form on the comment page.",
+        "operationId": "deleteOwnComment",
+        "tags": ["Comments"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "submission_id", "in": "path", "required": true, "type": "integer"},
+          {"name": "comment_id", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "302": {"description": "Success. Redirects back to the submission page."},
+          "403": {"description": "Forbidden — comment does not belong to the authenticated user."}
+        }
+      }
+    },
+    "/sv/{id}.json": {
+      "post": {
+        "summary": "Vote on a submission (non-REST, returns JSON)",
+        "description": "Upvotes, downvotes, or removes a vote on a submission. TWO-STEP FLOW REQUIRED:\n1. GET the submission page (e.g. GET /f/{forum}/{submission_id}/{slug}) and find the <form> whose action is '/sv/{id}' (NO .json suffix in the form action). Extract the hidden input named 'token'.\n2. POST to /sv/{id}.json (WITH .json suffix) with that token and vote direction.\n\nRequired fields (urlencoded):\n- token: CSRF token from the hidden input in the /sv/{id} form\n- vote: '1' (upvote), '-1' (downvote), or '0' (remove vote)\n\nReturns JSON: {\"netScore\": <integer>}",
+        "operationId": "voteSubmission",
+        "tags": ["Submissions"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "integer", "description": "Numeric submission ID."}
+        ],
+        "responses": {
+          "200": {"description": "Success. Returns JSON: {\"netScore\": <integer>}."}
+        }
+      }
+    },
+    "/cv/{id}.json": {
+      "post": {
+        "summary": "Vote on a comment (non-REST, returns JSON)",
+        "description": "Upvotes, downvotes, or removes a vote on a comment. TWO-STEP FLOW REQUIRED:\n1. GET the submission page containing the comment and find the <form> whose action is '/cv/{id}' (NO .json suffix in the form action). Extract the hidden input named 'token'.\n2. POST to /cv/{id}.json (WITH .json suffix) with that token and vote direction.\n\nRequired fields (urlencoded):\n- token: CSRF token from the hidden input in the /cv/{id} form\n- vote: '1' (upvote), '-1' (downvote), or '0' (remove vote)\n\nReturns JSON: {\"netScore\": <integer>}",
+        "operationId": "voteComment",
+        "tags": ["Comments"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "integer", "description": "Numeric comment ID."}
+        ],
+        "responses": {
+          "200": {"description": "Success. Returns JSON: {\"netScore\": <integer>}."}
+        }
+      }
+    },
+    "/f/{forum_name}/subscribe.json": {
+      "post": {
+        "summary": "Subscribe to a forum (non-REST, returns JSON)",
+        "description": "Subscribes or unsubscribes the authenticated user from a forum. TWO-STEP FLOW REQUIRED:\n1. GET /f/{forum_name} and find the <form> whose action is '/f/{forum_name}/subscribe' OR '/f/{forum_name}/unsubscribe' (NO .json suffix in the form action — one of these will be present depending on current subscription state). Extract the hidden input named 'token'.\n2. POST to /f/{forum_name}/subscribe.json or /f/{forum_name}/unsubscribe.json (WITH .json suffix) with that token.\n\nRequired fields (urlencoded):\n- token: CSRF token from the subscribe/unsubscribe form on the forum page\n\nReturns JSON: {\"subscribed\": true} or {\"subscribed\": false}",
+        "operationId": "subscribeForum",
+        "tags": ["Forums"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "Success. Returns JSON: {\"subscribed\": true}."}
+        }
+      }
+    },
+    "/submit/{forum_name}": {
+      "get": {
+        "summary": "Get submission creation form",
+        "description": "Returns the HTML submission creation form for the given forum. Use this to obtain the CSRF token required by POST /submit/{forum_name}. Extract the value of the hidden input named 'submission[_token]'.",
+        "operationId": "getSubmitForm",
+        "tags": ["Submissions"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with the submission creation form."}
+        }
+      }
+    },
+    "/_up/{username}": {
+      "get": {
+        "summary": "Get user popover HTML fragment",
+        "description": "Returns an HTML fragment with a user card (avatar, bio, stats) for popover display. No authentication required. Returns 404 if the username does not exist.",
+        "operationId": "getUserPopover",
+        "tags": ["Users"],
+        "security": [],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML fragment with user card information."},
+          "404": {"description": "User not found."}
+        }
+      }
+    },
+    "/ft.json": {
+      "post": {
+        "summary": "Fetch link title from a URL",
+        "description": "Given a URL, fetches and returns the page title as a JSON response. Useful for auto-filling submission titles. Requires authentication.\n\nSend as urlencoded (NOT JSON body):\n- url: the URL to fetch the title for\n\nReturns JSON: {\"title\": \"<page title string>\"}",
+        "operationId": "fetchLinkTitle",
+        "tags": ["Submissions"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "url", "in": "formData", "required": true, "type": "string", "description": "The URL whose title to fetch."}
+        ],
+        "responses": {
+          "200": {"description": "Success. Returns JSON: {\"title\": \"<page title>\"}"},
+          "400": {"description": "Bad request — only urlencoded body is accepted, not JSON."}
+        }
+      }
+    },
+    "/f/{forum_name}/{submission_id}.json": {
+      "get": {
+        "summary": "Get a submission as JSON (non-REST)",
+        "description": "Returns the full details of a submission as JSON without requiring a slug. No X-Experimental-API header needed.\n\nResponse keys: id, title, url, body, mediaType, commentCount, timestamp, lastActive, visibility, forum, user, netScore, upvotes, downvotes, image, sticky, editedAt, moderated, userFlag, locked, thumbnail_1x, thumbnail_2x, slug, renderedBody.",
+        "operationId": "getSubmissionJson",
+        "tags": ["Submissions"],
+        "security": [{"sessionCookie": []}],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "submission_id", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "Submission object as JSON."}
+        }
+      }
+    },
+    "/f/{forum_name}/{submission_id}/{slug}/comment/{comment_id}.json": {
+      "get": {
+        "summary": "Get a comment as JSON (non-REST)",
+        "description": "Returns a single comment as JSON. No X-Experimental-API header needed.\n\nResponse keys: id, body, timestamp, user, submission, parentId, replyCount, visibility, editedAt, moderated, userFlag, netScore, upvotes, downvotes, renderedBody.",
+        "operationId": "getCommentJson",
+        "tags": ["Comments"],
+        "security": [{"sessionCookie": []}],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "submission_id", "in": "path", "required": true, "type": "integer"},
+          {"name": "slug", "in": "path", "required": true, "type": "string", "description": "Use '-' (literal dash) as slug placeholder."},
+          {"name": "comment_id", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "Comment object as JSON."}
+        }
+      }
+    },
+    "/f/{forum_name}/{submission_id}/{slug}/edit": {
+      "get": {
+        "summary": "Get submission edit form",
+        "description": "Returns the HTML edit form for a submission the authenticated user owns. Scrape ALL form fields (inputs, selects, textareas) with their current values. The form fields include: submission[title], submission[body], submission[url], submission[userFlag], submission[_token] (CSRF).",
+        "operationId": "getSubmissionEditForm",
+        "tags": ["Submissions"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "submission_id", "in": "path", "required": true, "type": "integer"},
+          {"name": "slug", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML form with current submission values."},
+          "403": {"description": "Forbidden — not the submission owner."}
+        }
+      }
+    },
+    "/f/{forum_name}/{submission_id}/comment/{comment_id}": {
+      "get": {
+        "summary": "Legacy comment URL (redirects to canonical)",
+        "description": "Redirects to the canonical comment URL that includes the slug. Use this if you have a forum, submission_id, and comment_id but not the slug. The 301 Location header will contain the full canonical URL with the slug.",
+        "operationId": "legacyCommentRedirect",
+        "tags": ["Comments"],
+        "security": [],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "submission_id", "in": "path", "required": true, "type": "integer"},
+          {"name": "comment_id", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          
+          "301": {"description": "Permanent redirect to the canonical URL /f/{forum}/{sub_id}/{slug}/comment/{comment_id}."}
+        }
+      }
+    },
+    "/{submission_id}": {
+      "get": {
+        "summary": "Submission shortcut by ID (redirects to canonical URL)",
+        "description": "Given a numeric submission ID, redirects to the canonical submission URL /f/{forum}/{id}/{slug}. Use this to resolve a submission's forum and slug from only its numeric ID.",
+        "operationId": "submissionShortcut",
+        "tags": ["Submissions"],
+        "security": [{"sessionCookie": []}],
+        "parameters": [
+          {"name": "submission_id", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "302": {"description": "Redirect to /f/{forum}/{id}/{slug}."}
+        }
+      }
+    },
+    "/f/{forum_name}/unsubscribe.json": {
+      "post": {
+        "summary": "Unsubscribe from a forum (non-REST, returns JSON)",
+        "description": "Unsubscribes the authenticated user from a forum. TWO-STEP FLOW REQUIRED:\n1. GET /f/{forum_name} and find the <form> whose action is '/f/{forum_name}/unsubscribe' (NO .json suffix). Extract the hidden input named 'token'.\n2. POST to /f/{forum_name}/unsubscribe.json (WITH .json suffix).\n\nIf the user is NOT subscribed, the subscribe form will be shown instead (action='/f/{forum_name}/subscribe'). Subscribe first using /f/{forum_name}/subscribe.json, then unsubscribe.\n\nRequired fields (urlencoded):\n- token: CSRF token from the form\n\nReturns JSON: {\"subscribed\": false}",
+        "operationId": "unsubscribeForum",
+        "tags": ["Forums"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "Success. Returns JSON: {\"subscribed\": false}."}
+        }
+      }
+    },
+    "/sv/{id}.html": {
+      "post": {
+        "summary": "Vote on a submission (returns HTML redirect)",
+        "description": "Votes on a submission and returns an HTML redirect. Same CSRF pattern as /sv/{id}.json.\n\nTWO-STEP FLOW REQUIRED:\n1. GET the submission page and find the <form> whose action is '/sv/{id}' (NO .html suffix). Extract the hidden input named 'token'.\n2. POST to /sv/{id}.html (WITH .html suffix).\n\nRequired fields (urlencoded):\n- token: CSRF token\n- vote: '1' (upvote), '-1' (downvote), or '0' (remove vote)\n\nReturns 302 redirect to '/' on success.",
+        "operationId": "voteSubmissionHtml",
+        "tags": ["Submissions"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "302": {"description": "Success. Redirects to '/'."}
+        }
+      }
+    },
+    "/night_mode": {
+      "post": {
+        "summary": "Toggle night mode (returns HTML redirect)",
+        "description": "Toggles the authenticated user's night mode preference. TWO-STEP FLOW REQUIRED:\n1. GET any page (e.g. GET /) and find the <form> whose action is '/night_mode'. Extract the hidden input named 'token'.\n2. POST here with that token and the desired mode.\n\nRequired fields (urlencoded):\n- token: CSRF token from the night_mode form on any page\n- nightMode: 'dark', 'light', or 'auto'\n\nNote: The form action on the page is '/night_mode' (no suffix). Use '/night_mode' for HTML redirect or '/night_mode.json' for JSON response. There is NO separate GET endpoint for this form.",
+        "operationId": "toggleNightModeHtml",
+        "tags": ["Users"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "nightMode", "in": "formData", "required": true, "type": "string", "enum": ["dark", "light", "auto"]}
+        ],
+        "responses": {
+          "302": {"description": "Success. Redirects to '/'."}
+        }
+      }
+    },
+    "/night_mode.json": {
+      "post": {
+        "summary": "Toggle night mode (returns JSON)",
+        "description": "Toggles the authenticated user's night mode preference and returns JSON. Same CSRF flow as POST /night_mode.\n\nTWO-STEP FLOW REQUIRED:\n1. GET any page (e.g. GET /) and find the <form> whose action is '/night_mode'. Extract the hidden input named 'token'.\n2. POST to /night_mode.json with that token and the desired mode.\n\nRequired fields (urlencoded):\n- token: CSRF token\n- nightMode: 'dark', 'light', or 'auto'\n\nReturns JSON: {\"nightMode\": \"dark\"} (or \"light\" or \"auto\").",
+        "operationId": "toggleNightModeJson",
+        "tags": ["Users"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "nightMode", "in": "formData", "required": true, "type": "string", "enum": ["dark", "light", "auto"]}
+        ],
+        "responses": {
+          "200": {"description": "Success. Returns JSON: {\"nightMode\": \"dark\" | \"light\" | \"auto\"}."}
+        }
+      }
+    },
+    "/forums/all": {
+      "get": {
+        "summary": "List all forum names (HTML)",
+        "description": "Returns an HTML page listing all forums on the site. Parse href attributes of <a> tags matching '/f/{name}' to extract forum names. No authentication required.",
+        "operationId": "listAllForums",
+        "tags": ["Forums"],
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "200": {"description": "HTML page with links to all forums. Parse href='/f/{name}' patterns to extract forum names."}
+        }
+      }
+    },
+    "/f/{forum_name}/comments": {
+      "get": {
+        "summary": "Forum comment list (HTML)",
+        "description": "Returns an HTML page listing recent comments in the forum. No authentication required.",
+        "operationId": "listForumComments",
+        "tags": ["Forums"],
+        "security": [],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with recent comments."}
+        }
+      }
+    },
+    "/f/{forum_name}/{sortBy}.atom": {
+      "get": {
+        "summary": "Forum front page as Atom feed",
+        "description": "Returns an Atom XML feed of submissions for the given forum. sortBy values: 'new', 'top', 'hot', 'controversial'. No authentication required.",
+        "operationId": "forumAtomFeed",
+        "tags": ["Forums"],
+        "security": [],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "sortBy", "in": "path", "required": true, "type": "string", "enum": ["new", "top", "hot", "controversial"]}
+        ],
+        "responses": {
+          "200": {"description": "Atom XML feed with <entry> elements for each submission."}
+        }
+      }
+    },
+    "/all/{sortBy}.atom": {
+      "get": {
+        "summary": "All forums front page as Atom feed",
+        "description": "Returns an Atom XML feed of submissions from all forums. sortBy: 'new', 'top', 'hot', 'controversial'. No authentication required.",
+        "operationId": "allForumsAtomFeed",
+        "tags": ["Submissions"],
+        "security": [],
+        "parameters": [
+          {"name": "sortBy", "in": "path", "required": true, "type": "string", "enum": ["new", "top", "hot", "controversial"]}
+        ],
+        "responses": {
+          "200": {"description": "Atom XML feed."}
+        }
+      }
+    },
+    "/all/{sortBy}.html": {
+      "get": {
+        "summary": "All forums front page (HTML)",
+        "description": "Returns an HTML page listing submissions from all forums sorted by the given criteria. No authentication required.",
+        "operationId": "allForumsFrontPage",
+        "tags": ["Submissions"],
+        "security": [],
+        "parameters": [
+          {"name": "sortBy", "in": "path", "required": true, "type": "string", "enum": ["new", "top", "hot", "controversial"]}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with submission listings."}
+        }
+      }
+    },
+    "/f/{forum_name}/moderators/{page}": {
+      "get": {
+        "summary": "List forum moderators (HTML)",
+        "description": "Returns an HTML page listing the moderators of the forum. Parse href='/user/{username}' links to extract moderator usernames. No authentication required.",
+        "operationId": "listForumModerators",
+        "tags": ["Forums"],
+        "security": [],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "page", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with moderator list."}
+        }
+      }
+    },
+    "/f/{forum_name}/bans/{page}": {
+      "get": {
+        "summary": "List forum bans (HTML)",
+        "description": "Returns an HTML page listing users banned from the forum. Requires authentication and moderator permission.",
+        "operationId": "listForumBans",
+        "tags": ["Forums"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "page", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with ban list."}
+        }
+      }
+    },
+    "/f/{forum_name}/moderation_log/{page}": {
+      "get": {
+        "summary": "Forum moderation log (HTML)",
+        "description": "Returns an HTML page listing moderation actions taken in the forum. Requires authentication.",
+        "operationId": "forumModerationLog",
+        "tags": ["Forums"],
+        "parameters": [
+          {"name": "forum_name", "in": "path", "required": true, "type": "string"},
+          {"name": "page", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with moderation log."}
+        }
+      }
+    },
+    "/moderation_log/{page}": {
+      "get": {
+        "summary": "Global moderation log (HTML)",
+        "description": "Returns an HTML page listing all moderation actions across all forums. Requires authentication.",
+        "operationId": "globalModerationLog",
+        "tags": ["Forums"],
+        "parameters": [
+          {"name": "page", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with global moderation log."}
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "summary": "Search submissions, forums, and users (HTML)",
+        "description": "Returns an HTML page with search results. No authentication required.\n\nQuery parameters:\n- q: search query string\n- type: 'submissions', 'forums', or 'users' (optional, defaults to submissions)\n- sortBy: sort order (optional)",
+        "operationId": "search",
+        "tags": ["Submissions"],
+        "security": [],
+        "parameters": [
+          {"name": "q", "in": "query", "required": true, "type": "string", "description": "Search query."},
+          {"name": "type", "in": "query", "required": false, "type": "string", "enum": ["submissions", "forums", "users"]}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with search results."}
+        }
+      }
+    },
+    "/registration": {
+      "get": {
+        "summary": "Get user registration form",
+        "description": "Returns the HTML registration form for creating a new account. No authentication required.\n\nForm fields: user[username], user[password][first], user[password][second], user[email], user[phone] (optional), user[_token] (CSRF).",
+        "operationId": "getRegistrationForm",
+        "tags": ["Users"],
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "200": {"description": "HTML registration form."}
+        }
+      },
+      "post": {
+        "summary": "Register a new user account",
+        "description": "Creates a new user account. TWO-STEP FLOW REQUIRED:\n1. GET /registration to obtain the CSRF token (user[_token]) and form fields.\n2. POST here (urlencoded) with all required fields.\n\nRequired fields (urlencoded):\n- user[username]: desired username\n- user[password][first]: password\n- user[password][second]: password confirmation (must match)\n- user[email]: email address\n- user[_token]: CSRF token from the registration form",
+        "operationId": "registerUser",
+        "tags": ["Users"],
+        "security": [],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [],
+        "responses": {
+          "302": {"description": "Success. Redirects to the home page or user profile."},
+          "200": {"description": "Validation error — form re-rendered with error messages."}
+        }
+      }
+    },
+    "/u/{username}": {
+      "get": {
+        "summary": "User profile shortcut (redirects to /user/{username})",
+        "description": "Convenience redirect from /u/{username} to /user/{username}. No authentication required.",
+        "operationId": "userProfileShortcut",
+        "tags": ["Users"],
+        "security": [],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "302": {"description": "Redirect to /user/{username}."}
+        }
+      }
+    },
+    "/user/{username}": {
+      "get": {
+        "summary": "User public profile page (HTML)",
+        "description": "Returns the HTML public profile page for a user. Shows biography, recent submissions, and recent comments. No authentication required.",
+        "operationId": "getUserProfile",
+        "tags": ["Users"],
+        "security": [],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML user profile page."},
+          "404": {"description": "User not found."}
+        }
+      }
+    },
+    "/user/{username}/submissions": {
+      "get": {
+        "summary": "List user's submissions (HTML)",
+        "description": "Returns an HTML page listing the user's submissions. Requires authentication. Note: use the exact username — 404 is returned for non-existent users.",
+        "operationId": "listUserSubmissions",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with the user's submissions."},
+          "404": {"description": "User not found."}
+        }
+      }
+    },
+    "/user/{username}/comments": {
+      "get": {
+        "summary": "List user's comments (HTML)",
+        "description": "Returns an HTML page listing the user's comments. Requires authentication.",
+        "operationId": "listUserComments",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with the user's comments."},
+          "404": {"description": "User not found."}
+        }
+      }
+    },
+    "/user/{username}/edit_biography": {
+      "get": {
+        "summary": "Get biography edit form",
+        "description": "Returns the HTML biography edit form for the authenticated user. The form has a textarea named 'user_biography[biography]' (or similar — always scrape the textarea name).\n\nForm fields: user_biography[_token] (CSRF), user_biography[biography] (textarea, current bio text).",
+        "operationId": "getBiographyEditForm",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string", "description": "Must be the authenticated user's own username."}
+        ],
+        "responses": {
+          "200": {"description": "HTML form with current biography text."},
+          "403": {"description": "Forbidden — not the authenticated user."}
+        }
+      },
+      "post": {
+        "summary": "Update user biography (non-REST form POST)",
+        "description": "Updates the authenticated user's biography. TWO-STEP FLOW REQUIRED:\n1. GET /user/{username}/edit_biography to obtain the CSRF token and current biography text.\n2. POST here (urlencoded) with all scraped form fields, overriding the biography textarea with the new text.\n\nIMPORTANT: Scrape ALL form fields including textareas — the biography text lives in a textarea, not a hidden input.\n\nReturns 302 on success.",
+        "operationId": "updateBiography",
+        "tags": ["Users"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "302": {"description": "Success. Redirects back to the edit biography page."},
+          "403": {"description": "Forbidden."}
+        }
+      }
+    },
+    "/user/{username}/account": {
+      "get": {
+        "summary": "Get account settings form",
+        "description": "Returns the HTML account settings form. Contains fields for changing username, password, and email.\n\nCAUTION: Submitting this form changes the account password/email. Scrape the form before modifying. Fields: user[username], user[password][first], user[password][second], user[email], user[phone], user[_token] (CSRF).",
+        "operationId": "getAccountSettingsForm",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML form with account settings."},
+          "403": {"description": "Forbidden — not the authenticated user."}
+        }
+      },
+      "post": {
+        "summary": "Update account settings (non-REST form POST)",
+        "description": "Updates the authenticated user's account settings (username, password, email). TWO-STEP FLOW REQUIRED:\n1. GET /user/{username}/account to obtain the CSRF token and form fields.\n2. POST here with all required fields.\n\nWARNING: Changing the password or username will affect subsequent authentication. Only submit if intentional.",
+        "operationId": "updateAccountSettings",
+        "tags": ["Users"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "302": {"description": "Success. Redirects back to account settings."},
+          "200": {"description": "Validation error."}
+        }
+      }
+    },
+    "/user/{username}/block_list/{page}": {
+      "get": {
+        "summary": "List blocked users (HTML)",
+        "description": "Returns an HTML page listing users blocked by the authenticated user. Each entry may include an unblock form.",
+        "operationId": "listBlockedUsers",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"},
+          {"name": "page", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with blocked users list."}
+        }
+      }
+    },
+    "/user/{target_username}/block_user": {
+      "get": {
+        "summary": "Get block user form",
+        "description": "Returns the HTML form for blocking the specified user. IMPORTANT: The URL uses the TARGET user's username (the user you want to block), NOT your own username.\n\nForm fields: user_block[_token] (CSRF), user_block[comment] (optional reason for blocking).",
+        "operationId": "getBlockUserForm",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "target_username", "in": "path", "required": true, "type": "string", "description": "Username of the user to block (not the authenticated user's own username)."}
+        ],
+        "responses": {
+          "200": {"description": "HTML block user form."},
+          "403": {"description": "Forbidden — you cannot block yourself or already blocked users this way."}
+        }
+      },
+      "post": {
+        "summary": "Block a user (non-REST form POST)",
+        "description": "Blocks the specified user. IMPORTANT: The URL uses the TARGET user's username.\n\nTWO-STEP FLOW REQUIRED:\n1. GET /user/{target_username}/block_user to obtain the CSRF token.\n2. POST here (urlencoded) with the form fields.\n\nRequired fields (urlencoded):\n- user_block[_token]: CSRF token from the form\n- user_block[comment]: optional reason (can be empty)\n\nReturns 302 to the authenticated user's block list on success.",
+        "operationId": "blockUser",
+        "tags": ["Users"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "target_username", "in": "path", "required": true, "type": "string", "description": "Username of the user to block."}
+        ],
+        "responses": {
+          "302": {"description": "Success. Redirects to the authenticated user's block list."}
+        }
+      }
+    },
+    "/user/{username}/unblock_user": {
+      "post": {
+        "summary": "Unblock a user (non-REST form POST)",
+        "description": "Removes a user from the authenticated user's block list. TWO-STEP FLOW REQUIRED:\n1. GET /user/{your_username}/block_list/1 and find the unblock form for the target user. Extract the hidden input named 'token'.\n2. POST to /user/{your_username}/unblock_user (your OWN username, not the target's) with that token.\n\nRequired fields (urlencoded):\n- token: CSRF token from the unblock form on the block list page",
+        "operationId": "unblockUser",
+        "tags": ["Users"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string", "description": "The authenticated user's OWN username (not the target user's username)."}
+        ],
+        "responses": {
+          "302": {"description": "Success. Redirects back to the block list."}
+        }
+      }
+    },
+    "/user/{username}/hide_forum/{forum_id}": {
+      "post": {
+        "summary": "Hide a forum from listings (non-REST form POST)",
+        "description": "Hides the specified forum from the authenticated user's front-page listings. IMPORTANT: {forum_id} is the NUMERIC forum ID (e.g. '10037' for 'books'), NOT the forum name string.\n\nTWO-STEP FLOW REQUIRED:\n1. GET /f/{forum_name} and find the <form> whose action contains 'hide_forum'. The form action includes the numeric forum ID. Extract the hidden input named 'token'.\n2. POST to the full action URL from step 1 (which is /user/{username}/hide_forum/{numeric_forum_id}).\n\nRequired fields (urlencoded):\n- token: CSRF token from the hide form on the forum page",
+        "operationId": "hideForum",
+        "tags": ["Forums"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"},
+          {"name": "forum_id", "in": "path", "required": true, "type": "integer", "description": "The NUMERIC forum ID (not the forum name)."}
+        ],
+        "responses": {
+          "302": {"description": "Success. Redirects to the user's hidden forums list."}
+        }
+      }
+    },
+    "/user/{username}/unhide_forum/{forum_id}": {
+      "post": {
+        "summary": "Unhide a previously hidden forum (non-REST form POST)",
+        "description": "Removes a forum from the authenticated user's hidden forums list. IMPORTANT: {forum_id} is the NUMERIC forum ID, NOT the forum name.\n\nTWO-STEP FLOW REQUIRED:\n1. GET /user/{username}/hidden_forums/{page} and find the form for the forum you want to unhide. The form action contains the numeric forum ID.\n2. POST to that action URL with the scraped form token.\n\nRequired fields (urlencoded):\n- token: CSRF token from the unhide form",
+        "operationId": "unhideForum",
+        "tags": ["Forums"],
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"},
+          {"name": "forum_id", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "302": {"description": "Success."}
+        }
+      }
+    },
+    "/user/{username}/hidden_forums/{page}": {
+      "get": {
+        "summary": "List user's hidden forums (HTML)",
+        "description": "Returns an HTML page listing forums hidden by the authenticated user. Each entry may include an unhide form with a token.",
+        "operationId": "listHiddenForums",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"},
+          {"name": "page", "in": "path", "required": true, "type": "integer"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with hidden forums."}
+        }
+      }
+    },
+    "/user/{username}/trash": {
+      "get": {
+        "summary": "User's deleted submissions (HTML)",
+        "description": "Returns an HTML page listing the authenticated user's deleted submissions. Requires authentication and must be the user's own trash.",
+        "operationId": "getUserTrash",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "username", "in": "path", "required": true, "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with the user's deleted submissions."}
+        }
+      }
+    },
+    "/inbox/{page}": {
+      "get": {
+        "summary": "User inbox / notifications (HTML)",
+        "description": "Returns an HTML page listing the authenticated user's notifications (replies, mentions). Returns HTML (not JSON) despite being listed as a JSON endpoint in some documentation.\n\nTo check for new notifications, parse the HTML for notification elements. Page numbering starts at 1.",
+        "operationId": "getUserInbox",
+        "tags": ["Users"],
+        "parameters": [
+          {"name": "page", "in": "path", "required": true, "type": "integer", "description": "Page number, starting at 1."}
+        ],
+        "responses": {
+          "200": {"description": "HTML page with notifications."}
+        }
+      }
+    },
+    "/comments": {
+      "get": {
+        "summary": "List comments (paginated)",
+        "description": "Returns a paginated list of comments across all submissions. Requires authentication.",
+        "operationId": "listComments",
+        "tags": [
+          "Comments"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Paginated list of comments.",
+            "schema": {
+              "$ref": "#/definitions/PaginatedComments"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/comments/{id}": {
+      "get": {
+        "summary": "Get a comment by ID",
+        "description": "Returns a single comment by its numeric ID. Requires authentication.",
+        "operationId": "getComment",
+        "tags": [
+          "Comments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the comment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested comment.",
+            "schema": {
+              "$ref": "#/definitions/Comment"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a comment",
+        "description": "Updates the body of a comment. The authenticated user must own the comment or have edit permissions. A moderation flag is set if the editor is not the original author.",
+        "operationId": "updateComment",
+        "tags": [
+          "Comments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the comment to update."
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CommentUpdateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Validation error (e.g. body is empty or too long).",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          },
+          "204": {
+            "description": "No Content. Update was applied successfully."
+          }
+        }
+      }
+    },
+    "/forums": {
+      "post": {
+        "summary": "Create a forum",
+        "description": "Creates a new forum (community). Requires authentication and the `create_forum` permission.",
+        "operationId": "createForum",
+        "tags": [
+          "Forums"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ForumCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The newly created forum.",
+            "schema": {
+              "$ref": "#/definitions/Forum"
+            }
+          },
+          "400": {
+            "description": "Validation error (e.g. name taken, invalid characters, or missing required fields).",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/forums/{id}": {
+      "get": {
+        "summary": "Get a forum by ID",
+        "description": "Returns a forum's full details by its numeric ID. Requires authentication.",
+        "operationId": "getForumById",
+        "tags": [
+          "Forums"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the forum."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested forum.",
+            "schema": {
+              "$ref": "#/definitions/Forum"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a forum",
+        "description": "Updates an existing forum's details. Requires authentication and moderator permissions on the forum.",
+        "operationId": "updateForum",
+        "tags": [
+          "Forums"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the forum to update."
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ForumUpdateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Validation error (e.g. name taken or invalid).",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          },
+          "204": {
+            "description": "No Content. Update was applied successfully."
+          }
+        }
+      }
+    },
+    "/forums/by_name/{name}": {
+      "get": {
+        "summary": "Get a forum by name",
+        "description": "Returns a forum's full details by its unique name (slug). Name lookup is case-sensitive — use the exact slug as it appears in the URL (e.g. \"DIY\", \"Showerthoughts\"). Requires authentication.",
+        "operationId": "getForumByName",
+        "tags": [
+          "Forums"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The unique name (slug) of the forum. Case-sensitive. 3–25 characters, alphanumeric and underscores only."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested forum.",
+            "schema": {
+              "$ref": "#/definitions/Forum"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/submissions": {
+      "get": {
+        "summary": "List submissions",
+        "description": "Returns a paginated feed of submissions. The feed can be filtered and sorted. Defaults to the authenticated user's saved front-page preference. When the filtered set is empty the response is a bare JSON array `[]` rather than the standard `PaginatedSubmissions` envelope.",
+        "operationId": "listSubmissions",
+        "tags": [
+          "Submissions"
+        ],
+        "parameters": [
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "active",
+              "hot",
+              "new",
+              "top",
+              "controversial"
+            ],
+            "description": "Sort order for the submission feed. Defaults to the user's saved preference."
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "featured",
+              "subscribed",
+              "moderated",
+              "all"
+            ],
+            "description": "Feed filter mode. `featured` shows admin-featured forums, `subscribed` shows subscribed forums, `moderated` shows forums the user moderates, `all` shows every forum. Defaults to the user's saved preference."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of submissions.",
+            "schema": {
+              "$ref": "#/definitions/PaginatedSubmissions"
+            }
+          },
+          "400": {
+            "description": "Bad request. Unknown sort mode or filter value.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a submission",
+        "description": "Creates a new submission (post) in a forum. Requires authentication. Rate-limited to 15 posts per 5 minutes (3 per hour for new users).",
+        "operationId": "createSubmission",
+        "tags": [
+          "Submissions"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SubmissionCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The newly created submission.",
+            "schema": {
+              "$ref": "#/definitions/Submission"
+            }
+          },
+          "400": {
+            "description": "Validation error (e.g. missing title, invalid URL, or rate limit exceeded).",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/submissions/{id}": {
+      "get": {
+        "summary": "Get a submission by ID",
+        "description": "Returns a single submission by its numeric ID. Requires authentication.",
+        "operationId": "getSubmission",
+        "tags": [
+          "Submissions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the submission."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested submission.",
+            "schema": {
+              "$ref": "#/definitions/Submission"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a submission",
+        "description": "Updates an existing submission's title, URL, or body text. Requires authentication and edit permission (owner or moderator).",
+        "operationId": "updateSubmission",
+        "tags": [
+          "Submissions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the submission to update."
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SubmissionUpdateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Validation error (e.g. title too long or invalid URL).",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          },
+          "204": {
+            "description": "No Content. Update was applied successfully."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a submission",
+        "description": "Deletes a submission. Requires authentication and `delete_own` permission (user must own the submission).",
+        "operationId": "deleteSubmission",
+        "tags": [
+          "Submissions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the submission to delete."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content. Submission was successfully deleted."
+          },
+          "403": {
+            "description": "Forbidden.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/submissions/{id}/comments": {
+      "get": {
+        "summary": "Get top-level comments for a submission",
+        "description": "Returns the top-level (root) comments for a submission, with nested reply trees included. Requires authentication.",
+        "operationId": "getSubmissionComments",
+        "tags": [
+          "Submissions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the submission."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of top-level comments, each containing a nested `replies` tree.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CommentNested"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Get a user profile by ID",
+        "description": "Returns a user's public profile including username, biography, creation date, and admin status. Requires authentication.",
+        "operationId": "getUserById",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the user."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested user's public profile.",
+            "schema": {
+              "$ref": "#/definitions/UserProfile"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/users/self": {
+      "get": {
+        "summary": "Get the currently authenticated user",
+        "description": "Returns the abbreviated profile of the currently authenticated user. Requires authentication.",
+        "operationId": "getSelf",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The authenticated user's abbreviated profile.",
+            "schema": {
+              "$ref": "#/definitions/UserAbbreviated"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/users/{id}/preferences": {
+      "get": {
+        "summary": "Get a user's preferences",
+        "description": "Returns the preferences/settings for the specified user. The authenticated user must own this profile (`edit_user` permission).",
+        "operationId": "getUserPreferences",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the user whose preferences to retrieve."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user's preference settings.",
+            "schema": {
+              "$ref": "#/definitions/UserPreferences"
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a user's preferences",
+        "description": "Updates the preferences/settings for the specified user. The authenticated user must own this profile (`edit_user` permission).",
+        "operationId": "updateUserPreferences",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the user whose preferences to update."
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserPreferencesUpdateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Validation error (e.g. invalid enum value or string too long).",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          },
+          "204": {
+            "description": "No Content. Update was applied successfully."
+          }
+        }
+      }
+    },
+    "/users/{id}/submissions": {
+      "get": {
+        "summary": "Get submissions by a user",
+        "description": "Returns submissions posted by the specified user, sorted by newest first. Requires authentication.",
+        "operationId": "getUserSubmissions",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the user."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of the user's submissions.",
+            "schema": {
+              "$ref": "#/definitions/PaginatedSubmissions"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    },
+    "/users/{id}/moderator_of": {
+      "get": {
+        "summary": "Get forums moderated by a user",
+        "description": "Returns the list of forums the specified user is a moderator of, along with the date they became a moderator. Requires authentication.",
+        "operationId": "getUserModeratedForums",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "Numeric ID of the user."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of forums the user moderates.",
+            "schema": {
+              "$ref": "#/definitions/ModeratorList"
+            }
+          },
+          "404": {
+            "description": "Not Found.",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetailsResponse"
+            }
+          },
+          "302": {
+            "description": "Redirect to /login. User is not authenticated. Returns an HTML redirect response."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "UserAbbreviated": {
+      "type": "object",
+      "description": "Abbreviated user representation included in abbreviated_relations serialization group. Used as a foreign-key reference in other objects.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique numeric identifier of the user.",
+          "example": 42
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's display name. 3–25 characters, alphanumeric and underscores only.",
+          "example": "johndoe"
+        }
+      },
+      "required": [
+        "id",
+        "username"
+      ]
+    },
+    "UserProfile": {
+      "type": "object",
+      "description": "Full public user profile returned by the user:read serialization group.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique numeric identifier of the user.",
+          "example": 42
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's display name. 3–25 characters, alphanumeric and underscores only.",
+          "example": "johndoe"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when the user account was created.",
+          "example": "2023-01-15T10:30:00+00:00"
+        },
+        "biography": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional user biography in Markdown format. Maximum 300 characters.",
+          "example": "I enjoy long walks on the internet."
+        },
+        "admin": {
+          "type": "boolean",
+          "description": "Whether the user has site-wide administrator privileges.",
+          "example": false
+        },
+        "renderedBiography": {
+          "type": "string",
+          "description": "The user's biography rendered to HTML. Null if no biography is set.",
+          "example": "<p>I enjoy long walks on the internet.</p>"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "admin"
+      ]
+    },
+    "UserPreferences": {
+      "type": "object",
+      "description": "User account preferences returned by the user:preferences serialization group. All fields are optional in responses (nullable if not yet set).",
+      "properties": {
+        "locale": {
+          "type": "string",
+          "description": "BCP 47 locale code for the user's preferred language (e.g. `en`, `fr`, `de`).",
+          "example": "en"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "IANA timezone identifier for the user's preferred timezone.",
+          "example": "America/New_York"
+        },
+        "frontPage": {
+          "type": "string",
+          "enum": [
+            "featured",
+            "subscribed",
+            "moderated",
+            "all"
+          ],
+          "description": "Default front-page feed filter. `featured` shows admin-featured forums, `subscribed` shows subscribed forums, `moderated` shows moderated forums, `all` shows everything.",
+          "example": "subscribed"
+        },
+        "frontPageSortMode": {
+          "type": "string",
+          "enum": [
+            "active",
+            "hot",
+            "new"
+          ],
+          "description": "Default sort mode for the front-page feed.",
+          "example": "hot"
+        },
+        "nightMode": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark",
+            "auto"
+          ],
+          "description": "Display theme preference. `auto` follows the system/browser preference.",
+          "example": "auto"
+        },
+        "showCustomStylesheets": {
+          "type": "boolean",
+          "description": "Whether to render custom CSS stylesheets defined by forums.",
+          "example": true
+        },
+        "openExternalLinksInNewTab": {
+          "type": "boolean",
+          "description": "Whether external links should open in a new browser tab.",
+          "example": true
+        },
+        "autoFetchSubmissionTitles": {
+          "type": "boolean",
+          "description": "Whether to automatically fetch the page title when a URL is entered in the submission form.",
+          "example": true
+        },
+        "enablePostPreviews": {
+          "type": "boolean",
+          "description": "Whether to show inline previews for link submissions.",
+          "example": true
+        },
+        "showThumbnails": {
+          "type": "boolean",
+          "description": "Whether to show thumbnail images alongside submissions in the feed.",
+          "example": true
+        },
+        "allowPrivateMessages": {
+          "type": "boolean",
+          "description": "Whether other users are allowed to send this user private messages.",
+          "example": true
+        },
+        "notifyOnReply": {
+          "type": "boolean",
+          "description": "Whether to send a notification when someone replies to a submission or comment.",
+          "example": true
+        },
+        "notifyOnMentions": {
+          "type": "boolean",
+          "description": "Whether to send a notification when the user is @mentioned.",
+          "example": true
+        },
+        "preferredFonts": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Comma-separated list of preferred font family names for the UI. Maximum 200 characters.",
+          "example": "Inter, system-ui, sans-serif"
+        },
+        "poppersEnabled": {
+          "type": "boolean",
+          "description": "Whether to enable popper.js tooltip overlays.",
+          "example": true
+        },
+        "fullWidthDisplayEnabled": {
+          "type": "boolean",
+          "description": "Whether to render the page layout at full browser width rather than a fixed max-width container.",
+          "example": false
+        },
+        "submissionLinkDestination": {
+          "type": "string",
+          "enum": [
+            "submission",
+            "url"
+          ],
+          "description": "Where clicking a link submission title navigates: `submission` goes to the submission comments page, `url` goes directly to the external URL.",
+          "example": "submission"
+        },
+        "preferredTheme": {
+          "type": "string",
+          "description": "Name of a preferred CSS theme for the UI. Null if none is set.",
+          "example": null
+        }
+      }
+    },
+    "UserPreferencesUpdateRequest": {
+      "type": "object",
+      "description": "Request body for updating user preferences. All fields are optional; only provided fields will be validated and updated.",
+      "properties": {
+        "locale": {
+          "type": "string",
+          "description": "BCP 47 locale code for the user's preferred language.",
+          "example": "en"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "IANA timezone identifier.",
+          "example": "America/New_York"
+        },
+        "frontPage": {
+          "type": "string",
+          "enum": [
+            "featured",
+            "subscribed",
+            "moderated",
+            "all"
+          ],
+          "description": "Default front-page feed filter."
+        },
+        "frontPageSortMode": {
+          "type": "string",
+          "enum": [
+            "active",
+            "hot",
+            "new"
+          ],
+          "description": "Default sort mode for the front-page feed."
+        },
+        "nightMode": {
+          "type": "string",
+          "enum": [
+            "light",
+            "dark",
+            "auto"
+          ],
+          "description": "Display theme preference."
+        },
+        "showCustomStylesheets": {
+          "type": "boolean",
+          "description": "Whether to render custom CSS stylesheets defined by forums."
+        },
+        "openExternalLinksInNewTab": {
+          "type": "boolean",
+          "description": "Whether external links should open in a new browser tab."
+        },
+        "autoFetchSubmissionTitles": {
+          "type": "boolean",
+          "description": "Whether to automatically fetch page titles when a URL is entered in the submission form."
+        },
+        "enablePostPreviews": {
+          "type": "boolean",
+          "description": "Whether to show inline previews for link submissions."
+        },
+        "showThumbnails": {
+          "type": "boolean",
+          "description": "Whether to show thumbnail images alongside submissions."
+        },
+        "allowPrivateMessages": {
+          "type": "boolean",
+          "description": "Whether other users are allowed to send private messages."
+        },
+        "notifyOnReply": {
+          "type": "boolean",
+          "description": "Whether to send notifications on replies."
+        },
+        "notifyOnMentions": {
+          "type": "boolean",
+          "description": "Whether to send notifications on @mentions."
+        },
+        "preferredFonts": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Comma-separated preferred font families. Maximum 200 characters."
+        },
+        "poppersEnabled": {
+          "type": "boolean",
+          "description": "Whether to enable popper.js tooltips."
+        },
+        "fullWidthDisplayEnabled": {
+          "type": "boolean",
+          "description": "Whether to use full-width page layout."
+        },
+        "submissionLinkDestination": {
+          "type": "string",
+          "enum": [
+            "submission",
+            "url"
+          ],
+          "description": "Click destination for link submission titles."
+        }
+      }
+    },
+    "ForumAbbreviated": {
+      "type": "object",
+      "description": "Abbreviated forum representation included in the abbreviated_relations serialization group. Used as a foreign-key reference in submissions.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique numeric identifier of the forum.",
+          "example": 7
+        },
+        "name": {
+          "type": "string",
+          "description": "The forum's unique URL slug. 3–25 characters, alphanumeric and underscores only.",
+          "example": "programming"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Forum": {
+      "type": "object",
+      "description": "Full forum object returned by the forum:read serialization group.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique numeric identifier of the forum.",
+          "example": 7
+        },
+        "name": {
+          "type": "string",
+          "description": "The forum's unique URL slug. 3–25 characters, alphanumeric and underscores only.",
+          "example": "programming"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Human-readable display title of the forum.",
+          "example": "Programming"
+        },
+        "sidebar": {
+          "type": "string",
+          "maxLength": 1500,
+          "description": "Forum sidebar content in Markdown format. Displayed to users visiting the forum.",
+          "example": "A community for discussing programming topics."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Short description of the forum shown in search results and listings.",
+          "example": "Discuss programming languages, tools, and techniques."
+        },
+        "featured": {
+          "type": "boolean",
+          "description": "Whether this forum is admin-featured and appears in the `featured` front-page feed.",
+          "example": false
+        },
+        "suggestedTheme": {
+          "type": "string",
+          "description": "Name of a suggested CSS theme for the forum. Null if none is set.",
+          "example": null
+        },
+        "renderedSidebar": {
+          "type": "string",
+          "description": "The forum sidebar content rendered to HTML.",
+          "example": "<p>Welcome to the programming community!</p>"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "title",
+        "description",
+        "sidebar",
+        "featured"
+      ]
+    },
+    "ForumCreateRequest": {
+      "type": "object",
+      "description": "Request body for creating a new forum. All fields are required.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 25,
+          "pattern": "^\\w+$",
+          "description": "Unique URL slug for the forum. 3–25 characters, letters, digits, and underscores only. Must not be already taken.",
+          "example": "programming"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Human-readable display title for the forum.",
+          "example": "Programming"
+        },
+        "sidebar": {
+          "type": "string",
+          "maxLength": 1500,
+          "description": "Forum sidebar content in Markdown. Displayed to visitors.",
+          "example": "Welcome to the programming community!"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Short description shown in listings and search results.",
+          "example": "Discuss programming languages, tools, and techniques."
+        }
+      },
+      "required": [
+        "name",
+        "title",
+        "sidebar",
+        "description"
+      ]
+    },
+    "ForumUpdateRequest": {
+      "type": "object",
+      "description": "Request body for updating a forum. All fields are required when updating (full replacement).",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 25,
+          "pattern": "^\\w+$",
+          "description": "New URL slug for the forum. Must be unique across all forums.",
+          "example": "programming"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Updated display title for the forum.",
+          "example": "Programming & Software"
+        },
+        "sidebar": {
+          "type": "string",
+          "maxLength": 1500,
+          "description": "Updated sidebar content in Markdown.",
+          "example": "Welcome! Please read the rules before posting."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Updated short description.",
+          "example": "Programming languages, tools, libraries, and techniques."
+        }
+      },
+      "required": [
+        "name",
+        "title",
+        "sidebar",
+        "description"
+      ]
+    },
+    "Submission": {
+      "type": "object",
+      "description": "Full submission object returned by the submission:read serialization group.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique numeric identifier of the submission.",
+          "example": 101
+        },
+        "title": {
+          "type": "string",
+          "description": "The submission title.",
+          "example": "Announcing Rust 2024 Edition"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "External URL for link submissions. Null or empty string for text-only posts.",
+          "example": "https://blog.rust-lang.org/2024/01/01/rust-2024.html"
+        },
+        "body": {
+          "type": "string",
+          "description": "Body text of the submission in Markdown format. Null for pure link posts.",
+          "example": "I wanted to share this exciting announcement..."
+        },
+        "mediaType": {
+          "type": "string",
+          "enum": [
+            "url",
+            "image",
+            "video",
+            "text"
+          ],
+          "description": "The type of media attached to this submission.",
+          "example": "url"
+        },
+        "commentCount": {
+          "type": "integer",
+          "description": "Total number of comments on this submission.",
+          "example": 47
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when the submission was created.",
+          "example": "2024-01-15T12:00:00+00:00"
+        },
+        "lastActive": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the most recent activity (comment, edit, etc.).",
+          "example": "2024-01-16T08:30:00+00:00"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "visible",
+            "deleted",
+            "trashed"
+          ],
+          "description": "Visibility state of the submission.",
+          "example": "visible"
+        },
+        "forum": {
+          "description": "The forum this submission belongs to.",
+          "$ref": "#/definitions/ForumAbbreviated"
+        },
+        "user": {
+          "description": "The user who posted this submission.",
+          "$ref": "#/definitions/UserAbbreviated"
+        },
+        "netScore": {
+          "type": "integer",
+          "description": "Net vote score (upvotes minus downvotes).",
+          "example": 128
+        },
+        "upvotes": {
+          "type": "integer",
+          "description": "Total number of upvotes.",
+          "example": 135
+        },
+        "downvotes": {
+          "type": "integer",
+          "description": "Total number of downvotes.",
+          "example": 7
+        },
+        "sticky": {
+          "type": "boolean",
+          "description": "Whether this submission is pinned/stickied to the top of the forum.",
+          "example": false
+        },
+        "editedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the last edit, or null if never edited.",
+          "example": null
+        },
+        "moderated": {
+          "type": "boolean",
+          "description": "Whether this submission has been flagged as moderated.",
+          "example": false
+        },
+        "userFlag": {
+          "type": "string",
+          "description": "Role badge displayed alongside the author's name for locally-created content (`none`, `op`, `admin`, `moderator`). For content imported from Reddit this field carries the original Reddit name ID (e.g. `t3_abc123`).",
+          "example": "none"
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "Whether new comments are locked on this submission.",
+          "example": false
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug derived from the title. Used in the submission's permalink.",
+          "example": "announcing-rust-2024-edition"
+        },
+        "image": {
+          "type": "array",
+          "description": "Array of image URLs for image-type submissions. Returns an empty array `[]` even when thumbnails are available (use `thumbnail_1x` / `thumbnail_2x` instead). Null for non-image posts.",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "thumbnail_1x": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the 1x (standard resolution) thumbnail image. Null if no thumbnail.",
+          "example": "http://example.com/uploads/abc123_thumb.jpg"
+        },
+        "thumbnail_2x": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the 2x (high resolution / retina) thumbnail image. Null if no thumbnail.",
+          "example": "http://example.com/uploads/abc123_thumb@2x.jpg"
+        },
+        "renderedBody": {
+          "type": "string",
+          "description": "The submission body rendered to HTML. Null for pure link posts or posts with no body.",
+          "example": "<p>I wanted to share this exciting announcement...</p>"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "mediaType",
+        "commentCount",
+        "timestamp",
+        "visibility",
+        "forum",
+        "user",
+        "netScore",
+        "upvotes",
+        "downvotes",
+        "sticky",
+        "moderated",
+        "userFlag",
+        "locked"
+      ]
+    },
+    "SubmissionCreateRequest": {
+      "type": "object",
+      "description": "Request body for creating a new submission. `title` and `forum` are required. At least one of `url` or `body` should be provided.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Title of the submission. Required. Maximum 300 characters.",
+          "example": "Announcing Rust 2024 Edition"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "External URL for link submissions. Must be a valid http or https URL.",
+          "example": "https://blog.rust-lang.org/2024/01/01/rust-2024.html"
+        },
+        "body": {
+          "type": "string",
+          "description": "Body text in Markdown format for text posts.",
+          "example": "I wanted to share this exciting announcement with the community."
+        },
+        "forum": {
+          "type": "integer",
+          "description": "Numeric ID of the forum to post in. Required.",
+          "example": 7
+        }
+      },
+      "required": [
+        "title",
+        "forum"
+      ]
+    },
+    "SubmissionUpdateRequest": {
+      "type": "object",
+      "description": "Request body for updating a submission. All fields are optional; only provided fields are updated.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Updated title of the submission.",
+          "example": "Announcing Rust 2024 Edition (updated)"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Updated external URL. Must be a valid http or https URL.",
+          "example": "https://blog.rust-lang.org/2024/01/01/rust-2024.html"
+        },
+        "body": {
+          "type": "string",
+          "description": "Updated body text in Markdown format.",
+          "example": "Updated with corrections..."
+        }
+      }
+    },
+    "Comment": {
+      "type": "object",
+      "description": "Full comment object returned by the comment:read serialization group.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique numeric identifier of the comment.",
+          "example": 501
+        },
+        "body": {
+          "type": "string",
+          "description": "The comment text in Markdown format. Must contain at least one visible character (not blank). Maximum 10000 characters.",
+          "example": "This is a great post, thanks for sharing!"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when the comment was posted.",
+          "example": "2024-01-15T13:45:00+00:00"
+        },
+        "user": {
+          "description": "The user who posted this comment.",
+          "$ref": "#/definitions/UserAbbreviated"
+        },
+        "submission": {
+          "description": "The submission this comment belongs to.",
+          "$ref": "#/definitions/SubmissionReference"
+        },
+        "parentId": {
+          "type": "integer",
+          "description": "Numeric ID of the parent comment, or null if this is a top-level comment.",
+          "example": null
+        },
+        "replyCount": {
+          "type": "integer",
+          "description": "Total number of direct and indirect replies to this comment.",
+          "example": 3
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "visible",
+            "deleted",
+            "trashed"
+          ],
+          "description": "Visibility state of the comment.",
+          "example": "visible"
+        },
+        "editedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the last edit, or null if the comment has not been edited.",
+          "example": null
+        },
+        "moderated": {
+          "type": "boolean",
+          "description": "Whether this comment was edited by someone other than the original author (moderator edit flag).",
+          "example": false
+        },
+        "userFlag": {
+          "type": "string",
+          "description": "Role badge displayed alongside the author's name for locally-created content (`none`, `op`, `admin`, `moderator`). For content imported from Reddit this field carries the original Reddit name ID (e.g. `t1_abc123`).",
+          "example": "none"
+        },
+        "netScore": {
+          "type": "integer",
+          "description": "Net vote score (upvotes minus downvotes).",
+          "example": 12
+        },
+        "upvotes": {
+          "type": "integer",
+          "description": "Total number of upvotes. May be null if vote counts are hidden.",
+          "example": 14
+        },
+        "downvotes": {
+          "type": "integer",
+          "description": "Total number of downvotes.",
+          "example": 2
+        },
+        "renderedBody": {
+          "type": "string",
+          "description": "The comment body rendered to HTML.",
+          "example": "<p>This is a great post, thanks for sharing!</p>"
+        }
+      },
+      "required": [
+        "id",
+        "body",
+        "timestamp",
+        "replyCount",
+        "visibility",
+        "moderated",
+        "userFlag",
+        "netScore",
+        "downvotes"
+      ]
+    },
+    "CommentNested": {
+      "type": "object",
+      "description": "Comment with nested replies, returned by the comment:read + comment:nested serialization groups. Used for the submission comments tree.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Comment"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "replies": {
+              "type": "array",
+              "description": "Direct child comments (replies to this comment), each of which may also contain nested replies.",
+              "items": {
+                "$ref": "#/definitions/CommentNested"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CommentUpdateRequest": {
+      "type": "object",
+      "description": "Request body for updating a comment body.",
+      "properties": {
+        "body": {
+          "type": "string",
+          "description": "New comment text in Markdown format. Must contain at least one visible character. Maximum 10000 characters.",
+          "example": "Updated comment text with a correction."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    },
+    "SubmissionReference": {
+      "type": "object",
+      "description": "Abbreviated submission reference embedded inside comment objects.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Numeric ID of the parent submission.",
+          "example": 101
+        },
+        "forum": {
+          "description": "The forum the parent submission belongs to.",
+          "$ref": "#/definitions/ForumAbbreviated"
+        },
+        "user": {
+          "description": "The user who posted the parent submission.",
+          "$ref": "#/definitions/UserAbbreviated"
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug of the parent submission.",
+          "example": "announcing-rust-2024-edition"
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "ModeratorEntry": {
+      "type": "object",
+      "description": "A moderator relationship entry from the user's perspective (moderator:user-side group). Shows which forum the user moderates and since when.",
+      "properties": {
+        "forum": {
+          "description": "The forum this user moderates.",
+          "$ref": "#/definitions/ForumAbbreviated"
+        },
+        "since": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when the user was granted moderator status on this forum.",
+          "example": "2023-06-01T00:00:00+00:00"
+        }
+      },
+      "required": [
+        "forum",
+        "since"
+      ]
+    },
+    "ModeratorList": {
+      "type": "object",
+      "description": "Wrapper object containing the list of moderator entries for a user.",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "description": "List of forums the user moderates, each with the date moderation began.",
+          "items": {
+            "$ref": "#/definitions/ModeratorEntry"
+          }
+        }
+      },
+      "required": [
+        "entries"
+      ]
+    },
+    "PaginatedComments": {
+      "type": "object",
+      "description": "Paginated response wrapping a list of comments.",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "description": "Array of comment objects for the current page.",
+          "items": {
+            "$ref": "#/definitions/Comment"
+          }
+        },
+        "nextPage": {
+          "type": "string",
+          "description": "Cursor URL for the next page of results, or null if this is the last page. Pass this URL directly (without modification) to retrieve the next page.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "entries"
+      ]
+    },
+    "PaginatedSubmissions": {
+      "type": "object",
+      "description": "Paginated response wrapping a list of submissions.",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "description": "Array of submission objects for the current page.",
+          "items": {
+            "$ref": "#/definitions/Submission"
+          }
+        },
+        "nextPage": {
+          "type": "string",
+          "description": "Cursor URL for the next page of results, or null if this is the last page. Pass this URL directly (without modification) to retrieve the next page.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "entries"
+      ]
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "description": "Generic error response body.",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message.",
+          "example": "unknown sort mode"
+        }
+      },
+      "required": [
+        "message"
+      ]
+    },
+    "ValidationErrorResponse": {
+      "type": "object",
+      "description": "Symfony validation failure response.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "https://symfony.com/errors/validation"
+        },
+        "title": {
+          "type": "string",
+          "example": "Validation Failed"
+        },
+        "detail": {
+          "type": "string",
+          "example": "title: This value should not be blank."
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "propertyPath": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "parameters": {
+                "type": "object"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "propertyPath",
+              "title"
+            ]
+          }
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "detail",
+        "violations"
+      ]
+    },
+    "ProblemDetailsResponse": {
+      "type": "object",
+      "description": "RFC 7807 problem details response returned for 403 and 404 errors.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "https://tools.ietf.org/html/rfc2616#section-10"
+        },
+        "title": {
+          "type": "string",
+          "example": "An error occurred"
+        },
+        "status": {
+          "type": "integer",
+          "example": 403
+        },
+        "detail": {
+          "type": "string",
+          "example": "Forbidden"
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "status",
+        "detail"
+      ]
+    }
+  }
+}

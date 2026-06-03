@@ -50,6 +50,14 @@ class UserInfo:
     exists: bool = True
 
 
+@dataclass
+class UpdateBiographyResult:
+    """Result of updating user biography."""
+
+    success: bool
+    error_message: Optional[str] = None
+
+
 def block_user(
     page: Page,
     username: str,
@@ -263,6 +271,49 @@ def update_email(
         success=True,
         new_email=new_email
     )
+
+
+def update_biography(page: Page, username: str, biography: str) -> UpdateBiographyResult:
+    """
+    Update the biography for the logged-in user.
+
+    Args:
+        page: Playwright Page instance
+        username: The logged-in user's username
+        biography: New biography text (markdown supported)
+
+    Returns:
+        UpdateBiographyResult with success status
+    """
+    bio_url = f"{REDDIT_DOMAIN}/user/{username}/edit_biography"
+    page.goto(bio_url, wait_until="networkidle")
+
+    textarea_selector = "#user_biography_biography"
+    try:
+        page.wait_for_selector(textarea_selector, timeout=5000)
+    except TimeoutError:
+        return UpdateBiographyResult(success=False, error_message="Biography form not found (check username or login state)")
+
+    page.fill(textarea_selector, biography)
+
+    # Submit — button has no type attr, match by text
+    try:
+        page.click('button:has-text("Save")', timeout=5000)
+    except TimeoutError:
+        return UpdateBiographyResult(success=False, error_message="Submit button not found on edit_biography page")
+
+    page.wait_for_load_state("networkidle")
+
+    # Postmill redirects back to edit_biography after save — check flash message instead of URL
+    flash = page.query_selector(".flash, .alert, [class*='flash']")
+    if flash and "updated" in flash.inner_text().lower():
+        return UpdateBiographyResult(success=True)
+
+    # Also accept if we navigated away from the edit page
+    if "edit_biography" not in page.url:
+        return UpdateBiographyResult(success=True)
+
+    return UpdateBiographyResult(success=False, error_message="Biography may not have saved (no confirmation message)")
 
 
 def get_user_info(page: Page, username: str) -> UserInfo:

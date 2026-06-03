@@ -1,5 +1,6 @@
 """Reddit post management helpers."""
 
+import re
 from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
@@ -11,6 +12,7 @@ from .constants import (
     SUBMIT_URL,
     Selectors,
     get_user_profile_url,
+    get_forum_url,
 )
 
 
@@ -25,6 +27,25 @@ class Post:
     subreddit: str
     url: str
     created_at: Optional[datetime] = None
+    score: int = 0
+    link_url: Optional[str] = None
+
+
+@dataclass
+class VotePostResult:
+    """Result of voting on a post."""
+
+    success: bool
+    error_message: Optional[str] = None
+
+
+@dataclass
+class EditPostResult:
+    """Result of editing a post."""
+
+    success: bool
+    post_url: Optional[str] = None
+    error_message: Optional[str] = None
 
 
 @dataclass
@@ -52,9 +73,10 @@ def create_post(
     title: str,
     body: str,
     username: str,
+    url: Optional[str] = None,
 ) -> CreatePostResult:
     """
-    Create a new Reddit post with title and body text.
+    Create a new Reddit post with title and body text (or a link post with url).
 
     Checks if a post with the same title already exists for the user before creating.
 
@@ -64,6 +86,7 @@ def create_post(
         title: Title of the post
         body: Body text of the post
         username: Username creating the post (used to check for duplicates)
+        url: Optional URL for link posts (image reposts, etc.)
 
     Returns:
         CreatePostResult with success status, URL, and any error message
@@ -106,6 +129,11 @@ def create_post(
 
     # Fill in post details
     page.fill(Selectors.POST_TITLE_INPUT, title)
+    if url:
+        try:
+            page.fill(Selectors.POST_URL_INPUT, url)
+        except Exception:
+            pass
     page.fill(Selectors.POST_BODY_INPUT, body)
 
     # Select the forum using Select2-aware interaction.
@@ -321,53 +349,435 @@ def delete_all_posts_by_username(
     return deleted_count
 
 
-def get_posts_by_username(page: Page, username: str) -> List[Post]:
+def vote_post(page: Page, post_url: str, direction: str) -> VotePostResult:
     """
-    Get all posts by a user.
+    Vote on a submission (upvote or downvote).
+
+    Args:
+        page: Playwright Page instance
+        post_url: Full URL of the post
+        direction: "up" or "1" to upvote, "down" or "-1" to downvote
+
+    Returns:
+        VotePostResult with success status
+    """
+    is_up = direction in ("up", "1", 1)
+    selector = "button.vote__up" if is_up else "button.vote__down"
+
+    try:
+        page.goto(post_url, wait_until="networkidle")
+        page.wait_for_selector(selector, timeout=5000)
+        page.click(selector, timeout=5000)
+        page.wait_for_load_state("networkidle")
+        return VotePostResult(success=True)
+    except TimeoutError:
+        return VotePostResult(success=False, error_message=f"Vote button '{selector}' not found on {post_url}")
+    except Exception as e:
+        return VotePostResult(success=False, error_message=str(e))
+
+
+def edit_post(
+    page: Page,
+    post_url: str,
+    new_body: Optional[str] = None,
+    new_title: Optional[str] = None,
+    append: bool = False,
+) -> EditPostResult:
+    """
+    Edit a post's body.
+
+    Args:
+        page: Playwright Page instance
+        post_url: Full URL of the post (e.g. http://host/f/books/59421/slug)
+        new_body: Body text to set. Replaces the existing body unless append=True.
+        new_title: Ignored — Postmill does not allow title edits after posting.
+        append: If True, new_body is appended to the existing body; if False (default), replaces it.
+
+    Returns:
+        EditPostResult with success status and post URL
+    """
+    m = re.search(r'/f/([^/]+)/(\d+)', post_url)
+    if not m:
+        return EditPostResult(success=False, error_message=f"Cannot parse forum/post_id from URL: {post_url}")
+
+    forum, post_id = m.group(1), m.group(2)
+    edit_url = f"{REDDIT_DOMAIN}/f/{forum}/{post_id}/-/edit"
+    response = page.goto(edit_url, wait_until="domcontentloaded")
+
+    if response and response.status == 403:
+        return EditPostResult(success=False, error_message="Access denied: you can only edit your own posts")
+
+    if "/edit" not in page.url:
+        return EditPostResult(success=False, error_message=f"Edit page not accessible (redirected to {page.url})")
+
+    try:
+        page.wait_for_selector(Selectors.POST_BODY_INPUT, timeout=5000)
+    except TimeoutError:
+        return EditPostResult(success=False, error_message="Edit form not found")
+
+    if new_body is not None:
+        if append:
+            existing_body = page.input_value(Selectors.POST_BODY_INPUT)
+            body_to_write = (existing_body + "\n\n" + new_body) if existing_body.strip() else new_body
+        else:
+            body_to_write = new_body
+        page.fill(Selectors.POST_BODY_INPUT, body_to_write)
+
+    page.click(Selectors.EDIT_POST_SUBMIT_BUTTON)
+    page.wait_for_load_state("domcontentloaded")
+
+    if "/edit" in page.url:
+        return EditPostResult(success=False, error_message="Still on edit page after submit — validation may have failed")
+
+    return EditPostResult(success=True, post_url=page.url)
+
+
+def get_post(page: Page, forum: str, post_id: str) -> Optional[Post]:
+    """
+    Fetch a single post by forum name and post ID.
+
+    Args:
+        page: Playwright Page instance
+        forum: Forum/subreddit name (e.g. "MachineLearning")
+        post_id: Numeric post ID (from the post URL: /f/{forum}/{post_id}/...)
+
+    Returns:
+        Post object, or None if the post doesn't exist or is inaccessible
+    """
+    url = f"{REDDIT_DOMAIN}/f/{forum}/{post_id}"
+    page.goto(url, wait_until="networkidle")
+
+    article = page.query_selector("article.submission")
+    if not article:
+        return None
+
+    title_el = article.query_selector("h1.submission__title a")
+    title = title_el.inner_text().strip() if title_el else ""
+    title_href = (title_el.get_attribute("href") or "") if title_el else ""
+
+    # Determine full URL and link_url (link posts have external href on submission__link)
+    link_el = article.query_selector("a.submission__link")
+    link_href = (link_el.get_attribute("href") or "") if link_el else ""
+    if link_href.startswith("http") and not link_href.startswith(REDDIT_DOMAIN):
+        link_url = link_href
+        post_url = f"{REDDIT_DOMAIN}{title_href}" if title_href.startswith("/") else page.url
+    else:
+        link_url = None
+        post_url = f"{REDDIT_DOMAIN}{title_href}" if title_href.startswith("/") else page.url
+
+    author_el = article.query_selector("a.submission__submitter strong")
+    author = author_el.inner_text().strip() if author_el else ""
+
+    forum_el = article.query_selector("a.submission__forum strong")
+    subreddit = forum_el.inner_text().strip() if forum_el else forum
+
+    body_el = article.query_selector(".submission__body")
+    body = body_el.inner_text().strip() if body_el else ""
+
+    vote_form = article.query_selector("form.vote")
+    score_str = (vote_form.get_attribute("data-vote-score-value") or "0") if vote_form else "0"
+    try:
+        score = int(score_str)
+    except ValueError:
+        score = 0
+
+    return Post(
+        id=post_id,
+        title=title,
+        body=body,
+        author=author,
+        subreddit=subreddit,
+        url=post_url,
+        link_url=link_url,
+        score=score,
+    )
+
+
+def search_posts(
+    page: Page,
+    query: str,
+    limit: int = 25,
+) -> List[Post]:
+    """
+    Full-text search across all posts (titles, bodies) using the site's search page.
+
+    Args:
+        page: Playwright Page instance
+        query: Search query string
+        limit: Maximum number of results to return (default: 25)
+
+    Returns:
+        List of Post objects matching the query
+    """
+    from urllib.parse import quote_plus
+    url = f"{REDDIT_DOMAIN}/search?q={quote_plus(query)}"
+    page.goto(url, wait_until="domcontentloaded")
+
+    posts: List[Post] = []
+    articles = page.query_selector_all("article.submission")
+
+    for article in articles:
+        if len(posts) >= limit:
+            break
+
+        title_link = article.query_selector("a.submission__link")
+        if not title_link:
+            continue
+
+        # Replace <mark> highlight tags with spaces before stripping so adjacent
+        # highlighted words (e.g. <mark>bald</mark><mark>eagle</mark>) don't merge
+        raw_html = title_link.inner_html()
+        raw_html = re.sub(r'<mark[^>]*>', ' ', raw_html)   # space before each highlighted word
+        raw_html = re.sub(r'</mark>', '', raw_html)         # closing tag needs no space
+        title = re.sub(r'<[^>]+>', '', raw_html)
+        title = re.sub(r'\s+', ' ', title).strip()
+        title_href = title_link.get_attribute("href") or ""
+        if not title_href:
+            continue
+
+        postmill_url = None
+        link_url = None
+        comments_link = article.query_selector("nav.submission__nav a[href*='/f/']")
+        if comments_link:
+            comments_href = comments_link.get_attribute("href") or ""
+            postmill_url = comments_href if comments_href.startswith("http") else f"{REDDIT_DOMAIN}{comments_href}"
+
+        if title_href.startswith("http") and postmill_url:
+            link_url = title_href
+        elif title_href.startswith("/f/"):
+            postmill_url = postmill_url or f"{REDDIT_DOMAIN}{title_href}"
+        else:
+            postmill_url = postmill_url or (title_href if title_href.startswith("http") else f"{REDDIT_DOMAIN}{title_href}")
+
+        pm = re.search(r'/f/([^/]+)/(\d+)', postmill_url or "")
+        if pm:
+            post_id = pm.group(2)
+            subreddit = pm.group(1)
+        else:
+            vote_form_action = article.query_selector("form[action^='/sv/']")
+            action = vote_form_action.get_attribute("action") if vote_form_action else ""
+            id_m = re.search(r'/sv/(\d+)', action or "")
+            post_id = id_m.group(1) if id_m else ""
+            subreddit = ""
+
+        author_el = article.query_selector("a.submission__submitter strong")
+        author = author_el.inner_text().strip() if author_el else ""
+
+        body_el = article.query_selector(".submission__body")
+        body = body_el.inner_text().strip() if body_el else ""
+
+        vote_form = article.query_selector("form.vote[data-vote-route-value='submission_vote']")
+        score_str = vote_form.get_attribute("data-vote-score-value") if vote_form else "0"
+        try:
+            score = int(score_str or 0)
+        except ValueError:
+            score = 0
+
+        posts.append(Post(
+            id=post_id,
+            title=title,
+            body=body,
+            author=author,
+            subreddit=subreddit,
+            url=postmill_url or "",
+            link_url=link_url,
+            score=score,
+        ))
+
+    return posts
+
+
+def get_forum_posts(
+    page: Page,
+    forum_name: str,
+    sort: str = "hot",
+    limit: int = 25,
+) -> List[Post]:
+    """
+    Get posts from a forum, optionally sorted.
+
+    Args:
+        page: Playwright Page instance
+        forum_name: Name of the forum (e.g. "books")
+        sort: Sort order — "hot", "new", "top", "controversial", "active" (default: "hot")
+        limit: Maximum number of posts to return (default: 25)
+
+    Returns:
+        List of Post objects (up to limit)
+    """
+    sort_map = {"hot": "", "new": "/new", "top": "/top", "controversial": "/controversial", "active": "/active"}
+    suffix = sort_map.get(sort.lower(), f"/{sort}")
+    url = f"{REDDIT_DOMAIN}/f/{forum_name}{suffix}"
+    page.goto(url, wait_until="networkidle")
+
+    posts: List[Post] = []
+    articles = page.query_selector_all("article.submission")
+
+    for article in articles:
+        if len(posts) >= limit:
+            break
+
+        title_link = article.query_selector("a.submission__link")
+        if not title_link:
+            continue
+
+        title = title_link.inner_text().strip()
+        title_href = title_link.get_attribute("href") or ""
+        if not title_href:
+            continue
+
+        # The Postmill submission URL is in the comments nav link (/f/{forum}/{id}/slug).
+        # For link posts, submission__link points to the external URL — use the comments
+        # link as the canonical Postmill URL and store the external URL as link_url.
+        postmill_url = None
+        link_url = None
+        comments_link = article.query_selector("nav.submission__nav a[href*='/f/']")
+        if comments_link:
+            comments_href = comments_link.get_attribute("href") or ""
+            postmill_url = comments_href if comments_href.startswith("http") else f"{REDDIT_DOMAIN}{comments_href}"
+
+        if title_href.startswith("http") and postmill_url:
+            # Link post: external URL is the link, comments link is the Postmill URL
+            link_url = title_href
+        elif title_href.startswith("/f/"):
+            # Text post: submission__link IS the Postmill URL
+            postmill_url = postmill_url or f"{REDDIT_DOMAIN}{title_href}"
+        else:
+            postmill_url = postmill_url or (title_href if title_href.startswith("http") else f"{REDDIT_DOMAIN}{title_href}")
+
+        # Extract post_id from the Postmill URL (or vote form action /sv/{id} as fallback)
+        pm = re.search(r'/f/([^/]+)/(\d+)', postmill_url or "")
+        if pm:
+            post_id = pm.group(2)
+            subreddit = pm.group(1)
+        else:
+            vote_form_action = article.query_selector("form[action^='/sv/']")
+            action = vote_form_action.get_attribute("action") if vote_form_action else ""
+            id_m = re.search(r'/sv/(\d+)', action or "")
+            post_id = id_m.group(1) if id_m else ""
+            subreddit = forum_name
+
+        # Author
+        author_el = article.query_selector("a.submission__submitter strong")
+        author = author_el.inner_text().strip() if author_el else ""
+
+        # Score from vote form data attribute
+        vote_form = article.query_selector("form.vote[data-vote-route-value='submission_vote']")
+        score_str = vote_form.get_attribute("data-vote-score-value") if vote_form else "0"
+        try:
+            score = int(score_str or 0)
+        except ValueError:
+            score = 0
+
+        # Timestamp
+        time_el = article.query_selector("time[datetime]")
+        created_at = None
+        if time_el:
+            dt_str = time_el.get_attribute("datetime") or ""
+            try:
+                from datetime import timezone
+                created_at = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+            except Exception:
+                pass
+
+        posts.append(Post(
+            id=post_id,
+            title=title,
+            body="",
+            author=author,
+            subreddit=subreddit,
+            url=postmill_url or "",
+            link_url=link_url,
+            created_at=created_at,
+            score=score,
+        ))
+
+    return posts
+
+
+def get_posts_by_username(page: Page, username: str, limit: int = 50) -> List[Post]:
+    """
+    Get submissions by a user from their /submissions profile page.
 
     Args:
         page: Playwright Page instance
         username: Username to get posts for
+        limit: Max posts to return (default 50)
 
     Returns:
         List of Post objects
     """
-    profile_url = get_user_profile_url(username)
-    page.goto(profile_url, wait_until="networkidle")
+    url = f"{REDDIT_DOMAIN}/user/{username}/submissions"
+    page.goto(url, wait_until="networkidle")
 
     posts: List[Post] = []
+    articles = page.query_selector_all("article.submission")
 
-    # Find all post links on the profile page
-    # This is a simplified extraction - actual selectors may vary
-    post_links = page.query_selector_all("article a, .post-title a, h2 a, h3 a")
+    for article in articles:
+        if len(posts) >= limit:
+            break
 
-    for link in post_links:
-        href = link.get_attribute("href") or ""
-        title = link.inner_text().strip()
+        title_link = article.query_selector("a.submission__link")
+        if not title_link:
+            continue
 
-        if href and title and "/f/" in href:
-            # Extract subreddit and post_id from URL
-            parts = href.split("/")
+        title = title_link.inner_text().strip()
+        title_href = title_link.get_attribute("href") or ""
+        if not title_href:
+            continue
+
+        postmill_url = None
+        link_url = None
+        comments_link = article.query_selector("nav.submission__nav a[href*='/f/']")
+        if comments_link:
+            comments_href = comments_link.get_attribute("href") or ""
+            postmill_url = comments_href if comments_href.startswith("http") else f"{REDDIT_DOMAIN}{comments_href}"
+
+        if title_href.startswith("http") and postmill_url:
+            link_url = title_href
+        elif title_href.startswith("/f/"):
+            postmill_url = postmill_url or f"{REDDIT_DOMAIN}{title_href}"
+        else:
+            postmill_url = postmill_url or (title_href if title_href.startswith("http") else f"{REDDIT_DOMAIN}{title_href}")
+
+        pm = re.search(r'/f/([^/]+)/(\d+)', postmill_url or "")
+        if pm:
+            post_id = pm.group(2)
+            subreddit = pm.group(1)
+        else:
+            vote_form_action = article.query_selector("form[action^='/sv/']")
+            action = vote_form_action.get_attribute("action") if vote_form_action else ""
+            id_m = re.search(r'/sv/(\d+)', action or "")
+            post_id = id_m.group(1) if id_m else ""
             subreddit = ""
-            post_id = ""
 
-            if len(parts) >= 3:
-                try:
-                    f_index = parts.index("f")
-                    if f_index + 1 < len(parts):
-                        subreddit = parts[f_index + 1]
-                    if f_index + 2 < len(parts):
-                        post_id = parts[f_index + 2]
-                except ValueError:
-                    pass
+        vote_form = article.query_selector("form.vote[data-vote-route-value='submission_vote']")
+        score_str = vote_form.get_attribute("data-vote-score-value") if vote_form else "0"
+        try:
+            score = int(score_str or 0)
+        except ValueError:
+            score = 0
 
-            posts.append(Post(
-                id=post_id,
-                title=title,
-                body="",  # Would need to visit post to get body
-                author=username,
-                subreddit=subreddit,
-                url=f"{REDDIT_DOMAIN}{href}" if not href.startswith("http") else href,
-            ))
+        time_el = article.query_selector("time[datetime]")
+        created_at = None
+        if time_el:
+            dt_str = time_el.get_attribute("datetime") or ""
+            try:
+                from datetime import timezone
+                created_at = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+            except Exception:
+                pass
+
+        posts.append(Post(
+            id=post_id,
+            title=title,
+            body="",
+            author=username,
+            subreddit=subreddit,
+            url=postmill_url or "",
+            link_url=link_url,
+            created_at=created_at,
+            score=score,
+        ))
 
     return posts
