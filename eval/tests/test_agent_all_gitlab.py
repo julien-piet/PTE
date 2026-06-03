@@ -223,7 +223,7 @@ def test_agent_accomplishes_gitlab_tasks(
                     async with worker_ctx as w:
                         runner = AgentRunner(
                             headless=True,
-                            enable_reset=False,
+                            enable_reset=True,
                             force_reset=force_reset,
                             gitlab_base_url=w["gitlab_url"],
                         )

@@ -233,4 +233,5 @@ Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpo
 
 CRITICAL — For tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), use the given customer email. You can look up their customer ID using `GET /V1/customers/search` with appropriate filters.
 CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
+CRITICAL — Order number formatting: Magento stores order numbers (increment_id) zero-padded to 9 digits (e.g., "000000178", not "178" or "00178"). When filtering by increment_id, always zero-pad the input: str(order_number).zfill(9). For example, "00178" → "000000178", "187" → "000000187".
 """

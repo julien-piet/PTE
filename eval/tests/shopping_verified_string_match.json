@@ -715,12 +715,21 @@
       ],
       "reference_answers": {
         "must_include": [
-          "16x24"
+          [
+            "16x24",
+            "\"width\": 16",
+            "width: 16"
+          ],
+          [
+            "16x24",
+            "\"height\": 24",
+            "height: 24"
+          ]
         ]
       },
       "reference_url": "",
       "program_html": [],
-      "string_note": "",
+      "string_note": "eval fix: must_include [\"16x24\"] \u2192 OR-groups accepting both \"16x24\" string and JSON {\"width\": 16, \"height\": 24} format (agent follows task instructions and returns JSON objects)",
       "reference_answer_raw_annotation": "16x24"
     },
     "intent_template_id": 155,

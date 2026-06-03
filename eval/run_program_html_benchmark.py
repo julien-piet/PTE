@@ -356,7 +356,11 @@ class BaseAgentRunner:
         answer_lower = answer.lower()
 
         for item in must_include:
-            if isinstance(item, str) and item.lower() not in answer_lower:
+            if isinstance(item, list):
+                # OR group: at least one alternative must appear
+                if not any(str(alt).lower() in answer_lower for alt in item):
+                    return False
+            elif isinstance(item, str) and item.lower() not in answer_lower:
                 return False
             elif isinstance(item, (int, float)) and str(item) not in answer:
                 return False

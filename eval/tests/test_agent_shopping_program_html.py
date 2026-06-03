@@ -1,12 +1,14 @@
 # eval/tests/test_agent_shopping_program_html.py
 #
 # Integration tests: run the agent on every shopping program_html task in
-# shopping_program_html_verified.json (46 tasks).
+# shopping_program_html_verified.json (51 tasks).
 #
-# Excluded task IDs (not in this file): 118, 528-532, 585-589
-#   585-589: func:shopping_get_sku_latest_review_* locators not implemented in evaluator
+# Excluded task IDs (not in this file): 118, 528-532
 #   528-532: malformed/superseded by 653-657 (inconsistent price vs SKU checks)
 #   118:     open-ended navigation task with ambiguous eval
+#
+# 585-589 (rate a product) are INCLUDED — func:shopping_get_sku_latest_review_rating/author
+#   locators are fully implemented in ProgramHtmlEvaluator.
 #
 # Tasks run concurrently up to num_workers() at a time when --multi-docker
 # is set; otherwise a single worker is used.

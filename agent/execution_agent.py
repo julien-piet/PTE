@@ -164,7 +164,12 @@ class ExecutionAgent:
             break  # unrecognised token
         return obj
 
-    def _resolve_foreach(self, foreach_value: Any, outputs: Dict[str, Any]) -> List[Any]:
+    def _resolve_foreach(
+        self,
+        foreach_value: Any,
+        outputs: Dict[str, Any],
+        depends_on: Optional[List[str]] = None,
+    ) -> List[Any]:
         """Resolve a foreach field to a concrete list of items to iterate over."""
         if isinstance(foreach_value, list):
             return foreach_value
@@ -181,6 +186,14 @@ class ExecutionAgent:
                 if isinstance(resolved, list):
                     return resolved
                 return [resolved] if resolved is not None else []
+            # "LOOP_OVER_PRIOR": planner sentinel that was never resolved to a real
+            # step reference.  Fall back to the most recent dependency that produced
+            # a non-empty list output so execution continues correctly.
+            if foreach_value == "LOOP_OVER_PRIOR" and depends_on:
+                for dep_id in reversed(depends_on):
+                    out = outputs.get(dep_id)
+                    if isinstance(out, list) and out:
+                        return out
         return []
 
     def _resolve(self, value: Any, outputs: Dict[str, Any]) -> Any:
@@ -500,7 +513,10 @@ class ExecutionAgent:
                 # Use raw_outputs (full curl responses) so accessor chains like
                 # [sort_desc:field][:N][*].id operate on the complete API data,
                 # not on the LLM-extracted subset stored in ctx.step_outputs.
-                items = self._resolve_foreach(foreach_val, raw_outputs)
+                items = self._resolve_foreach(
+                    foreach_val, raw_outputs,
+                    depends_on=getattr(step, "depends_on", None),
+                )
                 if not items:
                     raw_outputs[step.step_id] = []
                     ctx.mark_completed(step.step_id, [])
