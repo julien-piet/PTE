@@ -215,7 +215,7 @@ def test_agent_accomplishes_reddit_tasks(
                             str(task["task_id"]),
                             server="reddit",
                             acquire_lock=acquire_lock,
-                            read_only=False,
+                            read_only=task.get("read_only", False),
                         )
                     else:
                         worker_ctx = _local_session(base_url)

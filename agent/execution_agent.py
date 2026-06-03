@@ -14,6 +14,7 @@ import json
 import re
 import subprocess
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote, quote_plus
 
@@ -114,8 +115,9 @@ class ExecutionAgent:
                     return [ExecutionAgent._follow_accessor(item, remaining) for item in obj]
                 return list(obj)
             # [?(@.field==value)]  exact match filter
-            # [?(@.field*=value)]  contains (substring) filter — use when the search term
-            #                      is a user-provided fragment, not a full field value
+            # [?(@.field*=value)]  fuzzy contains filter — tries exact substring, then
+            #                      normalized (no-space), then word-token overlap, then
+            #                      difflib similarity. Exact matches always pass first.
             m = re.match(r'\[\?\(@\.(\w+(?:\.\w+)*)(==|\*=)([^\]]+)\)\]', accessor[pos:])
             if m:
                 field_path = m.group(1)
@@ -137,7 +139,23 @@ class ExecutionAgent:
                     if actual is None:
                         return False
                     if op == "*=":
-                        return rv.lower() in str(actual).lower()
+                        rv_lower = rv.lower()
+                        actual_lower = str(actual).lower()
+                        # 1. Exact case-insensitive substring
+                        if rv_lower in actual_lower:
+                            return True
+                        # 2. Normalized (spaces stripped) substring — "deep learning" → "deeplearning"
+                        rv_nospace = re.sub(r'\s+', '', rv_lower)
+                        actual_nospace = re.sub(r'\s+', '', actual_lower)
+                        if rv_nospace and rv_nospace in actual_nospace:
+                            return True
+                        # 3. All query words appear in normalized field
+                        words = rv_lower.split()
+                        if words and all(w in actual_nospace for w in words):
+                            return True
+                        # 4. Difflib similarity — "future technology" → "futurology"
+                        score = SequenceMatcher(None, rv_nospace or rv_lower, actual_nospace or actual_lower).ratio()
+                        return score >= 0.6
                     try:
                         return actual == type(actual)(rv)
                     except (ValueError, TypeError):

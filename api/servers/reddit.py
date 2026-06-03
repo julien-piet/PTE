@@ -159,6 +159,7 @@ class CreatePostResponse(BaseModel):
 class PostInfo(BaseModel):
     id: str
     title: str
+    body: str = ""
     author: str
     subreddit: str
     url: str
@@ -386,7 +387,7 @@ def get_forum_posts_endpoint(
             posts = get_forum_posts(page, forum, sort, limit)
             return GetForumPostsResponse(posts=[
                 PostInfo(
-                    id=p.id, title=p.title, author=p.author,
+                    id=p.id, title=p.title, body=p.body, author=p.author,
                     subreddit=p.subreddit, url=p.url, score=p.score,
                     link_url=p.link_url,
                 )
@@ -447,7 +448,7 @@ def search_endpoint(
             posts = search_posts(page, q, limit)
             return GetForumPostsResponse(posts=[
                 PostInfo(
-                    id=post.id, title=post.title, author=post.author,
+                    id=post.id, title=post.title, body=post.body, author=post.author,
                     subreddit=post.subreddit, url=post.url, score=post.score,
                     link_url=post.link_url,
                 )
@@ -475,7 +476,7 @@ def get_user_posts_endpoint(
             posts = get_posts_by_username(page, username, limit)
             return GetForumPostsResponse(posts=[
                 PostInfo(
-                    id=p.id, title=p.title, author=p.author,
+                    id=p.id, title=p.title, body=p.body, author=p.author,
                     subreddit=p.subreddit, url=p.url, score=p.score,
                     link_url=p.link_url,
                 )
