@@ -292,7 +292,7 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__REDDIT__/f/deeplearning/124993/meta-s-llama-weights-leaked-on-torrent-and-the-best-thing",
+          "url": "__REDDIT__/f/deeplearning/125036/should-i-continue-with-this",
           "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
           "required_contents": {
             "must_include": [
@@ -327,7 +327,7 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__REDDIT__/f/explainlikeimfive/39244/eli5-how-does-pinching-a-ribbon-and-sliding-your-finger",
+          "url": "__REDDIT__/f/explainlikeimfive/125342/eli5-why-does-pressing-my-palms-against-my-eyes-create-a",
           "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
           "required_contents": {
             "must_include": [
@@ -1001,7 +1001,7 @@
           "locator": "document.querySelector('.submission__inner').outerText",
           "required_contents": {
             "must_include": [
-              "safe and budge apartment to live in nyc"
+              "safe and budget apartment to live in nyc"
             ]
           }
         }
@@ -1190,7 +1190,7 @@
           "locator": "document.querySelector('.submission__inner').outerText",
           "required_contents": {
             "must_include": [
-              "safe and budge apartment to live"
+              "safe and budget apartment to live"
             ]
           }
         }
@@ -2384,7 +2384,7 @@
       "category": "must-have product in my life",
       "price": "$30"
     },
-    "intent": "Create a post in the most appropriate forum. Title it \"Must have product at last for ever recommendations\" and in post details ask \"I need recommendations for Must have product at last for ever within a budget of $30 please\"",
+    "intent": "Create a post in the most appropriate forum. Title it \"must-have product in my life recommendations\" and in post details ask \"I need recommendations for must-have product in my life within a budget of $30 please\"",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -3013,7 +3013,7 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__REDDIT__/f/history/84338/the-scientist-who-discovered-sperm-was-so-grossed-out-he",
+          "url": "__REDDIT__/f/history/105990/4-500-year-old-sumerian-temple-dedicated-to-mighty-thunder",
           "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
           "required_contents": {
             "must_include": [
@@ -3058,7 +3058,7 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__REDDIT__/f/books/81371/the-letters-of-t-s-eliot-to-emily-hale-that-were-kept-sealed",
+          "url": "__REDDIT__/f/books/59447/appalachian-prison-book-project-seeks-notebook-donations-the",
           "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
           "required_contents": {
             "must_include": [
@@ -3112,7 +3112,7 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__REDDIT__/f/movies/86174/who-will-win-the-oscar-for-actress-in-a-supporting-role",
+          "url": "__REDDIT__/f/movies/42682/michelle-yeoh-to-receive-palm-springs-film-festival-s",
           "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
           "required_contents": {
             "must_include": [
@@ -3175,7 +3175,7 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__REDDIT__/f/technology/48670/brain-cancer-vaccine-succeeds-at-prolonging-survival-in",
+          "url": "__REDDIT__/f/technology/70233/social-media-influencers-are-charged-with-feeding-followers",
           "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
           "required_contents": {
             "must_include": [
