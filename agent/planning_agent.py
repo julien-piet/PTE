@@ -541,12 +541,24 @@ class PlanningAgent:
             "include that resolver endpoint EXACTLY ONCE with foreach set to all their names: "
             'foreach: ["Name1", "Name2", ...]. Do NOT list the same resolver endpoint multiple times.\n'
             "- The foreach step runs once per element and collects all results as a list for the goal step to iterate over.\n\n"
+            f"IMPORTANT: goal_index must be an integer from 0 to {len(kept_endpoints) - 1} inclusive.\n\n"
             "Return a JSON object with fields: goal_index, literal_args, foreach, required_resolvers.\n"
             "Examples (goal_index=2, no resolvers): goal_index=2, literal_args={\"limit\": 25}, foreach=null, required_resolvers=[]\n"
             "Example with resolver: required_resolvers=[{endpoint_index: 1, capability: \"...\", satisfies_param: \"author_id\", literal_args: {}, foreach: null}]\n"
             "Example multi-entity: foreach=\"LOOP_OVER_PRIOR\", required_resolvers=[{..., foreach: [\"Alice\", \"Bob\"]}]"
         )
+
+        MAX_GOAL_RETRIES = 2
         data: _GoalResult = await self._run_agent("_pick_goal", prompt, _GoalResult)
+        for _retry in range(MAX_GOAL_RETRIES):
+            if 0 <= data.goal_index < len(kept_endpoints):
+                break
+            retry_prompt = (
+                f"⚠️ CORRECTION REQUIRED: you returned goal_index={data.goal_index} but valid indices are "
+                f"0 to {len(kept_endpoints) - 1}. Re-read the endpoint list and return a corrected response.\n\n"
+                + prompt
+            )
+            data = await self._run_agent("_pick_goal", retry_prompt, _GoalResult)
 
         if not (0 <= data.goal_index < len(kept_endpoints)):
             raise ValueError(
