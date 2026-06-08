@@ -106,6 +106,7 @@ from .settings import (
     UsernameChangeResult,
     DeleteResult,
     CreateAccessTokenResult,
+    RssTokenResult,
     toggle_private_profile,
     change_username,
     create_access_token,
@@ -113,9 +114,10 @@ from .settings import (
     delete_deploy_token,
     delete_all_webhooks,
     delete_ssh_key,
-    create_access_token,
     delete_all_access_tokens,
     delete_account,
+    get_rss_token,
+    reset_rss_token,
 )
 
 __all__ = [
@@ -217,6 +219,7 @@ __all__ = [
     "UsernameChangeResult",
     "DeleteResult",
     "CreateAccessTokenResult",
+    "RssTokenResult",
     "toggle_private_profile",
     "change_username",
     "create_access_token",
@@ -224,7 +227,8 @@ __all__ = [
     "delete_deploy_token",
     "delete_all_webhooks",
     "delete_ssh_key",
-    "create_access_token",
     "delete_all_access_tokens",
     "delete_account",
+    "get_rss_token",
+    "reset_rss_token",
 ]

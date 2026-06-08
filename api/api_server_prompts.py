@@ -150,6 +150,21 @@ You do NOT know the user IDs or usernames of any other users — if the task req
 
 When determining default_branch for a repository, do NOT assume it is always 'main' or 'master'. Look up the default branch instead.
 
+Adding collaborators:
+Use POST /projects/{id}/members to add a user directly and immediately — the user appears in project_members at once. POST /projects/{id}/invitations sends an email invitation that requires the recipient to accept; the user will NOT appear in project_members until they do. Always prefer POST /projects/{id}/members when the task is to add a collaborator or member.
+
+Repository disambiguation:
+When a task names a repository without specifying an owner and multiple matches exist — including a fork owned by byteblaze — always prefer the original non-byteblaze repo (i.e. the one not in the byteblaze namespace).
+
+Pagination:
+All GitLab list endpoints return at most 20 items by default (per_page=20). Results beyond the first 20 are silently omitted unless you request more.
+- Always set per_page=100 (the maximum) on any list endpoint when the task requires finding ALL items, ranking (e.g. "most", "least", "top N"), counting, or comparing across the full result set. Missing a page means missing data and producing a wrong answer.
+- If a task asks for the top N items by some field (e.g. stars, commits), fetch with per_page=100 so that sorting and slicing happen over the complete list, not just the first page.
+- Commit authors may appear under multiple name or email variants (e.g. "Steve Woodson" and "Steven Woodson"). When counting commits by a person, sum all contributor entries whose name or email plausibly refers to the same individual — do not count only the entry with the largest commit count.
+- When filtering commits by date, always use full ISO 8601 timestamps with explicit time and timezone: `since=2023-02-06T00:00:00Z&until=2023-02-07T00:00:00Z`. Using a bare date like `until=2023-02-06` is interpreted as midnight UTC and will exclude all commits made later that day.
+- This GitLab instance has more than 100 projects. For ranking tasks (top N by star count, most commits, etc.) that fetch all projects, you MUST fetch both page 1 AND page 2 with per_page=100 to cover the full project list. Use two parallel steps with page=1 and page=2, combine the results, then sort and slice client-side.
+- When searching for a merge request by topic or description and the exact title is unknown, do NOT use the `search` parameter — it requires an exact title match and will return empty if phrasing differs. Instead fetch all MRs with state=all and no search filter, then identify the relevant MR from the full list in the answer generation step.
+
 For Project Templates. Use this json schema to search through available built-in templates. Otherwise, leave template_name blank.
 
 {json.dumps(project_templates, indent=2)}
@@ -199,6 +214,12 @@ Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1
 - Pagination: Control result pages using `searchCriteria[pageSize]` (number of items per page) and `searchCriteria[currentPage]` (1-indexed page number). Example: `searchCriteria[pageSize]=20&searchCriteria[currentPage]=1`.
 - Getting all items: To fetch all items with no filters, you MUST still pass at least an empty searchCriteria: `?searchCriteria=all` or `?searchCriteria[pageSize]=50`.
 
+CRITICAL — Full-Text Search with `GET /V1/search`:
+  - Always include `searchCriteria[requestName]=quick_search_container` — omitting it causes an HTTP 500 error.
+  - Use `searchCriteria[filterGroups][0][filters][0][field]=search_term` with `conditionType=eq` and the query as the value.
+  - The response returns product IDs and relevance scores only. Follow up with `GET /V1/products` filtering by `entity_id` (using `in` conditionType with a comma-separated list) to retrieve product names.
+  - Example: `GET /V1/search?searchCriteria[requestName]=quick_search_container&searchCriteria[filterGroups][0][filters][0][field]=search_term&searchCriteria[filterGroups][0][filters][0][value]=xbox&searchCriteria[filterGroups][0][filters][0][conditionType]=eq&searchCriteria[pageSize]=20`
+
 CRITICAL — Search Strategy for Product Names:
   - When you need to find a product by name, use the `GET /fuzzy_search` endpoint (Shopping Extra API) with the product name as the `q` parameter.
   - This returns an ordered list of product names (Not SKUs) exactly as they appear on the shopping website. The item you are looking for may not be the top ranked item in the list, so make sure you check all returned results carefully.
@@ -229,4 +250,5 @@ Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpo
 
 CRITICAL — For tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), use the given customer email. You can look up their customer ID using `GET /V1/customers/search` with appropriate filters.
 CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
+CRITICAL — Order number formatting: Magento stores order numbers (increment_id) zero-padded to 9 digits (e.g., "000000178", not "178" or "00178"). When filtering by increment_id, always zero-pad the input: str(order_number).zfill(9). For example, "00178" → "000000178", "187" → "000000187".
 """

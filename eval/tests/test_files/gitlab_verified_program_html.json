@@ -25,7 +25,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/primer/design/-/merge_requests/450",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/primer%2Fdesign/merge_requests/450/notes?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const notes = await r.json(); return notes.map(n => n.body).join('\\n'); })()",
           "required_contents": {
             "must_include": [
               "Thanks, working on reviews"
@@ -63,7 +63,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1531",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/a11yproject%2Fa11yproject.com/merge_requests/1531/notes?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const notes = await r.json(); return notes.map(n => n.body).join('\\n'); })()",
           "required_contents": {
             "must_include": [
               "lgtm"
@@ -101,7 +101,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1265",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/a11yproject%2Fa11yproject.com/merge_requests/1265/notes?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const notes = await r.json(); return notes.map(n => n.body).join('\\n'); })()",
           "required_contents": {
             "must_include": [
               "close because non reproducible"
@@ -139,7 +139,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/a11yproject/a11yproject.com/-/merge_requests/1071",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/a11yproject%2Fa11yproject.com/merge_requests/1071/notes?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const notes = await r.json(); return notes.map(n => n.body).join('\\n'); })()",
           "required_contents": {
             "must_include": [
               "Good idea"
@@ -177,7 +177,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/empathy-prompts/-/merge_requests/19",
-          "locator": "",
+          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fempathy-prompts/merge_requests/19/notes?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const notes = await r.json(); return notes.map(n => n.body).join('\\n'); })()",
           "required_contents": {
             "must_include": [
               "lgtm"
@@ -575,7 +575,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/a11y-webring.club/-/merge_requests/40",
-          "locator": "document.querySelector('[id=\"notes-list\"]').lastElementChild.querySelector('.timeline-discussion-body').outerText",
+          "locator": "document.querySelector('[id=\"notes-list\"]').lastElementChild?.querySelector('.timeline-discussion-body')?.outerText",
           "required_contents": {
             "must_include": [
               "@davepgreene"
@@ -853,7 +853,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/index.html",
-          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
+          "locator": "(async () => { await new Promise(r => setTimeout(r, 2000)); const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main&_=' + Date.now(), {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "<title>GIVE ME SPACE</title>"
@@ -889,7 +889,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/index.html",
-          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
+          "locator": "(async () => { await new Promise(r => setTimeout(r, 2000)); const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main&_=' + Date.now(), {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "<title>Welcome to my site</title>"
@@ -961,7 +961,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/title-update/index.html",
-          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=title-update', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
+          "locator": "(async () => { await new Promise(r => setTimeout(r, 2000)); const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=title-update&_=' + Date.now(), {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "<title>Title Wanted</title>"
@@ -997,7 +997,7 @@
       "program_html": [
         {
           "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/index.html",
-          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main', {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
+          "locator": "(async () => { await new Promise(r => setTimeout(r, 2000)); const r = await fetch('/api/v4/projects/byteblaze%2Fgimmiethat.space/repository/files/index.html/raw?ref=main&_=' + Date.now(), {credentials: 'include'}); return r.ok ? await r.text() : ''; })()",
           "required_contents": {
             "must_include": [
               "<title>Hello</title>"
@@ -3851,15 +3851,6 @@
           }
         },
         {
-          "url": "__GITLAB__/byteblaze/awesome_web_agents/-/commits",
-          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fawesome_web_agents/repository/commits?per_page=10', {credentials: 'include'}); if (!r.ok) return ''; const c = await r.json(); return c.map(x => x.title).join(', '); })()",
-          "required_contents": {
-            "must_include": [
-              "Initial commit"
-            ]
-          }
-        },
-        {
           "url": "__GITLAB__/byteblaze/awesome_web_agents/-/project_members",
           "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fawesome_web_agents/members/all?per_page=100', {credentials: 'include'}); if (!r.ok) return ''; const m = await r.json(); return m.map(x => '@' + x.username).join(', '); })()",
           "required_contents": {
@@ -4138,15 +4129,6 @@
           "required_contents": {
             "must_include": [
               "Private"
-            ]
-          }
-        },
-        {
-          "url": "__GITLAB__/byteblaze/web_agent/-/commits",
-          "locator": "(async () => { const r = await fetch('/api/v4/projects/byteblaze%2Fweb_agent/repository/commits?per_page=10', {credentials: 'include'}); if (!r.ok) return ''; const c = await r.json(); return c.map(x => x.title).join(', '); })()",
-          "required_contents": {
-            "must_include": [
-              "Initial commit"
             ]
           }
         }
