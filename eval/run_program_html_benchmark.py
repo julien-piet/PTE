@@ -603,7 +603,12 @@ class AgentRunner(BaseAgentRunner):
 
         server_name = getattr(self, "server", "gitlab")
         server_url = getattr(self, "base_url", self.gitlab_base_url)
-        result = await self._agent.run_task(prompt, servers={server_name: server_url})
+        run_servers: Dict[str, str] = {server_name: server_url}
+        if server_name == "reddit":
+            run_servers["reddit"] = _SERVER_URLS["reddit_extra"]
+        if server_name == "shopping":
+            run_servers["shopping_extra"] = _SERVER_URLS["shopping_extra"]
+        result = await self._agent.run_task(prompt, servers=run_servers)
         agent_result = {
             "success": True,
             "final_url": None,
