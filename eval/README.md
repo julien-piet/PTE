@@ -9,49 +9,77 @@ Evaluates an agent on WebArena tasks using two evaluation types:
 
 ## Task files
 
-| File | Tasks | Description |
-|------|-------|-------------|
-| `tests/raw_webarena_tasks_all_gitlab.json` | 186 | All GitLab tasks (string_match + program_html) |
-| `tests/raw_webarena_tasks_no_map.json` | 684 | All WebArena tasks across all sites |
+Verified task files live in `tests/test_files/`:
+
+| File | Tasks | Site | Eval type |
+|------|-------|------|-----------|
+| `gitlab_verified_program_html.json` | 117 | GitLab | program_html |
+| `gitlab_verified_string_match.json` | 68 | GitLab | string_match |
+| `reddit_verified_program_html.json` | 95 | Reddit | program_html |
+| `reddit_verified_string_match.json` | 11 | Reddit | string_match |
+| `shopping_program_html_verified.json` | 51 | Shopping | program_html |
+| `shopping_verified_string_match.json` | 130 | Shopping | string_match |
+| `raw_webarena_tasks_no_map.json` | 684 | All | all (unverified) |
 
 ---
 
 ## Running the evaluation
 
-### GitLab tasks only (recommended starting point)
+### GitLab (117 program_html tasks)
 
 ```bash
-# Run all 186 GitLab tasks
-python3 -m pytest eval/tests/test_agent_all_gitlab.py -v
+# Run all tasks
+python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v
 
 # Save results to a JSON log
-python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --output gitlab_results.json
+python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --output gitlab_results.json
 
 # Smoke test — first 5 tasks only
-python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-limit 5 -v -s
+python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-limit 5 -v -s
 
 # Single task by ID
-python3 -m pytest eval/tests/test_agent_all_gitlab.py -k "task_389" -v -s
+python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-id 389 -v -s
 
 # Force-reset GitLab state before every task (use after a partial run leaves dirty state)
-python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --force-reset
+python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --force-reset
+
+# Resume an interrupted run
+python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --output gitlab_results.json --resume
 ```
 
-### All WebArena tasks
+### Reddit
 
 ```bash
-# program_html tasks (~371 tasks across all sites)
-python3 -m pytest eval/tests/test_agent_program_html.py -v
+# program_html tasks (95 tasks)
+python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py -v
 
-# string_match tasks (~241 tasks across all sites)
-python3 -m pytest eval/tests/test_agent_string_match.py -v
+# string_match tasks (11 tasks)
+python3 -m pytest eval/tests/test_agent_verified_reddit_string_match.py -v --server reddit
 
-# Both together
-python3 -m pytest eval/tests/ -v
+# Single task by ID
+python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py --task-id 465 -v -s
+python3 -m pytest eval/tests/test_agent_verified_reddit_string_match.py --task-id 389 -v -s --server reddit
 
-# Filter by site
-python3 -m pytest eval/tests/test_agent_program_html.py -k "gitlab" -v
-python3 -m pytest eval/tests/test_agent_program_html.py -k "shopping_admin" -v
+# Resume an interrupted run
+python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py -v --output reddit_program_html_results.json --resume
+```
+
+### Shopping
+
+```bash
+# program_html tasks (51 tasks)
+python3 -m pytest eval/tests/test_agent_verified_shopping_program_html.py -v
+
+# string_match tasks (130 tasks)
+python3 -m pytest eval/tests/test_agent_verified_shopping_string_match.py -v --server shopping
+
+# Single task by ID
+python3 -m pytest eval/tests/test_agent_verified_shopping_program_html.py --task-id 465 -v -s
+python3 -m pytest eval/tests/test_agent_verified_shopping_string_match.py --task-id 21 -v -s --server shopping
+
+# Resume an interrupted run
+python3 -m pytest eval/tests/test_agent_verified_shopping_program_html.py -v --output shopping_program_html_results.json --resume
+python3 -m pytest eval/tests/test_agent_verified_shopping_string_match.py -v --server shopping --output shopping_string_match_results.json --resume
 ```
 
 ---
@@ -61,7 +89,7 @@ python3 -m pytest eval/tests/test_agent_program_html.py -k "shopping_admin" -v
 The default agent is `AgentRunner` (PTE ToolCallAgent + MCP tools) defined in `agent_runner.py`. To use a different agent, subclass `BaseAgentRunner` from `run_program_html_benchmark.py` and pass the class via `--agent-runner`:
 
 ```bash
-python3 -m pytest eval/tests/test_agent_all_gitlab.py \
+python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py \
     --agent-runner my_module.MyAgentRunner -v -s
 ```
 
@@ -96,10 +124,14 @@ class MyAgentRunner(BaseAgentRunner):
 | Option | Description |
 |--------|-------------|
 | `--task-limit N` | Only run the first N tasks |
+| `--task-id ID[,ID,...]` | Run only the specified task ID(s), comma-separated |
 | `--output FILENAME` | Write results JSON to `tests/logs/<FILENAME>` |
-| `--force-reset` | Reset GitLab state before every task (ignores `require_reset` field) |
-| `--agent-runner MODULE.CLASS` | Use a custom agent runner instead of the default |
+| `--resume` | Skip tasks already recorded in the `--output` file |
+| `--force-reset` | Reset server state before every task (ignores `require_reset` field) |
 | `--server SERVER` | Site the agent authenticates against (`gitlab`, `reddit`, `shopping`). Default: `gitlab` |
+| `--base-url URL` | Override the default base URL for the target server |
+| `--agent-runner MODULE.CLASS` | Use a custom agent runner instead of the default |
+| `--multi-docker` | Use the remote multi-docker worker pool (GitLab only) |
 
 ---
 
@@ -137,17 +169,26 @@ All entries must pass for the task to pass.
 
 ```
 eval/
-├── agent_runner.py              # Default AgentRunner implementation (PTE agent)
-├── docker_worker_pool.py        # Parallel worker pool for multi-worker runs
-├── gitlab_state_reset.py        # Resets GitLab to a known state before write tasks
-├── program_html_evaluator.py    # ProgramHtmlEvaluator — Playwright-based checker
-├── run_program_html_benchmark.py# BaseAgentRunner, AgentRunner, BaselineRunner
-├── url_match_evaluator.py       # UrlMatchEvaluator — used internally by the runner
+├── agent_runner.py                      # Default AgentRunner implementation (PTE agent)
+├── gitlab_state_reset.py                # Resets GitLab to a known state before write tasks
+├── program_html_evaluator.py            # ProgramHtmlEvaluator — Playwright-based checker
+├── run_program_html_benchmark.py        # BaseAgentRunner, AgentRunner, BaselineRunner
+├── url_match_evaluator.py               # UrlMatchEvaluator — used internally by the runner
 └── tests/
-    ├── conftest.py                          # Shared pytest fixtures and CLI options
-    ├── raw_webarena_tasks_all_gitlab.json   # 186 GitLab tasks
-    ├── raw_webarena_tasks_no_map.json       # 684 all-site WebArena tasks
-    ├── test_agent_all_gitlab.py             # Runs all 186 GitLab tasks
-    ├── test_agent_program_html.py           # Runs all program_html tasks (all sites)
-    └── test_agent_string_match.py           # Runs all string_match tasks (all sites)
+    ├── conftest.py                                      # Shared pytest fixtures and CLI options
+    ├── agent_test_utils.py                              # Shared utilities (extract_agent_details, task_status)
+    ├── test_agent_verified_all_gitlab.py                # 117 GitLab program_html tasks
+    ├── test_agent_verified_reddit_program_html.py       # 95 Reddit program_html tasks
+    ├── test_agent_verified_reddit_string_match.py       # 11 Reddit string_match tasks
+    ├── test_agent_verified_shopping_program_html.py     # 51 Shopping program_html tasks
+    ├── test_agent_verified_shopping_string_match.py     # 130 Shopping string_match tasks
+    ├── logs/                                            # Output JSON files from test runs
+    └── test_files/
+        ├── gitlab_verified_program_html.json            # 117 verified GitLab program_html tasks
+        ├── gitlab_verified_string_match.json            # 68 verified GitLab string_match tasks
+        ├── reddit_verified_program_html.json            # 95 verified Reddit program_html tasks
+        ├── reddit_verified_string_match.json            # 11 verified Reddit string_match tasks
+        ├── shopping_program_html_verified.json          # 51 verified Shopping program_html tasks
+        ├── shopping_verified_string_match.json          # 130 verified Shopping string_match tasks
+        └── raw_webarena_tasks_no_map.json               # 684 all-site tasks (unverified)
 ```

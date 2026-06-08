@@ -11,8 +11,12 @@ Adding a new server:
   2. Register it in AuthRegistry.build_default()
 """
 
+import base64
+import json
+import threading
+import time
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Callable, Dict, Optional
 
 from dotenv import dotenv_values
 
@@ -25,8 +29,13 @@ class AuthProvider(ABC):
     """Supplies HTTP headers needed for authentication."""
 
     @abstractmethod
-    def get_headers(self) -> Dict[str, str]:
-        """Return {header_name: header_value} to inject into every request."""
+    def get_headers(self, url: str = "") -> Dict[str, str]:
+        """Return {header_name: header_value} to inject into every request.
+
+        The optional ``url`` argument allows URL-aware providers (e.g.
+        RoutingAuth) to select the correct token for each request.
+        Implementations that don't need it can safely ignore it.
+        """
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -57,7 +66,7 @@ class HeaderAuth(AuthProvider):
             raise ValueError(f"Token key {env_key!r} not found or empty in env file")
         self._headers = {header: f"{prefix}{token}"}
 
-    def get_headers(self) -> Dict[str, str]:
+    def get_headers(self, url: str = "") -> Dict[str, str]:
         return dict(self._headers)
 
 
@@ -89,7 +98,7 @@ class CookieAuth(AuthProvider):
             raise ValueError("CookieAuth: no cookie values resolved from env file")
         self._headers = {"Cookie": "; ".join(parts)}
 
-    def get_headers(self) -> Dict[str, str]:
+    def get_headers(self, url: str = "") -> Dict[str, str]:
         return dict(self._headers)
 
 
@@ -104,10 +113,10 @@ class MultiAuth(AuthProvider):
     def __init__(self, *providers: AuthProvider) -> None:
         self._providers = providers
 
-    def get_headers(self) -> Dict[str, str]:
+    def get_headers(self, url: str = "") -> Dict[str, str]:
         merged: Dict[str, str] = {}
         for provider in self._providers:
-            merged.update(provider.get_headers())
+            merged.update(provider.get_headers(url=url))
         return merged
 
 
@@ -117,8 +126,106 @@ class StaticAuth(AuthProvider):
     def __init__(self, headers: Dict[str, str]) -> None:
         self._headers = headers
 
-    def get_headers(self) -> Dict[str, str]:
+    def get_headers(self, url: str = "") -> Dict[str, str]:
         return dict(self._headers)
+
+
+class RoutingAuth(AuthProvider):
+    """
+    URL-aware auth that selects a token based on the request URL.
+
+    A default provider handles all requests; override providers are checked
+    first — the first pattern whose substring appears in the URL wins.
+
+    Example (shopping eval — admin token for catalog/orders, customer token
+    for cart/wishlist/customer-me endpoints):
+
+        RoutingAuth(
+            default=StaticAuth({"Authorization": f"Bearer {admin_token}"}),
+            overrides=[
+                ("/carts/mine",    StaticAuth({"Authorization": f"Bearer {customer_token}"})),
+                ("/customers/me",  StaticAuth({"Authorization": f"Bearer {customer_token}"})),
+                (":7790/",         StaticAuth({"Authorization": f"Bearer {customer_token}"})),
+            ],
+        )
+    """
+
+    def __init__(
+        self,
+        default: AuthProvider,
+        overrides: "list[tuple[str, AuthProvider]]",
+    ) -> None:
+        self._default = default
+        self._overrides = overrides  # [(url_substring, provider), ...]
+
+    def get_headers(self, url: str = "") -> Dict[str, str]:
+        for pattern, provider in self._overrides:
+            if pattern in url:
+                return provider.get_headers(url=url)
+        return self._default.get_headers(url=url)
+
+
+class RefreshableAuth(AuthProvider):
+    """
+    Auth provider that automatically refreshes the token before it expires.
+
+    Decodes the JWT ``exp`` claim to determine expiry. On every call to
+    ``get_headers()``, if the token is within ``buffer_seconds`` of expiry
+    a fresh token is fetched via ``refresh_fn`` before returning headers.
+    Thread-safe via an internal lock.
+
+    Example::
+
+        auth = RefreshableAuth(
+            initial_token=admin_token,
+            refresh_fn=lambda: refresh_tokens(base_url="http://127.0.0.1:7770"),
+        )
+    """
+
+    def __init__(
+        self,
+        initial_token: str,
+        refresh_fn: Callable[[], str],
+        header: str = "Authorization",
+        prefix: str = "Bearer ",
+        buffer_seconds: int = 300,
+    ) -> None:
+        self._token = initial_token
+        self._refresh_fn = refresh_fn
+        self._header = header
+        self._prefix = prefix
+        self._buffer = buffer_seconds
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def _jwt_exp(token: str) -> Optional[float]:
+        """Extract the ``exp`` claim from a JWT without verifying the signature."""
+        try:
+            parts = token.split(".")
+            if len(parts) != 3:
+                return None
+            payload = parts[1] + "=="  # restore base64 padding
+            decoded = base64.urlsafe_b64decode(payload)
+            claims = json.loads(decoded)
+            exp = claims.get("exp")
+            return float(exp) if exp else None
+        except Exception:
+            return None
+
+    def _refresh_if_needed(self) -> None:
+        exp = self._jwt_exp(self._token)
+        if exp is None:
+            return  # non-JWT token — can't determine expiry, leave as-is
+        remaining = exp - time.time()
+        if remaining < self._buffer:
+            print(f"  ↻ Token expires in {remaining:.0f}s — refreshing...")
+            self._token = self._refresh_fn()
+            print("  ✓ Token refreshed")
+
+    def get_headers(self, url: str = "") -> Dict[str, str]:
+        with self._lock:
+            self._refresh_if_needed()
+            return {self._header: f"{self._prefix}{self._token}"}
 
 
 # ──────────────────────────────────────────────────────────────────────────────

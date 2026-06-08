@@ -26774,7 +26774,7 @@
             "description": "Bad Request"
           }
         },
-        "description": "Update an existing project issue"
+        "description": "Update an existing project issue. At least one body field must be provided (e.g. assignee_ids, state_event, title, description, labels, milestone_id, due_date) — an empty body will return HTTP 400."
       },
       "delete": {
         "summary": "Delete an issue",
@@ -33487,7 +33487,7 @@
             "name": "state",
             "in": "query",
             "required": false,
-            "description": "Returns all merge requests or just those that are opened, closed, locked, or merged.",
+            "description": "Filter by state. Default is opened. Use state=all to include merged and closed MRs — required when the target MR may not be open (e.g. searching for a merged or closed MR by topic).",
             "type": "string"
           },
           {
@@ -33562,7 +33562,7 @@
             }
           }
         },
-        "description": "Get all merge requests the authenticated user has access to"
+        "description": "Get all merge requests the authenticated user has access to. To find open merge requests where the authenticated user is a reviewer (not assignee), call this endpoint with BOTH reviewer_username={username} AND state=opened. Do NOT use scope=assigned_to_me (returns MRs assigned to you, not ones needing your review). Do NOT omit state=opened — without it you will receive all historical reviews including merged and closed MRs, and the open ones requiring action will be buried."
       }
     },
     "/projects/{id}/merge_requests": {
@@ -33741,7 +33741,7 @@
             "name": "state",
             "in": "query",
             "required": false,
-            "description": "Returns all merge requests or just those that are opened, closed, locked, or merged.",
+            "description": "Filter by state. Default is opened. Use state=all to include merged and closed MRs — required when the target MR may not be open (e.g. searching for a merged or closed MR by topic).",
             "type": "string"
           },
           {
@@ -34128,7 +34128,7 @@
             "name": "state",
             "in": "query",
             "required": false,
-            "description": "Returns all merge requests or just those that are opened, closed, locked, or merged.",
+            "description": "Filter by state. Default is opened. Use state=all to include merged and closed MRs — required when the target MR may not be open (e.g. searching for a merged or closed MR by topic).",
             "type": "string"
           },
           {

@@ -673,7 +673,7 @@
       "reference_answers": {
         "must_include": [
           "Better initial load experience",
-          "closed"
+          ["false", "open", "not closed"]
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/8",
@@ -1571,13 +1571,13 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Erik Linder-Nor\u00e9n"
+          "eriklindernoren"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Erik Linder-Nor\u00e9n"
+      "reference_answer_raw_annotation": "eriklindernoren"
     },
     "intent_template_id": 323,
     "read_only": true

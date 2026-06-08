@@ -1348,6 +1348,226 @@
     "sites": [
       "shopping"
     ],
+    "task_id": 585,
+    "require_login": true,
+    "storage_state": "./.auth/shopping_state.json",
+    "start_url": "__SHOPPING__",
+    "geolocation": null,
+    "intent_template": "Rate my recently purchased {{product}} with {{num_star}} stars using my nickname {{nickname}}, with the summary \"{{summary}}\" and review \"{{review}}\"",
+    "instantiation_dict": {
+      "product": "floor lamp",
+      "num_star": 5,
+      "nickname": "Emma Lopez"
+    },
+    "intent": "Rate my recently purchased floor lamp with 5 stars using my nickname Emma Lopez, with the summary \"Good purchase\" and review \"I like it\"",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_rating('B00J8RZL7I')",
+          "required_contents": {
+            "exact_match": "100"
+          }
+        },
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_author('B00J8RZL7I')",
+          "required_contents": {
+            "must_include": [
+              "Emma Lopez"
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 194
+  },
+  {
+    "sites": [
+      "shopping"
+    ],
+    "task_id": 586,
+    "require_login": true,
+    "storage_state": "./.auth/shopping_state.json",
+    "start_url": "__SHOPPING__",
+    "geolocation": null,
+    "intent_template": "Rate my recently purchased {{product}} with {{num_star}} stars using my nickname {{nickname}}, with the summary \"{{summary}}\" and review \"{{review}}\"",
+    "instantiation_dict": {
+      "product": "Jiffy Corn Muffin Cornbread Mix",
+      "num_star": 4,
+      "nickname": "ShoppingEmma"
+    },
+    "intent": "Rate my recently purchased Jiffy Mix with 4 stars using my nickname ShoppingEmma, with the summary \"Good purchase\" and review \"I like it\"",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_rating('B07HZB38XH')",
+          "required_contents": {
+            "exact_match": "80"
+          }
+        },
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_author('B07HZB38XH')",
+          "required_contents": {
+            "must_include": [
+              "ShoppingEmma"
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 194
+  },
+  {
+    "sites": [
+      "shopping"
+    ],
+    "task_id": 587,
+    "require_login": true,
+    "storage_state": "./.auth/shopping_state.json",
+    "start_url": "__SHOPPING__",
+    "geolocation": null,
+    "intent_template": "Rate my recently purchased {{product}} with {{num_star}} stars using my nickname {{nickname}}, with the summary \"{{summary}}\" and review \"{{review}}\"",
+    "instantiation_dict": {
+      "product": "PS3 Remote Controllers",
+      "num_star": 3,
+      "nickname": "GamingEmma"
+    },
+    "intent": "Rate my recently purchased PS3 accessory with 3 stars using my nickname GamingEmma, with the summary \"Ok I guess\" and review \"Does the job\"",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_rating('B0041MSF2S')",
+          "required_contents": {
+            "exact_match": "60"
+          }
+        },
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_author('B0041MSF2S')",
+          "required_contents": {
+            "must_include": [
+              "GamingEmma"
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 194
+  },
+  {
+    "sites": [
+      "shopping"
+    ],
+    "task_id": 588,
+    "require_login": true,
+    "storage_state": "./.auth/shopping_state.json",
+    "start_url": "__SHOPPING__",
+    "geolocation": null,
+    "intent_template": "Rate my recently purchased {{product}} with {{num_star}} stars using my nickname {{nickname}}, with the summary \"{{summary}}\" and review \"{{review}}\"",
+    "instantiation_dict": {
+      "product": "Foundation For Mattress With Frame Set",
+      "num_star": 1,
+      "nickname": "ShoppingEmma"
+    },
+    "intent": "Rate my recently purchased Foundation For Mattress With Frame Set with 1 stars using my nickname ShoppingEmma, with the summary \"Very bad\" and review \"I hated it\"",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_rating('B07DFJ5XKH')",
+          "required_contents": {
+            "exact_match": "20"
+          }
+        },
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_author('B07DFJ5XKH')",
+          "required_contents": {
+            "must_include": [
+              "ShoppingEmma"
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 194
+  },
+  {
+    "sites": [
+      "shopping"
+    ],
+    "task_id": 589,
+    "require_login": true,
+    "storage_state": "./.auth/shopping_state.json",
+    "start_url": "__SHOPPING__",
+    "geolocation": null,
+    "intent_template": "Rate my recently purchased {{product}} with {{num_star}} stars using my nickname {{nickname}}, with the summary \"{{summary}}\" and review \"{{review}}\"",
+    "instantiation_dict": {
+      "product": "Mini Wireless Bluetooth Speaker",
+      "num_star": 2,
+      "nickname": "SimpleEmma"
+    },
+    "intent": "Rate my recently purchased Mini Wireless Bluetooth Speaker with 2 stars using my nickname SimpleEmma, with the summary \"Very bad\" and review \"I hated it\"",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_rating('B09P7BFL4H')",
+          "required_contents": {
+            "exact_match": "40"
+          }
+        },
+        {
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_sku_latest_review_author('B09P7BFL4H')",
+          "required_contents": {
+            "must_include": [
+              "SimpleEmma"
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 194
+  },
+  {
+    "sites": [
+      "shopping"
+    ],
     "task_id": 653,
     "require_login": true,
     "storage_state": "./.auth/shopping_state.json",

@@ -238,7 +238,17 @@ def result_log(request):
 
     output_name = request.config.getoption("--output", default=None)
     if not output_name:
-        return
+        # Derive a prefix from the test file(s) passed on the command line so
+        # that auto-saved logs are easy to identify (e.g. "test_agent_shopping_
+        # string_match_20260531_194331.json").  Fall back to "run" if no
+        # specific file was given.
+        stems = [
+            Path(arg).stem
+            for arg in request.config.args
+            if arg.endswith(".py") and Path(arg).exists()
+        ]
+        prefix = stems[0] if stems else "run"
+        output_name = f"{prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
     logs_dir = Path(__file__).parent / "logs"
     logs_dir.mkdir(exist_ok=True)
