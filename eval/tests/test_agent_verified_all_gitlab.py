@@ -1,4 +1,4 @@
-# eval/tests/test_agent_all_gitlab.py
+# eval/tests/test_agent_verified_all_gitlab.py
 #
 # Integration tests: run the agent on every GitLab task in
 # raw_webarena_tasks_all_gitlab.json (186 tasks, both string_match and
@@ -8,26 +8,26 @@
 # parallelism of scripts/run_tasks_batch_new.py.
 #
 # Run all 186 tasks:
-#   python3 -m pytest eval/tests/test_agent_all_gitlab.py -v
+#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v
 #
 # Smoke test (first 5 tasks):
-#   python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-limit 5 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-limit 5 -v -s
 #
 # Single task by ID:
-#   python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-id 389 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-id 389 -v -s
 #
 # Multiple tasks by ID:
-#   python3 -m pytest eval/tests/test_agent_all_gitlab.py --task-id 389,412,500 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-id 389,412,500 -v -s
 #
 # Save results to a JSON log:
-#   python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --output gitlab_results.json
+#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --output gitlab_results.json
 #
 # Force-reset GitLab state before every task:
-#   python3 -m pytest eval/tests/test_agent_all_gitlab.py -v --force-reset
+#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --force-reset
 #
 # Plug in a custom agent runner:
 
-#   python3 -m pytest eval/tests/test_agent_all_gitlab.py \
+#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py \
 #       --agent-runner my_agent_runner.MyAgentRunner -v -s
 
 import asyncio
