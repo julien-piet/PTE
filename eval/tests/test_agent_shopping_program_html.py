@@ -35,6 +35,9 @@
 # Plug in a custom agent runner:
 #   python3 -m pytest eval/tests/test_agent_shopping_program_html.py \
 #       --agent-runner my_agent_runner.MyAgentRunner -v -s
+#
+# Enable agent trace (print curl commands and raw responses):
+#   python3 -m pytest eval/tests/test_agent_shopping_program_html.py --agent-trace -v -s
 
 import asyncio
 import json
@@ -47,7 +50,7 @@ import pytest
 
 from agent.auth import StaticAuth
 from config.servers import SERVER_URLS as _SERVER_URLS
-from config.init_tokens.refresh_shopping_customer_token import refresh_customer_token as _refresh_shopping_tokens
+from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_tokens
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
 from eval.tests.agent_test_utils import extract_agent_details, task_status
@@ -233,6 +236,7 @@ def test_agent_accomplishes_shopping_tasks(
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
     base_url = request.config.getoption("--base-url") or _SERVER_URLS["shopping"]
+    debug = request.config.getoption("--agent-trace", default=False)
 
     # Resolve output path once — _flush_result writes here after every task.
     output_name = request.config.getoption("--output", default=None)
@@ -274,7 +278,7 @@ def test_agent_accomplishes_shopping_tasks(
                         worker_ctx = _local_session(base_url)
 
                     async with worker_ctx as w:
-                        runner = AgentRunner(headless=True, enable_reset=False, force_reset=False)
+                        runner = AgentRunner(headless=True, enable_reset=False, force_reset=False, debug=debug)
                         runner.server = "shopping"
                         runner.base_url = w["shopping_url"]
 

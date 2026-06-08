@@ -149,6 +149,7 @@ def test_agent_accomplishes_shopping_tasks(
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
     base_url = request.config.getoption("--base-url") or _SERVER_URLS["shopping"]
+    debug = request.config.getoption("--agent-trace", default=False)
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
@@ -185,7 +186,7 @@ def test_agent_accomplishes_shopping_tasks(
                         worker_ctx = _local_session(base_url)
 
                     async with worker_ctx as w:
-                        runner = AgentRunner(headless=True, enable_reset=False, force_reset=False)
+                        runner = AgentRunner(headless=True, enable_reset=False, force_reset=False, debug=debug)
                         runner.server = "shopping"
                         runner.base_url = w["shopping_url"]
 

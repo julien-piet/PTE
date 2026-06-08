@@ -14,6 +14,9 @@
 #
 # Save results to a JSON log:
 #   python3 -m pytest eval/tests/test_agent_shopping_string_match.py -v --server shopping --output shopping_string_match_results.json
+#
+# Enable agent trace (print curl commands and raw responses):
+#   python3 -m pytest eval/tests/test_agent_shopping_string_match.py -v --server shopping --agent-trace
 
 import asyncio
 import json

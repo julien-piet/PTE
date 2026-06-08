@@ -227,6 +227,6 @@ CRITICAL — searchCriteria is REQUIRED for list endpoints:
 Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpoints REQUIRE the `searchCriteria` query parameter. Calling these endpoints with no query parameters at all will return HTTP 400 with "searchCriteria is required".
 - Always include at least one `searchCriteria` parameter, even if you do not need any specific filters (see "Getting all items" above).
 
-CRITICAL — For tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), use the given customer email. You can look up their customer ID using `GET /V1/customers/search` with appropriate filters.
+CRITICAL — You are using an Admin authentication token, for tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), use the given customer email. You can look up their customer ID using `GET /V1/customers/search` with appropriate filters.
 CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
 """
