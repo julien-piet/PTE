@@ -39,6 +39,11 @@ from api.reddit_pw import (
     get_comments_on_post,
     comment_on_post_by_url,
     create_forum,
+    send_message,
+    get_messages,
+    delete_post,
+    update_email,
+    get_blocked_users,
 )
 
 REDDIT_BASE_URL = SERVER_URLS["reddit"]
@@ -573,6 +578,109 @@ def create_forum_endpoint(payload: CreateForumRequest) -> CreateForumResponse:
                 already_existed=result.already_existed,
                 error_message=result.error_message,
             )
+        finally:
+            browser.close()
+
+
+class SendMessageRequest(BaseModel):
+    recipient_username: str
+    subject: str = ""
+    message_body: str
+
+class SendMessageResponse(BaseModel):
+    success: bool
+    error_message: Optional[str] = None
+
+
+class MessageInfo(BaseModel):
+    subject: str
+    sender: str
+    body: str
+
+class GetMessagesResponse(BaseModel):
+    messages: List[MessageInfo]
+
+
+class DeletePostRequest(BaseModel):
+    post_url: str
+
+class DeletePostResponse(BaseModel):
+    success: bool
+    error_message: Optional[str] = None
+
+
+class UpdateEmailRequest(BaseModel):
+    username: str
+    new_email: str
+
+class UpdateEmailResponse(BaseModel):
+    success: bool
+    error_message: Optional[str] = None
+
+
+class GetBlockListResponse(BaseModel):
+    blocked_users: List[str]
+
+
+@app.post("/send_message", response_model=SendMessageResponse)
+def send_message_endpoint(payload: SendMessageRequest) -> SendMessageResponse:
+    """Send a private message (DM) to another user."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            result = send_message(page, payload.recipient_username, payload.subject, payload.message_body)
+            return SendMessageResponse(success=result.success, error_message=result.error_message)
+        finally:
+            browser.close()
+
+
+@app.get("/get_messages", response_model=GetMessagesResponse)
+def get_messages_endpoint() -> GetMessagesResponse:
+    """Read the inbox — returns subject, sender, and body for each message."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            msgs = get_messages(page)
+            return GetMessagesResponse(messages=[
+                MessageInfo(subject=m.subject, sender=m.sender, body=m.body)
+                for m in msgs
+            ])
+        finally:
+            browser.close()
+
+
+@app.post("/delete_post", response_model=DeletePostResponse)
+def delete_post_endpoint(payload: DeletePostRequest) -> DeletePostResponse:
+    """Delete a post by its URL (must be owned by the logged-in user)."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            result = delete_post(page, payload.post_url)
+            return DeletePostResponse(success=result.success, error_message=result.error_message)
+        finally:
+            browser.close()
+
+
+@app.post("/update_email", response_model=UpdateEmailResponse)
+def update_email_endpoint(payload: UpdateEmailRequest) -> UpdateEmailResponse:
+    """Change the logged-in user's email address in account settings."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            result = update_email(page, payload.username, payload.new_email)
+            return UpdateEmailResponse(success=result.success, error_message=result.error_message)
+        finally:
+            browser.close()
+
+
+@app.get("/get_block_list", response_model=GetBlockListResponse)
+def get_block_list_endpoint(username: str) -> GetBlockListResponse:
+    """Return the list of usernames blocked by the given user."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            users = get_blocked_users(page, username)
+            return GetBlockListResponse(blocked_users=users)
         finally:
             browser.close()
 

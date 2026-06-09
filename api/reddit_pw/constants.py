@@ -89,6 +89,7 @@ class Selectors:
     COMMENT_SUBMIT_BUTTON = 'button:has-text("Post")'
 
     # Message form
+    MESSAGE_SUBJECT_INPUT = "#message_subject"
     MESSAGE_BODY_INPUT = "#message_body"
     MESSAGE_SUBMIT_BUTTON = 'button:has-text("Send")'
     MESSAGE_THREAD_LINKS = 'a[href*="messages/thread"]'
