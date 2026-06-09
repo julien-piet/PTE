@@ -205,15 +205,15 @@ CRITICAL — Search Strategy for Product Names:
   - Use the returned product names to look up further details via `GET /V1/products` filtering by `name` with `eq` conditionType.
 
 CRITICAL — POST/PUT request body structure:
-The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsMineItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
+The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsQuoteIdItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
 
-For example, POST /V1/carts/mine/items has a body parameter named "PostV1CartsMineItemsBody" whose schema requires a "cartItem" property. The correct request body is:
+For example, POST /V1/carts/{{cartId}}/items has a body parameter whose schema requires a "cartItem" property. The correct request body is:
   {{"cartItem": {{"sku": "...", "qty": 1, "quote_id": "..."}}}}
 NOT:
-  {{"PostV1CartsMineItemsBody": {{"sku": "...", "qty": 1}}}}
+  {{"PostV1CartsQuoteIdItemsBody": {{"sku": "...", "qty": 1}}}}
 
 Common body wrapper keys by endpoint:
-- POST /V1/carts/mine/items → {{"cartItem": {{...}}}}
+- POST /V1/carts/{{cartId}}/items → {{"cartItem": {{...}}}}
 - POST /V1/reviews → {{"review": {{...}}}}
 - POST /V1/cmsPage → {{"page": {{...}}}}
 - POST /V1/cmsBlock → {{"block": {{...}}}}
@@ -227,6 +227,15 @@ CRITICAL — searchCriteria is REQUIRED for list endpoints:
 Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpoints REQUIRE the `searchCriteria` query parameter. Calling these endpoints with no query parameters at all will return HTTP 400 with "searchCriteria is required".
 - Always include at least one `searchCriteria` parameter, even if you do not need any specific filters (see "Getting all items" above).
 
-CRITICAL — You are using an Admin authentication token, for tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), use the given customer email. You can look up their customer ID using `GET /V1/customers/search` with appropriate filters.
+CRITICAL — You are using an Admin authentication token (not a customer token). For any task that operates on a specific customer (e.g., "add this item to my cart", "update my account info", "what is my order history"), you must resolve that customer's ID via `GET /V1/customers/search` filtering on their email, then use the customer-keyed admin endpoints below — there is no "current customer" associated with an admin token, so endpoints that try to infer one from the token will reject the request.
+
+For cart-modifying operations specifically, the admin-token-compatible endpoints are:
+- `POST /V1/customers/{{customerId}}/carts` — get-or-create the customer's active cart. Takes no body and returns a BARE INTEGER cart/quote ID (not a JSON object). Idempotent: if the customer already has an active quote, the existing ID is returned.
+- `POST /V1/carts/{{cartId}}/items` — add or update a line item in that cart. Body is `{{"cartItem": {{"sku": "...", "qty": N, "quote_id": "<cartId>"}}}}`. The `quote_id` value MUST equal the `{{cartId}}` in the URL path, and `sku` is required in practice even though the JSON schema lists only `qty` and `quote_id` under `required`. Some products require option/variant selections before they can be added. Make sure to include any required options in the request body, which you can find by looking up the product's details via `GET /V1/products/{{sku}}` and checking the `options` array for any required fields.
+
+Tasks worded as "reorder", "buy", "place an order", "purchase", or "checkout" REQUIRE actually placing an order — adding a line to a cart is NOT enough; a cart with items but no order is invisible to anything that queries the customer's orders. After populating the cart, order placement uses two more endpoints:
+- `POST /V1/carts/{{cartId}}/shipping-information` — sets billing+shipping addresses and the shipping carrier/method code (commonly `flatrate`/`flatrate`). Address dicts need `region_id` (numeric, e.g. 12 for California) and `email`, not just `region_code`. This call is a prerequisite for placing the order; the response includes the available payment-method codes and totals.
+- `PUT /V1/carts/{{cartId}}/order` — places the order. Body is `{{"paymentMethod": {{"method": "<code>"}}}}` using one of the payment-method codes returned above (commonly `checkmo`). Returns a BARE INTEGER order entity_id (not a JSON object). The customer-token-style `POST /V1/carts/{{cartId}}/payment-information` is not routable with an admin token — use this PUT-order endpoint instead.
+
 CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
 """

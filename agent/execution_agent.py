@@ -311,6 +311,7 @@ class ExecutionAgent:
         path_params: Dict[str, str] = {}
         query_params: Dict[str, Any] = {}
         body: Optional[Any] = None
+        body_args_pending: List[tuple] = []  # (name, value) for body args, decided below
 
         for arg in step.arguments:
             name = arg.name
@@ -321,26 +322,36 @@ class ExecutionAgent:
             if name in path_param_names:
                 path_params[name] = str(value)
             elif pin == "body":
-                # If the arg is literally named "body" and the value is a dict/list,
-                # treat it as the entire request body. Otherwise treat it as a named
-                # body field and merge — this handles the case where the planner emits
-                # individual body-property args each tagged param_in="body".
-                if name == "body" and isinstance(value, (dict, list)):
-                    body = value
-                else:
-                    if body is None:
-                        body = {}
-                    if isinstance(body, dict):
-                        body[name] = value
+                body_args_pending.append((name, value))
             elif pin in ("query", "formData", "header"):
                 query_params[name] = value
             elif method in ("POST", "PUT", "PATCH"):
-                if body is None:
-                    body = {}
-                if isinstance(body, dict):
-                    body[name] = value
+                body_args_pending.append((name, value))
             else:
                 query_params[name] = value
+
+        # Decide body shape from the collected body args.
+        # Swagger generates body-parameter names like "<OperationId>Body"
+        # (e.g. PostV1CartsQuoteIdItemsBody, PutV1OrdersParent_idBody) for the
+        # Webarena shopping website. These are NOT the real JSON keys.
+        # When the planner emits a single body arg
+        # under such a name, the real top-level keys are inside `value` and we
+        # must use `value` directly as the body. Multiple body args → merge by
+        # name (each arg.name is then a real body field like "cartItem").
+        if len(body_args_pending) == 1:
+            name, value = body_args_pending[0]
+            is_auto_wrapper = (
+                name == "body"
+                or bool(re.match(r"^(Get|Post|Put|Patch|Delete)[A-Z].*Body$", name))
+            )
+            if is_auto_wrapper and isinstance(value, (dict, list)):
+                body = value
+            else:
+                body = {name: value}
+        elif len(body_args_pending) > 1:
+            body = {}
+            for name, value in body_args_pending:
+                body[name] = value
 
         # Build final URL — step.base_url wins, fall back to init-time base_url
         step_base_url = getattr(step, "base_url", "").rstrip("/") or self.base_url
