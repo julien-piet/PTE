@@ -91,10 +91,12 @@ class PlanningAgent:
         self.debug_prompts = debug_prompts
         self.debug_responses = debug_responses
         self._run_log: list = []  # structured log for the current plan() call — always populated
+        self._run_costs: list = []  # per-LLM-call costs for the last plan() run
 
         config = Configurator()
         config.load_all_env()
         provider = ModelProvider(config)
+        self._model_name: str = provider.model_name  # from config.yaml agent_llm_model
         self.llm = provider.get_llm_model_provider()
         self._agent_kwargs = provider.get_agent_kwargs()
 
@@ -124,6 +126,11 @@ class PlanningAgent:
         """Return the accumulated log from the most recent plan() call."""
         return list(self._run_log)
 
+    @property
+    def last_run_costs(self) -> list:
+        """Return per-LLM-call costs (floats) from the most recent plan() call."""
+        return list(self._run_costs)
+
     async def _run_agent(self, label: str, prompt: str, output_type: type) -> Any:
         self._debug_print(label, prompt=prompt)
         if self.debug_prompts or self.debug_responses:
@@ -138,6 +145,17 @@ class PlanningAgent:
             print(f"\n{err_msg}")
             self._record(f"{label}.llm_error", err_msg)
             raise
+        try:
+            import litellm
+            usage = result.usage()
+            cost_in, cost_out = litellm.cost_per_token(
+                model=self._model_name,
+                prompt_tokens=usage.input_tokens or 0,
+                completion_tokens=usage.output_tokens or 0,
+            )
+            self._run_costs.append(round(cost_in + cost_out, 8))
+        except Exception:
+            self._run_costs.append(None)
         output = result.output
         self._record(f"{label}.response", output.model_dump(mode="json") if hasattr(output, "model_dump") else output)
         self._debug_print(label, response=str(output))
@@ -1223,6 +1241,7 @@ class PlanningAgent:
 
         for planning_attempt in range(MAX_PLANNING_ATTEMPTS):
             self._run_log = []
+            self._run_costs = []
             self._record("task", task)
             if planning_attempt > 0:
                 self._record("planning_attempt", planning_attempt + 1)

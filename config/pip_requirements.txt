@@ -111,6 +111,7 @@ langgraph-prebuilt==0.2.2
 langgraph-sdk==0.1.70
 langsmith==0.4.1
 lazy-object-proxy==1.12.0
+litellm
 logfire==4.14.2
 logfire-api==4.14.2
 markdown-it-py==3.0.0

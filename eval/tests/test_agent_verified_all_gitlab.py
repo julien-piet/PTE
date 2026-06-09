@@ -34,6 +34,7 @@ import asyncio
 import json
 import sys
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -43,7 +44,12 @@ from agent.auth import StaticAuth
 from config.servers import SERVER_URLS as _SERVER_URLS
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
-from eval.tests.agent_test_utils import extract_agent_details, task_status
+from eval.tests.agent_test_utils import (
+    build_detailed_entry,
+    extract_agent_details,
+    flush_detailed_jsonl,
+    task_status,
+)
 
 
 @asynccontextmanager
@@ -191,8 +197,8 @@ def test_agent_accomplishes_gitlab_tasks(
     if not output_name:
         # Always save logs — auto-generate a timestamped filename when --output
         # is not explicitly provided so no run is ever lost.
-        from datetime import datetime, timezone
         output_name = datetime.now(timezone.utc).strftime("gitlab_%Y%m%d_%H%M%S.json")
+    detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
@@ -240,7 +246,9 @@ def test_agent_accomplishes_gitlab_tasks(
                                 )
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 
+                        start_time = datetime.now(timezone.utc)
                         passed, agent_result, error, html_detail = await runner.run_agent_on_task(task)
+                        end_time = datetime.now(timezone.utc)
 
                         details = extract_agent_details(runner)
                         status = task_status(passed, error, details["plan_steps"])
@@ -257,8 +265,12 @@ def test_agent_accomplishes_gitlab_tasks(
                             "planning_log": details["planning_log"],
                             "worker_id": w["worker_id"],
                             "status": status,
+                            "costs": details.get("costs"),
+                            "start_time": start_time,
+                            "end_time": end_time,
                         }
                 except Exception as e:
+                    _now = datetime.now(timezone.utc)
                     result = {
                         "task": task,
                         "passed": False,
@@ -270,6 +282,9 @@ def test_agent_accomplishes_gitlab_tasks(
                         "execution": None,
                         "worker_id": None,
                         "status": "failed",
+                        "costs": [],
+                        "start_time": _now,
+                        "end_time": _now,
                     }
 
                 # Record result and flush to disk immediately after each task.
@@ -298,6 +313,18 @@ def test_agent_accomplishes_gitlab_tasks(
                     }
                     result_log.append(entry)
                     _flush_results(output_name, result_log, interrupted=False)
+
+                    det_entry = build_detailed_entry(
+                        task=task_obj,
+                        agent_result=r_agent,
+                        error=r_error,
+                        correct=r_passed and not r_error,
+                        start_time=result["start_time"],
+                        end_time=result["end_time"],
+                        eval_output_dir=str(LOGS_DIR / output_name),
+                        costs=result.get("costs"),
+                    )
+                    flush_detailed_jsonl(detailed_out_path, det_entry)
 
                     outcome = "PASS" if r_passed and not r_error else "FAIL"
                     print(f"\n[{remaining} tasks remaining] Task {task_obj['task_id']} done ({outcome})")

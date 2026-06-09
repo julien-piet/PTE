@@ -42,6 +42,7 @@ import asyncio
 import json
 import sys
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -53,7 +54,12 @@ from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refres
 from config.init_tokens.refresh_shopping_customer_token import refresh_customer_token as _refresh_shopping_customer_tokens
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
-from eval.tests.agent_test_utils import extract_agent_details, task_status
+from eval.tests.agent_test_utils import (
+    build_detailed_entry,
+    extract_agent_details,
+    flush_detailed_jsonl,
+    task_status,
+)
 
 
 @asynccontextmanager
@@ -242,7 +248,9 @@ def test_agent_accomplishes_shopping_tasks(
     output_name = request.config.getoption("--output", default=None)
     if not output_name:
         output_name = "shopping_program_html_results.json"
-    out_path = Path(__file__).parent / "logs" / output_name
+    _logs_dir = Path(__file__).parent / "logs"
+    out_path = _logs_dir / output_name
+    detailed_out_path = _logs_dir / (Path(output_name).stem + "_detailed.jsonl")
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
@@ -321,7 +329,9 @@ def test_agent_accomplishes_shopping_tasks(
                         if force_reset and not task.get("read_only", False):
                             run_task = {**task, "require_reset": True}
 
+                        start_time = datetime.now(timezone.utc)
                         passed, agent_result, error, html_detail = await runner.run_agent_on_task(run_task)
+                        end_time = datetime.now(timezone.utc)
 
                         async with remaining_lock:
                             nonlocal remaining
@@ -343,9 +353,13 @@ def test_agent_accomplishes_shopping_tasks(
                             "planning_log": details["planning_log"],
                             "worker_id": w["worker_id"],
                             "status": status,
+                            "costs": details.get("costs"),
+                            "start_time": start_time,
+                            "end_time": end_time,
                         }
 
                 except Exception as e:
+                    _now = datetime.now(timezone.utc)
                     result = {
                         "task": task,
                         "passed": False,
@@ -357,16 +371,31 @@ def test_agent_accomplishes_shopping_tasks(
                         "execution": None,
                         "worker_id": None,
                         "status": "failed",
+                        "costs": [],
+                        "start_time": _now,
+                        "end_time": _now,
                     }
 
                 # Flush to disk immediately — safe under the write_lock so
                 # concurrent workers don't interleave writes.
-                if out_path is not None:
-                    entry = _build_log_entry(result)
-                    async with write_lock:
-                        await asyncio.get_event_loop().run_in_executor(
-                            None, _flush_result, out_path, entry
-                        )
+                entry = _build_log_entry(result)
+                det_entry = build_detailed_entry(
+                    task=result["task"],
+                    agent_result=result["agent_result"],
+                    error=result["error"],
+                    correct=bool(result["passed"]) and not result["error"],
+                    start_time=result["start_time"],
+                    end_time=result["end_time"],
+                    eval_output_dir=str(out_path),
+                    costs=result.get("costs"),
+                )
+                async with write_lock:
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, _flush_result, out_path, entry
+                    )
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, flush_detailed_jsonl, detailed_out_path, det_entry
+                    )
 
                 return result
 

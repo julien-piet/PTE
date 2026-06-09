@@ -28,6 +28,7 @@ import asyncio
 import json
 import sys
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -38,6 +39,11 @@ from config.init_tokens.refresh_reddit_session import refresh_session as _refres
 from config.servers import SERVER_URLS as _SERVER_URLS
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
+from eval.tests.agent_test_utils import (
+    build_detailed_entry,
+    extract_agent_details,
+    flush_detailed_jsonl,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -175,6 +181,7 @@ def test_agent_produces_correct_answer(
     if not output_name:
         output_name = "reddit_string_match_results.json"
     out_path = LOGS_DIR / output_name
+    detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
@@ -225,7 +232,9 @@ def test_agent_produces_correct_answer(
                             })
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 
+                        start_time = datetime.now(timezone.utc)
                         passed, agent_result, error, _html_detail = await runner.run_agent_on_task(task)
+                        end_time = datetime.now(timezone.utc)
 
                         async with remaining_lock:
                             nonlocal remaining
@@ -233,21 +242,29 @@ def test_agent_produces_correct_answer(
                             outcome = "PASS" if passed and not error else "FAIL"
                             print(f"\n[{remaining} tasks remaining] Task {task['task_id']} done ({outcome})")
 
+                        details = extract_agent_details(runner)
                         result = {
                             "task": task,
                             "passed": passed,
                             "agent_result": agent_result,
                             "error": error,
                             "worker_id": w["worker_id"],
+                            "costs": details.get("costs"),
+                            "start_time": start_time,
+                            "end_time": end_time,
                         }
 
                 except Exception as e:
+                    _now = datetime.now(timezone.utc)
                     result = {
                         "task": task,
                         "passed": False,
                         "agent_result": None,
                         "error": str(e),
                         "worker_id": None,
+                        "costs": [],
+                        "start_time": _now,
+                        "end_time": _now,
                     }
 
                 entry = {
@@ -259,9 +276,22 @@ def test_agent_produces_correct_answer(
                     "answer":     result["agent_result"].get("answer") if result["agent_result"] else None,
                     "error":      result["error"],
                 }
+                det_entry = build_detailed_entry(
+                    task=result["task"],
+                    agent_result=result["agent_result"],
+                    error=result["error"],
+                    correct=result["passed"] and not result["error"],
+                    start_time=result["start_time"],
+                    end_time=result["end_time"],
+                    eval_output_dir=str(out_path),
+                    costs=result.get("costs"),
+                )
                 async with write_lock:
                     await asyncio.get_event_loop().run_in_executor(
                         None, _flush_result, out_path, entry
+                    )
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, flush_detailed_jsonl, detailed_out_path, det_entry
                     )
 
                 return result
