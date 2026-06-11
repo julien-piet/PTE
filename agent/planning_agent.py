@@ -945,7 +945,8 @@ class PlanningAgent:
         )
         tool_names = list(dict.fromkeys(f"{ep.method} {ep.path}" for ep in kept))
         bundle = build_agent_models(tool_names)
-        return endpoint_details, api_hints_section, tool_names, bundle
+        user_context_section = self._get_user_context(api_files_used)
+        return endpoint_details, api_hints_section, tool_names, bundle, user_context_section
 
     @staticmethod
     def _format_plan_text(plan_result) -> str:
@@ -973,13 +974,14 @@ class PlanningAgent:
     async def _check_plan(
         self, task: str, plan_result, kept: List[EndpointInfo]
     ) -> tuple:
-        endpoint_details, api_hints_section, _, _ = self._plan_context(kept)
+        endpoint_details, api_hints_section, _, _, user_context_section = self._plan_context(kept)
         plan_text = self._format_plan_text(plan_result)
 
         prompt = (
             f"Task: {task}\n\n"
             f"Endpoint definitions:\n{endpoint_details}\n\n"
             + api_hints_section
+            + user_context_section
             + f"\nGenerated plan:\n{plan_text}\n\n"
             "Review this plan for argument-level correctness. Do NOT flag endpoint selection "
             "or high-level sequencing — focus only on the wiring within the plan as written.\n\n"
@@ -992,7 +994,7 @@ class PlanningAgent:
             "only a step returning that resource type can do that)\n\n"
             "3. Parameter value correctness: are literal argument values valid for their parameter "
             "according to the endpoint description? (wrong enum, wrong format, user display name "
-            "used where a machine identifier is needed, etc.)\n\n"
+            "used where a machine identifier is needed, etc.) "
             "4. Task accomplishment: does the plan as a whole accomplish the stated task?\n\n"
             "Return a JSON object with fields: issues (list of strings) and ok (bool).\n"
             "Example with issues: {\"issues\": [\"step_2 arg 'id' wires step_1.result (user_id) into an item {id} — type mismatch\"], \"ok\": false}\n"
@@ -1004,7 +1006,7 @@ class PlanningAgent:
     async def _fix_plan(
         self, task: str, plan_result, kept: List[EndpointInfo], issues: list
     ):
-        endpoint_details, api_hints_section, tool_names, bundle = self._plan_context(kept)
+        endpoint_details, api_hints_section, tool_names, bundle, user_context_section = self._plan_context(kept)
         plan_text = self._format_plan_text(plan_result)
         schema = json.dumps(bundle.ToolBasedResponse.model_json_schema(), indent=2)
         issues_text = "\n".join(f"  - {iss}" for iss in issues)
@@ -1013,6 +1015,7 @@ class PlanningAgent:
             f"Task: {task}\n\n"
             f"Endpoint definitions:\n{endpoint_details}\n\n"
             + api_hints_section
+            + user_context_section
             + f"\nCurrent plan (has issues):\n{plan_text}\n\n"
             f"Issues to fix:\n{issues_text}\n\n"
             "Produce a corrected plan that resolves all issues above. "

@@ -2,8 +2,11 @@
 
 import os
 
-# GitLab domain - override via environment variable
-GITLAB_DOMAIN = os.getenv("GITLAB_DOMAIN", "http://localhost:8023")
+# GitLab domain - override via environment variable.
+# Default matches config/servers.py (127.0.0.1) so that session cookies set
+# during login are sent to the same origin used by the eval's fetch calls.
+# Use localhost:8023 only if explicitly set via the env var.
+GITLAB_DOMAIN = os.getenv("GITLAB_DOMAIN", "http://127.0.0.1:8023")
 
 # Authentication URLs
 LOGIN_URL = f"{GITLAB_DOMAIN}/users/sign_in"

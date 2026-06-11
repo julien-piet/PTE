@@ -388,6 +388,8 @@ class ProgramHtmlEvaluator:
 
         Currently supported:
           func:gitlab_get_project_memeber_role(__page__, '<username>')
+          func:shopping_get_sku_latest_review_rating('<sku>')
+          func:shopping_get_sku_latest_review_author('<sku>')
         """
         # func:gitlab_get_project_memeber_role(__page__, 'username')
         match = re.match(
@@ -397,6 +399,24 @@ class ProgramHtmlEvaluator:
         if match:
             username = match.group(1)
             return self._gitlab_get_project_member_role(page, username)
+
+        # func:shopping_get_sku_latest_review_rating('SKU')
+        match = re.match(
+            r"func:shopping_get_sku_latest_review_rating\('([^']+)'\)",
+            locator,
+        )
+        if match:
+            sku = match.group(1)
+            return self._shopping_get_sku_latest_review_rating(sku)
+
+        # func:shopping_get_sku_latest_review_author('SKU')
+        match = re.match(
+            r"func:shopping_get_sku_latest_review_author\('([^']+)'\)",
+            locator,
+        )
+        if match:
+            sku = match.group(1)
+            return self._shopping_get_sku_latest_review_author(sku)
 
         raise ValueError(f"Unknown func: pattern in locator: {locator!r}")
 
@@ -453,6 +473,68 @@ class ProgramHtmlEvaluator:
                     return ACCESS_LEVEL_NAMES.get(level, str(level))
 
         return ""
+
+    def _shopping_get_latest_review_for_sku(self, sku: str) -> dict:
+        """
+        Fetch the most recently created review for a product SKU via the
+        Magento REST API.  Returns the review dict, or {} if none found.
+
+        Uses an admin token read from config/.server_env (ADMIN_AUTH_TOKEN),
+        falling back to a fresh token if the env file is absent.
+        """
+        import requests as _requests
+        from pathlib import Path as _Path
+
+        shopping_base = self.base_urls.get("__SHOPPING__", DEFAULT_BASE_URLS["__SHOPPING__"])
+        token = ""
+
+        # Try reading a cached admin token from .server_env first to avoid
+        # an extra network round-trip on every eval check.
+        server_env = _Path(__file__).parent.parent / "config" / ".server_env"
+        if server_env.exists():
+            for line in server_env.read_text().splitlines():
+                if line.strip().startswith("ADMIN_AUTH_TOKEN="):
+                    token = line.strip().split("=", 1)[1].strip()
+                    break
+
+        if not token:
+            from config.init_tokens.refresh_shopping_tokens import refresh_tokens
+            token = refresh_tokens(base_url=shopping_base)
+
+        url = f"{shopping_base}/rest/V1/products/{sku}/reviews"
+        resp = _requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
+        if resp.status_code != 200:
+            return {}
+        reviews = resp.json()
+        if not reviews:
+            return {}
+        # Most recently created = highest id
+        return max(reviews, key=lambda r: r.get("id", 0))
+
+    def _shopping_get_sku_latest_review_rating(self, sku: str) -> str:
+        """
+        Return the rating percentage (e.g. "100", "80", "60", "40", "20")
+        of the most recent review for the given SKU.
+        5 stars = 100, 4 = 80, 3 = 60, 2 = 40, 1 = 20.
+        Returns "" if no reviews exist.
+
+        Used by: func:shopping_get_sku_latest_review_rating('<sku>')
+        """
+        review = self._shopping_get_latest_review_for_sku(sku)
+        ratings = review.get("ratings", [])
+        if not ratings:
+            return ""
+        return str(ratings[0].get("percent", ""))
+
+    def _shopping_get_sku_latest_review_author(self, sku: str) -> str:
+        """
+        Return the nickname (author) of the most recent review for the
+        given SKU.  Returns "" if no reviews exist.
+
+        Used by: func:shopping_get_sku_latest_review_author('<sku>')
+        """
+        review = self._shopping_get_latest_review_for_sku(sku)
+        return review.get("nickname", "")
 
     # ------------------------------------------------------------------
     # Content checking

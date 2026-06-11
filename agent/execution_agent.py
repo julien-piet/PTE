@@ -14,6 +14,7 @@ import json
 import re
 import subprocess
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote, quote_plus
 
@@ -114,8 +115,9 @@ class ExecutionAgent:
                     return [ExecutionAgent._follow_accessor(item, remaining) for item in obj]
                 return list(obj)
             # [?(@.field==value)]  exact match filter
-            # [?(@.field*=value)]  contains (substring) filter — use when the search term
-            #                      is a user-provided fragment, not a full field value
+            # [?(@.field*=value)]  fuzzy contains filter — tries exact substring, then
+            #                      normalized (no-space), then word-token overlap, then
+            #                      difflib similarity. Exact matches always pass first.
             m = re.match(r'\[\?\(@\.(\w+(?:\.\w+)*)(==|\*=)([^\]]+)\)\]', accessor[pos:])
             if m:
                 field_path = m.group(1)
@@ -137,7 +139,23 @@ class ExecutionAgent:
                     if actual is None:
                         return False
                     if op == "*=":
-                        return rv.lower() in str(actual).lower()
+                        rv_lower = rv.lower()
+                        actual_lower = str(actual).lower()
+                        # 1. Exact case-insensitive substring
+                        if rv_lower in actual_lower:
+                            return True
+                        # 2. Normalized (spaces stripped) substring — "deep learning" → "deeplearning"
+                        rv_nospace = re.sub(r'\s+', '', rv_lower)
+                        actual_nospace = re.sub(r'\s+', '', actual_lower)
+                        if rv_nospace and rv_nospace in actual_nospace:
+                            return True
+                        # 3. All query words appear in normalized field
+                        words = rv_lower.split()
+                        if words and all(w in actual_nospace for w in words):
+                            return True
+                        # 4. Difflib similarity — "future technology" → "futurology"
+                        score = SequenceMatcher(None, rv_nospace or rv_lower, actual_nospace or actual_lower).ratio()
+                        return score >= 0.6
                     try:
                         return actual == type(actual)(rv)
                     except (ValueError, TypeError):
@@ -202,7 +220,12 @@ class ExecutionAgent:
             break  # unrecognised token
         return obj
 
-    def _resolve_foreach(self, foreach_value: Any, outputs: Dict[str, Any]) -> List[Any]:
+    def _resolve_foreach(
+        self,
+        foreach_value: Any,
+        outputs: Dict[str, Any],
+        depends_on: Optional[List[str]] = None,
+    ) -> List[Any]:
         """Resolve a foreach field to a concrete list of items to iterate over."""
         if isinstance(foreach_value, list):
             return foreach_value
@@ -219,6 +242,14 @@ class ExecutionAgent:
                 if isinstance(resolved, list):
                     return resolved
                 return [resolved] if resolved is not None else []
+            # "LOOP_OVER_PRIOR": planner sentinel that was never resolved to a real
+            # step reference.  Fall back to the most recent dependency that produced
+            # a non-empty list output so execution continues correctly.
+            if foreach_value == "LOOP_OVER_PRIOR" and depends_on:
+                for dep_id in reversed(depends_on):
+                    out = outputs.get(dep_id)
+                    if isinstance(out, list) and out:
+                        return out
         return []
 
     def _resolve(self, value: Any, outputs: Dict[str, Any]) -> Any:
@@ -365,7 +396,7 @@ class ExecutionAgent:
 
         # Assemble curl command
         cmd = ["curl", "-g", "-s", "-X", method, "-H", "Content-Type: application/json"]
-        for hname, hval in self.auth.get_headers().items():
+        for hname, hval in self.auth.get_headers(url=url).items():
             cmd += ["-H", f"{hname}: {hval}"]
         if body is not None:
             cmd += ["-d", json.dumps(body)]
@@ -452,22 +483,48 @@ class ExecutionAgent:
             # If every accessor has a structural path after .result (e.g. [0].field,
             # [sort_desc:f][0].id, .key), _follow_accessor handles all the navigation
             # correctly on the raw output — skip the LLM entirely. The LLM is only
-            # needed for bare {step.result} references that require semantic extraction.
+            # needed for bare {step.result} references that require semantic extraction,
+            # OR when a downstream hint describes a content transformation to apply.
             structural_path_re = re.compile(
                 r"\{" + re.escape(step.step_id) + r"\.result[.\[]"
+            )
+            _transform_keywords = {"decode", "encode", "base64", "replace", "transform", "modify"}
+            _has_transform_hint = any(
+                any(kw in (getattr(ds, "hints", "") or "").lower() for kw in _transform_keywords)
+                for ds in dependent_steps
             )
             # [*] wildcard returns a list — can't be used as-is for a single-value
             # argument. Let the LLM parse step run so hints can guide selection.
             has_wildcard = any(r"\[\*\]" in acc or "[*]" in acc for acc in unique_accessors)
-            if not has_wildcard and all(structural_path_re.match(acc) for acc in unique_accessors):
+            if not has_wildcard and all(structural_path_re.match(acc) for acc in unique_accessors) and not _has_transform_hint:
                 return raw_output
+
+            # Map each accessor to the hint of the step that uses it (first match wins)
+            _acc_to_hint: dict[str, str] = {}
+            for ds in dependent_steps:
+                ds_hint = getattr(ds, "hints", "") or ""
+                for a in (ds.arguments or []):
+                    serialized = json.dumps(a.value) if isinstance(a.value, (dict, list)) else (a.value if isinstance(a.value, str) else "")
+                    for acc in re.findall(r"\{" + step.step_id + r"\.result[^}]*\}", serialized):
+                        if acc not in _acc_to_hint:
+                            _acc_to_hint[acc] = ds_hint
 
             lines = []
             for acc in unique_accessors:
                 # Extract the field path after .result (e.g. ".default_branch" → "default_branch")
                 m = re.match(r"\{" + step.step_id + r"\.result\.?(.*)\}", acc)
                 field_path = m.group(1) if m and m.group(1) else None
-                if field_path:
+                acc_hint = _acc_to_hint.get(acc, "")
+                if acc_hint and any(kw in acc_hint.lower() for kw in _transform_keywords):
+                    if field_path:
+                        lines.append(
+                            f"  '{acc}' → read the value at field '{field_path}', apply the transformation described in the downstream hint, and return the transformed result"
+                        )
+                    else:
+                        lines.append(
+                            f"  '{acc}' → apply the transformation described in the downstream hint to the full value and return the transformed result"
+                        )
+                elif field_path:
                     lines.append(f"  '{acc}' → extract the value at field '{field_path}' (must be a scalar string/number, not an object)")
                 else:
                     lines.append(f"  '{acc}' → extract the full value")
@@ -486,6 +543,7 @@ class ExecutionAgent:
             f"- If the dependent step needs a structured sub-object, return that object.\n"
             f"- If the dependent step uses the value as a path parameter and multiple values are needed, return a JSON array. The engine will call the step once per item.\n"
             f"- If the response is a list and only one specific item is needed, extract only that item or field.\n"
+            f"- If a downstream hint describes a transformation (e.g. decode base64, replace text, re-encode), apply that transformation to the extracted field value and return the transformed result — not the original raw value.\n"
             f"- Set found=false only if the required value is genuinely absent from the response."
         )
         self._debug(f"Parsing output of {step.step_id}:\n{prompt}")
@@ -566,7 +624,10 @@ class ExecutionAgent:
                 # Use raw_outputs (full curl responses) so accessor chains like
                 # [sort_desc:field][:N][*].id operate on the complete API data,
                 # not on the LLM-extracted subset stored in ctx.step_outputs.
-                items = self._resolve_foreach(foreach_val, raw_outputs)
+                items = self._resolve_foreach(
+                    foreach_val, raw_outputs,
+                    depends_on=getattr(step, "depends_on", None),
+                )
                 if not items:
                     raw_outputs[step.step_id] = []
                     ctx.mark_completed(step.step_id, [])

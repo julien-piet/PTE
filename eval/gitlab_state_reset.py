@@ -219,6 +219,7 @@ TASK_RESET_CONFIG: Dict[int, List[Dict[str, Any]]] = {
         # Eval-created projects (same as their own task resets)
         {"type": "fork_delete", "fork_path": "byteblaze/nolan_academy_awards"},
         {"type": "fork_delete", "fork_path": "byteblaze/planner"},
+        {"type": "fork_delete", "fork_path": "byteblaze/web_arena"},
         {"type": "fork_delete", "fork_path": "byteblaze/awesome-llms"},
         {"type": "fork_delete", "fork_path": "byteblaze/llm_bulk_inference"},
         {"type": "fork_delete", "fork_path": "byteblaze/awesome_web_agents"},
@@ -235,6 +236,7 @@ TASK_RESET_CONFIG: Dict[int, List[Dict[str, Any]]] = {
     ],
     560: [{"type": "fork_delete", "fork_path": "byteblaze/nolan_academy_awards"}],
     742: [{"type": "fork_delete", "fork_path": "byteblaze/planner"}],
+    743: [{"type": "fork_delete", "fork_path": "byteblaze/web_arena"}],
     745: [{"type": "fork_delete", "fork_path": "byteblaze/awesome-llms"}],
     746: [{"type": "fork_delete", "fork_path": "byteblaze/llm_bulk_inference"}],
     747: [{"type": "fork_delete", "fork_path": "byteblaze/awesome_web_agents"}],
@@ -264,6 +266,12 @@ TASK_RESET_CONFIG: Dict[int, List[Dict[str, Any]]] = {
     567: [
         {"type": "remove_member", "project": "byteblaze/gimmiethat.space", "username": "lahwaacz"},
         {"type": "remove_member", "project": "byteblaze/gimmiethat.space", "username": "bblanchon"},
+    ],
+    570: [
+        {"type": "remove_member", "project": "byteblaze/timeit", "username": "lahwaacz"},
+        {"type": "remove_member", "project": "byteblaze/timeit", "username": "V13Axel"},
+        {"type": "remove_member", "project": "byteblaze/timeit", "username": "alexhutnik"},
+        {"type": "remove_member", "project": "byteblaze/timeit", "username": "bblanchon"},
     ],
     576: [
         {"type": "remove_member", "project": "byteblaze/a11y-webring.club", "username": "abisubramanya27"},
@@ -560,7 +568,7 @@ class GitLabStateReset:
         if del_status in (200, 202, 204):
             print(f"   ✅ [reset] Deleted fork {project_name}")
             # Wait for GitLab to process the deletion (project namespace stays reserved briefly)
-            self._wait_for_project_deletion(token, project_id, timeout_s=20)
+            self._wait_for_project_deletion(token, project_id)
         elif del_status == 404:
             pass  # Already gone
         else:
@@ -836,8 +844,9 @@ class GitLabStateReset:
         )
         if del_status in (200, 202, 204):
             print(f"   ✅ [reset] Deleted group {group_path!r}")
-            # Give GitLab a moment to finish processing the deletion
-            time.sleep(2)
+            # GitLab reserves the group path briefly after deletion; sleep long
+            # enough that the next agent creation attempt doesn't see HTTP 400.
+            time.sleep(10)
         elif del_status == 404:
             pass  # Already gone
         else:
@@ -898,14 +907,17 @@ class GitLabStateReset:
                 return proj
         return None
 
-    def _wait_for_project_deletion(self, token: str, project_id: int, timeout_s: int = 20) -> None:
+    def _wait_for_project_deletion(self, token: str, project_id: int, timeout_s: int = 45) -> None:
         """Poll until the project is no longer accessible (or timeout)."""
         deadline = time.time() + timeout_s
         while time.time() < deadline:
             _, status = self._api("GET", f"/projects/{project_id}", token=token)
             if status in (404, 500):
-                # 404 = deleted; 500 = GitLab processing deletion (treat as deleted)
-                time.sleep(1)  # Give GitLab a bit more time to finish cleanup
+                # 404 = deleted; 500 = GitLab processing deletion (treat as deleted).
+                # Sleep an extra 8 seconds after the project disappears — GitLab
+                # keeps the namespace path reserved briefly after the project 404s,
+                # and a creation attempt during that window gets HTTP 400 "already taken".
+                time.sleep(8)
                 return
             time.sleep(1)
         # Timeout — log but continue; GitLab may still be processing
