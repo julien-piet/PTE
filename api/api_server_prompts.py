@@ -214,16 +214,11 @@ Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1
 - Pagination: Control result pages using `searchCriteria[pageSize]` (number of items per page) and `searchCriteria[currentPage]` (1-indexed page number). Example: `searchCriteria[pageSize]=20&searchCriteria[currentPage]=1`.
 - Getting all items: To fetch all items with no filters, you MUST still pass at least an empty searchCriteria: `?searchCriteria=all` or `?searchCriteria[pageSize]=50`.
 
-CRITICAL — Full-Text Search with `GET /V1/search`:
-  - Always include `searchCriteria[requestName]=quick_search_container` — omitting it causes an HTTP 500 error.
-  - Use `searchCriteria[filterGroups][0][filters][0][field]=search_term` with `conditionType=eq` and the query as the value.
-  - The response returns product IDs and relevance scores only. Follow up with `GET /V1/products` filtering by `entity_id` (using `in` conditionType with a comma-separated list) to retrieve product names.
-  - Example: `GET /V1/search?searchCriteria[requestName]=quick_search_container&searchCriteria[filterGroups][0][filters][0][field]=search_term&searchCriteria[filterGroups][0][filters][0][value]=xbox&searchCriteria[filterGroups][0][filters][0][conditionType]=eq&searchCriteria[pageSize]=20`
-
 CRITICAL — Search Strategy for Product Names:
-  - When you need to find a product by name, use the `GET /fuzzy_search` endpoint (Shopping Extra API) with the product name as the `q` parameter.
+  - When you need to find products by name, use the `GET /fuzzy_search` endpoint (Shopping Extra API) with the product name as the `q` parameter.
   - This returns an ordered list of product names, product SKUs, and urls, exactly as they appear on the shopping website. The item you are looking for may not be the top ranked item in the list, so make sure you check all returned results carefully.
-  - Use the returned product names to look up further details via `GET /V1/products` filtering by `name` with `eq` conditionType.
+  - You can use the returned product names to look up further details via `GET /V1/products` filtering by `name` with `eq` conditionType.
+  - Keep in mind that the `GET /V1/products` might return a large amount of data for each product based on your search filters, so it is more efficient to first use the fuzzy search to find the exact product name and then filter products by that name, rather than fetching all products.
 
 CRITICAL — POST/PUT request body structure:
 The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsQuoteIdItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.

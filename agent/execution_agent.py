@@ -97,10 +97,15 @@ class ExecutionAgent:
         Supported tokens:
           [*]                   wildcard — map remaining chain over each list element
           [?(@.field==value)]   filter — keep only list elements where dict[field] == value
-          [n]                   numeric index
+          [n] / [-n]            numeric index (negatives count from the end, like Python)
+          [sort_asc:f]          sort list ascending by field f (dicts) or value (scalars)
           [sort_desc:f]         sort list descending by field f (dicts) or value (scalars)
           [:N]                  take first N elements (slice)
           .key                  dict field access
+
+        Unrecognised tokens return None (fail-loud). Callers rely on this to
+        detect accessor failures and abort the dependent step rather than
+        silently embedding the upstream object as a string.
         """
         pos = 0
         length = len(accessor)
@@ -168,17 +173,18 @@ class ExecutionAgent:
                 if isinstance(obj, list):
                     obj = [item for item in obj if _matches(item)]
                 continue
-            # [sort_desc:field] — sort list descending by a named field (or value for scalars)
-            m = re.match(r'\[sort_desc:(\w+)\]', accessor[pos:])
+            # [sort_asc:field] / [sort_desc:field] — sort list by a named field (or value for scalars)
+            m = re.match(r'\[sort_(asc|desc):(\w+)\]', accessor[pos:])
             if m:
-                field = m.group(1)
+                direction = m.group(1)
+                field = m.group(2)
                 pos += len(m.group(0))
                 if isinstance(obj, list):
                     try:
                         obj = sorted(
                             obj,
                             key=lambda x: (x.get(field, 0) if isinstance(x, dict) else x),
-                            reverse=True,
+                            reverse=(direction == "desc"),
                         )
                     except (TypeError, AttributeError):
                         pass
@@ -191,13 +197,13 @@ class ExecutionAgent:
                 if isinstance(obj, list):
                     obj = obj[:n]
                 continue
-            # [n] numeric index
-            m = re.match(r'\[(\d+)\]', accessor[pos:])
+            # [n] / [-n] numeric index (negative indices count from the end, like Python)
+            m = re.match(r'\[(-?\d+)\]', accessor[pos:])
             if m:
                 pos += len(m.group(0))
                 if isinstance(obj, list):
                     idx = int(m.group(1))
-                    if idx >= len(obj):
+                    if idx >= len(obj) or idx < -len(obj):
                         return None
                     obj = obj[idx]
                 # If obj is a dict (fan-out already distributed this item), skip the
@@ -217,7 +223,12 @@ class ExecutionAgent:
                 if obj is None:
                     return None
                 continue
-            break  # unrecognised token
+            # Unrecognised token — fail loud rather than silently returning
+            # the current obj. _resolve treats None as accessor failure and
+            # _execute_step's guard raises _MissingDependency, which is the
+            # correct outcome: the planner used an unsupported accessor
+            # pattern, so the dependent step cannot run with valid inputs.
+            return None
         return obj
 
     def _resolve_foreach(

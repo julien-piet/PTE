@@ -35,7 +35,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-TASK_FILE = Path(__file__).parent / "shopping_verified_string_match.json"
+TASK_FILE = Path(__file__).parent / "test_files" / "shopping_verified_string_match.json"
 
 
 def _load_tasks() -> List[Dict[str, Any]]:

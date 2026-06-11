@@ -2587,7 +2587,7 @@
                 "tags": [
                     "customerCustomerRepositoryV1"
                 ],
-                "description": "Retrieve customers which match a specified criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#CustomerRepositoryInterface to determine which call to use to get detailed information about all attributes for an object. Common filter fields: `email` (exact match by default; use `conditionType=like` with `%pattern%` for partial), `firstname`, `lastname`, `id`, `group_id`, `created_at`, `store_id`. To find a customer by their login email, filter on `email` \u2014 the returned item's `id` field is the customer ID used by cart/order admin endpoints (e.g. `/V1/customers/{customerId}/carts`). Requires admin auth.",
+                "description": "Retrieve customers which match a specified criteria. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included. See https://devdocs.magento.com/codelinks/attributes.html#CustomerRepositoryInterface to determine which call to use to get detailed information about all attributes for an object.",
                 "operationId": "GetV1CustomersSearch",
                 "consumes": [
                     "application/json",
@@ -4399,86 +4399,6 @@
                 }
             }
         },
-        "/V1/search": {
-            "get": {
-                "tags": [
-                    "searchV1"
-                ],
-                "description": "Make Full Text Search and return found Documents",
-                "operationId": "GetV1Search",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "searchCriteria[requestName]",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "searchCriteria[filterGroups][0][filters][0][field]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Field"
-                    },
-                    {
-                        "name": "searchCriteria[filterGroups][0][filters][0][value]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Value"
-                    },
-                    {
-                        "name": "searchCriteria[filterGroups][0][filters][0][conditionType]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Condition type"
-                    },
-                    {
-                        "name": "searchCriteria[sortOrders][0][field]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Sorting field."
-                    },
-                    {
-                        "name": "searchCriteria[sortOrders][0][direction]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Sorting direction."
-                    },
-                    {
-                        "name": "searchCriteria[pageSize]",
-                        "in": "query",
-                        "type": "integer",
-                        "description": "Page size."
-                    },
-                    {
-                        "name": "searchCriteria[currentPage]",
-                        "in": "query",
-                        "type": "integer",
-                        "description": "Current page."
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/framework-search-search-result-interface"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/products": {
             "post": {
                 "tags": [
@@ -4548,7 +4468,7 @@
                 "tags": [
                     "catalogProductRepositoryV1"
                 ],
-                "description": "Get product list. Filtered/sorted/paginated via the searchCriteria query params below. Common filter fields: `sku`, `name`, `url_key`, `status`, `visibility`, `category_id`, `price`, `created_at`, `updated_at`. To resolve a storefront product URL (e.g. `http://host/<slug>.html`) to its SKU, filter by `url_key` with the slug as the value (drop the `.html` suffix and any leading host/path); the returned item's `sku` field is what cart/order endpoints require. Note: both `searchCriteria[filterGroups]` (the schema-documented camelCase) and `searchCriteria[filter_groups]` (snake_case) are accepted by the Magento router.",
+                "description": "Get product list.",
                 "operationId": "GetV1Products",
                 "consumes": [
                     "application/json",
@@ -9879,7 +9799,7 @@
                 "tags": [
                     "quoteCartManagementV1"
                 ],
-                "description": "Creates an empty cart and quote for a specified customer if customer does not have a cart yet. Idempotent: if the customer already has an active quote in the target store, that existing quote's ID is returned (no new cart is created). The returned cart ID IS the same quote the customer's logged-in storefront session uses \u2014 there is one active quote per (customer, store) pair, so items added through `/V1/carts/{quoteId}/items` afterward appear in the customer's storefront cart. No request body is needed; admin auth required. Response body is the bare integer cart/quote ID (not a JSON object).",
+                "description": "Creates an empty cart and quote for a specified customer if customer does not have a cart yet. Returns the cart/quote ID as a bare integer.",
                 "operationId": "PostV1CustomersCustomerIdCarts",
                 "consumes": [
                     "application/json",
@@ -9932,7 +9852,7 @@
                 "tags": [
                     "quoteCartManagementV1"
                 ],
-                "description": "Places an order for a specified cart and returns the order entity_id (as a bare integer in the response body, NOT a JSON object). This is the admin-token-compatible order-placement endpoint. Prerequisites: the cart must already have items (`POST /V1/carts/{cartId}/items`) AND must have had `POST /V1/carts/{cartId}/shipping-information` called on it to set the addresses and shipping method. Body is `{\"paymentMethod\": {\"method\": \"<code>\"}}` where `<code>` is one of the payment-method codes returned by the prior shipping-information call (commonly `checkmo`).",
+                "description": "Places an order for a specified cart. Returns the order entity_id as a bare integer.",
                 "operationId": "PutV1CartsCartIdOrder",
                 "consumes": [
                     "application/json",
@@ -10571,7 +10491,7 @@
                 "tags": [
                     "quoteCartItemRepositoryV1"
                 ],
-                "description": "Add an item to (or update the quantity of an existing item in) the specified cart/quote. Admin endpoint \u2014 works on any cart by ID. Request body must be `{\"cartItem\": {\"sku\": \"<product-sku>\", \"qty\": <number>, \"quote_id\": \"<cartId>\"}}`. The `quote_id` in the body MUST be the string form of the `{quoteId}` path parameter; the schema marks only `qty` and `quote_id` as required, but `sku` is required in practice and the request will fail without it. If an item with the same SKU already exists in the cart, its quantity is updated rather than a second line being created. REQUIRED PRODUCT OPTIONS: if the product (check via `GET /V1/products/{sku}`) has non-empty `options[]` entries with `is_require: true`, OR is a configurable/bundle product, this call will return `\"The product's required option(s) weren't entered\"` unless every required option is also supplied in `cartItem.product_option.extension_attributes.custom_options[]`. Each entry is `{\"option_id\": \"<options[*].option_id as string>\", \"option_value\": \"<options[*].values[*].option_type_id as string>\"}`. This applies to `simple`-type products with custom options too, not just configurable ones.",
+                "description": "Add/update the specified cart item.",
                 "operationId": "PostV1CartsQuoteIdItems",
                 "consumes": [
                     "application/json",
@@ -11142,158 +11062,6 @@
                         "required": true,
                         "description": "The cart ID."
                     }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "array",
-                            "description": "Array of payment methods.",
-                            "items": {
-                                "$ref": "#/definitions/quote-data-payment-method-interface"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/selected-payment-method": {
-            "get": {
-                "tags": [
-                    "quotePaymentMethodManagementV1"
-                ],
-                "description": "Returns the payment method for a specified shopping cart.",
-                "operationId": "GetV1CartsMineSelectedpaymentmethod",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-payment-interface"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "quotePaymentMethodManagementV1"
-                ],
-                "description": "Adds a specified payment method to a specified shopping cart.",
-                "operationId": "PutV1CartsMineSelectedpaymentmethod",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PutV1CartsMineSelectedpaymentmethodBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "method"
-                            ],
-                            "properties": {
-                                "method": {
-                                    "$ref": "#/definitions/quote-data-payment-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "string",
-                            "description": "redirect url or error message."
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/payment-methods": {
-            "get": {
-                "tags": [
-                    "quotePaymentMethodManagementV1"
-                ],
-                "description": "Lists available payment methods for a specified shopping cart. This call returns an array of objects, but detailed information about each object’s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#PaymentMethodManagementInterface to determine which call to use to get detailed information about all attributes for an object.",
-                "operationId": "GetV1CartsMinePaymentmethods",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
                 ],
                 "responses": {
                     "200": {
@@ -15032,7 +14800,7 @@
                 "tags": [
                     "checkoutShippingInformationManagementV1"
                 ],
-                "description": "Sets billing+shipping addresses and the shipping carrier/method on a cart, returning the available payment-method codes and totals. Prerequisite for `PUT /V1/carts/{cartId}/order` — a cart that has not had this call cannot be turned into an order. Body shape: `{\"addressInformation\": {\"shipping_address\": {...}, \"billing_address\": {...}, \"shipping_carrier_code\": \"flatrate\", \"shipping_method_code\": \"flatrate\"}}`. Each address dict needs at minimum `firstname`, `lastname`, `street` (array of strings), `city`, `region_id` (numeric, NOT just `region_code` — e.g. 12 for California), `country_id` (e.g. `US`), `postcode`, `telephone`, and `email`. The `flatrate`/`flatrate` carrier/method pair is the default available on this store; the response's `payment_methods[]` lists what can be passed to the subsequent place-order call.",
+                "description": "Sets billing and shipping addresses and the shipping carrier/method on a cart. Returns the available payment methods and totals.",
                 "operationId": "PostV1CartsCartIdShippinginformation",
                 "consumes": [
                     "application/json",
@@ -27040,7 +26808,7 @@
         },
         "quote-data-cart-item-interface": {
             "type": "object",
-            "description": "Interface CartItemInterface. Used as both request body and response shape for cart-item endpoints. On REQUEST (add/update item): `sku`, `qty`, and `quote_id` are the meaningful fields \u2014 `quote_id` must equal the cart/quote ID in the URL path, and although the schema only marks `qty`/`quote_id` as required, `sku` is required in practice. `item_id`, `name`, `price`, and `product_type` are response-only \u2014 server-assigned/derived and ignored if sent. For configurable, bundle, grouped, or downloadable products, supply `product_option` with the appropriate selections (see `quote-data-product-option-interface`); simple products do not need it.",
+            "description": "Interface CartItemInterface",
             "properties": {
                 "item_id": {
                     "type": "integer",
@@ -27048,11 +26816,11 @@
                 },
                 "sku": {
                     "type": "string",
-                    "description": "Product SKU. Required when adding an item, even though the JSON schema does not list it under `required` (server-side validation rejects requests without it). Otherwise, null."
+                    "description": "Product SKU. Otherwise, null."
                 },
                 "qty": {
                     "type": "number",
-                    "description": "Product quantity. Must be > 0. When the same SKU already exists in the cart, posting again updates this line's qty rather than creating a duplicate line."
+                    "description": "Product quantity."
                 },
                 "name": {
                     "type": "string",
