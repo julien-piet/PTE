@@ -27,8 +27,7 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from agent.auth import RefreshableAuth, RoutingAuth
-from config.init_tokens.refresh_shopping_customer_token import refresh_customer_token as _refresh_shopping_customer_tokens
+from agent.auth import RefreshableAuth
 from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_admin_tokens
 from config.servers import SERVER_URLS as _SERVER_URLS
 
@@ -74,20 +73,17 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="session", autouse=True)
 def _inject_shopping_token(agent_runner, request):
     """
-    Fetch both shopping auth tokens once at session start and inject them into
-    the shared agent runner as RefreshableAuth providers.
+    Fetch the shopping admin token once at session start and inject it into
+    the shared agent runner as a RefreshableAuth provider.
 
-    Admin token    — default for all endpoints (catalog, orders, products).
-    Customer token — fallback for endpoints that reject admin tokens
-                     (/carts/mine, /customers/me, shopping_extra :7790/).
-
-    RefreshableAuth (from agent.auth) auto-refreshes a token on every
+    RefreshableAuth (from agent.auth) auto-refreshes the token on every
     get_headers() call whenever it is within 5 minutes of its JWT exp claim.
-    This means no per-test bookkeeping is needed — tokens stay live for the
+    This means no per-test bookkeeping is needed — the token stays live for the
     entire session regardless of how long it runs.
 
-    Initial token values are also written to os.environ so that any env-reading
-    code path (e.g. token_manager) gets a valid token from the start.
+    The initial token value is also written to os.environ so that any
+    env-reading code path (e.g. token_manager) gets a valid token from the
+    start.
     """
     base_url = (
         request.config.getoption("--base-url", default=None)
@@ -100,37 +96,16 @@ def _inject_shopping_token(agent_runner, request):
             "Ensure _init_agent() completed successfully before this fixture runs."
         )
     print(f"\nRefreshing shopping auth tokens from {base_url} ...")
-    admin_token    = _refresh_shopping_admin_tokens(base_url=base_url)
-    customer_token = _refresh_shopping_customer_tokens(base_url=base_url)
+    admin_token = _refresh_shopping_admin_tokens(base_url=base_url)
 
-    # Seed os.environ so that env-reading code paths get a valid token from the
-    # start.  Note: these values are NOT automatically updated when RefreshableAuth
-    # silently renews a token mid-session; they represent the initial values only.
-    os.environ["ADMIN_AUTH_TOKEN"]    = admin_token
-    os.environ["CUSTOMER_AUTH_TOKEN"] = customer_token
+    os.environ["ADMIN_AUTH_TOKEN"] = admin_token
 
-    # RefreshableAuth wraps the token with automatic renewal: on every
-    # get_headers() call it checks the JWT exp claim and fetches a new token via
-    # refresh_fn if fewer than buffer_seconds (default 300 = 5 min) remain.
     _base = base_url  # capture for lambda closure
-    admin_auth = RefreshableAuth(
+    agent_runner._agent.execution_agent.auth = RefreshableAuth(
         initial_token=admin_token,
         refresh_fn=lambda: _refresh_shopping_admin_tokens(base_url=_base),
     )
-    customer_auth = RefreshableAuth(
-        initial_token=customer_token,
-        refresh_fn=lambda: _refresh_shopping_customer_tokens(base_url=_base),
-    )
-    agent_runner._agent.execution_agent.auth = RoutingAuth(
-        default=admin_auth,
-        overrides=[
-            ("/carts/mine",   customer_auth),
-            ("/customers/me", customer_auth),
-            (":7790/",        customer_auth),  # shopping_extra server
-        ],
-    )
     print(f"  Admin token injected    (length={len(admin_token)}, auto-refresh enabled)")
-    print(f"  Customer token injected (length={len(customer_token)}, auto-refresh enabled)")
 
 
 def _make_failure_message(
