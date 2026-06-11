@@ -66,6 +66,39 @@ def _resolve_placeholder(url: str) -> str:
     return url
 
 
+def _extract_final_url_from_outputs(outputs: Dict[str, Any]) -> Optional[str]:
+    """Pull a post/comment URL out of the agent's raw step outputs.
+
+    The API-based agent doesn't navigate, so it can't report a `final_url` from
+    a browser. But mutating MCP tools (create_post, reply_to_comment, …) return
+    the URL of what they just created, and ProgramHtmlEvaluator's
+    `func:reddit_get_post_url('__last_url__')` lookup needs that URL to know
+    which page to inspect. Without it the eval raises and every "post to a
+    forum" task fails regardless of agent correctness.
+
+    Scan steps from the highest-numbered step backward and return the first
+    `post_url` (preferred) or `comment_url` we see. Returns None if the run
+    didn't produce one — voting and subscribe tasks fall here, and that's fine
+    because their evals use hardcoded URLs.
+    """
+    if not isinstance(outputs, dict):
+        return None
+
+    def _step_num(key: str) -> int:
+        m = re.match(r"step_(\d+)", str(key))
+        return int(m.group(1)) if m else -1
+
+    for step_id in sorted(outputs.keys(), key=_step_num, reverse=True):
+        val = outputs[step_id]
+        if not isinstance(val, dict):
+            continue
+        for url_key in ("post_url", "comment_url"):
+            url = val.get(url_key)
+            if isinstance(url, str) and url:
+                return url
+    return None
+
+
 def _login_for_task(
     page,
     task: Dict[str, Any],
@@ -471,26 +504,12 @@ class BaseAgentRunner:
             )
             html_passed = html_detail.get("passed", False)
             # url_match is intentionally skipped here, even for tasks that carry
-            # both eval_types ("url_match" + "program_html").
-            #
-            # Rationale: AgentRunner._run_task always returns final_url=None
-            # because the agent uses direct API calls (curl) rather than a
-            # browser, so it never navigates to a URL. This makes url_match
-            # structurally impossible to satisfy — it would always fail regardless
-            # of whether the agent completed the task correctly.
-            #
-            # Dropping url_match here does not meaningfully weaken evaluation
-            # because:
-            #   1. The program_html evaluator already navigates to reference_url
-            #      when final_url is None, so the "right page" constraint is
-            #      already implicit in every DOM check.
-            #   2. The program_html checks in these tasks are specific enough
-            #      (exact titles, dates, named assignees) that they cannot
-            #      plausibly pass on the wrong page.
-            #   3. url_match was originally paired with program_html as a cheap
-            #      navigation gate for browser-based agents. For an API-based
-            #      agent, program_html alone provides equivalent (and stronger)
-            #      signal.
+            # both eval_types ("url_match" + "program_html"). When _run_task can
+            # recover a final_url (a post URL from create_post) it's a deep link
+            # like /f/headphones/9/... while the url_match reference is the bare
+            # forum page /f/headphones, so they won't compare equal. The
+            # program_html DOM checks on the post page are a stronger signal
+            # than a forum-root URL match anyway.
             passed = html_passed
             # If the agent errored but the eval still passed (e.g. comment was
             # posted before the error), report the pass.  If both failed, surface
@@ -606,7 +625,7 @@ class AgentRunner(BaseAgentRunner):
         result = await self._agent.run_task(prompt, servers={server_name: server_url})
         agent_result = {
             "success": True,
-            "final_url": None,
+            "final_url": _extract_final_url_from_outputs(result.outputs),
             "answer": result.answer,
             "execution_result": result.outputs,
         }

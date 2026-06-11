@@ -212,22 +212,55 @@ class ExecutionAgent:
         if isinstance(foreach_value, list):
             return foreach_value
         if isinstance(foreach_value, str):
+            # concat(step_X.result, step_Y.result, ...)<accessor>
+            # Concatenates list outputs of multiple steps into a single list, then
+            # applies the outer accessor (e.g. [sort_desc:field][:N]) to the combined
+            # result. Useful for ranking/top-N tasks that span multiple paginated
+            # GET calls.
+            m_concat = re.match(r'^concat\(([^)]+)\)(.*)$', foreach_value)
+            if m_concat:
+                refs_str, outer_accessor = m_concat.group(1), m_concat.group(2)
+                combined: List[Any] = []
+                for ref in [r.strip() for r in refs_str.split(',')]:
+                    rm = re.match(r'^(\w+)\.result(.*)$', ref)
+                    if not rm:
+                        continue
+                    sid, sub_acc = rm.group(1), rm.group(2)
+                    out = outputs.get(sid)
+                    if out is None:
+                        continue
+                    if sub_acc:
+                        out = self._follow_accessor(out, sub_acc)
+                    if isinstance(out, list):
+                        combined.extend(out)
+                    elif out is not None:
+                        combined.append(out)
+                if outer_accessor:
+                    resolved = self._follow_accessor(combined, outer_accessor)
+                    if isinstance(resolved, list):
+                        return resolved
+                    return [resolved] if resolved is not None else []
+                return combined
             m = re.match(r'^(\w+)\.result(.*)$', foreach_value)
             if m:
                 step_id, accessor = m.group(1), m.group(2)
                 out = outputs.get(step_id)
-                if out is None:
-                    return []
-                if not accessor:
-                    return out if isinstance(out, list) else [out]
-                resolved = self._follow_accessor(out, accessor)
-                if isinstance(resolved, list):
-                    return resolved
-                return [resolved] if resolved is not None else []
-            # "LOOP_OVER_PRIOR": planner sentinel that was never resolved to a real
-            # step reference.  Fall back to the most recent dependency that produced
-            # a non-empty list output so execution continues correctly.
-            if foreach_value == "LOOP_OVER_PRIOR" and depends_on:
+                if out is not None:
+                    if not accessor:
+                        return out if isinstance(out, list) else [out]
+                    resolved = self._follow_accessor(out, accessor)
+                    if isinstance(resolved, list) and resolved:
+                        return resolved
+                    if resolved is not None and not isinstance(resolved, list):
+                        return [resolved]
+                    # Accessor resolved to None/[] — common when the planner emits a
+                    # bad accessor (e.g. .field on a list-of-lists like [[u1],[u2]]
+                    # produced by an upstream foreach). Fall through to LOOP_OVER_PRIOR
+                    # fallback so the step still iterates the dependency list.
+            # "LOOP_OVER_PRIOR" sentinel OR a failed accessor on a real reference:
+            # fall back to the most recent dependency that produced a non-empty list
+            # so execution continues correctly.
+            if depends_on:
                 for dep_id in reversed(depends_on):
                     out = outputs.get(dep_id)
                     if isinstance(out, list) and out:
@@ -546,9 +579,20 @@ class ExecutionAgent:
 
             # Conditional step: evaluate an equality condition and store the chosen branch.
             if getattr(step, "step_type", "tool_call") == "conditional":
-                lhs, _, rhs = self._resolve(step.condition, ctx.step_outputs).partition(" == ")
+                # Resolve against raw_outputs (full API responses) so deep accessor
+                # chains like [0].author.username work — ctx.step_outputs holds the
+                # LLM-extracted summary which often drops nested fields.
+                resolved_condition = self._resolve(step.condition, raw_outputs)
+                if not isinstance(resolved_condition, str) or " == " not in resolved_condition:
+                    raise _MissingDependency(
+                        f"conditional step '{step.step_id}': condition "
+                        f"{step.condition!r} could not be resolved to a comparable "
+                        f"string (got {resolved_condition!r}). Likely a referenced "
+                        f"step output is missing a field used in the condition."
+                    )
+                lhs, _, rhs = resolved_condition.partition(" == ")
                 result = lhs.strip() == rhs.strip()
-                value = self._resolve(step.if_true if result else step.if_false, ctx.step_outputs)
+                value = self._resolve(step.if_true if result else step.if_false, raw_outputs)
                 raw_outputs[step.step_id] = value
                 ctx.mark_completed(step.step_id, value)
                 branch = "true" if result else "false"
@@ -809,18 +853,65 @@ class ExecutionAgent:
                 ctx.mark_executing(step_id)
 
             steps_to_run = [s for s in plan if s.step_id in ready]
-            try:
-                await asyncio.gather(*[
-                    self._execute_step(s, ctx, plan, raw_outputs) for s in steps_to_run
-                ])
-            except (_MissingDependency, _HttpError):
-                # A step couldn't run (missing dependency or HTTP error).
-                # Mark all remaining unstarted steps as skipped and stop here.
+            # return_exceptions=True so a single failure in the batch doesn't
+            # cancel sibling steps that are parallel alternatives (e.g. a /groups
+            # path and a /users path both running against an ambiguous namespace).
+            # Each step's own except clauses in _execute_step already record the
+            # failure via ctx.mark_failed; transitive dependents are skipped via
+            # the _MissingDependency guard at the top of _execute_step.
+            await asyncio.gather(*[
+                self._execute_step(s, ctx, plan, raw_outputs) for s in steps_to_run
+            ], return_exceptions=True)
+
+            # Alternative-aware early termination:
+            # Steps with the same numeric prefix and different letter suffix
+            # (e.g. step_3a, step_3b) are alternative approaches to the same
+            # sub-goal. After each batch, decide whether any remaining unstarted
+            # step can still potentially succeed:
+            #   - For each "family" (numeric prefix), track if any member succeeded.
+            #   - A remaining step is "viable" if every dependency family either
+            #     has a successful member or is still pending (has unstarted members).
+            #   - If NO remaining step is viable, every path to the goal is blocked
+            #     and we should stop wasting calls — fail the task now.
+            def _family(sid: str) -> str:
+                m = re.match(r"^(step_\d+)[a-z]?$", sid)
+                return m.group(1) if m else sid
+
+            family_succeeded: set = set()
+            family_has_pending: set = set()
+            family_has_failed: set = set()
+            for s in plan:
+                fam = _family(s.step_id)
+                if s.step_id in ctx.completed_steps and s.step_id not in ctx.failed_steps:
+                    family_succeeded.add(fam)
+                elif s.step_id in ctx.failed_steps:
+                    family_has_failed.add(fam)
+                else:
+                    family_has_pending.add(fam)
+
+            remaining_unstarted = [
+                s for s in plan if s.step_id not in ctx.completed_steps
+            ]
+            any_viable = False
+            for s in remaining_unstarted:
+                deps = getattr(s, "depends_on", []) or []
+                blocked = False
+                for d in deps:
+                    dfam = _family(d)
+                    if dfam in family_succeeded or dfam in family_has_pending:
+                        continue
+                    if dfam in family_has_failed:
+                        blocked = True
+                        break
+                if not blocked:
+                    any_viable = True
+                    break
+
+            if remaining_unstarted and not any_viable:
                 tag = f"[task {self.task_id}]" if self.task_id else "[ExecutionAgent]"
-                for s in plan:
-                    if s.step_id not in ctx.completed_steps and s.step_id not in ctx.failed_steps:
-                        ctx.mark_failed(s.step_id, "skipped due to earlier step failure")
-                        print(f"{tag} ✗ {s.step_id} skipped (earlier step failed)")
+                for s in remaining_unstarted:
+                    ctx.mark_failed(s.step_id, "skipped — all alternative paths failed")
+                    print(f"{tag} ✗ {s.step_id} skipped (all alternative paths failed)")
                 break
 
         tag = f"[task {self.task_id}]" if self.task_id else "[ExecutionAgent]"
