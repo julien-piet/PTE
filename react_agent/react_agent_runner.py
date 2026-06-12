@@ -163,7 +163,14 @@ class ReactAgentRunner(BaseAgentRunner):
         try:
             loop = asyncio.get_event_loop()
             while state.iteration < self.max_iterations:
-                action = await loop.run_in_executor(None, self._react_agent.step, state)
+                try:
+                    action = await asyncio.wait_for(
+                        loop.run_in_executor(None, self._react_agent.step, state),
+                        timeout=180,
+                    )
+                except asyncio.TimeoutError:
+                    print(f"\n[Step {state.iteration + 1}] LLM call timed out after 180s — stopping")
+                    break
                 state.iteration += 1
                 step_num = state.iteration
                 action_type = type(action).__name__
@@ -255,9 +262,11 @@ class ReactAgentRunner(BaseAgentRunner):
     # ------------------------------------------------------------------
 
     def _exec_python(self, code: str, gitlab_url: str, token: str) -> str:
-        """Execute a Python code block; capture and return stdout."""
+        """Execute a Python code block; capture and return stdout (thread-safe)."""
+        buf = io.StringIO()
         namespace: Dict[str, Any] = {
             "__builtins__": __builtins__,
+            "print": lambda *a, **kw: print(*a, **{**kw, "file": buf}),
             "requests": __import__("requests"),
             "json": __import__("json"),
             "os": os,
@@ -265,16 +274,11 @@ class ReactAgentRunner(BaseAgentRunner):
             "GITLAB_URL": gitlab_url,
             "GITLAB_TOKEN": token,
         }
-        buf = io.StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = buf
         try:
             exec(compile(code, "<ipython>", "exec"), namespace)  # noqa: S102
             output = buf.getvalue()
         except Exception as exc:
             output = f"{type(exc).__name__}: {exc}"
-        finally:
-            sys.stdout = old_stdout
         return truncate_observation(output or "(no output)")
 
     def _exec_bash(self, command: str) -> str:
