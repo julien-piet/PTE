@@ -150,19 +150,33 @@ def _login_for_task(
         return False
 
     if "reddit" in sites:
-        from api.reddit_pw import login as reddit_login
-        from api.reddit_pw.constants import REDDIT_DOMAIN
-        username = os.getenv("REDDIT_USERNAME", "MarvelsGrantMan136")
-        password = os.getenv("REDDIT_PASSWORD", "test1234")
-        result = reddit_login.login_user(page, username, password)
-        return result.success
+        # Postmill UI login (reddit_login.login_user) authenticates against the
+        # REDDIT_DOMAIN host (default localhost:9999) and stores the cookie
+        # scoped to that host. But our eval URLs come from SERVER_URLS["reddit"]
+        # (127.0.0.1:9999), so the cookie never travels to the post page and the
+        # form's user-vote class appears absent — even though the vote did
+        # persist server-side.
+        #
+        # Use the requests-based session refresh (same one the MCP server uses)
+        # and set PHPSESSID on BOTH hosts so the cookie covers whichever the
+        # eval URL ends up resolving to. Mirrors _make_browser_page in
+        # api/servers/reddit.py.
+        from config.init_tokens.refresh_reddit_session import refresh_session
+        try:
+            phpsessid = refresh_session()
+        except Exception as exc:
+            print(f"   ⚠️  reddit session refresh failed: {exc}")
+            return False
+        page.context.add_cookies([
+            {"name": "PHPSESSID", "value": phpsessid, "domain": d, "path": "/"}
+            for d in ("localhost", "127.0.0.1")
+        ])
+        return True
 
     if "shopping_admin" in sites:
         from api.shopping_pw import login as shopping_login
-        from api.shopping_pw.constants import BASE_URL
-        admin_url = BASE_URL + "/admin"
         username = os.getenv("SHOPPING_ADMIN_USER", "admin")
-        password = os.getenv("SHOPPING_ADMIN_PASS", "admin123")
+        password = os.getenv("SHOPPING_ADMIN_PASS", "admin1234")
         result = shopping_login.login_admin(page, username, password)
         return result.success
 
