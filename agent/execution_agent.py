@@ -636,6 +636,16 @@ class ExecutionAgent:
             # and collect all results as a list stored in ctx.step_outputs.
             foreach_val = getattr(step, "foreach", None)
             if foreach_val is not None:
+                # If the foreach expression embeds inner {step_X.result.field}
+                # references (e.g. JSONPath filter values like
+                # [?(@.subreddit=={step_1.result.name})]), substitute them now
+                # so _follow_accessor sees a concrete filter. Without this the
+                # filter literal "{step_1.result.name}" is compared as a string
+                # and matches nothing — every foreach silently iterates 0 times.
+                if isinstance(foreach_val, str) and "{" in foreach_val:
+                    resolved = self._resolve(foreach_val, ctx.step_outputs)
+                    if isinstance(resolved, str):
+                        foreach_val = resolved
                 # Use raw_outputs (full curl responses) so accessor chains like
                 # [sort_desc:field][:N][*].id operate on the complete API data,
                 # not on the LLM-extracted subset stored in ctx.step_outputs.
