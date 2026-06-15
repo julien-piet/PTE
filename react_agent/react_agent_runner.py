@@ -108,22 +108,6 @@ class ReactAgentRunner(BaseAgentRunner):
         self._react_agent = CodeActAgent(llm=None)  # LLM sourced from config/config.yaml
         print("✓ React Agent initialized\n")
 
-    async def run_agent_on_task(self, task):
-        """Override to do cleanup AFTER the task instead of before."""
-        resetter = self._resetter
-        self._resetter = None  # suppress pre-task reset in super()
-        try:
-            result = await super().run_agent_on_task(task)
-        finally:
-            self._resetter = resetter  # restore
-            if resetter is not None:
-                reset_task = dict(task, require_reset=True) if self.force_reset else task
-                try:
-                    resetter.reset_for_task(reset_task)
-                except Exception as exc:
-                    print(f"   ⚠️  [post-reset] {exc}")
-        return result
-
     async def _run_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Run the CodeActAgent ReAct loop on a single task."""
         intent = task.get("intent", "")
@@ -182,7 +166,7 @@ class ReactAgentRunner(BaseAgentRunner):
                 await self._login_browser(gitlab_url)
                 if start_url:
                     try:
-                        await self._page.goto(start_url, wait_until="load", timeout=30000)
+                        await self._page.goto(start_url, wait_until="domcontentloaded", timeout=30000)
                         await self._inject_bids()
                     except Exception:
                         pass
@@ -397,7 +381,7 @@ class ReactAgentRunner(BaseAgentRunner):
             if m:
                 url = m.group(1)
                 try:
-                    await page.goto(url, wait_until="load", timeout=30000)
+                    await page.goto(url, wait_until="domcontentloaded", timeout=30000)
                     await self._inject_bids()
                 except Exception as exc:
                     errors.append(f"goto({url!r}): {exc}")
@@ -478,7 +462,7 @@ class ReactAgentRunner(BaseAgentRunner):
 
         # Build page-content observation
         try:
-            await page.wait_for_load_state("load", timeout=10000)
+            await page.wait_for_load_state("domcontentloaded", timeout=10000)
         except Exception:
             pass
 

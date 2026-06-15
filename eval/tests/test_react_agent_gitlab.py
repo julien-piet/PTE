@@ -36,6 +36,7 @@ from eval.docker import workers_new as _workers_new
 from eval.tests.agent_test_utils import (
     build_detailed_entry,
     flush_detailed_jsonl,
+    get_model_id,
     task_status,
 )
 from react_agent.react_agent_runner import ReactAgentRunner
@@ -73,7 +74,7 @@ def _load_completed_ids(output_name: Optional[str]) -> set:
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:
-    tasks = json.loads(TASK_FILE.read_text()) #+ json.loads(TASK_FILE2.read_text())
+    tasks = json.loads(TASK_FILE.read_text()) + json.loads(TASK_FILE2.read_text())
     if config is not None:
         task_id = config.getoption("--task-id", default=None)
         if task_id is not None:
@@ -100,6 +101,7 @@ def _flush_results(output_name: Optional[str], result_log: List[Dict[str, Any]],
     out_path = LOGS_DIR / output_name
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model": get_model_id(),
         "interrupted": interrupted,
         "total": len(result_log),
         "passed": sum(1 for e in result_log if e.get("passed")),

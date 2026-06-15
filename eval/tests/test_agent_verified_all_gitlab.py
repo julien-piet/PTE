@@ -48,6 +48,7 @@ from eval.tests.agent_test_utils import (
     build_detailed_entry,
     extract_agent_details,
     flush_detailed_jsonl,
+    get_model_id,
     task_status,
 )
 
@@ -118,6 +119,7 @@ def _flush_results(output_name: Optional[str], result_log: List[Dict[str, Any]],
     out_path = LOGS_DIR / output_name
     summary = {
         "generated_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        "model": get_model_id(),
         "interrupted": interrupted,
         "total": len(result_log),
         "passed": sum(1 for e in result_log if e.get("passed")),
@@ -126,7 +128,7 @@ def _flush_results(output_name: Optional[str], result_log: List[Dict[str, Any]],
     }
     # Write atomically via a temp file so a kill mid-write doesn't corrupt data.
     tmp_path = out_path.with_suffix(".tmp")
-    tmp_path.write_text(json.dumps(summary, indent=2))
+    tmp_path.write_text(json.dumps(summary, indent=2, default=str))
     tmp_path.replace(out_path)
 
 
@@ -311,9 +313,6 @@ def test_agent_accomplishes_gitlab_tasks(
                         "parsed_outputs": result.get("parsed_outputs"),
                         "planning_log":   result.get("planning_log"),
                     }
-                    result_log.append(entry)
-                    _flush_results(output_name, result_log, interrupted=False)
-
                     det_entry = build_detailed_entry(
                         task=task_obj,
                         agent_result=r_agent,
@@ -325,6 +324,9 @@ def test_agent_accomplishes_gitlab_tasks(
                         costs=result.get("costs"),
                     )
                     flush_detailed_jsonl(detailed_out_path, det_entry)
+
+                    result_log.append(entry)
+                    _flush_results(output_name, result_log, interrupted=False)
 
                     outcome = "PASS" if r_passed and not r_error else "FAIL"
                     print(f"\n[{remaining} tasks remaining] Task {task_obj['task_id']} done ({outcome})")

@@ -235,8 +235,6 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             return self
 
     class ToolBasedResponse(BaseModel):
-        tool_call_required: Literal[True]
-        response: Literal[""] = ""  # Must be empty string
         plan: List[Annotated[Union[ConditionalStep, ExecutionStep], Field(discriminator="step_type")]] = Field(
             min_length=1,
             description="Execution plan with at least one step",

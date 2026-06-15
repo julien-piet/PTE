@@ -29,23 +29,30 @@ class _ApiSelection(BaseModel):
 class _ExclusionResult(BaseModel):
     excluded_indices: List[int] = []
 
+class _Arg(BaseModel):
+    key: str
+    value: Union[str, int, float, bool, None]
+
+def _args_to_dict(args: List[_Arg]) -> dict:
+    return {a.key: a.value for a in args}
+
 class _ResolverSpec(BaseModel):
     endpoint_index: int
     capability: str = ""
     satisfies_param: str = ""
-    literal_args: dict = {}
+    literal_args: List[_Arg] = []
     foreach: Optional[Union[str, List]] = None
 
 class _GoalResult(BaseModel):
     goal_index: int
-    literal_args: dict = {}
+    literal_args: List[_Arg] = []
     foreach: Optional[Union[str, List]] = None
     required_resolvers: List[_ResolverSpec] = []
 
 class _ResolverResult(BaseModel):
     endpoint_index: Optional[int] = None
     satisfies_param: str = ""
-    literal_args: dict = {}
+    literal_args: List[_Arg] = []
     foreach: Optional[Union[str, List]] = None
     capability: str = ""
 
@@ -561,8 +568,9 @@ class PlanningAgent:
             "- The foreach step runs once per element and collects all results as a list for the goal step to iterate over.\n\n"
             f"IMPORTANT: goal_index must be an integer from 0 to {len(kept_endpoints) - 1} inclusive.\n\n"
             "Return a JSON object with fields: goal_index, literal_args, foreach, required_resolvers.\n"
-            "Examples (goal_index=2, no resolvers): goal_index=2, literal_args={\"limit\": 25}, foreach=null, required_resolvers=[]\n"
-            "Example with resolver: required_resolvers=[{endpoint_index: 1, capability: \"...\", satisfies_param: \"author_id\", literal_args: {}, foreach: null}]\n"
+            "literal_args is a list of {key, value} pairs for parameters known from the task, e.g. [{\"key\": \"limit\", \"value\": 25}] or [] if none.\n"
+            "Examples (goal_index=2, no resolvers): goal_index=2, literal_args=[], foreach=null, required_resolvers=[]\n"
+            "Example with resolver: required_resolvers=[{endpoint_index: 1, capability: \"...\", satisfies_param: \"author_id\", literal_args: [], foreach: null}]\n"
             "Example multi-entity: foreach=\"LOOP_OVER_PRIOR\", required_resolvers=[{..., foreach: [\"Alice\", \"Bob\"]}]"
         )
 
@@ -585,7 +593,7 @@ class PlanningAgent:
         goal_step = ChainStep(
             endpoint=kept_endpoints[data.goal_index],
             capability="performs the main action of the task",
-            literal_args=data.literal_args,
+            literal_args=_args_to_dict(data.literal_args),
             foreach=data.foreach,
         )
 
@@ -603,7 +611,7 @@ class PlanningAgent:
                 endpoint=ep,
                 capability=r.capability or "provides prerequisite data",
                 satisfies_param=r.satisfies_param,
-                literal_args=r.literal_args,
+                literal_args=_args_to_dict(r.literal_args),
                 foreach=r.foreach,
             ))
 
@@ -653,6 +661,7 @@ class PlanningAgent:
             "Do NOT return this resolver with foreach=null and expect a second call — each resolver endpoint is used at most once.\n"
             "- Otherwise set foreach to null.\n\n"
             "Return a JSON object with fields: endpoint_index (int or null), satisfies_param, literal_args, foreach, capability.\n"
+            "literal_args is a list of {key, value} pairs for parameters known from the task, e.g. [{\"key\": \"search\", \"value\": \"Alice\"}] or [].\n"
             "If nothing fits, set endpoint_index to null."
         )
         data: _ResolverResult = await self._run_agent("_find_resolver", prompt, _ResolverResult)
@@ -670,7 +679,7 @@ class PlanningAgent:
             endpoint=chosen_ep,
             capability=data.capability or "provides prerequisite data",
             satisfies_param=data.satisfies_param,
-            literal_args=data.literal_args,
+            literal_args=_args_to_dict(data.literal_args),
             foreach=data.foreach,
         )
 

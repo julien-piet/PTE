@@ -43,6 +43,7 @@ from eval.tests.agent_test_utils import (
     build_detailed_entry,
     extract_agent_details,
     flush_detailed_jsonl,
+    get_model_id,
 )
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -148,6 +149,7 @@ def _flush_result(out_path: Path, entry: dict) -> None:
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model": get_model_id(),
         "total":  len(results),
         "passed": sum(1 for r in results if r.get("passed")),
         "failed": sum(1 for r in results if not r.get("passed")),
