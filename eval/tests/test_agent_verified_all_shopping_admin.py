@@ -1,62 +1,68 @@
-# eval/tests/test_agent_verified_all_gitlab.py
+# eval/tests/test_agent_verified_all_shopping_admin.py
 #
-# Integration tests: run the agent on every GitLab task in
-# raw_webarena_tasks_all_gitlab.json (186 tasks, both string_match and
-# program_html eval types).
+# Integration tests: run the agent on every Shopping Admin (Luma Admin)
+# task in shopping_admin_verified_string_match.json (88 tasks) +
+# shopping_admin_verified_program_html.json (66 tasks).
 #
-# Tasks run concurrently up to num_workers() at a time, matching the
-# parallelism of scripts/run_tasks_batch_new.py.
+# Tasks run concurrently up to num_workers() at a time when --multi-docker
+# is set; otherwise a single local Magento/Luma Admin instance is used.
 #
-# Run all 186 tasks:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v
+# Run all 154 tasks:
+#   python3 -m pytest eval/tests/test_agent_verified_all_shopping_admin.py -v
 #
 # Smoke test (first 5 tasks):
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-limit 5 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_all_shopping_admin.py --task-limit 5 -v -s
 #
 # Single task by ID:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-id 389 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_all_shopping_admin.py --task-id 423 -v -s
 #
 # Multiple tasks by ID:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-id 389,412,500 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_all_shopping_admin.py --task-id 423,453,500 -v -s
 #
 # Save results to a JSON log:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --output gitlab_results.json
+#   python3 -m pytest eval/tests/test_agent_verified_all_shopping_admin.py -v --output shopping_admin_results.json
 #
-# Force-reset GitLab state before every task:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --force-reset
+# Force-reset shopping_admin state before every write task:
+#   python3 -m pytest eval/tests/test_agent_verified_all_shopping_admin.py -v --force-reset
+#
+# Use multi-docker worker pool:
+#   python3 -m pytest eval/tests/test_agent_verified_all_shopping_admin.py -v --multi-docker
 #
 # Plug in a custom agent runner:
-
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py \
+#   python3 -m pytest eval/tests/test_agent_verified_all_shopping_admin.py \
 #       --agent-runner my_agent_runner.MyAgentRunner -v -s
 
 import asyncio
 import json
 import sys
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pytest
 
-from agent.auth import StaticAuth
+from agent.auth import RefreshableAuth
 from config.servers import SERVER_URLS as _SERVER_URLS
+from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_admin_tokens
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
-from eval.tests.agent_test_utils import (
-    build_detailed_entry,
-    extract_agent_details,
-    flush_detailed_jsonl,
-    get_model_id,
-    task_status,
-)
+from eval.tests.agent_test_utils import extract_agent_details, task_status
 
 
 @asynccontextmanager
-async def _local_session(gitlab_url: str, glpat=None):
-    """Stub worker session for a single local GitLab instance."""
-    yield {"worker_id": "local", "gitlab_url": gitlab_url, "glpat": glpat}
+async def _local_session(shopping_admin_url: str, shopping_url: str):
+    """Stub worker session for a single local Shopping Admin (Luma) instance.
+
+    Both URLs are yielded because the admin Magento token endpoint lives on
+    the storefront URL (port 7770) while the agent talks to the Luma admin
+    panel (port 7780).
+    """
+    yield {
+        "worker_id": "local",
+        "shopping_admin_url": shopping_admin_url,
+        "shopping_url": shopping_url,
+    }
+
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -66,8 +72,8 @@ if str(PROJECT_ROOT) not in sys.path:
 # Task loading
 # ---------------------------------------------------------------------------
 
-TASK_FILE = Path(__file__).parent / "test_files" / "gitlab_verified_string_match.json"
-TASK_FILE2 = Path(__file__).parent / "test_files" / "gitlab_verified_program_html.json"
+TASK_FILE = Path(__file__).parent / "test_files" / "shopping_admin_verified_string_match.json"
+TASK_FILE2 = Path(__file__).parent / "test_files" / "shopping_admin_verified_program_html.json"
 
 LOGS_DIR = Path(__file__).parent / "logs"
 
@@ -118,7 +124,6 @@ def _flush_results(output_name: Optional[str], result_log: List[Dict[str, Any]],
     out_path = LOGS_DIR / output_name
     summary = {
         "generated_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
-        "model": get_model_id(),
         "interrupted": interrupted,
         "total": len(result_log),
         "passed": sum(1 for e in result_log if e.get("passed")),
@@ -127,7 +132,7 @@ def _flush_results(output_name: Optional[str], result_log: List[Dict[str, Any]],
     }
     # Write atomically via a temp file so a kill mid-write doesn't corrupt data.
     tmp_path = out_path.with_suffix(".tmp")
-    tmp_path.write_text(json.dumps(summary, indent=2, default=str))
+    tmp_path.write_text(json.dumps(summary, indent=2))
     tmp_path.replace(out_path)
 
 
@@ -150,6 +155,8 @@ def _make_failure_message(
     ra = ev.get("reference_answers") or {}
     if ra.get("must_include"):
         lines.append(f"  must_include : {ra['must_include']}")
+    if ra.get("must_exclude"):
+        lines.append(f"  must_exclude : {ra['must_exclude']}")
     if ra.get("exact_match") is not None:
         lines.append(f"  exact_match  : {ra['exact_match']!r}")
     if ra.get("fuzzy_match") is not None:
@@ -184,7 +191,7 @@ def _make_failure_message(
 # Test
 # ---------------------------------------------------------------------------
 
-def test_agent_accomplishes_gitlab_tasks(
+def test_agent_accomplishes_shopping_admin_tasks(
     session_event_loop,
     acquire_lock,
     result_log,
@@ -193,18 +200,30 @@ def test_agent_accomplishes_gitlab_tasks(
     tasks = _load_tasks(request.config)
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
-    base_url = request.config.getoption("--base-url") or _SERVER_URLS["gitlab"]
+    # The agent calls the Magento REST API on port 7770 with an admin Bearer
+    # token. Port 7780 hosts a *separate* Magento backend (Luma admin panel)
+    # whose user database does not grant our token any catalog scope (returns
+    # 401 "Magento_Catalog::products"). The shopping_admin URL is only needed
+    # by the program_html Playwright eval, which resolves __SHOPPING_ADMIN__
+    # via DEFAULT_BASE_URLS independently.
+    base_url = request.config.getoption("--base-url") or _SERVER_URLS["shopping"]
+    shopping_storefront_url = base_url
     output_name = request.config.getoption("--output", default=None)
     if not output_name:
         # Always save logs — auto-generate a timestamped filename when --output
         # is not explicitly provided so no run is ever lost.
-        output_name = datetime.now(timezone.utc).strftime("gitlab_%Y%m%d_%H%M%S.json")
-    detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
+        from datetime import datetime, timezone
+        output_name = datetime.now(timezone.utc).strftime("shopping_admin_%Y%m%d_%H%M%S.json")
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
     else:
         n_workers = 1
+
+    single_admin_token: Optional[str] = None
+    if not multi_docker:
+        print("Refreshing shopping admin auth token...")
+        single_admin_token = _refresh_shopping_admin_tokens(base_url=shopping_storefront_url)
 
     print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
 
@@ -219,37 +238,66 @@ def test_agent_accomplishes_gitlab_tasks(
             async with sem:
                 try:
                     if multi_docker:
+                        # workers_new only validates the "shopping" service, but
+                        # the orchestrator co-locates Luma Admin on the same
+                        # worker and returns shopping_admin_url in the same
+                        # response dict. Acquire via "shopping" and read both
+                        # URLs out of the worker session.
                         worker_ctx = _workers_new.worker_session(
                             str(task["task_id"]),
-                            server="gitlab",
+                            server="shopping",
                             acquire_lock=acquire_lock,
-                            read_only=True,
+                            read_only=task.get("read_only", False),
                         )
                     else:
-                        worker_ctx = _local_session(base_url, glpat=None)
+                        worker_ctx = _local_session(base_url, shopping_storefront_url)
 
                     async with worker_ctx as w:
+                        shopping_url_for_worker = w.get("shopping_url", shopping_storefront_url)
+
                         runner = AgentRunner(
                             headless=True,
-                            enable_reset=True,
-                            force_reset=force_reset,
-                            gitlab_base_url=w["gitlab_url"],
+                            enable_reset=False,
+                            force_reset=False,
                         )
-                        runner.server = "gitlab"
-                        runner.base_url = w["gitlab_url"]
+                        # server="shopping" routes the planner's API-filename
+                        # tags (shopping_api_schema.json) to shopping_url,
+                        # where the admin token is authorised. The Playwright
+                        # eval logs into the Luma admin UI on port 7780
+                        # separately, using DEFAULT_BASE_URLS to resolve
+                        # __SHOPPING_ADMIN__.
+                        runner.server = "shopping"
+                        runner.base_url = shopping_url_for_worker
 
                         await runner._init_agent()
 
                         if runner._agent.execution_agent is not None:
-                            if w["glpat"]:
-                                runner._agent.execution_agent.auth = StaticAuth(
-                                    {"PRIVATE-TOKEN": w["glpat"]}
+                            if multi_docker:
+                                admin_token = _refresh_shopping_admin_tokens(
+                                    base_url=shopping_url_for_worker
                                 )
+                            else:
+                                admin_token = single_admin_token
+
+                            # The Magento admin token is valid for catalog,
+                            # orders, customers, products, etc. — everything
+                            # the Luma admin tasks need. Wrap it in
+                            # RefreshableAuth so it auto-renews when the JWT
+                            # exp claim is within 5 minutes of expiry.
+                            _base_for_refresh = shopping_url_for_worker
+                            runner._agent.execution_agent.auth = RefreshableAuth(
+                                initial_token=admin_token,
+                                refresh_fn=lambda: _refresh_shopping_admin_tokens(
+                                    base_url=_base_for_refresh
+                                ),
+                            )
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 
-                        start_time = datetime.now(timezone.utc)
-                        passed, agent_result, error, html_detail = await runner.run_agent_on_task(task)
-                        end_time = datetime.now(timezone.utc)
+                        run_task = task
+                        if force_reset and not task.get("read_only", False):
+                            run_task = {**task, "require_reset": True}
+
+                        passed, agent_result, error, html_detail = await runner.run_agent_on_task(run_task)
 
                         details = extract_agent_details(runner)
                         status = task_status(passed, error, details["plan_steps"])
@@ -266,12 +314,8 @@ def test_agent_accomplishes_gitlab_tasks(
                             "planning_log": details["planning_log"],
                             "worker_id": w["worker_id"],
                             "status": status,
-                            "costs": details.get("costs"),
-                            "start_time": start_time,
-                            "end_time": end_time,
                         }
                 except Exception as e:
-                    _now = datetime.now(timezone.utc)
                     result = {
                         "task": task,
                         "passed": False,
@@ -283,9 +327,6 @@ def test_agent_accomplishes_gitlab_tasks(
                         "execution": None,
                         "worker_id": None,
                         "status": "failed",
-                        "costs": [],
-                        "start_time": _now,
-                        "end_time": _now,
                     }
 
                 # Record result and flush to disk immediately after each task.
@@ -312,18 +353,6 @@ def test_agent_accomplishes_gitlab_tasks(
                         "parsed_outputs": result.get("parsed_outputs"),
                         "planning_log":   result.get("planning_log"),
                     }
-                    det_entry = build_detailed_entry(
-                        task=task_obj,
-                        agent_result=r_agent,
-                        error=r_error,
-                        correct=r_passed and not r_error,
-                        start_time=result["start_time"],
-                        end_time=result["end_time"],
-                        eval_output_dir=str(LOGS_DIR / output_name),
-                        costs=result.get("costs"),
-                    )
-                    flush_detailed_jsonl(detailed_out_path, det_entry)
-
                     result_log.append(entry)
                     _flush_results(output_name, result_log, interrupted=False)
 

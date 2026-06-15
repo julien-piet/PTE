@@ -357,12 +357,8 @@ def create_post_endpoint(payload: CreatePostRequest) -> CreatePostResponse:
             browser.close()
 
 
-@app.get("/list_forums")
-def list_forums_endpoint() -> dict:
-    """
-    Return the names of all forums (subreddits) on this site.
-    Use this to discover the exact forum name before calling /create_post or /forum_posts.
-    """
+def _all_forum_names() -> list[str]:
+    """Fetch the canonical list of forum names from /forums/all."""
     import re as _re
     import requests as _http
     from config.init_tokens.refresh_reddit_session import refresh_session as _refresh
@@ -370,8 +366,99 @@ def list_forums_endpoint() -> dict:
     s = _http.Session()
     s.cookies.set("PHPSESSID", phpsessid)
     r = s.get(f"{REDDIT_BASE_URL}/forums/all")
-    forums = sorted(set(_re.findall(r'/f/([A-Za-z0-9_]+)', r.text)))
-    return {"forums": [{"name": f} for f in forums]}
+    return sorted(set(_re.findall(r'/f/([A-Za-z0-9_]+)', r.text)))
+
+
+@app.get("/list_forums")
+def list_forums_endpoint() -> dict:
+    """
+    Return the names of all forums (subreddits) on this site.
+    Use this to discover the exact forum name before calling /create_post or /forum_posts.
+    """
+    return {"forums": [{"name": f} for f in _all_forum_names()]}
+
+
+@app.get("/find_forum_by_name")
+def find_forum_by_name_endpoint(name: str) -> dict:
+    """
+    Resolve a user-supplied forum name to its canonical form.
+
+    Postmill forum names are case-sensitive (the URL `/f/books` is distinct
+    from `/f/Books`), but task intents often use casual casing ("Books",
+    "r/Books"). This endpoint matches by exact name first, then
+    case-insensitive, and returns the canonical name to pass to /create_post,
+    /forum_posts, /vote_post, etc.
+
+    Returns:
+        {"name": <canonical_name>, "exists": true, "url": "/f/<name>"} on match,
+        {"name": null, "exists": false, "candidates": [...]} when no match.
+        `candidates` is a short list of forums whose name contains the query
+        as a substring (case-insensitive) — useful for fuzzy intents.
+    """
+    query = (name or "").strip()
+    for prefix in ("r/", "f/"):
+        if query.startswith(prefix):
+            query = query[len(prefix):]
+
+    forums = _all_forum_names()
+    if not query:
+        return {"name": None, "exists": False, "candidates": []}
+
+    exact = next((f for f in forums if f == query), None)
+    if exact is None:
+        target = query.lower()
+        exact = next((f for f in forums if f.lower() == target), None)
+
+    if exact is not None:
+        return {"name": exact, "exists": True, "url": f"/f/{exact}"}
+
+    # Normalized matching for the common casual variants the planner emits:
+    #   "relationships"     → strip trailing 's' → "relationship" → in "relationship_advice"
+    #   "deep learning"     → strip whitespace  → "deeplearning"
+    #   "long-distance"     → strip dashes      → "longdistance"
+    #   "Worcester"         → lowercase         → "worcester" → prefix of "worcesterma"
+    def _norm(s: str) -> str:
+        s = "".join(c for c in s.lower() if c.isalnum())
+        # English plural heuristic — only strip for words long enough that
+        # the 's' is unlikely to be load-bearing
+        if len(s) > 4 and s.endswith("s"):
+            s = s[:-1]
+        return s
+
+    nq = _norm(query)
+    if nq:
+        # Score forums by match quality: exact normalized > substring either way
+        exact_norm = next((f for f in forums if _norm(f) == nq), None)
+        if exact_norm is not None:
+            return {
+                "name": exact_norm,
+                "exists": True,
+                "url": f"/f/{exact_norm}",
+                "fuzzy_match": True,
+                "matched_via": "normalized_exact",
+            }
+
+        substr = [f for f in forums if nq in _norm(f) or _norm(f) in nq]
+        # Single unambiguous match — treat as a fuzzy hit so the planner can use
+        # it directly. Without this, queries like "relationships" return
+        # exists=false even though "relationship_advice" is the obvious match,
+        # and downstream steps end up passing null to /create_post.
+        if len(substr) == 1:
+            only = substr[0]
+            return {
+                "name": only,
+                "exists": True,
+                "url": f"/f/{only}",
+                "fuzzy_match": True,
+                "matched_via": "normalized_substring",
+            }
+        if substr:
+            return {"name": None, "exists": False, "candidates": substr[:8]}
+
+    # Final fallback: original case-insensitive substring against raw names
+    target = query.lower()
+    candidates = [f for f in forums if target in f.lower()][:8]
+    return {"name": None, "exists": False, "candidates": candidates}
 
 
 @app.get("/forum_posts", response_model=GetForumPostsResponse)

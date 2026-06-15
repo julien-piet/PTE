@@ -136,54 +136,60 @@ def create_post(
             pass
     page.fill(Selectors.POST_BODY_INPUT, body)
 
-    # Select the forum using Select2-aware interaction.
-    # The #submission_forum element is a Select2-enhanced widget (aria-hidden="true",
-    # class="select2-hidden-accessible"), so Playwright's select_option() cannot find
-    # options by label.  Instead we interact with Select2's custom UI:
-    #   1. Click the visible Select2 container to open the dropdown.
-    #   2. Type the forum name into the search input.
-    #   3. Click the matching result in the dropdown list.
-    # If that fails for any reason we fall back to the native select_option() call.
-    # Strip any "r/" prefix the planner may add (e.g. "r/books" -> "books")
-    forum_clean = forum.lstrip("r/").strip() if forum else forum
-    try:
-        # The Select2 visible widget is a sibling/cousin of the hidden <select>.
-        # Clicking the container opens the dropdown search box.
-        page.locator(".select2-container").first.click(timeout=3000)
-        page.wait_for_timeout(300)  # give Select2 time to open
-        # Type into the search field (Select2 injects this into the body)
-        search_input = page.locator(".select2-search__field, .select2-search--dropdown input")
-        search_input.last.fill(forum_clean, timeout=3000)
-        page.wait_for_timeout(500)  # wait for results to filter
-        # Click the first matching result
-        page.locator(f".select2-results__option:has-text('{forum_clean}')").first.click(timeout=5000)
-        # Close the Select2 dropdown so it no longer intercepts pointer events.
-        # Without this, the open search overlay blocks the "Create submission" button.
-        page.keyboard.press("Escape")
-        page.wait_for_timeout(300)
-    except Exception:
-        # Always close any open Select2 dropdown before proceeding,
-        # otherwise it will intercept pointer events on the submit button.
-        try:
-            page.keyboard.press("Escape")
-            page.wait_for_timeout(200)
-        except Exception:
-            pass
-        # Fallback: try the native select_option (works if Select2 is not active)
-        try:
-            page.select_option(Selectors.POST_FORUM_SELECT, label=forum_clean, timeout=5000)
-        except Exception:
-            pass  # best-effort — let submit proceed and detect failure via URL check
+    # Select the forum by driving the underlying <select> directly.
+    #
+    # The visible widget is a Select2 enhancement on top of #submission_forum.
+    # Earlier versions tried to click-search-click through the Select2 dropdown
+    # and fell back to page.select_option(label=...), but both paths could
+    # silently no-op — Select2 search filtering doesn't always trigger from a
+    # Playwright fill, and label= matches visible TEXT (the rendered forum
+    # title), not the canonical name the agent passes in. When both fail the
+    # form submits with whatever the <select>'s default option was for the
+    # session — observed to be "Jokes" — landing the post in the wrong forum.
+    #
+    # Instead: set the <select>'s value directly via JS (matching <option>
+    # value attributes, case-insensitive) and dispatch a 'change' event so
+    # Select2's binding updates the visible label. This is deterministic and
+    # independent of Select2 state.
+    #
+    # Strip any "r/" / "f/" prefix the planner may add.
+    forum_clean = forum.strip() if forum else forum
+    for prefix in ("r/", "f/"):
+        if forum_clean and forum_clean.startswith(prefix):
+            forum_clean = forum_clean[len(prefix):]
 
-    # Ensure Select2 dropdown is closed before submitting.
-    # Press Escape one more time and click somewhere neutral (the title field)
-    # to guarantee any open dropdown overlay is dismissed.
+    select_result = page.evaluate(
+        """(forumName) => {
+            const select = document.querySelector('#submission_forum');
+            if (!select) return {ok: false, reason: 'select #submission_forum not found'};
+            const target = forumName.toLowerCase();
+            const opt =
+                Array.from(select.options).find(o => o.value === forumName) ||
+                Array.from(select.options).find(o => o.value.toLowerCase() === target) ||
+                Array.from(select.options).find(o => (o.textContent || '').trim().toLowerCase() === target);
+            if (!opt) return {ok: false, reason: 'forum not in options', available: Array.from(select.options).map(o => o.value).slice(0, 8)};
+            select.value = opt.value;
+            select.dispatchEvent(new Event('change', {bubbles: true}));
+            return {ok: true, selected: opt.value};
+        }""",
+        forum_clean,
+    )
+    if not select_result.get("ok"):
+        return CreatePostResult(
+            success=False,
+            post_url=None,
+            error_message=(
+                f"Failed to select forum '{forum_clean}': {select_result.get('reason')}"
+                + (f" (first options: {select_result.get('available')})" if select_result.get('available') else "")
+            ),
+        )
+
+    # If Select2 left a dropdown open (e.g. user code clicked the container
+    # before this function was reached), close it so it can't intercept the
+    # submit button.
     try:
         page.keyboard.press("Escape")
-        page.wait_for_timeout(150)
-        # Click the title field to move focus away from Select2
-        page.click(Selectors.POST_TITLE_INPUT, timeout=2000)
-        page.wait_for_timeout(150)
+        page.wait_for_timeout(100)
     except Exception:
         pass
 
@@ -351,24 +357,39 @@ def delete_all_posts_by_username(
 
 def vote_post(page: Page, post_url: str, direction: str) -> VotePostResult:
     """
-    Vote on a submission (upvote or downvote).
+    Vote on a submission (upvote or downvote). Idempotent.
 
-    Args:
-        page: Playwright Page instance
-        post_url: Full URL of the post
-        direction: "up" or "1" to upvote, "down" or "-1" to downvote
-
-    Returns:
-        VotePostResult with success status
+    Postmill's vote buttons toggle: clicking the up button on an already-upvoted
+    post un-votes it. Naive click-and-return therefore silently flips the vote
+    off whenever residual state from a prior run is present. We read the
+    submission__vote form's class to see the current state, click only when
+    needed, and then re-read the class to confirm the desired state took.
     """
     is_up = direction in ("up", "1", 1)
+    desired_class = "vote--user-upvoted" if is_up else "vote--user-downvoted"
     selector = "button.vote__up" if is_up else "button.vote__down"
 
     try:
         page.goto(post_url, wait_until="networkidle")
-        page.wait_for_selector(selector, timeout=5000)
+        form = page.wait_for_selector("div.submission__vote form", timeout=5000)
+
+        current_class = form.get_attribute("class") or ""
+        if desired_class in current_class:
+            return VotePostResult(success=True)
+
         page.click(selector, timeout=5000)
         page.wait_for_load_state("networkidle")
+
+        form = page.query_selector("div.submission__vote form")
+        new_class = (form.get_attribute("class") or "") if form else ""
+        if desired_class not in new_class:
+            return VotePostResult(
+                success=False,
+                error_message=(
+                    f"Vote did not persist on {post_url}: form class "
+                    f"{new_class!r} missing {desired_class!r} after click"
+                ),
+            )
         return VotePostResult(success=True)
     except TimeoutError:
         return VotePostResult(success=False, error_message=f"Vote button '{selector}' not found on {post_url}")

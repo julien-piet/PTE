@@ -1263,7 +1263,7 @@
       "program_html": [
         {
           "url": "func:reddit_get_post_url('__last_url__')",
-          "locator": "document.querySelector('.submission__inner').outerText",
+          "locator": "document.querySelector('main').outerText",
           "required_contents": {
             "must_include": [
               "To Kill a Mockingbird by Harper Lee",
@@ -1302,7 +1302,7 @@
       "program_html": [
         {
           "url": "func:reddit_get_post_url('__last_url__')",
-          "locator": "document.querySelector('.submission__inner').outerText",
+          "locator": "document.querySelector('main').outerText",
           "required_contents": {
             "must_include": [
               "Harry Potter",
@@ -1341,7 +1341,7 @@
       "program_html": [
         {
           "url": "func:reddit_get_post_url('__last_url__')",
-          "locator": "document.querySelector('.submission__inner').outerText",
+          "locator": "document.querySelector('main').outerText",
           "required_contents": {
             "must_include": [
               "big little lies",
@@ -1380,7 +1380,7 @@
       "program_html": [
         {
           "url": "func:reddit_get_post_url('__last_url__')",
-          "locator": "document.querySelector('.submission__inner').outerText",
+          "locator": "document.querySelector('main').outerText",
           "required_contents": {
             "must_include": [
               "Love story",
@@ -1419,7 +1419,7 @@
       "program_html": [
         {
           "url": "func:reddit_get_post_url('__last_url__')",
-          "locator": "document.querySelector('.submission__inner').outerText",
+          "locator": "document.querySelector('main').outerText",
           "required_contents": {
             "must_include": [
               "Gone with the wind",
@@ -1454,7 +1454,7 @@
         "program_html"
       ],
       "reference_answers": null,
-      "reference_url": "__REDDIT__/f/earthporn",
+      "reference_url": "__REDDIT__/f/connecticut",
       "program_html": [
         {
           "url": "func:reddit_get_post_url('__last_url__')",

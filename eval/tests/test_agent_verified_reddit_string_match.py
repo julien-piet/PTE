@@ -89,6 +89,54 @@ def _get_tasks(config=None) -> List[Dict[str, Any]]:
     return tasks
 
 
+ALL_TASKS: List[Dict[str, Any]] = _load_tasks()
+
+
+def _task_id(task: Dict[str, Any]) -> str:
+    site = task.get("sites", ["reddit"])[0]
+    return f"task_{task['task_id']}_{site}"
+
+
+def pytest_generate_tests(metafunc):
+    if "task" in metafunc.fixturenames:
+        tasks = _get_tasks(metafunc.config)
+        metafunc.parametrize("task", tasks, ids=[_task_id(t) for t in tasks])
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _inject_reddit_token(agent_runner, request):
+    """
+    Fetch a fresh Reddit PHPSESSID once at session start and inject it into
+    the shared agent runner as a StaticAuth cookie header.
+
+    The Postmill Reddit clone uses cookie-based session auth (PHPSESSID).
+    All API calls also need the X-Experimental-API header to access the
+    JSON API endpoints used by the MCP server.
+    """
+    # Two URLs in play. Session refresh has to hit Postmill (where the login
+    # form lives); the agent's tool calls have to hit the FastAPI MCP server
+    # (which exposes /list_forums, /create_post, …). Don't conflate them.
+    postmill_url = (
+        request.config.getoption("--base-url", default=None)
+        or _SERVER_URLS["reddit"]
+    )
+    mcp_url = _SERVER_URLS["reddit_extra"]
+    if agent_runner._agent is None or agent_runner._agent.execution_agent is None:
+        raise RuntimeError(
+            "execution_agent is not initialised — cannot inject Reddit token. "
+            "Ensure _init_agent() completed successfully before this fixture runs."
+        )
+    print(f"\nRefreshing Reddit session from {postmill_url} ...")
+    phpsessid = _refresh_reddit_session(base_url=postmill_url)
+    agent_runner._agent.execution_agent.auth = StaticAuth({
+        "Cookie": f"PHPSESSID={phpsessid}",
+        "X-Experimental-API": "1",
+    })
+    agent_runner.server = "reddit"
+    agent_runner.base_url = mcp_url
+    print(f"  Reddit PHPSESSID injected (prefix={phpsessid[:8]}...); agent target {mcp_url}")
+
+
 def _make_failure_message(
     task: Dict[str, Any],
     agent_result: Optional[Dict[str, Any]],

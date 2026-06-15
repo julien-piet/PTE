@@ -38,6 +38,47 @@
                 }
             }
         },
+        "/find_forum_by_name": {
+            "get": {
+                "summary": "Resolve a user-supplied forum name to its canonical form",
+                "description": "Looks up a forum by exact name, then case-insensitive, then by single unambiguous substring match (so 'relationships' resolves to 'relationship_advice', 'Worcester' to 'WorcesterMA'). Returns the canonical name to pass to /create_post, /forum_posts, /vote_post, etc. When `fuzzy_match` is true in the response, treat `name` as the resolved canonical name and proceed normally. Prefer this over /list_forums + JSONPath filtering when you already know the forum the user is asking about — it's one call and produces the exact case-sensitive name that downstream endpoints require.",
+                "operationId": "find_forum_by_name",
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "description": "Forum name from the user's request (any casing). 'r/' or 'f/' prefixes are stripped."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Match result.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Canonical forum name when exists=true, otherwise null."
+                                },
+                                "exists": {"type": "boolean"},
+                                "url": {
+                                    "type": "string",
+                                    "description": "Relative URL of the forum when exists=true."
+                                },
+                                "candidates": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "Up to 8 substring-match suggestions when exists=false."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/forum_posts": {
             "get": {
                 "summary": "List posts in a forum",
