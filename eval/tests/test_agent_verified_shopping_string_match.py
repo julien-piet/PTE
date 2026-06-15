@@ -28,7 +28,10 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from agent.auth import RefreshableAuth
-from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_admin_tokens
+from config.init_tokens.refresh_shopping_tokens import (
+    refresh_tokens as _refresh_shopping_admin_tokens,
+    write_admin_token_to_env as _persist_admin_token,
+)
 from config.servers import SERVER_URLS as _SERVER_URLS
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -99,6 +102,10 @@ def _inject_shopping_token(agent_runner, request):
     admin_token = _refresh_shopping_admin_tokens(base_url=base_url)
 
     os.environ["ADMIN_AUTH_TOKEN"] = admin_token
+    # Persist the fresh token so the program_html evaluator (which reads
+    # ADMIN_AUTH_TOKEN from config/.server_env) doesn't fall through to a
+    # stale cached value and get 401s on its lookup calls.
+    _persist_admin_token(admin_token)
 
     _base = base_url  # capture for lambda closure
     agent_runner._agent.execution_agent.auth = RefreshableAuth(

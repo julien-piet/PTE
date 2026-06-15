@@ -22578,7 +22578,7 @@
                 "tags": [
                     "divanteReviewApiReviewRepositoryV1"
                 ],
-                "description": "Save review.",
+                "description": "Save review. Omitting `required` fields returns HTTP 500.",
                 "operationId": "PostV1Reviews",
                 "consumes": [
                     "application/json",
@@ -33455,7 +33455,7 @@
         },
         "divante-review-api-data-review-interface": {
             "type": "object",
-            "description": "Represents a Review object Used fully qualified namespaces in annotations for proper work of WebApi request parser",
+            "description": "Represents a Review object.",
             "properties": {
                 "id": {
                     "type": "integer",
@@ -33463,38 +33463,38 @@
                 },
                 "title": {
                     "type": "string",
-                    "description": "Review title"
+                    "description": "Review title / summary text."
                 },
                 "detail": {
                     "type": "string",
-                    "description": "Review detail."
+                    "description": "Review body text."
                 },
                 "nickname": {
                     "type": "string",
-                    "description": "Author nickname."
+                    "description": "Author nickname displayed with the review."
                 },
                 "customer_id": {
                     "type": "integer",
-                    "description": "Customer id."
+                    "description": "Customer id. Required when posting on behalf of a known shopper."
                 },
                 "ratings": {
                     "type": "array",
-                    "description": "Review ratings.",
+                    "description": "Review ratings. Must contain at least one rating vote.",
                     "items": {
                         "$ref": "#/definitions/divante-review-api-data-rating-vote-interface"
                     }
                 },
                 "review_entity": {
                     "type": "string",
-                    "description": "Review entity type. Possible value: product."
+                    "description": "Review entity type. Use default value: \"product\"."
                 },
                 "review_type": {
                     "type": "integer",
-                    "description": "Reviewer type. Possible values: 1 - Customer, 2 - Guest, 3 - Administrator."
+                    "description": "Reviewer type. 1 - Customer (when customer_id is set)."
                 },
                 "review_status": {
                     "type": "integer",
-                    "description": "Review status. Possible values: 1 - Approved, 2 - Pending, 3 - Not Approved."
+                    "description": "Review status. 1 - Approved, 2 - Pending, 3 - Not Approved. Use 1 to publish immediately."
                 },
                 "created_at": {
                     "type": "string",
@@ -33506,26 +33506,25 @@
                 },
                 "store_id": {
                     "type": "integer",
-                    "description": "Store id in which review was added"
+                    "description": "Store id in which review was added. Use 1 for the default store."
                 },
                 "stores": {
                     "type": "array",
-                    "description": "Stores in which review is visible",
+                    "description": "Stores in which review is visible. Send [1] for the default store.",
                     "items": {
                         "type": "integer"
                     }
                 }
             },
             "required": [
-                "id",
                 "title",
                 "detail",
                 "nickname",
+                "customer_id",
                 "ratings",
                 "review_entity",
                 "review_type",
                 "review_status",
-                "created_at",
                 "entity_pk_value",
                 "store_id",
                 "stores"
@@ -33533,7 +33532,7 @@
         },
         "divante-review-api-data-rating-vote-interface": {
             "type": "object",
-            "description": "Represents a ReviewVote object Used fully qualified namespaces in annotations for proper work of WebApi request parser",
+            "description": "Represents a rating vote attached to a review.",
             "properties": {
                 "vote_id": {
                     "type": "integer",
@@ -33541,23 +33540,22 @@
                 },
                 "rating_id": {
                     "type": "integer",
-                    "description": "Rating id"
+                    "description": "Numeric ID of the rating attribute. Default to 1 when no prior reviews exist to copy it from."
                 },
                 "rating_name": {
                     "type": "string",
-                    "description": "Rating code."
+                    "description": "Rating code, typically the literal string \"Rating\"."
                 },
                 "percent": {
                     "type": "integer",
-                    "description": "Review Vote in percent"
+                    "description": "Review vote in percent. Must equal value * 20 (1→20, 2→40, 3→60, 4→80, 5→100)."
                 },
                 "value": {
                     "type": "integer",
-                    "description": "Rating value."
+                    "description": "Star rating, integer 1–5."
                 }
             },
             "required": [
-                "vote_id",
                 "rating_id",
                 "rating_name",
                 "percent",

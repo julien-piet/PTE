@@ -255,4 +255,10 @@ Tasks worded as "reorder", "buy", "place an order", "purchase", or "checkout" RE
 
 CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
 CRITICAL — Order number formatting: Magento stores order numbers (increment_id) zero-padded to 9 digits (e.g., "000000178", not "178" or "00178"). When filtering by increment_id, always zero-pad the input: str(order_number).zfill(9). For example, "00178" → "000000178", "187" → "000000187".
+
+CRITICAL — Configurable products:
+Apparel, footwear, phone cases, and similar products reject add-to-cart / add-to-wishlist with "The product's required option(s) weren't entered" unless variant options are supplied. NEVER assume a product has no options. For any task that adds a product to cart or wishlist, your plan MUST include a `GET /V1/products/{{sku}}` step BEFORE the add step to inspect the `options[]` array, even when the user did not mention size/color — many products are silently configurable. Each option has `option_id`, `title` (e.g. "Color"), `is_require`, and `values[]` where each value has `option_type_id` and `title` (e.g. "Silver"). Match the user's stated preference against the option `title` and value `title` to pick the right numeric IDs; if the user did not specify a preference, pick any in-stock value. Send required options as:
+- Cart (`POST /V1/carts/{{cartId}}/items`): include `product_option.extension_attributes.custom_options: [{{"option_id": "<id>", "option_value": "<type_id>"}}, ...]` alongside `cartItem.sku`/`qty`/`quote_id`.
+- Wishlist (`POST /add_to_wishlist`): pass `options: {{"<option_id>": "<option_type_id>"}}` (both as strings).
+- Keep in mind that the `GET /fuzzy_search` does not return if the product has required options or not, so you may need to check the product details via `GET /V1/products/{{sku}}` to determine if you need to include options when adding to cart or wishlist.
 """

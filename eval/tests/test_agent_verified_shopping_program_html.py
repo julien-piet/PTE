@@ -52,7 +52,10 @@ import pytest
 
 from agent.auth import RefreshableAuth
 from config.servers import SERVER_URLS as _SERVER_URLS
-from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_admin_tokens
+from config.init_tokens.refresh_shopping_tokens import (
+    refresh_tokens as _refresh_shopping_admin_tokens,
+    write_admin_token_to_env as _persist_admin_token,
+)
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
 from eval.tests.agent_test_utils import extract_agent_details, task_status
@@ -256,6 +259,10 @@ def test_agent_accomplishes_shopping_tasks(
     if not multi_docker:
         print("Refreshing shopping auth tokens...")
         single_admin_token = _refresh_shopping_admin_tokens(base_url=base_url)
+        # Persist the fresh token so the program_html evaluator (which reads
+        # ADMIN_AUTH_TOKEN from config/.server_env) doesn't fall through to a
+        # stale cached value and get 401s on its review-lookup calls.
+        _persist_admin_token(single_admin_token)
 
     print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
     print(f"Results written incrementally to {out_path} — safe to Ctrl+C and resume with --resume")
@@ -289,6 +296,7 @@ def test_agent_accomplishes_shopping_tasks(
                         if runner._agent.execution_agent is not None:
                             if multi_docker:
                                 admin_token = _refresh_shopping_admin_tokens(base_url=runner.base_url)
+                                _persist_admin_token(admin_token)
                             else:
                                 admin_token = single_admin_token
 
