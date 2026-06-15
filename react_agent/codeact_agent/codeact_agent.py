@@ -128,16 +128,22 @@ class _ConfigLLM:
     def __init__(self, provider: str, model: str):
         prefix = self._PROVIDER_PREFIX.get(provider.lower())
         self.model = f'{prefix}/{model}' if prefix else model
+        self.total_cost: float = 0.0
 
     def completion(self, messages, stop=None, temperature=0.0, **kwargs):
         import litellm
-        return litellm.completion(
+        response = litellm.completion(
             model=self.model,
             messages=messages,
             stop=stop,
             temperature=temperature,
             **kwargs,
         )
+        try:
+            self.total_cost += litellm.completion_cost(completion_response=response)
+        except Exception:
+            pass
+        return response
 
 
 def _llm_from_config():
@@ -731,7 +737,7 @@ class CodeActAgent(Agent):
             )
             state.num_of_chars += sum(
                 len(message['content']) for message in messages
-            ) + len(llm_response.choices[0].message.content)
+            ) + len(llm_response.choices[0].message.content or '')
             response = llm_response
 
         if response is not None and hasattr(response, 'choices'):

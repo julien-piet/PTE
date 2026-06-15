@@ -49,7 +49,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # ---------------------------------------------------------------------------
 
 TASK_FILE = Path(__file__).parent / "test_files" / "gitlab_verified_string_match.json"
-# TASK_FILE2 = Path(__file__).parent / "test_files" / "gitlab_verified_program_html.json"
+TASK_FILE2 = Path(__file__).parent / "test_files" / "gitlab_verified_program_html.json"
 
 LOGS_DIR = Path(__file__).parent / "logs"
 
@@ -150,6 +150,8 @@ def _make_failure_message(
                     lines.append(f"    excluded_found  : {chk['excluded_found']}")
                 if chk.get("error"):
                     lines.append(f"    error           : {chk['error']}")
+                if chk.get("extracted_content") is not None:
+                    lines.append(f"    content_snippet : {str(chk['extracted_content'])[:300]!r}")
     return "\n".join(lines)
 
 
@@ -219,6 +221,8 @@ def test_react_agent_accomplishes_gitlab_tasks(
 
                         plan_steps = runner._last_steps
                         status = task_status(passed, error, plan_steps)
+                        llm = getattr(getattr(runner, "_react_agent", None), "llm", None)
+                        task_cost = getattr(llm, "total_cost", None)
 
                         result = {
                             "task": task,
@@ -227,9 +231,12 @@ def test_react_agent_accomplishes_gitlab_tasks(
                             "error": error,
                             "html_detail": html_detail,
                             "plan": plan_steps,
+                            "parsed_outputs": None,
+                            "execution": None,
+                            "planning_log": None,
                             "worker_id": w["worker_id"],
                             "status": status,
-                            "costs": [],
+                            "costs": [task_cost] if task_cost is not None else [],
                             "start_time": start_time,
                             "end_time": end_time,
                         }
@@ -268,6 +275,9 @@ def test_react_agent_accomplishes_gitlab_tasks(
                         "worker_id":       result.get("worker_id"),
                         "plan":            result.get("plan"),
                         "plan_step_count": len(result["plan"]) if result.get("plan") else None,
+                        "execution":       result.get("execution"),
+                        "parsed_outputs":  result.get("parsed_outputs"),
+                        "planning_log":    result.get("planning_log"),
                     }
                     result_log.append(entry)
                     _flush_results(output_name, result_log, interrupted=False)
@@ -280,7 +290,7 @@ def test_react_agent_accomplishes_gitlab_tasks(
                         start_time=result["start_time"],
                         end_time=result["end_time"],
                         eval_output_dir=str(LOGS_DIR / output_name),
-                        costs=[],
+                        costs=result.get("costs"),
                     )
                     flush_detailed_jsonl(detailed_out_path, det_entry)
 
