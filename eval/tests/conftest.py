@@ -130,6 +130,12 @@ def pytest_addoption(parser):
             "are re-run. Has no effect when --output is not set."
         ),
     )
+    parser.addoption(
+        "--agent-trace",
+        action="store_true",
+        default=False,
+        help="Print curl commands and raw responses for each execution step.",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -194,10 +200,11 @@ def agent_runner(request, session_event_loop):
         runner_cls = AgentRunner
 
     force_reset = request.config.getoption("--force-reset", default=False)
+    debug = request.config.getoption("--agent-trace", default=False)
     server = request.config.getoption("--server", default="gitlab")
     base_url = request.config.getoption("--base-url") or _SERVER_URLS.get(server, _SERVER_URLS["gitlab"])
     runner = runner_cls(headless=True, enable_reset=True, force_reset=force_reset,
-                        gitlab_base_url=base_url)
+                        gitlab_base_url=base_url, debug=debug)
     runner.server = server
     runner.base_url = base_url
 

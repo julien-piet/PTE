@@ -58,6 +58,32 @@ def _existing_token(env_file: Path, key: str) -> str:
     return ""
 
 
+def write_admin_token_to_env(token: str, server_env_file: "str | Path" = SERVER_ENV) -> None:
+    """
+    Upsert ADMIN_AUTH_TOKEN=<token> into config/.server_env.
+
+    Callers use this after refresh_tokens() so that the program_html evaluator,
+    which reads its admin token from .server_env, sees the fresh value instead
+    of the expired one cached on disk.
+    """
+    path = Path(server_env_file)
+    key = "ADMIN_AUTH_TOKEN"
+    new_line = f"{key}={token}"
+
+    if path.exists():
+        lines = path.read_text().splitlines()
+        for i, line in enumerate(lines):
+            if line.strip().startswith(f"{key}="):
+                lines[i] = new_line
+                break
+        else:
+            lines.append(new_line)
+        path.write_text("\n".join(lines) + "\n")
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(new_line + "\n")
+
+
 def refresh_tokens(
     base_url: str = SHOPPING_BASE_URL,
     credentials_file: "str | Path" = ENV_FILE,
