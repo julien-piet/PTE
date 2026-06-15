@@ -1220,6 +1220,8 @@ class PlanningAgent:
                 # Always include shopping_extra when shopping is selected
                 if "shopping_api_schema.json" in selected_files and "shopping_extra_api_schema.json" not in selected_files:
                     selected_files.append("shopping_extra_api_schema.json")
+                if "shopping_extra_api_schema.json" in selected_files and "shopping_api_schema.json" not in selected_files:
+                    selected_files.append("shopping_api_schema.json")
                 self._record("selected_api_files", selected_files)
                 if not selected_files:
                     raise ValueError(f"No suitable API file found for task: {task!r}")

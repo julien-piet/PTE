@@ -81,12 +81,24 @@
                                     "minimum": 1,
                                     "default": 1,
                                     "description": "Desired quantity to set before adding"
+                                },
+                                "options": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "description": "REQUIRED whenever the target product has any option with `is_require=true`. Omitting it returns success=false with error 'Missing required product options'."
                                 }
                             },
                             "description": "JSON request body for adding to wishlist.",
                             "example": {
-                                "product_url": "elmwood-inn-fine-teas-orange-vanilla-caffeine-free-fruit-infusion-16-ounce-pouch.html",
-                                "quantity": 1
+                                "product_url": "iphone-13-pro-max-case-neon-turtle.html",
+                                "quantity": 1,
+                                "options": {
+                                    "62548": "385287",
+                                    "62547": "385284",
+                                    "62549": "385292"
+                                }
                             }
                         },
                         "description": "Required JSON body. Use product_url and optional quantity."

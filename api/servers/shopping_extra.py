@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 from urllib.parse import quote_plus, urljoin, urlparse
 
 import httpx
@@ -47,6 +47,7 @@ class AddToWishlistResponse(BaseModel):
 class AddToWishlistRequest(BaseModel):
     product_url: str
     quantity: int = 1
+    options: Optional[Dict[str, str]] = None
 
 
 class ProductSearchResult(BaseModel):
@@ -88,6 +89,46 @@ async def fuzzy_search(q: str) -> List[ProductSearchResult]:
     return results
 
 
+def _default_required_options(product_url: str) -> Dict[str, str]:
+    """
+    Fetch the product page and return a dict mapping every required option's
+    input name (e.g. "options[62548]") to the first available value. Returns
+    an empty dict when the product page has no required options.
+    """
+    with httpx.Client(timeout=30.0, follow_redirects=True) as client:
+        response = client.get(product_url)
+        response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    defaults: Dict[str, str] = {}
+    wrapper = soup.select_one("#product-options-wrapper")
+    if wrapper is None:
+        return defaults
+
+    for field in wrapper.select(".field.required"):
+        first_input = field.select_one(
+            'input[name^="options["], select[name^="options["], textarea[name^="options["]'
+        )
+        if first_input is None:
+            continue
+        name = first_input.get("name")
+        if not name or name in defaults:
+            continue
+
+        if first_input.name == "select":
+            option_tag = first_input.find("option", attrs={"value": True})
+            if option_tag is None:
+                continue
+            value = option_tag.get("value")
+        else:
+            value = first_input.get("value")
+
+        if value:
+            defaults[name] = value
+
+    return defaults
+
+
 @app.post("/add_to_wishlist", response_model=AddToWishlistResponse)
 def add_to_wishlist(payload: AddToWishlistRequest) -> AddToWishlistResponse:
     """
@@ -100,6 +141,21 @@ def add_to_wishlist(payload: AddToWishlistRequest) -> AddToWishlistResponse:
 
     if not product_url.startswith(("http://", "https://")):
         normalized_product_url = urljoin(f"{BASE_URL}/", product_url.lstrip("/"))
+
+    option_values: Optional[Dict[str, str]] = None
+    if payload.options:
+        option_values = {}
+        for option_id, option_value_id in payload.options.items():
+            key = option_id if option_id.startswith("options[") else f"options[{option_id}]"
+            option_values[key] = str(option_value_id)
+    else:
+        # If the user did not specify options, use the default required options from the product page.
+        try:
+            defaults = _default_required_options(normalized_product_url)
+        except httpx.HTTPError:
+            defaults = {}
+        if defaults:
+            option_values = defaults
 
     with sync_playwright() as p:
         try:
@@ -116,7 +172,7 @@ def add_to_wishlist(payload: AddToWishlistRequest) -> AddToWishlistResponse:
                 page=page,
                 product_url=normalized_product_url,
                 quantity=quantity,
-                option_values=None,
+                option_values=option_values,
             )
 
             return AddToWishlistResponse(
