@@ -214,27 +214,22 @@ Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1
 - Pagination: Control result pages using `searchCriteria[pageSize]` (number of items per page) and `searchCriteria[currentPage]` (1-indexed page number). Example: `searchCriteria[pageSize]=20&searchCriteria[currentPage]=1`.
 - Getting all items: To fetch all items with no filters, you MUST still pass at least an empty searchCriteria: `?searchCriteria=all` or `?searchCriteria[pageSize]=50`.
 
-CRITICAL — Full-Text Search with `GET /V1/search`:
-  - Always include `searchCriteria[requestName]=quick_search_container` — omitting it causes an HTTP 500 error.
-  - Use `searchCriteria[filterGroups][0][filters][0][field]=search_term` with `conditionType=eq` and the query as the value.
-  - The response returns product IDs and relevance scores only. Follow up with `GET /V1/products` filtering by `entity_id` (using `in` conditionType with a comma-separated list) to retrieve product names.
-  - Example: `GET /V1/search?searchCriteria[requestName]=quick_search_container&searchCriteria[filterGroups][0][filters][0][field]=search_term&searchCriteria[filterGroups][0][filters][0][value]=xbox&searchCriteria[filterGroups][0][filters][0][conditionType]=eq&searchCriteria[pageSize]=20`
-
 CRITICAL — Search Strategy for Product Names:
-  - When you need to find a product by name, use the `GET /fuzzy_search` endpoint (Shopping Extra API) with the product name as the `q` parameter.
-  - This returns an ordered list of product names (Not SKUs) exactly as they appear on the shopping website. The item you are looking for may not be the top ranked item in the list, so make sure you check all returned results carefully.
-  - Use the returned product names to look up further details via `GET /V1/products` filtering by `name` with `eq` conditionType.
+  - When you need to find products by name, use the `GET /fuzzy_search` endpoint (Shopping Extra API) with the product name as the `q` parameter.
+  - This returns an ordered list of product names, product SKUs, and urls, exactly as they appear on the shopping website. The item you are looking for may not be the top ranked item in the list, so make sure you check all returned results carefully.
+  - You can use the returned product names to look up further details via `GET /V1/products` filtering by `name` with `eq` conditionType.
+  - Keep in mind that the `GET /V1/products` might return a large amount of data for each product based on your search filters, so it is more efficient to first use the fuzzy search to find the exact product name and then filter products by that name, rather than fetching all products.
 
 CRITICAL — POST/PUT request body structure:
-The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsMineItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
+The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsQuoteIdItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
 
-For example, POST /V1/carts/mine/items has a body parameter named "PostV1CartsMineItemsBody" whose schema requires a "cartItem" property. The correct request body is:
+For example, POST /V1/carts/{{cartId}}/items has a body parameter whose schema requires a "cartItem" property. The correct request body is:
   {{"cartItem": {{"sku": "...", "qty": 1, "quote_id": "..."}}}}
 NOT:
-  {{"PostV1CartsMineItemsBody": {{"sku": "...", "qty": 1}}}}
+  {{"PostV1CartsQuoteIdItemsBody": {{"sku": "...", "qty": 1}}}}
 
 Common body wrapper keys by endpoint:
-- POST /V1/carts/mine/items → {{"cartItem": {{...}}}}
+- POST /V1/carts/{{cartId}}/items → {{"cartItem": {{...}}}}
 - POST /V1/reviews → {{"review": {{...}}}}
 - POST /V1/cmsPage → {{"page": {{...}}}}
 - POST /V1/cmsBlock → {{"block": {{...}}}}
@@ -248,7 +243,22 @@ CRITICAL — searchCriteria is REQUIRED for list endpoints:
 Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpoints REQUIRE the `searchCriteria` query parameter. Calling these endpoints with no query parameters at all will return HTTP 400 with "searchCriteria is required".
 - Always include at least one `searchCriteria` parameter, even if you do not need any specific filters (see "Getting all items" above).
 
-CRITICAL — For tasks that require a user-specific customer operation (e.g., "add this item to my cart", "update my account info", "what is my order history"), use the given customer email. You can look up their customer ID using `GET /V1/customers/search` with appropriate filters.
+CRITICAL — You are using an Admin authentication token (not a customer token). For any task that operates on a specific customer (e.g., "add this item to my cart", "update my account info", "what is my order history"), you must resolve that customer's ID via `GET /V1/customers/search` filtering on their email, then use the customer-keyed admin endpoints below — there is no "current customer" associated with an admin token, so endpoints that try to infer one from the token will reject the request.
+
+For cart-modifying operations specifically, the admin-token-compatible endpoints are:
+- `POST /V1/customers/{{customerId}}/carts` — get-or-create the customer's active cart. Takes no body and returns a BARE INTEGER cart/quote ID (not a JSON object). Idempotent: if the customer already has an active quote, the existing ID is returned.
+- `POST /V1/carts/{{cartId}}/items` — add or update a line item in that cart. Body is `{{"cartItem": {{"sku": "...", "qty": N, "quote_id": "<cartId>"}}}}`. The `quote_id` value MUST equal the `{{cartId}}` in the URL path, and `sku` is required in practice even though the JSON schema lists only `qty` and `quote_id` under `required`. Some products require option/variant selections before they can be added. Make sure to include any required options in the request body, which you can find by looking up the product's details via `GET /V1/products/{{sku}}` and checking the `options` array for any required fields.
+
+Tasks worded as "reorder", "buy", "place an order", "purchase", or "checkout" REQUIRE actually placing an order — adding a line to a cart is NOT enough; a cart with items but no order is invisible to anything that queries the customer's orders. After populating the cart, order placement uses two more endpoints:
+- `POST /V1/carts/{{cartId}}/shipping-information` — sets billing+shipping addresses and the shipping carrier/method code (commonly `flatrate`/`flatrate`). Address dicts need `region_id` (numeric, e.g. 12 for California) and `email`, not just `region_code`. This call is a prerequisite for placing the order; the response includes the available payment-method codes and totals.
+- `PUT /V1/carts/{{cartId}}/order` — places the order. Body is `{{"paymentMethod": {{"method": "<code>"}}}}` using one of the payment-method codes returned above (commonly `checkmo`). Returns a BARE INTEGER order entity_id (not a JSON object). The customer-token-style `POST /V1/carts/{{cartId}}/payment-information` is not routable with an admin token — use this PUT-order endpoint instead.
+
 CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
 CRITICAL — Order number formatting: Magento stores order numbers (increment_id) zero-padded to 9 digits (e.g., "000000178", not "178" or "00178"). When filtering by increment_id, always zero-pad the input: str(order_number).zfill(9). For example, "00178" → "000000178", "187" → "000000187".
+
+CRITICAL — Configurable products:
+Apparel, footwear, phone cases, and similar products reject add-to-cart / add-to-wishlist with "The product's required option(s) weren't entered" unless variant options are supplied. NEVER assume a product has no options. For any task that adds a product to cart or wishlist, your plan MUST include a `GET /V1/products/{{sku}}` step BEFORE the add step to inspect the `options[]` array, even when the user did not mention size/color — many products are silently configurable. Each option has `option_id`, `title` (e.g. "Color"), `is_require`, and `values[]` where each value has `option_type_id` and `title` (e.g. "Silver"). Match the user's stated preference against the option `title` and value `title` to pick the right numeric IDs; if the user did not specify a preference, pick any in-stock value. Send required options as:
+- Cart (`POST /V1/carts/{{cartId}}/items`): include `product_option.extension_attributes.custom_options: [{{"option_id": "<id>", "option_value": "<type_id>"}}, ...]` alongside `cartItem.sku`/`qty`/`quote_id`.
+- Wishlist (`POST /add_to_wishlist`): pass `options: {{"<option_id>": "<option_type_id>"}}` (both as strings).
+- Keep in mind that the `GET /fuzzy_search` does not return if the product has required options or not, so you may need to check the product details via `GET /V1/products/{{sku}}` to determine if you need to include options when adding to cart or wishlist.
 """

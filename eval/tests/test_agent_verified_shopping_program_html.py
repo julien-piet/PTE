@@ -37,6 +37,9 @@
 # Plug in a custom agent runner:
 #   python3 -m pytest eval/tests/test_agent_shopping_program_html.py \
 #       --agent-runner my_agent_runner.MyAgentRunner -v -s
+#
+# Enable agent trace (print curl commands and raw responses):
+#   python3 -m pytest eval/tests/test_agent_shopping_program_html.py --agent-trace -v -s
 
 import asyncio
 import json
@@ -48,10 +51,12 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from agent.auth import RoutingAuth, RefreshableAuth
+from agent.auth import RefreshableAuth
 from config.servers import SERVER_URLS as _SERVER_URLS
-from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_admin_tokens
-from config.init_tokens.refresh_shopping_customer_token import refresh_customer_token as _refresh_shopping_customer_tokens
+from config.init_tokens.refresh_shopping_tokens import (
+    refresh_tokens as _refresh_shopping_admin_tokens,
+    write_admin_token_to_env as _persist_admin_token,
+)
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
 from eval.tests.agent_test_utils import (
@@ -242,6 +247,7 @@ def test_agent_accomplishes_shopping_tasks(
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
     base_url = request.config.getoption("--base-url") or _SERVER_URLS["shopping"]
+    debug = request.config.getoption("--agent-trace", default=False)
 
     # Resolve output path once — _flush_result writes here after every task.
     # Always save results: use --output filename if provided, otherwise default.
@@ -258,11 +264,13 @@ def test_agent_accomplishes_shopping_tasks(
         n_workers = 1
 
     single_admin_token: Optional[str] = None
-    single_customer_token: Optional[str] = None
     if not multi_docker:
         print("Refreshing shopping auth tokens...")
         single_admin_token = _refresh_shopping_admin_tokens(base_url=base_url)
-        single_customer_token = _refresh_shopping_customer_tokens(base_url=base_url)
+        # Persist the fresh token so the program_html evaluator (which reads
+        # ADMIN_AUTH_TOKEN from config/.server_env) doesn't fall through to a
+        # stale cached value and get 401s on its review-lookup calls.
+        _persist_admin_token(single_admin_token)
 
     print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
     print(f"Results written incrementally to {out_path} — safe to Ctrl+C and resume with --resume")
@@ -287,7 +295,7 @@ def test_agent_accomplishes_shopping_tasks(
                         worker_ctx = _local_session(base_url)
 
                     async with worker_ctx as w:
-                        runner = AgentRunner(headless=True, enable_reset=False, force_reset=False)
+                        runner = AgentRunner(headless=True, enable_reset=False, force_reset=False, debug=debug)
                         runner.server = "shopping"
                         runner.base_url = w["shopping_url"]
 
@@ -295,33 +303,15 @@ def test_agent_accomplishes_shopping_tasks(
 
                         if runner._agent.execution_agent is not None:
                             if multi_docker:
-                                admin_token    = _refresh_shopping_admin_tokens(base_url=runner.base_url)
-                                customer_token = _refresh_shopping_customer_tokens(base_url=runner.base_url)
+                                admin_token = _refresh_shopping_admin_tokens(base_url=runner.base_url)
+                                _persist_admin_token(admin_token)
                             else:
-                                admin_token    = single_admin_token
-                                customer_token = single_customer_token
+                                admin_token = single_admin_token
 
-                            # Use RoutingAuth so the agent always has an admin
-                            # token (for catalog/orders/customers) but switches
-                            # to the customer token for endpoints that reject
-                            # admin tokens. Both tokens auto-refresh when they
-                            # are within 5 minutes of expiry.
                             _base = runner.base_url
-                            admin_auth = RefreshableAuth(
+                            runner._agent.execution_agent.auth = RefreshableAuth(
                                 initial_token=admin_token,
                                 refresh_fn=lambda: _refresh_shopping_admin_tokens(base_url=_base),
-                            )
-                            customer_auth = RefreshableAuth(
-                                initial_token=customer_token,
-                                refresh_fn=lambda: _refresh_shopping_customer_tokens(base_url=_base),
-                            )
-                            runner._agent.execution_agent.auth = RoutingAuth(
-                                default=admin_auth,
-                                overrides=[
-                                    ("/carts/mine",   customer_auth),
-                                    ("/customers/me", customer_auth),
-                                    (":7790/",        customer_auth),  # shopping_extra server
-                                ],
                             )
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 

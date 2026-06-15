@@ -24,7 +24,11 @@
           "locator": "",
           "required_contents": {
             "must_include": [
-              "SPAAS White Taper Candles - 4 Pack |OR| 10 Inch Tall Candles, Scent-Free Premium Wax Candle Sticks |OR| 8 Hour Long Burning White Candlesticks for Home Decoration, Wedding, Holiday and Parties"
+              [
+                "SPAAS White Taper Candles - 4 Pack",
+                "10 Inch Tall Candles, Scent-Free Premium Wax Candle Sticks",
+                "8 Hour Long Burning White Candlesticks for Home Decoration, Wedding, Holiday and Parties"
+              ]
             ]
           }
         }

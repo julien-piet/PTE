@@ -526,6 +526,7 @@ class AgentRunner(BaseAgentRunner):
         api_dir: str = "api",
         env_file: str = "config/.server_env",
         gitlab_base_url: str = _SERVER_URLS["gitlab"],
+        debug: bool = False,
     ):
         super().__init__(
             headless=headless,
@@ -540,6 +541,7 @@ class AgentRunner(BaseAgentRunner):
         # env_file lets parallel workers use a per-worker .server_env with the
         # correct GITLAB_TOKEN for that container.  Defaults to the shared env.
         self.env_file = env_file
+        self.debug = debug
         self.results: Dict[str, Any] = {
             "total": 0,
             "passed": 0,
@@ -558,10 +560,13 @@ class AgentRunner(BaseAgentRunner):
         from agent.agent import Agent
 
         print("🔧 Initializing agent...")
-        self._agent = Agent(api_dir=self.api_dir, env_file=self.env_file)
+        self._agent = Agent(api_dir=self.api_dir, env_file=self.env_file, debug=self.debug)
         server_name = getattr(self, "server", "gitlab")
         base_url = getattr(self, "base_url", self.gitlab_base_url)
-        self._agent.initialize({server_name: base_url})
+        init_servers = {server_name: base_url}
+        if server_name == "shopping":
+            init_servers["shopping_extra"] = _SERVER_URLS["shopping_extra"]
+        self._agent.initialize(init_servers)
         print("✓ Agent initialized\n")
 
     # ------------------------------------------------------------------
