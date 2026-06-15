@@ -28,6 +28,7 @@ import asyncio
 import json
 import sys
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -38,6 +39,12 @@ from config.init_tokens.refresh_reddit_session import refresh_session as _refres
 from config.servers import SERVER_URLS as _SERVER_URLS
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
+from eval.tests.agent_test_utils import (
+    build_detailed_entry,
+    extract_agent_details,
+    flush_detailed_jsonl,
+    get_model_id,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -80,6 +87,54 @@ def _get_tasks(config=None) -> List[Dict[str, Any]]:
             if limit is not None:
                 tasks = tasks[:limit]
     return tasks
+
+
+ALL_TASKS: List[Dict[str, Any]] = _load_tasks()
+
+
+def _task_id(task: Dict[str, Any]) -> str:
+    site = task.get("sites", ["reddit"])[0]
+    return f"task_{task['task_id']}_{site}"
+
+
+def pytest_generate_tests(metafunc):
+    if "task" in metafunc.fixturenames:
+        tasks = _get_tasks(metafunc.config)
+        metafunc.parametrize("task", tasks, ids=[_task_id(t) for t in tasks])
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _inject_reddit_token(agent_runner, request):
+    """
+    Fetch a fresh Reddit PHPSESSID once at session start and inject it into
+    the shared agent runner as a StaticAuth cookie header.
+
+    The Postmill Reddit clone uses cookie-based session auth (PHPSESSID).
+    All API calls also need the X-Experimental-API header to access the
+    JSON API endpoints used by the MCP server.
+    """
+    # Two URLs in play. Session refresh has to hit Postmill (where the login
+    # form lives); the agent's tool calls have to hit the FastAPI MCP server
+    # (which exposes /list_forums, /create_post, …). Don't conflate them.
+    postmill_url = (
+        request.config.getoption("--base-url", default=None)
+        or _SERVER_URLS["reddit"]
+    )
+    mcp_url = _SERVER_URLS["reddit_extra"]
+    if agent_runner._agent is None or agent_runner._agent.execution_agent is None:
+        raise RuntimeError(
+            "execution_agent is not initialised — cannot inject Reddit token. "
+            "Ensure _init_agent() completed successfully before this fixture runs."
+        )
+    print(f"\nRefreshing Reddit session from {postmill_url} ...")
+    phpsessid = _refresh_reddit_session(base_url=postmill_url)
+    agent_runner._agent.execution_agent.auth = StaticAuth({
+        "Cookie": f"PHPSESSID={phpsessid}",
+        "X-Experimental-API": "1",
+    })
+    agent_runner.server = "reddit"
+    agent_runner.base_url = mcp_url
+    print(f"  Reddit PHPSESSID injected (prefix={phpsessid[:8]}...); agent target {mcp_url}")
 
 
 def _make_failure_message(
@@ -142,6 +197,7 @@ def _flush_result(out_path: Path, entry: dict) -> None:
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model": get_model_id(),
         "total":  len(results),
         "passed": sum(1 for r in results if r.get("passed")),
         "failed": sum(1 for r in results if not r.get("passed")),
@@ -175,6 +231,7 @@ def test_agent_produces_correct_answer(
     if not output_name:
         output_name = "reddit_string_match_results.json"
     out_path = LOGS_DIR / output_name
+    detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
 
     if multi_docker:
         n_workers = _workers_new.num_workers()
@@ -225,7 +282,9 @@ def test_agent_produces_correct_answer(
                             })
                             runner._agent.execution_agent.task_id = str(task["task_id"])
 
+                        start_time = datetime.now(timezone.utc)
                         passed, agent_result, error, _html_detail = await runner.run_agent_on_task(task)
+                        end_time = datetime.now(timezone.utc)
 
                         async with remaining_lock:
                             nonlocal remaining
@@ -233,21 +292,29 @@ def test_agent_produces_correct_answer(
                             outcome = "PASS" if passed and not error else "FAIL"
                             print(f"\n[{remaining} tasks remaining] Task {task['task_id']} done ({outcome})")
 
+                        details = extract_agent_details(runner)
                         result = {
                             "task": task,
                             "passed": passed,
                             "agent_result": agent_result,
                             "error": error,
                             "worker_id": w["worker_id"],
+                            "costs": details.get("costs"),
+                            "start_time": start_time,
+                            "end_time": end_time,
                         }
 
                 except Exception as e:
+                    _now = datetime.now(timezone.utc)
                     result = {
                         "task": task,
                         "passed": False,
                         "agent_result": None,
                         "error": str(e),
                         "worker_id": None,
+                        "costs": [],
+                        "start_time": _now,
+                        "end_time": _now,
                     }
 
                 entry = {
@@ -259,9 +326,22 @@ def test_agent_produces_correct_answer(
                     "answer":     result["agent_result"].get("answer") if result["agent_result"] else None,
                     "error":      result["error"],
                 }
+                det_entry = build_detailed_entry(
+                    task=result["task"],
+                    agent_result=result["agent_result"],
+                    error=result["error"],
+                    correct=result["passed"] and not result["error"],
+                    start_time=result["start_time"],
+                    end_time=result["end_time"],
+                    eval_output_dir=str(out_path),
+                    costs=result.get("costs"),
+                )
                 async with write_lock:
                     await asyncio.get_event_loop().run_in_executor(
                         None, _flush_result, out_path, entry
+                    )
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, flush_detailed_jsonl, detailed_out_path, det_entry
                     )
 
                 return result

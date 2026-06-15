@@ -163,31 +163,34 @@ def get_forum_info(page: Page, forum_name: str) -> Optional[Forum]:
 
 def subscribe_to_forum(page: Page, forum_name: str) -> SubscribeForumResult:
     """
-    Subscribe to a forum.
+    Subscribe to a forum. Idempotent and verifies persistence.
 
-    Navigates to the forum page and clicks the Subscribe button if not already subscribed.
-
-    Args:
-        page: Playwright Page instance
-        forum_name: Name of the forum to subscribe to
-
-    Returns:
-        SubscribeForumResult with success status
+    Postmill renders subscribe/unsubscribe as two distinct forms whose action is
+    `/f/{name}/subscribe` or `/f/{name}/unsubscribe`. We target those forms by
+    action URL rather than by button class — the `subscribe-button` class names
+    don't reliably match real Postmill markup. Verifies by re-reading the page
+    for the unsubscribe form after click.
     """
     forum_url = get_forum_url(forum_name)
     page.goto(forum_url, wait_until="networkidle")
 
-    # Check if already subscribed (button shows "Unsubscribe" / has unsubscribe class)
-    unsubscribe_btn = page.query_selector("button.subscribe-button--unsubscribe")
-    if unsubscribe_btn:
+    if page.query_selector("form[action*='/unsubscribe'] button"):
         return SubscribeForumResult(success=True, already_subscribed=True)
 
-    # Click the subscribe button
-    subscribe_btn_selector = "button.subscribe-button--subscribe, button.subscribe-button"
+    subscribe_btn = "form[action*='/subscribe'] button"
     try:
-        page.wait_for_selector(subscribe_btn_selector, timeout=5000)
-        page.click(subscribe_btn_selector)
+        page.wait_for_selector(subscribe_btn, timeout=5000)
+        page.click(subscribe_btn)
         page.wait_for_load_state("networkidle")
+
+        if not page.query_selector("form[action*='/unsubscribe'] button"):
+            return SubscribeForumResult(
+                success=False,
+                error_message=(
+                    f"Subscribe to /f/{forum_name} did not persist: "
+                    f"unsubscribe form absent after click"
+                ),
+            )
         return SubscribeForumResult(success=True)
     except TimeoutError:
         return SubscribeForumResult(success=False, error_message=f"Subscribe button not found on /f/{forum_name}")

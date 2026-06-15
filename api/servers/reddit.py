@@ -39,6 +39,11 @@ from api.reddit_pw import (
     get_comments_on_post,
     comment_on_post_by_url,
     create_forum,
+    send_message,
+    get_messages,
+    delete_post,
+    update_email,
+    get_blocked_users,
 )
 
 REDDIT_BASE_URL = SERVER_URLS["reddit"]
@@ -352,12 +357,8 @@ def create_post_endpoint(payload: CreatePostRequest) -> CreatePostResponse:
             browser.close()
 
 
-@app.get("/list_forums")
-def list_forums_endpoint() -> dict:
-    """
-    Return the names of all forums (subreddits) on this site.
-    Use this to discover the exact forum name before calling /create_post or /forum_posts.
-    """
+def _all_forum_names() -> list[str]:
+    """Fetch the canonical list of forum names from /forums/all."""
     import re as _re
     import requests as _http
     from config.init_tokens.refresh_reddit_session import refresh_session as _refresh
@@ -365,8 +366,99 @@ def list_forums_endpoint() -> dict:
     s = _http.Session()
     s.cookies.set("PHPSESSID", phpsessid)
     r = s.get(f"{REDDIT_BASE_URL}/forums/all")
-    forums = sorted(set(_re.findall(r'/f/([A-Za-z0-9_]+)', r.text)))
-    return {"forums": [{"name": f} for f in forums]}
+    return sorted(set(_re.findall(r'/f/([A-Za-z0-9_]+)', r.text)))
+
+
+@app.get("/list_forums")
+def list_forums_endpoint() -> dict:
+    """
+    Return the names of all forums (subreddits) on this site.
+    Use this to discover the exact forum name before calling /create_post or /forum_posts.
+    """
+    return {"forums": [{"name": f} for f in _all_forum_names()]}
+
+
+@app.get("/find_forum_by_name")
+def find_forum_by_name_endpoint(name: str) -> dict:
+    """
+    Resolve a user-supplied forum name to its canonical form.
+
+    Postmill forum names are case-sensitive (the URL `/f/books` is distinct
+    from `/f/Books`), but task intents often use casual casing ("Books",
+    "r/Books"). This endpoint matches by exact name first, then
+    case-insensitive, and returns the canonical name to pass to /create_post,
+    /forum_posts, /vote_post, etc.
+
+    Returns:
+        {"name": <canonical_name>, "exists": true, "url": "/f/<name>"} on match,
+        {"name": null, "exists": false, "candidates": [...]} when no match.
+        `candidates` is a short list of forums whose name contains the query
+        as a substring (case-insensitive) — useful for fuzzy intents.
+    """
+    query = (name or "").strip()
+    for prefix in ("r/", "f/"):
+        if query.startswith(prefix):
+            query = query[len(prefix):]
+
+    forums = _all_forum_names()
+    if not query:
+        return {"name": None, "exists": False, "candidates": []}
+
+    exact = next((f for f in forums if f == query), None)
+    if exact is None:
+        target = query.lower()
+        exact = next((f for f in forums if f.lower() == target), None)
+
+    if exact is not None:
+        return {"name": exact, "exists": True, "url": f"/f/{exact}"}
+
+    # Normalized matching for the common casual variants the planner emits:
+    #   "relationships"     → strip trailing 's' → "relationship" → in "relationship_advice"
+    #   "deep learning"     → strip whitespace  → "deeplearning"
+    #   "long-distance"     → strip dashes      → "longdistance"
+    #   "Worcester"         → lowercase         → "worcester" → prefix of "worcesterma"
+    def _norm(s: str) -> str:
+        s = "".join(c for c in s.lower() if c.isalnum())
+        # English plural heuristic — only strip for words long enough that
+        # the 's' is unlikely to be load-bearing
+        if len(s) > 4 and s.endswith("s"):
+            s = s[:-1]
+        return s
+
+    nq = _norm(query)
+    if nq:
+        # Score forums by match quality: exact normalized > substring either way
+        exact_norm = next((f for f in forums if _norm(f) == nq), None)
+        if exact_norm is not None:
+            return {
+                "name": exact_norm,
+                "exists": True,
+                "url": f"/f/{exact_norm}",
+                "fuzzy_match": True,
+                "matched_via": "normalized_exact",
+            }
+
+        substr = [f for f in forums if nq in _norm(f) or _norm(f) in nq]
+        # Single unambiguous match — treat as a fuzzy hit so the planner can use
+        # it directly. Without this, queries like "relationships" return
+        # exists=false even though "relationship_advice" is the obvious match,
+        # and downstream steps end up passing null to /create_post.
+        if len(substr) == 1:
+            only = substr[0]
+            return {
+                "name": only,
+                "exists": True,
+                "url": f"/f/{only}",
+                "fuzzy_match": True,
+                "matched_via": "normalized_substring",
+            }
+        if substr:
+            return {"name": None, "exists": False, "candidates": substr[:8]}
+
+    # Final fallback: original case-insensitive substring against raw names
+    target = query.lower()
+    candidates = [f for f in forums if target in f.lower()][:8]
+    return {"name": None, "exists": False, "candidates": candidates}
 
 
 @app.get("/forum_posts", response_model=GetForumPostsResponse)
@@ -573,6 +665,109 @@ def create_forum_endpoint(payload: CreateForumRequest) -> CreateForumResponse:
                 already_existed=result.already_existed,
                 error_message=result.error_message,
             )
+        finally:
+            browser.close()
+
+
+class SendMessageRequest(BaseModel):
+    recipient_username: str
+    subject: str = ""
+    message_body: str
+
+class SendMessageResponse(BaseModel):
+    success: bool
+    error_message: Optional[str] = None
+
+
+class MessageInfo(BaseModel):
+    subject: str
+    sender: str
+    body: str
+
+class GetMessagesResponse(BaseModel):
+    messages: List[MessageInfo]
+
+
+class DeletePostRequest(BaseModel):
+    post_url: str
+
+class DeletePostResponse(BaseModel):
+    success: bool
+    error_message: Optional[str] = None
+
+
+class UpdateEmailRequest(BaseModel):
+    username: str
+    new_email: str
+
+class UpdateEmailResponse(BaseModel):
+    success: bool
+    error_message: Optional[str] = None
+
+
+class GetBlockListResponse(BaseModel):
+    blocked_users: List[str]
+
+
+@app.post("/send_message", response_model=SendMessageResponse)
+def send_message_endpoint(payload: SendMessageRequest) -> SendMessageResponse:
+    """Send a private message (DM) to another user."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            result = send_message(page, payload.recipient_username, payload.subject, payload.message_body)
+            return SendMessageResponse(success=result.success, error_message=result.error_message)
+        finally:
+            browser.close()
+
+
+@app.get("/get_messages", response_model=GetMessagesResponse)
+def get_messages_endpoint() -> GetMessagesResponse:
+    """Read the inbox — returns subject, sender, and body for each message."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            msgs = get_messages(page)
+            return GetMessagesResponse(messages=[
+                MessageInfo(subject=m.subject, sender=m.sender, body=m.body)
+                for m in msgs
+            ])
+        finally:
+            browser.close()
+
+
+@app.post("/delete_post", response_model=DeletePostResponse)
+def delete_post_endpoint(payload: DeletePostRequest) -> DeletePostResponse:
+    """Delete a post by its URL (must be owned by the logged-in user)."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            result = delete_post(page, payload.post_url)
+            return DeletePostResponse(success=result.success, error_message=result.error_message)
+        finally:
+            browser.close()
+
+
+@app.post("/update_email", response_model=UpdateEmailResponse)
+def update_email_endpoint(payload: UpdateEmailRequest) -> UpdateEmailResponse:
+    """Change the logged-in user's email address in account settings."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            result = update_email(page, payload.username, payload.new_email)
+            return UpdateEmailResponse(success=result.success, error_message=result.error_message)
+        finally:
+            browser.close()
+
+
+@app.get("/get_block_list", response_model=GetBlockListResponse)
+def get_block_list_endpoint(username: str) -> GetBlockListResponse:
+    """Return the list of usernames blocked by the given user."""
+    with sync_playwright() as p:
+        browser, page = _make_browser_page(p)
+        try:
+            users = get_blocked_users(page, username)
+            return GetBlockListResponse(blocked_users=users)
         finally:
             browser.close()
 

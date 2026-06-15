@@ -170,12 +170,27 @@ async def worker_session(
     If health-check or GLPAT creation fails, the bad worker is released and a
     fresh one is acquired, up to `init_retries` times total.
 
+    Args:
+        task_id:       Identifier passed to the orchestrator acquire command.
+        server:        One of "gitlab", "shopping", "reddit".
+        max_attempts:  Max retries for acquire_worker_with_retry.
+        wait:          Seconds to wait between acquire retries.
+        acquire_lock:  Optional asyncio.Lock to serialize acquire calls.
+        read_only:     If True, releases the worker with --read-only so the
+                       instance is not restarted after the task. Use this for
+                       tasks that do not modify site state.
+        init_retries:  Max attempts to init (health-check + GLPAT) a fresh worker.
+
     Usage::
 
         async with worker_session(task_id, server="gitlab", acquire_lock=lock) as w:
             # w["worker_id"]  — int
             # w["gitlab_url"] — str, e.g. "http://localhost:20016"
             # w["glpat"]      — str for gitlab, None for other servers
+
+        # Read-only task (no site state modified — skip instance restart on release):
+        async with worker_session(task_id, server="shopping", read_only=True) as w:
+            ...
 
     """
     if server not in _URL_FIELD:

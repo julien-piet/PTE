@@ -5,7 +5,7 @@ shared_env_path: config/.sharedenv
 server_env_path: config/.server_env
 
 # agent_llm_provider: google-gla
-# agent_llm_model: gemini-3-pro-preview
+# agent_llm_model: gemini-3.5-flash
 agent_llm_provider: anthropic
 agent_llm_model: claude-sonnet-4-6
 # agent_llm_model: claude-opus-4-6
@@ -53,7 +53,7 @@ llm_providers:
     temp: 0.0
 
  google:
-  - model: gemini-3-pro-preview
+  - model: gemini-3.5-flash
     temp: 0.0
   - model: gemini-3-flash-preview
     temp: 0.0

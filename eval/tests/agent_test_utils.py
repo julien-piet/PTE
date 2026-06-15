@@ -2,7 +2,12 @@
 #
 # Shared utilities for agent integration tests (gitlab, shopping, and future servers).
 
-from typing import Any, Dict, Optional
+import json
+import subprocess
+from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 def serialize_plan(plan) -> list:
@@ -37,6 +42,7 @@ def extract_agent_details(runner) -> Dict[str, Any]:
     raw_execution = None
     planning_log = None
 
+    costs: list = []
     _agent = getattr(runner, "_agent", None)
     if _agent is not None:
         pr = getattr(_agent, "last_plan_response", None)
@@ -45,6 +51,7 @@ def extract_agent_details(runner) -> Dict[str, Any]:
         pa = getattr(_agent, "planning_agent", None)
         if pa is not None:
             planning_log = getattr(pa, "last_run_log", None)
+            costs = getattr(pa, "last_run_costs", [])
         ea = getattr(_agent, "execution_agent", None)
         if ea is not None:
             raw_execution = getattr(ea, "last_raw_outputs", None)
@@ -57,6 +64,7 @@ def extract_agent_details(runner) -> Dict[str, Any]:
         "parsed_outputs": parsed_outputs,
         "raw_execution": raw_execution,
         "planning_log": planning_log,
+        "costs": costs,
     }
 
 
@@ -67,3 +75,71 @@ def task_status(passed: bool, error: Optional[str], plan_steps: Optional[list]) 
     if passed:
         return "success"
     return "execution_failed"
+
+
+@lru_cache(maxsize=1)
+def get_model_id() -> str:
+    """Return agent_llm_model from config.yaml (same field ModelProvider reads)."""
+    try:
+        from agent.common.configurator import Configurator
+        return str(Configurator().data.agent_llm_model)
+    except Exception:
+        return "unknown"
+
+
+@lru_cache(maxsize=1)
+def get_git_commit() -> str:
+    """Return the current HEAD commit hash."""
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return r.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def build_detailed_entry(
+    task: Dict[str, Any],
+    agent_result: Optional[Dict[str, Any]],
+    error: Optional[str],
+    correct: bool,
+    start_time: datetime,
+    end_time: datetime,
+    eval_output_dir: str,
+    costs: Optional[List] = None,
+) -> Dict[str, Any]:
+    """Build a lightweight JSONL entry in the OpenHands/WebArena result format."""
+    model_id = get_model_id()
+    raw_answer = (agent_result or {}).get("answer") or ""
+    first_sentence = (raw_answer.split(".")[0] + ".").strip() if raw_answer else None
+    valid_costs = [c for c in (costs or []) if c is not None]
+    return {
+        "task_id": task["task_id"],
+        "raw": first_sentence,
+        "answer_id": str(task["answer_id"]) if task.get("answer_id") is not None else "None",
+        "model_id": model_id,
+        "metadata": {
+            "agent_class": "AgentRunner",
+            "model_name": model_id,
+            "max_iterations": None,
+            "eval_output_dir": eval_output_dir,
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "git_commit": get_git_commit(),
+        },
+        "metrics": {
+            "accumulated_cost": sum(valid_costs) if valid_costs else None,
+            "costs": costs or [],
+        },
+        "error": error,
+        "correct": correct,
+        "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+
+def flush_detailed_jsonl(out_path: Path, entry: Dict[str, Any]) -> None:
+    """Append a single task result as one JSON line to the detailed JSONL log."""
+    out_path.parent.mkdir(exist_ok=True)
+    with open(out_path, "a") as f:
+        f.write(json.dumps(entry) + "\n")

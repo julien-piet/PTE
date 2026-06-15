@@ -29,23 +29,30 @@ class _ApiSelection(BaseModel):
 class _ExclusionResult(BaseModel):
     excluded_indices: List[int] = []
 
+class _Arg(BaseModel):
+    key: str
+    value: Union[str, int, float, bool, None]
+
+def _args_to_dict(args: List[_Arg]) -> dict:
+    return {a.key: a.value for a in args}
+
 class _ResolverSpec(BaseModel):
     endpoint_index: int
     capability: str = ""
     satisfies_param: str = ""
-    literal_args: dict = {}
+    literal_args: List[_Arg] = []
     foreach: Optional[Union[str, List]] = None
 
 class _GoalResult(BaseModel):
     goal_index: int
-    literal_args: dict = {}
+    literal_args: List[_Arg] = []
     foreach: Optional[Union[str, List]] = None
     required_resolvers: List[_ResolverSpec] = []
 
 class _ResolverResult(BaseModel):
     endpoint_index: Optional[int] = None
     satisfies_param: str = ""
-    literal_args: dict = {}
+    literal_args: List[_Arg] = []
     foreach: Optional[Union[str, List]] = None
     capability: str = ""
 
@@ -91,10 +98,12 @@ class PlanningAgent:
         self.debug_prompts = debug_prompts
         self.debug_responses = debug_responses
         self._run_log: list = []  # structured log for the current plan() call — always populated
+        self._run_costs: list = []  # per-LLM-call costs for the last plan() run
 
         config = Configurator()
         config.load_all_env()
         provider = ModelProvider(config)
+        self._model_name: str = provider.model_name  # from config.yaml agent_llm_model
         self.llm = provider.get_llm_model_provider()
         self._agent_kwargs = provider.get_agent_kwargs()
 
@@ -124,6 +133,11 @@ class PlanningAgent:
         """Return the accumulated log from the most recent plan() call."""
         return list(self._run_log)
 
+    @property
+    def last_run_costs(self) -> list:
+        """Return per-LLM-call costs (floats) from the most recent plan() call."""
+        return list(self._run_costs)
+
     async def _run_agent(self, label: str, prompt: str, output_type: type) -> Any:
         self._debug_print(label, prompt=prompt)
         if self.debug_prompts or self.debug_responses:
@@ -138,6 +152,17 @@ class PlanningAgent:
             print(f"\n{err_msg}")
             self._record(f"{label}.llm_error", err_msg)
             raise
+        try:
+            import litellm
+            usage = result.usage()
+            cost_in, cost_out = litellm.cost_per_token(
+                model=self._model_name,
+                prompt_tokens=usage.input_tokens or 0,
+                completion_tokens=usage.output_tokens or 0,
+            )
+            self._run_costs.append(round(cost_in + cost_out, 8))
+        except Exception:
+            self._run_costs.append(None)
         output = result.output
         self._record(f"{label}.response", output.model_dump(mode="json") if hasattr(output, "model_dump") else output)
         self._debug_print(label, response=str(output))
@@ -541,12 +566,25 @@ class PlanningAgent:
             "include that resolver endpoint EXACTLY ONCE with foreach set to all their names: "
             'foreach: ["Name1", "Name2", ...]. Do NOT list the same resolver endpoint multiple times.\n'
             "- The foreach step runs once per element and collects all results as a list for the goal step to iterate over.\n\n"
+            f"IMPORTANT: goal_index must be an integer from 0 to {len(kept_endpoints) - 1} inclusive.\n\n"
             "Return a JSON object with fields: goal_index, literal_args, foreach, required_resolvers.\n"
-            "Examples (goal_index=2, no resolvers): goal_index=2, literal_args={\"limit\": 25}, foreach=null, required_resolvers=[]\n"
-            "Example with resolver: required_resolvers=[{endpoint_index: 1, capability: \"...\", satisfies_param: \"author_id\", literal_args: {}, foreach: null}]\n"
+            "literal_args is a list of {key, value} pairs for parameters known from the task, e.g. [{\"key\": \"limit\", \"value\": 25}] or [] if none.\n"
+            "Examples (goal_index=2, no resolvers): goal_index=2, literal_args=[], foreach=null, required_resolvers=[]\n"
+            "Example with resolver: required_resolvers=[{endpoint_index: 1, capability: \"...\", satisfies_param: \"author_id\", literal_args: [], foreach: null}]\n"
             "Example multi-entity: foreach=\"LOOP_OVER_PRIOR\", required_resolvers=[{..., foreach: [\"Alice\", \"Bob\"]}]"
         )
+
+        MAX_GOAL_RETRIES = 2
         data: _GoalResult = await self._run_agent("_pick_goal", prompt, _GoalResult)
+        for _retry in range(MAX_GOAL_RETRIES):
+            if 0 <= data.goal_index < len(kept_endpoints):
+                break
+            retry_prompt = (
+                f"⚠️ CORRECTION REQUIRED: you returned goal_index={data.goal_index} but valid indices are "
+                f"0 to {len(kept_endpoints) - 1}. Re-read the endpoint list and return a corrected response.\n\n"
+                + prompt
+            )
+            data = await self._run_agent("_pick_goal", retry_prompt, _GoalResult)
 
         if not (0 <= data.goal_index < len(kept_endpoints)):
             raise ValueError(
@@ -555,7 +593,7 @@ class PlanningAgent:
         goal_step = ChainStep(
             endpoint=kept_endpoints[data.goal_index],
             capability="performs the main action of the task",
-            literal_args=data.literal_args,
+            literal_args=_args_to_dict(data.literal_args),
             foreach=data.foreach,
         )
 
@@ -573,7 +611,7 @@ class PlanningAgent:
                 endpoint=ep,
                 capability=r.capability or "provides prerequisite data",
                 satisfies_param=r.satisfies_param,
-                literal_args=r.literal_args,
+                literal_args=_args_to_dict(r.literal_args),
                 foreach=r.foreach,
             ))
 
@@ -623,6 +661,7 @@ class PlanningAgent:
             "Do NOT return this resolver with foreach=null and expect a second call — each resolver endpoint is used at most once.\n"
             "- Otherwise set foreach to null.\n\n"
             "Return a JSON object with fields: endpoint_index (int or null), satisfies_param, literal_args, foreach, capability.\n"
+            "literal_args is a list of {key, value} pairs for parameters known from the task, e.g. [{\"key\": \"search\", \"value\": \"Alice\"}] or [].\n"
             "If nothing fits, set endpoint_index to null."
         )
         data: _ResolverResult = await self._run_agent("_find_resolver", prompt, _ResolverResult)
@@ -640,7 +679,7 @@ class PlanningAgent:
             endpoint=chosen_ep,
             capability=data.capability or "provides prerequisite data",
             satisfies_param=data.satisfies_param,
-            literal_args=data.literal_args,
+            literal_args=_args_to_dict(data.literal_args),
             foreach=data.foreach,
         )
 
@@ -1211,6 +1250,7 @@ class PlanningAgent:
 
         for planning_attempt in range(MAX_PLANNING_ATTEMPTS):
             self._run_log = []
+            self._run_costs = []
             self._record("task", task)
             if planning_attempt > 0:
                 self._record("planning_attempt", planning_attempt + 1)

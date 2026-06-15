@@ -22,6 +22,7 @@ import asyncio
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -33,12 +34,19 @@ from config.init_tokens.refresh_shopping_tokens import (
     write_admin_token_to_env as _persist_admin_token,
 )
 from config.servers import SERVER_URLS as _SERVER_URLS
+from eval.tests.agent_test_utils import (
+    build_detailed_entry,
+    extract_agent_details,
+    flush_detailed_jsonl,
+    get_model_id,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 TASK_FILE = Path(__file__).parent / "test_files" / "shopping_verified_string_match.json"
+LOGS_DIR = Path(__file__).parent / "logs"
 
 
 def _load_tasks() -> List[Dict[str, Any]]:
@@ -158,10 +166,31 @@ def test_agent_produces_correct_answer(
     agent_runner,
     session_event_loop,
     result_log,
+    request,
     task: Dict[str, Any],
 ) -> None:
+    output_name = request.config.getoption("--output", default=None) or "shopping_string_match_results.json"
+    detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
+
+    start_time = datetime.now(timezone.utc)
     passed, agent_result, error, _html_detail = session_event_loop.run_until_complete(
         agent_runner.run_agent_on_task(task)
+    )
+    end_time = datetime.now(timezone.utc)
+
+    details = extract_agent_details(agent_runner)
+    flush_detailed_jsonl(
+        detailed_out_path,
+        build_detailed_entry(
+            task=task,
+            agent_result=agent_result,
+            error=error,
+            correct=passed and not error,
+            start_time=start_time,
+            end_time=end_time,
+            eval_output_dir=str(LOGS_DIR / output_name),
+            costs=details.get("costs"),
+        ),
     )
 
     result_log.append({

@@ -185,6 +185,19 @@ class ProgramHtmlEvaluator:
                     'document.querySelector(\'[id="notes-list"]\').children.length > 0',
                     timeout=10000,
                 )
+                # Scroll to the bottom to trigger lazy-loading of later notes (e.g. a
+                # newly posted comment that appears after the initial viewport batch).
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                page.wait_for_timeout(2000)
+                # Re-scroll in case the page extended further after first scroll
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                page.wait_for_timeout(1000)
+                # Wait for at least one .timeline-discussion-body to be rendered —
+                # this is the specific class the lastElementChild locator queries.
+                try:
+                    page.wait_for_selector(".timeline-discussion-body", timeout=5000)
+                except Exception:
+                    pass
             except Exception:
                 pass  # Fall through to locator eval which will surface the error
 

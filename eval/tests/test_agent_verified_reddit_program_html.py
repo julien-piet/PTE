@@ -45,7 +45,13 @@ from config.init_tokens.refresh_reddit_session import refresh_session as _refres
 from config.servers import SERVER_URLS as _SERVER_URLS
 from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
-from eval.tests.agent_test_utils import extract_agent_details, task_status
+from eval.tests.agent_test_utils import (
+    build_detailed_entry,
+    extract_agent_details,
+    flush_detailed_jsonl,
+    get_model_id,
+    task_status,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -212,6 +218,7 @@ def _flush_result(out_path: Path, entry: dict) -> None:
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model": get_model_id(),
         "total":  len(results),
         "passed": sum(1 for r in results if r.get("passed")),
         "failed": sum(1 for r in results if not r.get("passed")),
@@ -298,6 +305,7 @@ def test_agent_accomplishes_reddit_tasks(
     if not output_name:
         output_name = "reddit_program_html_results.json"
     out_path = LOGS_DIR / output_name
+    detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
 
     multi_docker = request.config.getoption("--multi-docker", default=False)
 
@@ -363,7 +371,9 @@ def test_agent_accomplishes_reddit_tasks(
                         if force_reset and not task.get("read_only", False):
                             run_task = {**task, "require_reset": True}
 
+                        start_time = datetime.now(timezone.utc)
                         passed, agent_result, error, html_detail = await runner.run_agent_on_task(run_task)
+                        end_time = datetime.now(timezone.utc)
 
                         # State restoration only needed in single mode; multi-docker
                         # workers are isolated per task.
@@ -399,9 +409,13 @@ def test_agent_accomplishes_reddit_tasks(
                             "planning_log": details["planning_log"],
                             "worker_id": w["worker_id"],
                             "status": status,
+                            "costs": details.get("costs"),
+                            "start_time": start_time,
+                            "end_time": end_time,
                         }
 
                 except Exception as e:
+                    _now = datetime.now(timezone.utc)
                     result = {
                         "task": task,
                         "passed": False,
@@ -414,12 +428,28 @@ def test_agent_accomplishes_reddit_tasks(
                         "planning_log": None,
                         "worker_id": None,
                         "status": "failed",
+                        "costs": [],
+                        "start_time": _now,
+                        "end_time": _now,
                     }
 
                 entry = _build_log_entry(result)
+                det_entry = build_detailed_entry(
+                    task=result["task"],
+                    agent_result=result["agent_result"],
+                    error=result["error"],
+                    correct=bool(result["passed"]) and not result["error"],
+                    start_time=result["start_time"],
+                    end_time=result["end_time"],
+                    eval_output_dir=str(out_path),
+                    costs=result.get("costs"),
+                )
                 async with write_lock:
                     await asyncio.get_event_loop().run_in_executor(
                         None, _flush_result, out_path, entry
+                    )
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, flush_detailed_jsonl, detailed_out_path, det_entry
                     )
 
                 return result

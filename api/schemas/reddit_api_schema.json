@@ -38,6 +38,47 @@
                 }
             }
         },
+        "/find_forum_by_name": {
+            "get": {
+                "summary": "Resolve a user-supplied forum name to its canonical form",
+                "description": "Looks up a forum by exact name, then case-insensitive, then by single unambiguous substring match (so 'relationships' resolves to 'relationship_advice', 'Worcester' to 'WorcesterMA'). Returns the canonical name to pass to /create_post, /forum_posts, /vote_post, etc. When `fuzzy_match` is true in the response, treat `name` as the resolved canonical name and proceed normally. Prefer this over /list_forums + JSONPath filtering when you already know the forum the user is asking about — it's one call and produces the exact case-sensitive name that downstream endpoints require.",
+                "operationId": "find_forum_by_name",
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "description": "Forum name from the user's request (any casing). 'r/' or 'f/' prefixes are stripped."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Match result.",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Canonical forum name when exists=true, otherwise null."
+                                },
+                                "exists": {"type": "boolean"},
+                                "url": {
+                                    "type": "string",
+                                    "description": "Relative URL of the forum when exists=true."
+                                },
+                                "candidates": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "Up to 8 substring-match suggestions when exists=false."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/forum_posts": {
             "get": {
                 "summary": "List posts in a forum",
@@ -620,6 +661,195 @@
                             "properties": {
                                 "success": {"type": "boolean"},
                                 "error_message": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/send_message": {
+            "post": {
+                "summary": "Send a private message to a user",
+                "description": "Send a DM to another user. Navigates to /user/{recipient}/compose_message and submits the message form.",
+                "operationId": "send_message",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "required": ["recipient_username", "message_body"],
+                            "properties": {
+                                "recipient_username": {
+                                    "type": "string",
+                                    "description": "Username of the message recipient"
+                                },
+                                "subject": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "Message subject line (optional)"
+                                },
+                                "message_body": {
+                                    "type": "string",
+                                    "description": "Body text of the message"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Send result",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "success": {"type": "boolean"},
+                                "error_message": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get_messages": {
+            "get": {
+                "summary": "Read the inbox",
+                "description": "Scrape the /messages page and return each message's subject, sender, and body preview.",
+                "operationId": "get_messages",
+                "produces": ["application/json"],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "List of inbox messages",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "messages": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "subject": {"type": "string"},
+                                            "sender": {"type": "string"},
+                                            "body": {"type": "string"}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/delete_post": {
+            "post": {
+                "summary": "Delete a post",
+                "description": "Delete a post by its URL. The logged-in user must be the post owner.",
+                "operationId": "delete_post",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "required": ["post_url"],
+                            "properties": {
+                                "post_url": {
+                                    "type": "string",
+                                    "description": "Full URL of the post to delete"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Delete result",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "success": {"type": "boolean"},
+                                "error_message": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/update_email": {
+            "post": {
+                "summary": "Update the logged-in user's email address",
+                "description": "Change the email address for a user account via /user/{username}/account settings.",
+                "operationId": "update_email",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "required": ["username", "new_email"],
+                            "properties": {
+                                "username": {
+                                    "type": "string",
+                                    "description": "The logged-in user's username"
+                                },
+                                "new_email": {
+                                    "type": "string",
+                                    "description": "New email address to set"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update result",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "success": {"type": "boolean"},
+                                "error_message": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get_block_list": {
+            "get": {
+                "summary": "Get the block list for a user",
+                "description": "Return the list of usernames blocked by the given user, scraped from /user/{username}/block_list.",
+                "operationId": "get_block_list",
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "description": "The username whose block list to fetch"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Block list",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "blocked_users": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "List of blocked usernames"
+                                }
                             }
                         }
                     }
