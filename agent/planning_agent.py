@@ -41,19 +41,19 @@ class _ResolverSpec(BaseModel):
     capability: str = ""
     satisfies_param: str = ""
     literal_args: List[_Arg] = []
-    foreach: Optional[Union[str, List]] = None
+    foreach: Optional[Union[str, List[str]]] = None
 
 class _GoalResult(BaseModel):
     goal_index: int
     literal_args: List[_Arg] = []
-    foreach: Optional[Union[str, List]] = None
+    foreach: Optional[Union[str, List[str]]] = None
     required_resolvers: List[_ResolverSpec] = []
 
 class _ResolverResult(BaseModel):
     endpoint_index: Optional[int] = None
     satisfies_param: str = ""
     literal_args: List[_Arg] = []
-    foreach: Optional[Union[str, List]] = None
+    foreach: Optional[Union[str, List[str]]] = None
     capability: str = ""
 
 class _CheckResult(BaseModel):
@@ -77,7 +77,7 @@ class ChainStep(BaseModel):
     capability: str
     satisfies_param: str = ""        # which param in the next chain step this step's output satisfies
     literal_args: dict = {}          # {param_name: value} directly from the task
-    foreach: Union[str, List, None] = None  # literal list or "step_N.result[*].field" reference
+    foreach: Union[str, List[str], None] = None  # literal list or "step_N.result[*].field" reference
 
 
 class PlanningAgent:

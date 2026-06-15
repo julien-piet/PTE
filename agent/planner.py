@@ -6,7 +6,23 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Annotated, Any, Dict, List, Literal, Optional, Sequence, Set, Tuple, Union
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, GetJsonSchemaHandler, model_validator
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema as _core_schema
+
+
+class _AnyValue:
+    """Runtime-accepts any JSON value (str/int/float/bool/list/dict/None).
+    Presents a primitive-only schema so Gemini doesn't see additionalProperties."""
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source, _handler):
+        return _core_schema.no_info_plain_validator_function(lambda v: v)
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _cs, _handler: GetJsonSchemaHandler) -> JsonSchemaValue:
+        return {"anyOf": [{"type": "string"}, {"type": "integer"},
+                          {"type": "number"}, {"type": "boolean"}]}
 
 
 # =======================
@@ -47,7 +63,7 @@ class ConditionalStep(BaseModel):
     hints: str = Field(default="", description="Optional human-readable notes.")
     # Stubs so generic plan-walking code (pretty_print, etc.) doesn't need special-casing
     tool_name: None = None
-    arguments: list = Field(default_factory=list)
+    arguments: List[str] = Field(default_factory=list)
     foreach: None = None
     base_url: str = ""
     returns: str = ""
@@ -88,7 +104,7 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
 
     class Argument(BaseModel):
         name: str = Field(description="Name of the argument parameter")
-        value: Union[str, int, float, bool, dict, list] = Field(
+        value: _AnyValue = Field(
             description=(
                 "Value of the argument. Literals can be any JSON type. "
                 "References must be a string placeholder like '{step_1.result}' or '{loop_item}'."
@@ -211,7 +227,7 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
             default="",
             description="Base URL of the API server for this step (e.g. http://127.0.0.1:8023/api/v4)",
         )
-        foreach: Optional[Union[str, List]] = Field(
+        foreach: Optional[Union[str, List[Union[str, int, float, bool]]]] = Field(
             default=None,
             description=(
                 "If set, run this step once per element and collect all results as a list. "

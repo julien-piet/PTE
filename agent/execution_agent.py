@@ -22,10 +22,11 @@ from pydantic import BaseModel
 from pydantic_ai import Agent
 
 from agent.auth import AuthProvider
+from agent.planner import _AnyValue
 
 class _ParsedValue(BaseModel):
     found: bool
-    value: Union[str, int, float, bool, list, dict, None] = None
+    value: _AnyValue = None
     reason: Optional[str] = None
 
 
