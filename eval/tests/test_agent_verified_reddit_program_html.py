@@ -352,7 +352,12 @@ def test_agent_accomplishes_reddit_tasks(
                     async with worker_ctx as w:
                         runner = AgentRunner(headless=True, enable_reset=False, force_reset=False)
                         runner.server = "reddit"
-                        runner.base_url = w["reddit_url"]
+                        # The agent's tool calls go to the FastAPI MCP server
+                        # (reddit_extra, default 127.0.0.1:7791), NOT to Postmill
+                        # itself (reddit, 127.0.0.1:9999, used for login/session
+                        # refresh above). Mirrors scripts/run_tasks_batch_new.py
+                        # which routes `reddit` calls to reddit_extra's URL.
+                        runner.base_url = _SERVER_URLS["reddit_extra"]
 
                         await runner._init_agent()
 
