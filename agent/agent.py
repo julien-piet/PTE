@@ -134,7 +134,7 @@ class Agent:
 
         plan_response = await asyncio.wait_for(
             self.planning_agent.plan(prompt),
-            timeout=120,
+            timeout=300,    #more for gemini since latency is slow (used to be 120)
         )
         self.last_plan_response = plan_response
 
