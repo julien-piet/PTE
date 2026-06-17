@@ -1,34 +1,25 @@
-# eval/tests/test_agent_verified_all_gitlab.py
+# eval/tests/test_react_agent_gitlab.py
 #
-# Integration tests: run the agent on every GitLab task in
-# raw_webarena_tasks_all_gitlab.json (186 tasks, both string_match and
-# program_html eval types).
-#
-# Tasks run concurrently up to num_workers() at a time, matching the
-# parallelism of scripts/run_tasks_batch_new.py.
-#
-# Run all 186 tasks:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v
+# Integration tests: run the ReactAgent (ReAct loop) on GitLab tasks.
+# Mirrors test_agent_verified_all_gitlab.py but uses ReactAgentRunner.
 #
 # Smoke test (first 5 tasks):
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-limit 5 -v -s
+#   python3 -m pytest eval/tests/test_react_agent_gitlab.py --task-limit 5 -v -s
 #
 # Single task by ID:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-id 389 -v -s
+#   python3 -m pytest eval/tests/test_react_agent_gitlab.py --task-id 389 -v -s
 #
 # Multiple tasks by ID:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py --task-id 389,412,500 -v -s
+#   python3 -m pytest eval/tests/test_react_agent_gitlab.py --task-id 389,412,500 -v -s
 #
-# Save results to a JSON log:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --output gitlab_results.json
+# Save results:
+#   python3 -m pytest eval/tests/test_react_agent_gitlab.py --output react_gitlab.json -v
+#
+# Multi-docker (parallel workers):
+#   python3 -m pytest eval/tests/test_react_agent_gitlab.py --multi-docker -v
 #
 # Force-reset GitLab state before every task:
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py -v --force-reset
-#
-# Plug in a custom agent runner:
-
-#   python3 -m pytest eval/tests/test_agent_verified_all_gitlab.py \
-#       --agent-runner my_agent_runner.MyAgentRunner -v -s
+#   python3 -m pytest eval/tests/test_react_agent_gitlab.py --force-reset -v
 
 import asyncio
 import json
@@ -40,25 +31,17 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from agent.auth import StaticAuth
 from config.servers import SERVER_URLS as _SERVER_URLS
 from eval.docker import workers_new as _workers_new
-from eval.run_program_html_benchmark import AgentRunner
 from eval.tests.agent_test_utils import (
     build_detailed_entry,
-    extract_agent_details,
     flush_detailed_jsonl,
     get_model_id,
     task_status,
 )
+from react_agent.react_agent_runner import ReactAgentRunner
 
-
-@asynccontextmanager
-async def _local_session(gitlab_url: str, glpat=None):
-    """Stub worker session for a single local GitLab instance."""
-    yield {"worker_id": "local", "gitlab_url": gitlab_url, "glpat": glpat}
-
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -72,11 +55,12 @@ TASK_FILE2 = Path(__file__).parent / "test_files" / "gitlab_verified_program_htm
 LOGS_DIR = Path(__file__).parent / "logs"
 
 
+@asynccontextmanager
+async def _local_session(gitlab_url: str, glpat=None):
+    yield {"worker_id": "local", "gitlab_url": gitlab_url, "glpat": glpat}
+
+
 def _load_completed_ids(output_name: Optional[str]) -> set:
-    """
-    Return the set of task_ids already saved in the output file.
-    Used by --resume to skip tasks that were completed in a prior run.
-    """
     if not output_name:
         return set()
     out_path = LOGS_DIR / output_name
@@ -111,13 +95,12 @@ def _load_tasks(config=None) -> List[Dict[str, Any]]:
 
 
 def _flush_results(output_name: Optional[str], result_log: List[Dict[str, Any]], interrupted: bool = False) -> None:
-    """Write current result_log snapshot to the output file (atomic via temp file)."""
     if not output_name:
         return
     LOGS_DIR.mkdir(exist_ok=True)
     out_path = LOGS_DIR / output_name
     summary = {
-        "generated_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "model": get_model_id(),
         "interrupted": interrupted,
         "total": len(result_log),
@@ -125,14 +108,13 @@ def _flush_results(output_name: Optional[str], result_log: List[Dict[str, Any]],
         "failed": sum(1 for e in result_log if not e.get("passed")),
         "results": list(result_log),
     }
-    # Write atomically via a temp file so a kill mid-write doesn't corrupt data.
     tmp_path = out_path.with_suffix(".tmp")
-    tmp_path.write_text(json.dumps(summary, indent=2, default=str))
+    tmp_path.write_text(json.dumps(summary, indent=2))
     tmp_path.replace(out_path)
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Failure message helper
 # ---------------------------------------------------------------------------
 
 def _make_failure_message(
@@ -146,7 +128,6 @@ def _make_failure_message(
         f"  intent     : {task['intent']}",
         f"  eval_types : {ev.get('eval_types', [])}",
     ]
-
     ra = ev.get("reference_answers") or {}
     if ra.get("must_include"):
         lines.append(f"  must_include : {ra['must_include']}")
@@ -154,11 +135,8 @@ def _make_failure_message(
         lines.append(f"  exact_match  : {ra['exact_match']!r}")
     if ra.get("fuzzy_match") is not None:
         lines.append(f"  fuzzy_match  : {ra['fuzzy_match']!r}")
-    if ev.get("string_note"):
-        lines.append(f"  string_note  : {ev['string_note']}")
     if agent_result:
         lines.append(f"  agent_answer : {str(agent_result.get('answer', ''))[:300]!r}")
-
     if html_detail:
         top_error = html_detail.get("error")
         checks = html_detail.get("checks", [])
@@ -176,7 +154,6 @@ def _make_failure_message(
                     lines.append(f"    error           : {chk['error']}")
                 if chk.get("extracted_content") is not None:
                     lines.append(f"    content_snippet : {str(chk['extracted_content'])[:300]!r}")
-
     return "\n".join(lines)
 
 
@@ -184,21 +161,19 @@ def _make_failure_message(
 # Test
 # ---------------------------------------------------------------------------
 
-def test_agent_accomplishes_gitlab_tasks(
+def test_react_agent_accomplishes_gitlab_tasks(
     session_event_loop,
     acquire_lock,
-    result_log,
     request,
 ) -> None:
+    result_log: List[Dict[str, Any]] = []
     tasks = _load_tasks(request.config)
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
     base_url = request.config.getoption("--base-url") or _SERVER_URLS["gitlab"]
     output_name = request.config.getoption("--output", default=None)
     if not output_name:
-        # Always save logs — auto-generate a timestamped filename when --output
-        # is not explicitly provided so no run is ever lost.
-        output_name = datetime.now(timezone.utc).strftime("gitlab_%Y%m%d_%H%M%S.json")
+        output_name = datetime.now(timezone.utc).strftime("react_gitlab_%Y%m%d_%H%M%S.json")
     detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
 
     if multi_docker:
@@ -206,12 +181,11 @@ def test_agent_accomplishes_gitlab_tasks(
     else:
         n_workers = 1
 
-    print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
+    print(f"\nRunning {len(tasks)} tasks with {n_workers} workers (ReactAgent)")
 
     async def run_all() -> tuple:
         sem = asyncio.Semaphore(n_workers)
         remaining = len(tasks)
-        # Lock protecting result_log mutations and incremental file flushes.
         record_lock = asyncio.Lock()
         failures: List[str] = []
 
@@ -229,30 +203,28 @@ def test_agent_accomplishes_gitlab_tasks(
                         worker_ctx = _local_session(base_url, glpat=None)
 
                     async with worker_ctx as w:
-                        runner = AgentRunner(
+                        runner = ReactAgentRunner(
                             headless=True,
                             enable_reset=True,
                             force_reset=force_reset,
                             gitlab_base_url=w["gitlab_url"],
+                            max_iterations=30,
                         )
                         runner.server = "gitlab"
                         runner.base_url = w["gitlab_url"]
+                        if w.get("glpat"):
+                            runner.glpat = w["glpat"]
 
                         await runner._init_agent()
-
-                        if runner._agent.execution_agent is not None:
-                            if w["glpat"]:
-                                runner._agent.execution_agent.auth = StaticAuth(
-                                    {"PRIVATE-TOKEN": w["glpat"]}
-                                )
-                            runner._agent.execution_agent.task_id = str(task["task_id"])
 
                         start_time = datetime.now(timezone.utc)
                         passed, agent_result, error, html_detail = await runner.run_agent_on_task(task)
                         end_time = datetime.now(timezone.utc)
 
-                        details = extract_agent_details(runner)
-                        status = task_status(passed, error, details["plan_steps"])
+                        plan_steps = runner._last_steps
+                        status = task_status(passed, error, plan_steps)
+                        llm = getattr(getattr(runner, "_react_agent", None), "llm", None)
+                        task_cost = getattr(llm, "total_cost", None)
 
                         result = {
                             "task": task,
@@ -260,13 +232,13 @@ def test_agent_accomplishes_gitlab_tasks(
                             "agent_result": agent_result,
                             "error": error,
                             "html_detail": html_detail,
-                            "plan": details["plan_steps"],
-                            "parsed_outputs": details["parsed_outputs"],
-                            "execution": details["raw_execution"],
-                            "planning_log": details["planning_log"],
+                            "plan": plan_steps,
+                            "parsed_outputs": None,
+                            "execution": None,
+                            "planning_log": None,
                             "worker_id": w["worker_id"],
                             "status": status,
-                            "costs": details.get("costs"),
+                            "costs": [task_cost] if task_cost is not None else [],
                             "start_time": start_time,
                             "end_time": end_time,
                         }
@@ -279,8 +251,6 @@ def test_agent_accomplishes_gitlab_tasks(
                         "error": str(e),
                         "html_detail": None,
                         "plan": None,
-                        "parsed_outputs": None,
-                        "execution": None,
                         "worker_id": None,
                         "status": "failed",
                         "costs": [],
@@ -288,7 +258,6 @@ def test_agent_accomplishes_gitlab_tasks(
                         "end_time": _now,
                     }
 
-                # Record result and flush to disk immediately after each task.
                 async with record_lock:
                     nonlocal remaining
                     remaining -= 1
@@ -298,20 +267,23 @@ def test_agent_accomplishes_gitlab_tasks(
                     r_agent = result["agent_result"]
 
                     entry = {
-                        "task_id":        task_obj["task_id"],
-                        "intent":         task_obj.get("intent", ""),
-                        "eval_types":     task_obj.get("eval", {}).get("eval_types", []),
-                        "passed":         r_passed and not r_error,
-                        "status":         result.get("status"),
-                        "answer":         r_agent.get("answer") if r_agent else None,
-                        "error":          r_error,
-                        "worker_id":      result.get("worker_id"),
-                        "plan":           result.get("plan"),
+                        "task_id":         task_obj["task_id"],
+                        "intent":          task_obj.get("intent", ""),
+                        "eval_types":      task_obj.get("eval", {}).get("eval_types", []),
+                        "passed":          r_passed and not r_error,
+                        "status":          result.get("status"),
+                        "answer":          r_agent.get("answer") if r_agent else None,
+                        "error":           r_error,
+                        "worker_id":       result.get("worker_id"),
+                        "plan":            result.get("plan"),
                         "plan_step_count": len(result["plan"]) if result.get("plan") else None,
-                        "execution":      result.get("execution"),
-                        "parsed_outputs": result.get("parsed_outputs"),
-                        "planning_log":   result.get("planning_log"),
+                        "execution":       result.get("execution"),
+                        "parsed_outputs":  result.get("parsed_outputs"),
+                        "planning_log":    result.get("planning_log"),
                     }
+                    result_log.append(entry)
+                    _flush_results(output_name, result_log, interrupted=False)
+
                     det_entry = build_detailed_entry(
                         task=task_obj,
                         agent_result=r_agent,
@@ -323,9 +295,6 @@ def test_agent_accomplishes_gitlab_tasks(
                         costs=result.get("costs"),
                     )
                     flush_detailed_jsonl(detailed_out_path, det_entry)
-
-                    result_log.append(entry)
-                    _flush_results(output_name, result_log, interrupted=False)
 
                     outcome = "PASS" if r_passed and not r_error else "FAIL"
                     print(f"\n[{remaining} tasks remaining] Task {task_obj['task_id']} done ({outcome})")
@@ -369,7 +338,6 @@ def test_agent_accomplishes_gitlab_tasks(
             print(f"\n📄 Partial results ({n} tasks) written to {LOGS_DIR / output_name}")
         pytest.exit("Interrupted by user", returncode=1)
 
-    # Final flush (marks interrupted=False).
     _flush_results(output_name, result_log, interrupted=False)
     print(f"\n📄 Results saved to {LOGS_DIR / output_name}")
 

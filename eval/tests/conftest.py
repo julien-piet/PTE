@@ -27,6 +27,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.servers import SERVER_URLS as _SERVER_URLS
+from eval.tests.agent_test_utils import get_model_id as _get_model_id
 
 
 # ---------------------------------------------------------------------------
@@ -130,6 +131,12 @@ def pytest_addoption(parser):
             "are re-run. Has no effect when --output is not set."
         ),
     )
+    parser.addoption(
+        "--agent-trace",
+        action="store_true",
+        default=False,
+        help="Print curl commands and raw responses for each execution step.",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -194,10 +201,11 @@ def agent_runner(request, session_event_loop):
         runner_cls = AgentRunner
 
     force_reset = request.config.getoption("--force-reset", default=False)
+    debug = request.config.getoption("--agent-trace", default=False)
     server = request.config.getoption("--server", default="gitlab")
     base_url = request.config.getoption("--base-url") or _SERVER_URLS.get(server, _SERVER_URLS["gitlab"])
     runner = runner_cls(headless=True, enable_reset=True, force_reset=force_reset,
-                        gitlab_base_url=base_url)
+                        gitlab_base_url=base_url, debug=debug)
     runner.server = server
     runner.base_url = base_url
 
@@ -268,6 +276,7 @@ def result_log(request):
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model": _get_model_id(),
         "total": len(entries),
         "passed": sum(1 for e in entries if e["passed"]),
         "failed": sum(1 for e in entries if not e["passed"]),

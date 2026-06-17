@@ -64,9 +64,11 @@ from .comments import (
 )
 from .messages import (
     Message,
+    InboxMessage,
     MessageResult,
     DeleteMessagesResult,
     send_message,
+    get_messages,
     delete_all_messages,
     delete_all_messages_by_user,
     get_message_threads,
@@ -153,10 +155,12 @@ __all__ = [
     "reply_to_comment",
     # Message dataclasses
     "Message",
+    "InboxMessage",
     "MessageResult",
     "DeleteMessagesResult",
     # Message functions
     "send_message",
+    "get_messages",
     "delete_all_messages",
     "delete_all_messages_by_user",
     "get_message_threads",

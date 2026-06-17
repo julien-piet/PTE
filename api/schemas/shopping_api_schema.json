@@ -4399,89 +4399,6 @@
                 }
             }
         },
-        "/V1/search": {
-            "get": {
-                "tags": [
-                    "searchV1"
-                ],
-                "description": "Make Full Text Search and return found Documents",
-                "operationId": "GetV1Search",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "searchCriteria[requestName]",
-                        "in": "query",
-                        "type": "string",
-                        "required": true,
-                        "default": "quick_search_container",
-                        "description": "Must be \"quick_search_container\". Required \u2014 omitting causes a 500 error."
-                    },
-                    {
-                        "name": "searchCriteria[filterGroups][0][filters][0][field]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Field"
-                    },
-                    {
-                        "name": "searchCriteria[filterGroups][0][filters][0][value]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Value"
-                    },
-                    {
-                        "name": "searchCriteria[filterGroups][0][filters][0][conditionType]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Condition type"
-                    },
-                    {
-                        "name": "searchCriteria[sortOrders][0][field]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Sorting field."
-                    },
-                    {
-                        "name": "searchCriteria[sortOrders][0][direction]",
-                        "in": "query",
-                        "type": "string",
-                        "description": "Sorting direction."
-                    },
-                    {
-                        "name": "searchCriteria[pageSize]",
-                        "in": "query",
-                        "type": "integer",
-                        "description": "Page size."
-                    },
-                    {
-                        "name": "searchCriteria[currentPage]",
-                        "in": "query",
-                        "type": "integer",
-                        "description": "Current page."
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/framework-search-search-result-interface"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/products": {
             "post": {
                 "tags": [
@@ -4551,7 +4468,7 @@
                 "tags": [
                     "catalogProductRepositoryV1"
                 ],
-                "description": "Get product list",
+                "description": "Get product list.",
                 "operationId": "GetV1Products",
                 "consumes": [
                     "application/json",
@@ -9833,140 +9750,6 @@
                 }
             }
         },
-        "/V1/carts/mine": {
-            "put": {
-                "tags": [
-                    "quoteCartRepositoryV1"
-                ],
-                "description": "Save quote",
-                "operationId": "PutV1CartsMine",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PutV1CartsMineBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "quote"
-                            ],
-                            "properties": {
-                                "quote": {
-                                    "$ref": "#/definitions/quote-data-cart-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "quoteCartManagementV1"
-                ],
-                "description": "Creates an empty cart and quote for a specified customer if customer does not have a cart yet.",
-                "operationId": "PostV1CartsMine",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "integer",
-                            "description": "new cart ID if customer did not have a cart or ID of the existing cart otherwise."
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "get": {
-                "tags": [
-                    "quoteCartManagementV1"
-                ],
-                "description": "Returns information for the cart for a specified customer.",
-                "operationId": "GetV1CartsMine",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-cart-interface"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/carts/": {
             "post": {
                 "tags": [
@@ -10016,7 +9799,7 @@
                 "tags": [
                     "quoteCartManagementV1"
                 ],
-                "description": "Creates an empty cart and quote for a specified customer if customer does not have a cart yet.",
+                "description": "Creates an empty cart and quote for a specified customer if customer does not have a cart yet. Returns the cart/quote ID as a bare integer.",
                 "operationId": "PostV1CustomersCustomerIdCarts",
                 "consumes": [
                     "application/json",
@@ -10064,73 +9847,12 @@
                 }
             }
         },
-        "/V1/carts/mine/order": {
-            "put": {
-                "tags": [
-                    "quoteCartManagementV1"
-                ],
-                "description": "Places an order for a specified cart.",
-                "operationId": "PutV1CartsMineOrder",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PutV1CartsMineOrderBody",
-                        "in": "body",
-                        "schema": {
-                            "properties": {
-                                "paymentMethod": {
-                                    "$ref": "#/definitions/quote-data-payment-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "integer",
-                            "description": "Order ID."
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/carts/{cartId}/order": {
             "put": {
                 "tags": [
                     "quoteCartManagementV1"
                 ],
-                "description": "Places an order for a specified cart.",
+                "description": "Places an order for a specified cart. Returns the order entity_id as a bare integer.",
                 "operationId": "PutV1CartsCartIdOrder",
                 "consumes": [
                     "application/json",
@@ -10530,115 +10252,6 @@
                 }
             }
         },
-        "/V1/carts/mine/shipping-methods": {
-            "get": {
-                "tags": [
-                    "quoteShippingMethodManagementV1"
-                ],
-                "description": "Lists applicable shipping methods for a specified quote.",
-                "operationId": "GetV1CartsMineShippingmethods",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "array",
-                            "description": "An array of shipping methods.",
-                            "items": {
-                                "$ref": "#/definitions/quote-data-shipping-method-interface"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/estimate-shipping-methods-by-address-id": {
-            "post": {
-                "tags": [
-                    "quoteShippingMethodManagementV1"
-                ],
-                "description": "Estimate shipping",
-                "operationId": "PostV1CartsMineEstimateshippingmethodsbyaddressid",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMineEstimateshippingmethodsbyaddressidBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "addressId"
-                            ],
-                            "properties": {
-                                "addressId": {
-                                    "type": "integer",
-                                    "description": "The estimate address id"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "array",
-                            "description": "An array of shipping methods.",
-                            "items": {
-                                "$ref": "#/definitions/quote-data-shipping-method-interface"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/carts/{cartId}/estimate-shipping-methods": {
             "post": {
                 "tags": [
@@ -10663,67 +10276,6 @@
                     },
                     {
                         "name": "PostV1CartsCartIdEstimateshippingmethodsBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "address"
-                            ],
-                            "properties": {
-                                "address": {
-                                    "$ref": "#/definitions/quote-data-address-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "array",
-                            "description": "An array of shipping methods",
-                            "items": {
-                                "$ref": "#/definitions/quote-data-shipping-method-interface"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/estimate-shipping-methods": {
-            "post": {
-                "tags": [
-                    "quoteShipmentEstimationV1"
-                ],
-                "description": "Estimate shipping by address and return list of available shipping methods",
-                "operationId": "PostV1CartsMineEstimateshippingmethods",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMineEstimateshippingmethodsBody",
                         "in": "body",
                         "schema": {
                             "required": [
@@ -11099,233 +10651,6 @@
                         "required": true,
                         "description": "The cart ID."
                     },
-                    {
-                        "name": "itemId",
-                        "in": "path",
-                        "type": "integer",
-                        "required": true,
-                        "description": "The item ID of the item to be removed."
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/items": {
-            "get": {
-                "tags": [
-                    "quoteCartItemRepositoryV1"
-                ],
-                "description": "Lists items that are assigned to a specified cart.",
-                "operationId": "GetV1CartsMineItems",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "array",
-                            "description": "Array of items.",
-                            "items": {
-                                "$ref": "#/definitions/quote-data-cart-item-interface"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "quoteCartItemRepositoryV1"
-                ],
-                "description": "Add/update the specified cart item.",
-                "operationId": "PostV1CartsMineItems",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMineItemsBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "cartItem"
-                            ],
-                            "properties": {
-                                "cartItem": {
-                                    "$ref": "#/definitions/quote-data-cart-item-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-cart-item-interface"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/items/{itemId}": {
-            "put": {
-                "tags": [
-                    "quoteCartItemRepositoryV1"
-                ],
-                "description": "Add/update the specified cart item.",
-                "operationId": "PutV1CartsMineItemsItemId",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "itemId",
-                        "in": "path",
-                        "type": "string",
-                        "required": true
-                    },
-                    {
-                        "name": "PutV1CartsMineItemsItemIdBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "cartItem"
-                            ],
-                            "properties": {
-                                "cartItem": {
-                                    "$ref": "#/definitions/quote-data-cart-item-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-cart-item-interface"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "quoteCartItemRepositoryV1"
-                ],
-                "description": "Removes the specified item from the specified cart.",
-                "operationId": "DeleteV1CartsMineItemsItemId",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
                     {
                         "name": "itemId",
                         "in": "path",
@@ -11770,158 +11095,6 @@
                 }
             }
         },
-        "/V1/carts/mine/selected-payment-method": {
-            "get": {
-                "tags": [
-                    "quotePaymentMethodManagementV1"
-                ],
-                "description": "Returns the payment method for a specified shopping cart.",
-                "operationId": "GetV1CartsMineSelectedpaymentmethod",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-payment-interface"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "quotePaymentMethodManagementV1"
-                ],
-                "description": "Adds a specified payment method to a specified shopping cart.",
-                "operationId": "PutV1CartsMineSelectedpaymentmethod",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PutV1CartsMineSelectedpaymentmethodBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "method"
-                            ],
-                            "properties": {
-                                "method": {
-                                    "$ref": "#/definitions/quote-data-payment-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "string",
-                            "description": "redirect url or error message."
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/payment-methods": {
-            "get": {
-                "tags": [
-                    "quotePaymentMethodManagementV1"
-                ],
-                "description": "Lists available payment methods for a specified shopping cart. This call returns an array of objects, but detailed information about each object\u2019s attributes might not be included.  See https://devdocs.magento.com/codelinks/attributes.html#PaymentMethodManagementInterface to determine which call to use to get detailed information about all attributes for an object.",
-                "operationId": "GetV1CartsMinePaymentmethods",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "array",
-                            "description": "Array of payment methods.",
-                            "items": {
-                                "$ref": "#/definitions/quote-data-payment-method-interface"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/guest-carts/{cartId}/selected-payment-method": {
             "get": {
                 "tags": [
@@ -12156,114 +11329,6 @@
                     },
                     {
                         "name": "PostV1CartsCartIdBillingaddressBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "address"
-                            ],
-                            "properties": {
-                                "address": {
-                                    "$ref": "#/definitions/quote-data-address-interface"
-                                },
-                                "useForShipping": {
-                                    "type": "boolean"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "integer",
-                            "description": "Address ID."
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/billing-address": {
-            "get": {
-                "tags": [
-                    "quoteBillingAddressManagementV1"
-                ],
-                "description": "Returns the billing address for a specified quote.",
-                "operationId": "GetV1CartsMineBillingaddress",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-address-interface"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "quoteBillingAddressManagementV1"
-                ],
-                "description": "Assigns a specified billing address to a specified cart.",
-                "operationId": "PostV1CartsMineBillingaddress",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMineBillingaddressBody",
                         "in": "body",
                         "schema": {
                             "required": [
@@ -12587,143 +11652,6 @@
                 }
             }
         },
-        "/V1/carts/mine/coupons": {
-            "get": {
-                "tags": [
-                    "quoteCouponManagementV1"
-                ],
-                "description": "Returns information for a coupon in a specified cart.",
-                "operationId": "GetV1CartsMineCoupons",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "string",
-                            "description": "The coupon code data."
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "quoteCouponManagementV1"
-                ],
-                "description": "Deletes a coupon from a specified cart.",
-                "operationId": "DeleteV1CartsMineCoupons",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/coupons/{couponCode}": {
-            "put": {
-                "tags": [
-                    "quoteCouponManagementV1"
-                ],
-                "description": "Adds a coupon by code to a specified cart.",
-                "operationId": "PutV1CartsMineCouponsCouponCode",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "couponCode",
-                        "in": "path",
-                        "type": "string",
-                        "required": true,
-                        "description": "The coupon code data."
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/guest-carts/{cartId}/coupons": {
             "get": {
                 "tags": [
@@ -12920,49 +11848,6 @@
                 }
             }
         },
-        "/V1/carts/mine/totals": {
-            "get": {
-                "tags": [
-                    "quoteCartTotalRepositoryV1"
-                ],
-                "description": "Returns quote totals data for a specified cart.",
-                "operationId": "GetV1CartsMineTotals",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-totals-interface"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/guest-carts/{cartId}/collect-totals": {
             "put": {
                 "tags": [
@@ -13065,74 +11950,6 @@
                     },
                     "400": {
                         "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/collect-totals": {
-            "put": {
-                "tags": [
-                    "quoteCartTotalManagementV1"
-                ],
-                "description": "Set shipping/billing methods and additional data for cart and collect totals.",
-                "operationId": "PutV1CartsMineCollecttotals",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PutV1CartsMineCollecttotalsBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "paymentMethod"
-                            ],
-                            "properties": {
-                                "paymentMethod": {
-                                    "$ref": "#/definitions/quote-data-payment-interface"
-                                },
-                                "shippingCarrierCode": {
-                                    "type": "string",
-                                    "description": "The carrier code."
-                                },
-                                "shippingMethodCode": {
-                                    "type": "string",
-                                    "description": "The shipping method code."
-                                },
-                                "additionalData": {
-                                    "$ref": "#/definitions/quote-data-totals-additional-data-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-totals-interface"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/error-response"
                         }
@@ -15978,69 +14795,12 @@
                 }
             }
         },
-        "/V1/carts/mine/shipping-information": {
-            "post": {
-                "tags": [
-                    "checkoutShippingInformationManagementV1"
-                ],
-                "description": "",
-                "operationId": "PostV1CartsMineShippinginformation",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMineShippinginformationBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "addressInformation"
-                            ],
-                            "properties": {
-                                "addressInformation": {
-                                    "$ref": "#/definitions/checkout-data-shipping-information-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/checkout-data-payment-details-interface"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/carts/{cartId}/shipping-information": {
             "post": {
                 "tags": [
                     "checkoutShippingInformationManagementV1"
                 ],
-                "description": "",
+                "description": "Sets billing and shipping addresses and the shipping carrier/method on a cart. Returns the available payment methods and totals.",
                 "operationId": "PostV1CartsCartIdShippinginformation",
                 "consumes": [
                     "application/json",
@@ -16122,63 +14882,6 @@
                     },
                     {
                         "name": "PostV1CartsCartIdTotalsinformationBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "addressInformation"
-                            ],
-                            "properties": {
-                                "addressInformation": {
-                                    "$ref": "#/definitions/checkout-data-totals-information-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/quote-data-totals-interface"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/totals-information": {
-            "post": {
-                "tags": [
-                    "checkoutTotalsInformationManagementV1"
-                ],
-                "description": "Calculate quote totals based on address and shipping method.",
-                "operationId": "PostV1CartsMineTotalsinformation",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMineTotalsinformationBody",
                         "in": "body",
                         "schema": {
                             "required": [
@@ -16441,175 +15144,6 @@
                     },
                     "400": {
                         "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/payment-information": {
-            "post": {
-                "tags": [
-                    "checkoutPaymentInformationManagementV1"
-                ],
-                "description": "Set payment information and place order for a specified cart.",
-                "operationId": "PostV1CartsMinePaymentinformation",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMinePaymentinformationBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "paymentMethod"
-                            ],
-                            "properties": {
-                                "paymentMethod": {
-                                    "$ref": "#/definitions/quote-data-payment-interface"
-                                },
-                                "billingAddress": {
-                                    "$ref": "#/definitions/quote-data-address-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "integer",
-                            "description": "Order ID."
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "get": {
-                "tags": [
-                    "checkoutPaymentInformationManagementV1"
-                ],
-                "description": "Get payment information",
-                "operationId": "GetV1CartsMinePaymentinformation",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/checkout-data-payment-details-interface"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/set-payment-information": {
-            "post": {
-                "tags": [
-                    "checkoutPaymentInformationManagementV1"
-                ],
-                "description": "Set payment information for a specified cart.",
-                "operationId": "PostV1CartsMineSetpaymentinformation",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMineSetpaymentinformationBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "paymentMethod"
-                            ],
-                            "properties": {
-                                "paymentMethod": {
-                                    "$ref": "#/definitions/quote-data-payment-interface"
-                                },
-                                "billingAddress": {
-                                    "$ref": "#/definitions/quote-data-address-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "integer",
-                            "description": "Order ID."
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/error-response"
                         }
@@ -17843,104 +16377,6 @@
                 }
             }
         },
-        "/V1/carts/mine/gift-message": {
-            "get": {
-                "tags": [
-                    "giftMessageCartRepositoryV1"
-                ],
-                "description": "Return the gift message for a specified order.",
-                "operationId": "GetV1CartsMineGiftmessage",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/gift-message-data-message-interface"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "giftMessageCartRepositoryV1"
-                ],
-                "description": "Set the gift message for an entire order.",
-                "operationId": "PostV1CartsMineGiftmessage",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "PostV1CartsMineGiftmessageBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "giftMessage"
-                            ],
-                            "properties": {
-                                "giftMessage": {
-                                    "$ref": "#/definitions/gift-message-data-message-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
         "/V1/carts/{cartId}/gift-message/{itemId}": {
             "get": {
                 "tags": [
@@ -18030,126 +16466,6 @@
                     },
                     {
                         "name": "PostV1CartsCartIdGiftmessageItemIdBody",
-                        "in": "body",
-                        "schema": {
-                            "required": [
-                                "giftMessage"
-                            ],
-                            "properties": {
-                                "giftMessage": {
-                                    "$ref": "#/definitions/gift-message-data-message-interface"
-                                }
-                            },
-                            "type": "object",
-                            "xml": {
-                                "name": "request"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            }
-        },
-        "/V1/carts/mine/gift-message/{itemId}": {
-            "get": {
-                "tags": [
-                    "giftMessageItemRepositoryV1"
-                ],
-                "description": "Return the gift message for a specified item in a specified shopping cart.",
-                "operationId": "GetV1CartsMineGiftmessageItemId",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "itemId",
-                        "in": "path",
-                        "type": "integer",
-                        "required": true,
-                        "description": "The item ID."
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "200 Success.",
-                        "schema": {
-                            "$ref": "#/definitions/gift-message-data-message-interface"
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "401": {
-                        "description": "401 Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "schema": {
-                            "$ref": "#/definitions/error-response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "giftMessageItemRepositoryV1"
-                ],
-                "description": "Set the gift message for a specified item in a specified shopping cart.",
-                "operationId": "PostV1CartsMineGiftmessageItemId",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [
-                    {
-                        "name": "itemId",
-                        "in": "path",
-                        "type": "integer",
-                        "required": true,
-                        "description": "The item ID."
-                    },
-                    {
-                        "name": "PostV1CartsMineGiftmessageItemIdBody",
                         "in": "body",
                         "schema": {
                             "required": [
@@ -24262,7 +22578,7 @@
                 "tags": [
                     "divanteReviewApiReviewRepositoryV1"
                 ],
-                "description": "Save review.",
+                "description": "Save review. Omitting `required` fields returns HTTP 500.",
                 "operationId": "PostV1Reviews",
                 "consumes": [
                     "application/json",
@@ -35139,7 +33455,7 @@
         },
         "divante-review-api-data-review-interface": {
             "type": "object",
-            "description": "Represents a Review object Used fully qualified namespaces in annotations for proper work of WebApi request parser",
+            "description": "Represents a Review object.",
             "properties": {
                 "id": {
                     "type": "integer",
@@ -35147,38 +33463,38 @@
                 },
                 "title": {
                     "type": "string",
-                    "description": "Review title"
+                    "description": "Review title / summary text."
                 },
                 "detail": {
                     "type": "string",
-                    "description": "Review detail."
+                    "description": "Review body text."
                 },
                 "nickname": {
                     "type": "string",
-                    "description": "Author nickname."
+                    "description": "Author nickname displayed with the review."
                 },
                 "customer_id": {
                     "type": "integer",
-                    "description": "Customer id."
+                    "description": "Customer id. Required when posting on behalf of a known shopper."
                 },
                 "ratings": {
                     "type": "array",
-                    "description": "Review ratings.",
+                    "description": "Review ratings. Must contain at least one rating vote.",
                     "items": {
                         "$ref": "#/definitions/divante-review-api-data-rating-vote-interface"
                     }
                 },
                 "review_entity": {
                     "type": "string",
-                    "description": "Review entity type. Possible value: product."
+                    "description": "Review entity type. Use default value: \"product\"."
                 },
                 "review_type": {
                     "type": "integer",
-                    "description": "Reviewer type. Possible values: 1 - Customer, 2 - Guest, 3 - Administrator."
+                    "description": "Reviewer type. 1 - Customer (when customer_id is set)."
                 },
                 "review_status": {
                     "type": "integer",
-                    "description": "Review status. Possible values: 1 - Approved, 2 - Pending, 3 - Not Approved."
+                    "description": "Review status. 1 - Approved, 2 - Pending, 3 - Not Approved. Use 1 to publish immediately."
                 },
                 "created_at": {
                     "type": "string",
@@ -35190,26 +33506,25 @@
                 },
                 "store_id": {
                     "type": "integer",
-                    "description": "Store id in which review was added"
+                    "description": "Store id in which review was added. Use 1 for the default store."
                 },
                 "stores": {
                     "type": "array",
-                    "description": "Stores in which review is visible",
+                    "description": "Stores in which review is visible. Send [1] for the default store.",
                     "items": {
                         "type": "integer"
                     }
                 }
             },
             "required": [
-                "id",
                 "title",
                 "detail",
                 "nickname",
+                "customer_id",
                 "ratings",
                 "review_entity",
                 "review_type",
                 "review_status",
-                "created_at",
                 "entity_pk_value",
                 "store_id",
                 "stores"
@@ -35217,7 +33532,7 @@
         },
         "divante-review-api-data-rating-vote-interface": {
             "type": "object",
-            "description": "Represents a ReviewVote object Used fully qualified namespaces in annotations for proper work of WebApi request parser",
+            "description": "Represents a rating vote attached to a review.",
             "properties": {
                 "vote_id": {
                     "type": "integer",
@@ -35225,23 +33540,22 @@
                 },
                 "rating_id": {
                     "type": "integer",
-                    "description": "Rating id"
+                    "description": "Numeric ID of the rating attribute. Default to 1 when no prior reviews exist to copy it from."
                 },
                 "rating_name": {
                     "type": "string",
-                    "description": "Rating code."
+                    "description": "Rating code, typically the literal string \"Rating\"."
                 },
                 "percent": {
                     "type": "integer",
-                    "description": "Review Vote in percent"
+                    "description": "Review vote in percent. Must equal value * 20 (1→20, 2→40, 3→60, 4→80, 5→100)."
                 },
                 "value": {
                     "type": "integer",
-                    "description": "Rating value."
+                    "description": "Star rating, integer 1–5."
                 }
             },
             "required": [
-                "vote_id",
                 "rating_id",
                 "rating_name",
                 "percent",

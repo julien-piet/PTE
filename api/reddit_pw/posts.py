@@ -682,6 +682,10 @@ def get_forum_posts(
         author_el = article.query_selector("a.submission__submitter strong")
         author = author_el.inner_text().strip() if author_el else ""
 
+        # Body (text posts only — link posts have no body)
+        body_el = article.query_selector(".submission__body")
+        body = body_el.inner_text().strip() if body_el else ""
+
         # Score from vote form data attribute
         vote_form = article.query_selector("form.vote[data-vote-route-value='submission_vote']")
         score_str = vote_form.get_attribute("data-vote-score-value") if vote_form else "0"
@@ -704,7 +708,7 @@ def get_forum_posts(
         posts.append(Post(
             id=post_id,
             title=title,
-            body="",
+            body=body,
             author=author,
             subreddit=subreddit,
             url=postmill_url or "",
@@ -772,6 +776,9 @@ def get_posts_by_username(page: Page, username: str, limit: int = 50) -> List[Po
             post_id = id_m.group(1) if id_m else ""
             subreddit = ""
 
+        body_el = article.query_selector(".submission__body")
+        body = body_el.inner_text().strip() if body_el else ""
+
         vote_form = article.query_selector("form.vote[data-vote-route-value='submission_vote']")
         score_str = vote_form.get_attribute("data-vote-score-value") if vote_form else "0"
         try:
@@ -792,7 +799,7 @@ def get_posts_by_username(page: Page, username: str, limit: int = 50) -> List[Po
         posts.append(Post(
             id=post_id,
             title=title,
-            body="",
+            body=body,
             author=username,
             subreddit=subreddit,
             url=postmill_url or "",

@@ -14,26 +14,39 @@
 #
 # Save results to a JSON log:
 #   python3 -m pytest eval/tests/test_agent_shopping_string_match.py -v --server shopping --output shopping_string_match_results.json
+#
+# Enable agent trace (print curl commands and raw responses):
+#   python3 -m pytest eval/tests/test_agent_shopping_string_match.py -v --server shopping --agent-trace
 
 import asyncio
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pytest
 
-from agent.auth import RefreshableAuth, RoutingAuth
-from config.init_tokens.refresh_shopping_customer_token import refresh_customer_token as _refresh_shopping_customer_tokens
-from config.init_tokens.refresh_shopping_tokens import refresh_tokens as _refresh_shopping_admin_tokens
+from agent.auth import RefreshableAuth
+from config.init_tokens.refresh_shopping_tokens import (
+    refresh_tokens as _refresh_shopping_admin_tokens,
+    write_admin_token_to_env as _persist_admin_token,
+)
 from config.servers import SERVER_URLS as _SERVER_URLS
+from eval.tests.agent_test_utils import (
+    build_detailed_entry,
+    extract_agent_details,
+    flush_detailed_jsonl,
+    get_model_id,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-TASK_FILE = Path(__file__).parent / "shopping_verified_string_match.json"
+TASK_FILE = Path(__file__).parent / "test_files" / "shopping_verified_string_match.json"
+LOGS_DIR = Path(__file__).parent / "logs"
 
 
 def _load_tasks() -> List[Dict[str, Any]]:
@@ -71,20 +84,17 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="session", autouse=True)
 def _inject_shopping_token(agent_runner, request):
     """
-    Fetch both shopping auth tokens once at session start and inject them into
-    the shared agent runner as RefreshableAuth providers.
+    Fetch the shopping admin token once at session start and inject it into
+    the shared agent runner as a RefreshableAuth provider.
 
-    Admin token    — default for all endpoints (catalog, orders, products).
-    Customer token — fallback for endpoints that reject admin tokens
-                     (/carts/mine, /customers/me, shopping_extra :7790/).
-
-    RefreshableAuth (from agent.auth) auto-refreshes a token on every
+    RefreshableAuth (from agent.auth) auto-refreshes the token on every
     get_headers() call whenever it is within 5 minutes of its JWT exp claim.
-    This means no per-test bookkeeping is needed — tokens stay live for the
+    This means no per-test bookkeeping is needed — the token stays live for the
     entire session regardless of how long it runs.
 
-    Initial token values are also written to os.environ so that any env-reading
-    code path (e.g. token_manager) gets a valid token from the start.
+    The initial token value is also written to os.environ so that any
+    env-reading code path (e.g. token_manager) gets a valid token from the
+    start.
     """
     base_url = (
         request.config.getoption("--base-url", default=None)
@@ -97,37 +107,20 @@ def _inject_shopping_token(agent_runner, request):
             "Ensure _init_agent() completed successfully before this fixture runs."
         )
     print(f"\nRefreshing shopping auth tokens from {base_url} ...")
-    admin_token    = _refresh_shopping_admin_tokens(base_url=base_url)
-    customer_token = _refresh_shopping_customer_tokens(base_url=base_url)
+    admin_token = _refresh_shopping_admin_tokens(base_url=base_url)
 
-    # Seed os.environ so that env-reading code paths get a valid token from the
-    # start.  Note: these values are NOT automatically updated when RefreshableAuth
-    # silently renews a token mid-session; they represent the initial values only.
-    os.environ["ADMIN_AUTH_TOKEN"]    = admin_token
-    os.environ["CUSTOMER_AUTH_TOKEN"] = customer_token
+    os.environ["ADMIN_AUTH_TOKEN"] = admin_token
+    # Persist the fresh token so the program_html evaluator (which reads
+    # ADMIN_AUTH_TOKEN from config/.server_env) doesn't fall through to a
+    # stale cached value and get 401s on its lookup calls.
+    _persist_admin_token(admin_token)
 
-    # RefreshableAuth wraps the token with automatic renewal: on every
-    # get_headers() call it checks the JWT exp claim and fetches a new token via
-    # refresh_fn if fewer than buffer_seconds (default 300 = 5 min) remain.
     _base = base_url  # capture for lambda closure
-    admin_auth = RefreshableAuth(
+    agent_runner._agent.execution_agent.auth = RefreshableAuth(
         initial_token=admin_token,
         refresh_fn=lambda: _refresh_shopping_admin_tokens(base_url=_base),
     )
-    customer_auth = RefreshableAuth(
-        initial_token=customer_token,
-        refresh_fn=lambda: _refresh_shopping_customer_tokens(base_url=_base),
-    )
-    agent_runner._agent.execution_agent.auth = RoutingAuth(
-        default=admin_auth,
-        overrides=[
-            ("/carts/mine",   customer_auth),
-            ("/customers/me", customer_auth),
-            (":7790/",        customer_auth),  # shopping_extra server
-        ],
-    )
     print(f"  Admin token injected    (length={len(admin_token)}, auto-refresh enabled)")
-    print(f"  Customer token injected (length={len(customer_token)}, auto-refresh enabled)")
 
 
 def _make_failure_message(
@@ -173,10 +166,31 @@ def test_agent_produces_correct_answer(
     agent_runner,
     session_event_loop,
     result_log,
+    request,
     task: Dict[str, Any],
 ) -> None:
+    output_name = request.config.getoption("--output", default=None) or "shopping_string_match_results.json"
+    detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
+
+    start_time = datetime.now(timezone.utc)
     passed, agent_result, error, _html_detail = session_event_loop.run_until_complete(
         agent_runner.run_agent_on_task(task)
+    )
+    end_time = datetime.now(timezone.utc)
+
+    details = extract_agent_details(agent_runner)
+    flush_detailed_jsonl(
+        detailed_out_path,
+        build_detailed_entry(
+            task=task,
+            agent_result=agent_result,
+            error=error,
+            correct=passed and not error,
+            start_time=start_time,
+            end_time=end_time,
+            eval_output_dir=str(LOGS_DIR / output_name),
+            costs=details.get("costs"),
+        ),
     )
 
     result_log.append({

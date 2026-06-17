@@ -26,6 +26,15 @@ class Message:
 
 
 @dataclass
+class InboxMessage:
+    """A message scraped from the inbox listing."""
+
+    subject: str
+    sender: str
+    body: str
+
+
+@dataclass
 class MessageResult:
     """Result of attempting to send a message."""
 
@@ -48,7 +57,8 @@ class DeleteMessagesResult:
 def send_message(
     page: Page,
     recipient_username: str,
-    message_body: str,
+    subject: str = "",
+    message_body: str = "",
 ) -> MessageResult:
     """
     Send a private message to a Reddit user.
@@ -91,6 +101,13 @@ def send_message(
             message_url=None,
             error_message="Message form not found"
         )
+
+    # Fill in subject if provided and the form has that field
+    if subject:
+        try:
+            page.fill(Selectors.MESSAGE_SUBJECT_INPUT, subject, timeout=3000)
+        except Exception:
+            pass
 
     # Fill in message
     page.fill(Selectors.MESSAGE_BODY_INPUT, message_body)
@@ -169,6 +186,56 @@ def delete_all_messages(
 def delete_all_messages_by_user(page: Page, username: str) -> DeleteMessagesResult:
     """Alias for delete_all_messages for compatibility with reddit_editor.py."""
     return delete_all_messages(page, username)
+
+
+def get_messages(page: Page) -> List[InboxMessage]:
+    """
+    Scrape the inbox at /messages and return each message's subject, sender, and body.
+
+    Postmill renders messages as a table under #main > table > tbody.
+    Each row has: subject link, sender username, and a body preview.
+    """
+    page.goto(MESSAGES_URL, wait_until="networkidle")
+
+    messages: List[InboxMessage] = []
+
+    # Postmill table columns: [0]=Title  [1]=Last message (time)  [2]=Replies  [3]=Participants
+    rows = page.query_selector_all("#main > table > tbody > tr")
+    for row in rows:
+        cells = row.query_selector_all("td")
+        subject = ""
+        sender = ""
+        body = ""
+        if len(cells) >= 1:
+            link = cells[0].query_selector("a")
+            subject = link.inner_text().strip() if link else cells[0].inner_text().strip()
+        if len(cells) >= 4:
+            sender_link = cells[3].query_selector("a[href*='/user/']")
+            sender = sender_link.inner_text().strip() if sender_link else cells[3].inner_text().strip()
+        # Body preview is not in the listing; use the subject text as the body
+        body = subject
+        if subject or sender:
+            messages.append(InboxMessage(subject=subject, sender=sender, body=body))
+
+    # Fallback: thread links if table structure doesn't match
+    if not messages:
+        for link in page.query_selector_all(Selectors.MESSAGE_THREAD_LINKS):
+            subject = link.inner_text().strip()
+            parent = link.evaluate_handle(
+                "e => e.closest('tr') || e.closest('li') || e.closest('div')"
+            ).as_element()
+            sender = ""
+            body = ""
+            if parent:
+                sender_el = parent.query_selector("a[href*='/user/']")
+                if sender_el:
+                    sender = sender_el.inner_text().strip()
+                body_el = parent.query_selector(".message__body, p")
+                if body_el:
+                    body = body_el.inner_text().strip()
+            messages.append(InboxMessage(subject=subject, sender=sender, body=body))
+
+    return messages
 
 
 def get_message_threads(page: Page) -> List[Message]:

@@ -1,28 +1,31 @@
-# eval/tests/test_agent_reddit_program_html.py
+# eval/tests/test_agent_verified_reddit_program_html.py
 #
 # Integration tests: run the agent on every Reddit program_html task in
 # reddit_verified_program_html.json.
 #
 # Run all tasks:
-#   python3 -m pytest eval/tests/test_agent_reddit_program_html.py -v
+#   python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py -v
 #
 # Smoke test (first 5 tasks):
-#   python3 -m pytest eval/tests/test_agent_reddit_program_html.py --task-limit 5 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py --task-limit 5 -v -s
 #
 # Single task by ID:
-#   python3 -m pytest eval/tests/test_agent_reddit_program_html.py --task-id 465 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py --task-id 465 -v -s
 #
 # Multiple tasks by ID:
-#   python3 -m pytest eval/tests/test_agent_reddit_program_html.py --task-id 465,521 -v -s
+#   python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py --task-id 465,521 -v -s
 #
 # Save results to a JSON log:
-#   python3 -m pytest eval/tests/test_agent_reddit_program_html.py -v --output reddit_program_html_results.json
+#   python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py -v --output reddit_program_html_results.json
 #
 # Force-reset Reddit state before every task:
-#   python3 -m pytest eval/tests/test_agent_reddit_program_html.py -v --force-reset
+#   python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py -v --force-reset
+#
+# Use multi-docker worker pool:
+#   python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py -v --multi-docker
 #
 # Resume a previous run:
-#   python3 -m pytest eval/tests/test_agent_reddit_program_html.py -v --output reddit_program_html_results.json --resume
+#   python3 -m pytest eval/tests/test_agent_verified_reddit_program_html.py -v --output reddit_program_html_results.json --resume
 
 import asyncio
 import json
@@ -40,8 +43,15 @@ from dotenv import dotenv_values as _dotenv_values
 from agent.auth import StaticAuth
 from config.init_tokens.refresh_reddit_session import refresh_session as _refresh_reddit_session
 from config.servers import SERVER_URLS as _SERVER_URLS
+from eval.docker import workers_new as _workers_new
 from eval.run_program_html_benchmark import AgentRunner
-from eval.tests.agent_test_utils import extract_agent_details, task_status
+from eval.tests.agent_test_utils import (
+    build_detailed_entry,
+    extract_agent_details,
+    flush_detailed_jsonl,
+    get_model_id,
+    task_status,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -208,6 +218,7 @@ def _flush_result(out_path: Path, entry: dict) -> None:
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model": get_model_id(),
         "total":  len(results),
         "passed": sum(1 for r in results if r.get("passed")),
         "failed": sum(1 for r in results if not r.get("passed")),
@@ -294,13 +305,20 @@ def test_agent_accomplishes_reddit_tasks(
     if not output_name:
         output_name = "reddit_program_html_results.json"
     out_path = LOGS_DIR / output_name
+    detailed_out_path = LOGS_DIR / (Path(output_name).stem + "_detailed.jsonl")
 
-    print(f"\nRefreshing Reddit session from {base_url} ...")
-    phpsessid = _refresh_reddit_session(base_url=base_url)
-    print(f"  PHPSESSID refreshed (prefix={phpsessid[:8]}...)")
+    multi_docker = request.config.getoption("--multi-docker", default=False)
 
-    n_workers = 1
-    print(f"\nRunning {len(tasks)} tasks with {n_workers} worker")
+    if multi_docker:
+        n_workers = _workers_new.num_workers()
+        phpsessid = None
+    else:
+        n_workers = 1
+        print(f"\nRefreshing Reddit session from {base_url} ...")
+        phpsessid = _refresh_reddit_session(base_url=base_url)
+        print(f"  PHPSESSID refreshed (prefix={phpsessid[:8]}...)")
+
+    print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
     print(f"Results written incrementally to {out_path} — safe to Ctrl+C and resume with --resume")
 
     async def run_all() -> list:
@@ -309,10 +327,9 @@ def test_agent_accomplishes_reddit_tasks(
         remaining = len(tasks)
         remaining_lock = asyncio.Lock()
 
-        # Capture the bio before any bio task can overwrite it so we can restore
-        # it after each of tasks 399-403.  Skip if no bio tasks are in this run.
+        # Bio capture only needed in single mode; multi-docker workers are isolated.
         original_bio: str = ""
-        if any(t["task_id"] in BIO_TASK_IDS for t in tasks):
+        if not multi_docker and any(t["task_id"] in BIO_TASK_IDS for t in tasks):
             loop = asyncio.get_event_loop()
             original_bio = await loop.run_in_executor(
                 None, _read_bio, base_url, phpsessid, _REDDIT_USERNAME
@@ -322,7 +339,17 @@ def test_agent_accomplishes_reddit_tasks(
         async def run_one(task: Dict[str, Any]) -> Dict[str, Any]:
             async with sem:
                 try:
-                    async with _local_session(base_url) as w:
+                    if multi_docker:
+                        worker_ctx = _workers_new.worker_session(
+                            str(task["task_id"]),
+                            server="reddit",
+                            acquire_lock=acquire_lock,
+                            read_only=task.get("read_only", True),
+                        )
+                    else:
+                        worker_ctx = _local_session(base_url)
+
+                    async with worker_ctx as w:
                         runner = AgentRunner(headless=True, enable_reset=False, force_reset=False)
                         runner.server = "reddit"
                         # The agent's tool calls go to the FastAPI MCP server
@@ -335,8 +362,12 @@ def test_agent_accomplishes_reddit_tasks(
                         await runner._init_agent()
 
                         if runner._agent.execution_agent is not None:
+                            task_phpsessid = (
+                                await asyncio.to_thread(_refresh_reddit_session, base_url=w["reddit_url"])
+                                if multi_docker else phpsessid
+                            )
                             runner._agent.execution_agent.auth = StaticAuth({
-                                "Cookie": f"PHPSESSID={phpsessid}",
+                                "Cookie": f"PHPSESSID={task_phpsessid}",
                                 "X-Experimental-API": "1",
                             })
                             runner._agent.execution_agent.task_id = str(task["task_id"])
@@ -345,20 +376,22 @@ def test_agent_accomplishes_reddit_tasks(
                         if force_reset and not task.get("read_only", False):
                             run_task = {**task, "require_reset": True}
 
+                        start_time = datetime.now(timezone.utc)
                         passed, agent_result, error, html_detail = await runner.run_agent_on_task(run_task)
+                        end_time = datetime.now(timezone.utc)
 
-                        # --- State restoration for conflicting tasks ---
-                        # Run after the eval so the agent's mutation is captured,
-                        # but before the next task acquires the semaphore.
-                        _loop = asyncio.get_event_loop()
-                        if task["task_id"] in BIO_TASK_IDS:
-                            await _loop.run_in_executor(
-                                None, _restore_bio, base_url, phpsessid, _REDDIT_USERNAME, original_bio
-                            )
-                        elif task["task_id"] in HREKIRES_TASK_IDS:
-                            await _loop.run_in_executor(
-                                None, _restore_hrekires_votes, base_url, phpsessid
-                            )
+                        # State restoration only needed in single mode; multi-docker
+                        # workers are isolated per task.
+                        if not multi_docker:
+                            _loop = asyncio.get_event_loop()
+                            if task["task_id"] in BIO_TASK_IDS:
+                                await _loop.run_in_executor(
+                                    None, _restore_bio, base_url, phpsessid, _REDDIT_USERNAME, original_bio
+                                )
+                            elif task["task_id"] in HREKIRES_TASK_IDS:
+                                await _loop.run_in_executor(
+                                    None, _restore_hrekires_votes, base_url, phpsessid
+                                )
 
                         async with remaining_lock:
                             nonlocal remaining
@@ -381,9 +414,13 @@ def test_agent_accomplishes_reddit_tasks(
                             "planning_log": details["planning_log"],
                             "worker_id": w["worker_id"],
                             "status": status,
+                            "costs": details.get("costs"),
+                            "start_time": start_time,
+                            "end_time": end_time,
                         }
 
                 except Exception as e:
+                    _now = datetime.now(timezone.utc)
                     result = {
                         "task": task,
                         "passed": False,
@@ -396,12 +433,28 @@ def test_agent_accomplishes_reddit_tasks(
                         "planning_log": None,
                         "worker_id": None,
                         "status": "failed",
+                        "costs": [],
+                        "start_time": _now,
+                        "end_time": _now,
                     }
 
                 entry = _build_log_entry(result)
+                det_entry = build_detailed_entry(
+                    task=result["task"],
+                    agent_result=result["agent_result"],
+                    error=result["error"],
+                    correct=bool(result["passed"]) and not result["error"],
+                    start_time=result["start_time"],
+                    end_time=result["end_time"],
+                    eval_output_dir=str(out_path),
+                    costs=result.get("costs"),
+                )
                 async with write_lock:
                     await asyncio.get_event_loop().run_in_executor(
                         None, _flush_result, out_path, entry
+                    )
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, flush_detailed_jsonl, detailed_out_path, det_entry
                     )
 
                 return result

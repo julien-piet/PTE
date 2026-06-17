@@ -31,8 +31,10 @@ NEW version:
 | Stop all workers | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py down'` |
 | Init workers | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py init --num-workers <#ofworkers>'` |
 | Release a worker | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py release --worker-id <id>'` |
+| Release (read-only) | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py release --worker-id <id> --read-only'` |
 
 > **Note:** `init` defaults to 3 workers if no number is provided.
+> **Note:** `--read-only` on `release` skips instance restart — use this when the task did not modify site state.
 
 ---
 
@@ -56,10 +58,10 @@ Old docker image use these.
 
 | Action | Command |
 |--------|---------|
-| Check status | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent/webarena_orchestrator/orchestrator.py status'` |
-| Stop all workers | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent/webarena_orchestrator/orchestrator.py down'` |
-| Init workers | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent/webarena_orchestrator/orchestrator.py init --num-workers <#ofworkers>'` |
-| Release a worker | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent/webarena_orchestrator/orchestrator.py release --worker-id <id>'` |
+| Check status | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py status'` |
+| Stop all workers | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py down'` |
+| Init workers | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py init --num-workers <#ofworkers>'` |
+| Release a worker | `ssh username@red5k.cs.berkeley.edu 'python3 /scr2/webagent-verified/webarena_orchestrator/orchestrator.py release --worker-id <id>'` |
 
 > **Note:** `init` defaults to 3 workers if no number is provided.
 

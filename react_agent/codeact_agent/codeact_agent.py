@@ -1,0 +1,750 @@
+import logging
+import os
+
+# opendevin and browsergym are only present in the eval Docker environment;
+# define minimal stubs so the module is importable during local development.
+try:
+    from browsergym.core.action.highlevel import HighLevelActionSet
+    from browsergym.utils.obs import flatten_axtree_to_str
+    from opendevin.controller.agent import Agent
+    from opendevin.controller.state.state import State
+    from opendevin.core.logger import opendevin_logger as logger
+    from opendevin.events.action import (
+        Action,
+        AgentFinishAction,
+        BrowseInteractiveAction,
+        CmdRunAction,
+        IPythonRunCellAction,
+        MessageAction,
+    )
+    from opendevin.events.observation import (
+        BrowserOutputObservation,
+        CmdOutputObservation,
+        IPythonRunCellObservation,
+    )
+    from opendevin.events.observation.observation import Observation
+    from opendevin.llm.llm import LLM
+    from opendevin.runtime.plugins import (
+        AgentSkillsRequirement,
+        JupyterRequirement,
+        PluginRequirement,
+    )
+    from opendevin.runtime.tools import RuntimeTool
+except ImportError:
+    logger = logging.getLogger(__name__)  # type: ignore[assignment]
+
+    class Agent:  # type: ignore[no-redef]
+        def __init__(self, llm): self.llm = llm
+        def reset(self): pass
+        @classmethod
+        def register(cls, name, agent_cls): pass
+
+    class State: pass  # type: ignore[no-redef]
+    class LLM: pass  # type: ignore[no-redef]
+    PluginRequirement = object  # type: ignore[assignment,misc]
+    RuntimeTool = type('RuntimeTool', (), {'BROWSER': 'browser'})()  # type: ignore[assignment]
+
+    class Action: pass  # type: ignore[no-redef]
+    class AgentFinishAction(Action):  # type: ignore[no-redef]
+        def __init__(self, thought=''): self.thought = thought
+    class MessageAction(Action):  # type: ignore[no-redef]
+        def __init__(self, content='', wait_for_response=False):
+            self.content = content; self.source = 'assistant'
+    class BrowseInteractiveAction(Action):  # type: ignore[no-redef]
+        def __init__(self, browser_actions='', thought='', browsergym_send_msg_to_user=''):
+            self.browser_actions = browser_actions
+            self.thought = thought
+            self.browsergym_send_msg_to_user = browsergym_send_msg_to_user
+            self.source = 'assistant'
+    class CmdRunAction(Action):  # type: ignore[no-redef]
+        def __init__(self, command='', thought=''):
+            self.command = command; self.thought = thought; self.source = 'assistant'
+    class IPythonRunCellAction(Action):  # type: ignore[no-redef]
+        def __init__(self, code='', thought='', kernel_init_code=''):
+            self.code = code; self.thought = thought; self.source = 'assistant'
+    class BrowserOutputObservation:  # type: ignore[no-redef]
+        error = False; last_browser_action = ''; axtree_object = {}
+        extra_element_properties = {}; content = ''
+    class CmdOutputObservation:  # type: ignore[no-redef]
+        content = ''; command_id = ''; exit_code = 0
+    class IPythonRunCellObservation:  # type: ignore[no-redef]
+        content = ''
+    class Observation: pass  # type: ignore[no-redef]
+    class AgentSkillsRequirement: pass  # type: ignore[no-redef]
+    class JupyterRequirement: pass  # type: ignore[no-redef]
+    class HighLevelActionSet:  # type: ignore[no-redef]
+        def __init__(self, subsets=None, strict=False, multiaction=False): pass
+    def flatten_axtree_to_str(*args, **kwargs): return ''  # type: ignore[no-redef]
+
+from .action_parser import InterleavingResponseParser
+from .prompt import (
+    API_PROMPT,
+    BROWSING_PREFIX,
+    EXAMPLE_PROMPT,
+    SYSTEM_PREFIX,
+    SYSTEM_SUFFIX,
+)
+
+# --- Site-specific API hints from api/api_server_prompts.py ---
+try:
+    from api.api_server_prompts import GITLAB_HINTS, REDDIT_HINTS, SHOPPING_HINTS
+    _API_HINTS: dict = {
+        'GITLAB': GITLAB_HINTS,
+        'SHOPPING': SHOPPING_HINTS,
+        'REDDIT': REDDIT_HINTS,
+    }
+except ImportError:
+    _API_HINTS = {}
+
+
+def _get_site_hints(history_str: str, urls: dict) -> str:
+    """Return concatenated API hints for whichever sites appear in the task history."""
+    seen: set = set()
+    parts = []
+    for url_key, hint_key in [
+        ('GITLAB', 'GITLAB'),
+        ('SHOPPING', 'SHOPPING'),
+        ('SHOPPING_ADMIN', 'SHOPPING'),
+        ('REDDIT', 'REDDIT'),
+    ]:
+        url = urls.get(url_key, '')
+        if url and url in history_str and hint_key in _API_HINTS and hint_key not in seen:
+            parts.append(_API_HINTS[hint_key])
+            seen.add(hint_key)
+    return '\n'.join(parts)
+
+
+# --- LLM backed by config/config.yaml via litellm ---
+class _ConfigLLM:
+    """Thin litellm wrapper built from config/config.yaml."""
+
+    _PROVIDER_PREFIX = {
+        'anthropic': 'anthropic',
+        'openai': None,
+        'google': 'gemini',
+        'google-gla': 'gemini',
+    }
+
+    def __init__(self, provider: str, model: str):
+        prefix = self._PROVIDER_PREFIX.get(provider.lower())
+        self.model = f'{prefix}/{model}' if prefix else model
+        self.total_cost: float = 0.0
+
+    def completion(self, messages, stop=None, temperature=0.0, **kwargs):
+        import litellm
+        response = litellm.completion(
+            model=self.model,
+            messages=messages,
+            stop=stop,
+            temperature=temperature,
+            **kwargs,
+        )
+        try:
+            self.total_cost += litellm.completion_cost(completion_response=response)
+        except Exception:
+            pass
+        return response
+
+
+def _llm_from_config():
+    """Build a _ConfigLLM from config/config.yaml; returns None on any error."""
+    try:
+        from agent.common.configurator import Configurator
+        config = Configurator()
+        config.load_all_env()
+        provider = config._data.get('agent_llm_provider', '')
+        model = config._data.get('agent_llm_model', '')
+        if provider and model:
+            return _ConfigLLM(provider, model)
+    except Exception:
+        pass
+    return None
+
+# --- API schema loading (mirrors planning_agent.py pattern) ---
+
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+_API_DIR = os.path.join(_PROJECT_ROOT, 'api')
+_HTTP_METHODS = {'get', 'post', 'put', 'patch', 'delete'}
+
+# URL env-var key → schema files that cover that server
+_URL_TO_SCHEMAS = {
+    'GITLAB':         ['gitlab_api_schema.json'],
+    'SHOPPING':       ['shopping_api_schema.json', 'shopping_extra_api_schema.json'],
+    'SHOPPING_ADMIN': ['shopping_api_schema.json', 'shopping_extra_api_schema.json'],
+    'REDDIT':         ['reddit_api_schema.json'],
+}
+
+_SCHEMA_CACHE: dict = {}  # schema_file → (base_path, [(method, path, summary), ...])
+
+
+def _load_schema_endpoints(schema_file: str) -> tuple:
+    """Parse a swagger file with prance; returns (base_path, endpoint_list).
+
+    Each entry in endpoint_list is (METHOD, /path, summary). Results are cached
+    so repeated step() calls don't re-parse the same file.
+    """
+    if schema_file in _SCHEMA_CACHE:
+        return _SCHEMA_CACHE[schema_file]
+    try:
+        import prance
+        filepath = os.path.join(_API_DIR, 'schemas', schema_file)
+        parser = prance.BaseParser(os.path.abspath(filepath), lazy=False)
+        spec = parser.specification
+        base_path = spec.get('basePath', '').rstrip('/')
+        endpoints = []
+        for path, path_item in spec.get('paths', {}).items():
+            if not isinstance(path_item, dict):
+                continue
+            for method, operation in path_item.items():
+                if method.lower() not in _HTTP_METHODS:
+                    continue
+                if not isinstance(operation, dict):
+                    continue
+                summary = (operation.get('summary', '') or '').strip()
+                endpoints.append((method.upper(), path, summary))
+        result = (base_path, endpoints)
+    except Exception as exc:
+        logger.warning('Failed to load schema %s: %s', schema_file, exc)
+        result = ('', [])
+    _SCHEMA_CACHE[schema_file] = result
+    return result
+
+
+def _get_api_schema_section(history_str: str, urls: dict) -> str:
+    """Return a compact endpoint reference for whichever sites appear in the task history.
+
+    Each line is "  METHOD /path - summary" so the agent knows what API calls are
+    available and their expected base URL, mirroring the schema-loading logic in
+    agent/planning_agent.py.
+    """
+    seen_files: set = set()
+    sections = []
+    for url_key, schema_files in _URL_TO_SCHEMAS.items():
+        url = urls.get(url_key, '')
+        if not url or url not in history_str:
+            continue
+        for schema_file in schema_files:
+            if schema_file in seen_files:
+                continue
+            seen_files.add(schema_file)
+            base_path, endpoints = _load_schema_endpoints(schema_file)
+            if not endpoints:
+                continue
+            base_url = url.rstrip('/') + base_path
+            lines = [f'[{schema_file}]  Base URL: {base_url}']
+            for method, path, summary in endpoints:
+                line = f'  {method} {path}'
+                if summary:
+                    line += f' - {summary}'
+                lines.append(line)
+            sections.append('\n'.join(lines))
+    if not sections:
+        return ''
+    return '\nAvailable API endpoints:\n' + '\n\n'.join(sections) + '\n'
+
+
+ENABLE_GITHUB = False
+USE_NAV = (
+    os.environ.get('USE_NAV', 'true') == 'true'
+)  # only disable NAV actions when running webarena and miniwob benchmarks
+USE_CONCISE_ANSWER = (
+    os.environ.get('USE_CONCISE_ANSWER', 'false') == 'true'
+)  # only return concise answer when running webarena and miniwob benchmarks
+
+if not USE_NAV and USE_CONCISE_ANSWER:
+    EVAL_MODE = True  # disabled NAV actions and only return concise answer, for webarena and miniwob benchmarks\
+else:
+    EVAL_MODE = False
+EVAL_MODE = True
+PROMPT_CACHE = True
+
+GITLAB_URL = os.environ.get('GITLAB', '')
+SHOPPING_URL = os.environ.get('SHOPPING', '')
+SHOPPING_ADMIN_URL = os.environ.get('SHOPPING_ADMIN', '')
+MAP_URL = os.environ.get('MAP', '')
+REDDIT_URL = os.environ.get('REDDIT', '')
+
+
+def _get_site_urls():
+    """Read site URLs from env at call time so worker-specific URLs are picked up."""
+    return {
+        'GITLAB': os.environ.get('GITLAB', GITLAB_URL),
+        'SHOPPING': os.environ.get('SHOPPING', SHOPPING_URL),
+        'SHOPPING_ADMIN': os.environ.get('SHOPPING_ADMIN', SHOPPING_ADMIN_URL),
+        'MAP': os.environ.get('MAP', MAP_URL),
+        'REDDIT': os.environ.get('REDDIT', REDDIT_URL),
+    }
+
+
+def get_error_prefix(last_browser_action: str) -> str:
+    return f'IMPORTANT! Last action is incorrect:\n{last_browser_action}\nThink again with the current observation of the page.\n'
+
+
+CONCISE_INSTRUCTION = """\
+
+Here is another example with chain of thought of a valid action when providing a concise answer to user:
+"
+In order to accomplish my goal I need to send the information asked back to the user. This page list the information of HP Inkjet Fax Machine, which is the product identified in the objective. Its price is $279.49. I will send a message back to user with the answer.
+```send_msg_to_user("$279.49")```
+"
+"""
+
+
+def get_browse_prompt(
+    error_prefix: str, cur_axtree_txt: str, prev_action_str: str
+) -> str:
+    prompt = f"""\
+{error_prefix}
+
+# Current Accessibility Tree:
+{cur_axtree_txt}
+
+# Previous Actions:
+{prev_action_str if prev_action_str.strip() != '' else 'None.'}
+
+Here is an example with chain of thought of a valid action when clicking on a button:
+"
+In order to accomplish my goal I need to click on the button with bid 12
+```click("12")```
+"
+""".strip()
+    if USE_CONCISE_ANSWER:
+        prompt += CONCISE_INSTRUCTION
+    return prompt
+
+
+def action_to_str(action: Action) -> str:
+    _t = type(action).__name__
+    if _t == 'CmdRunAction':
+        return f'{action.thought}\n<execute_bash>\n{action.command}\n</execute_bash>'
+    elif _t == 'IPythonRunCellAction':
+        return f'{action.thought}\n<execute_ipython>\n{action.code}\n</execute_ipython>'
+    elif _t == 'BrowseInteractiveAction':
+        return f'{action.thought}\n<execute_browse>\n{action.browser_actions}\n</execute_browse>'
+    elif _t == 'MessageAction':
+        return action.content
+    return ''
+
+
+def get_action_message(action: Action) -> dict[str, str] | None:
+    _t = type(action).__name__
+    if _t in ('BrowseInteractiveAction', 'CmdRunAction', 'IPythonRunCellAction', 'MessageAction'):
+        return {
+            'role': 'user' if getattr(action, 'source', '') == 'user' else 'assistant',
+            'content': action_to_str(action),
+        }
+    return None
+
+
+def get_observation_message(obs) -> dict[str, str] | None:
+    _t = type(obs).__name__
+    if _t == 'CmdOutputObservation':
+        content = 'OBSERVATION:\n' + truncate_observation(obs.content)
+        content += (
+            f'\n[Command {obs.command_id} finished with exit code {obs.exit_code}]'
+        )
+        return {'role': 'user', 'content': content}
+    elif _t == 'IPythonRunCellObservation':
+        content = 'OBSERVATION:\n' + obs.content
+        # replace base64 images with a placeholder
+        splitted = content.split('\n')
+        for i, line in enumerate(splitted):
+            if '![image](data:image/png;base64,' in line:
+                splitted[i] = (
+                    '![image](data:image/png;base64, ...) already displayed to user'
+                )
+        content = '\n'.join(splitted)
+        content = truncate_observation(content)
+        return {'role': 'user', 'content': content}
+    elif _t == 'BrowserOutputObservation':
+        content = 'OBSERVATION:\n' + truncate_observation(obs.content)
+        return {'role': 'user', 'content': content}
+    return None
+
+
+def truncate_observation(observation: str, max_chars: int = 10_000) -> str:
+    """
+    Truncate the middle of the observation if it is too long.
+    """
+    if len(observation) <= max_chars:
+        return observation
+    half = max_chars // 2
+    return (
+        observation[:half]
+        + '\n[... Observation truncated due to length ...]\n'
+        + observation[-half:]
+    )
+
+
+def get_in_context_example() -> str:
+    return EXAMPLE_PROMPT
+
+
+class CodeActAgent(Agent):
+    VERSION = '1.6'
+    """
+    The Code Act Agent is a minimalist agent.
+    The agent works by passing the model a list of action-observation pairs and prompting the model to take the next step.
+
+    ### Overview
+
+    This agent implements the CodeAct idea ([paper](https://arxiv.org/abs/2402.13463), [tweet](https://twitter.com/xingyaow_/status/1754556835703751087)) that consolidates LLM agents’ **act**ions into a unified **code** action space for both *simplicity* and *performance* (see paper for more details).
+
+    The conceptual idea is illustrated below. At each turn, the agent can:
+
+    1. **Converse**: Communicate with humans in natural language to ask for clarification, confirmation, etc.
+    2. **CodeAct**: Choose to perform the task by executing code
+    - Execute any valid Linux `bash` command
+    - Execute any valid `Python` code with [an interactive Python interpreter](https://ipython.org/). This is simulated through `bash` command, see plugin system below for more details.
+
+    ![image](https://github.com/OpenDevin/OpenDevin/assets/38853559/92b622e3-72ad-4a61-8f41-8c040b6d5fb3)
+
+    ### Plugin System
+
+    To make the CodeAct agent more powerful with only access to `bash` action space, CodeAct agent leverages OpenDevin's plugin system:
+    - [Jupyter plugin](https://github.com/OpenDevin/OpenDevin/tree/main/opendevin/runtime/plugins/jupyter): for IPython execution via bash command
+    - [SWE-agent tool plugin](https://github.com/OpenDevin/OpenDevin/tree/main/opendevin/runtime/plugins/swe_agent_commands): Powerful bash command line tools for software development tasks introduced by [swe-agent](https://github.com/princeton-nlp/swe-agent).
+
+    ### Demo
+
+    https://github.com/OpenDevin/OpenDevin/assets/38853559/f592a192-e86c-4f48-ad31-d69282d5f6ac
+
+    *Example of CodeActAgent with `gpt-4-turbo-2024-04-09` performing a data science task (linear regression)*
+
+    ### Work-in-progress & Next step
+
+    [] Support web-browsing
+    [] Complete the workflow for CodeAct agent to submit Github PRs
+
+    """
+
+    sandbox_plugins: list[PluginRequirement] = [
+        # NOTE: AgentSkillsRequirement need to go before JupyterRequirement, since
+        # AgentSkillsRequirement provides a lot of Python functions
+        # and it need to be initialized before Jupyter for Jupyter to use those functions.
+        AgentSkillsRequirement(),
+        JupyterRequirement(),
+    ]
+    runtime_tools: list[RuntimeTool] = [RuntimeTool.BROWSER]
+    action_parser = InterleavingResponseParser()
+
+    def __init__(
+        self,
+        llm: LLM,
+    ) -> None:
+        """
+        Initializes a new instance of the CodeActAgent class.
+
+        Parameters:
+        - llm (LLM): The llm to be used by this agent
+        """
+        super().__init__(llm)
+        config_llm = _llm_from_config()
+        if config_llm is not None:
+            self.llm = config_llm
+        action_subsets = ['chat', 'bid']
+        if USE_NAV:
+            action_subsets.append('nav')
+        self.action_space = HighLevelActionSet(
+            subsets=action_subsets,
+            strict=False,  # less strict on the parsing of the actions
+            multiaction=True,  # enable to agent to take multiple actions at once
+        )
+        self.reset()
+
+    def reset(self) -> None:
+        """
+        Resets the CodeAct Agent.
+        """
+        super().reset()
+        self.cost_accumulator = 0
+        self.error_accumulator = 0
+
+    def step(self, state: State) -> Action:
+        """
+        Performs one step using the CodeAct Agent.
+        This includes gathering info on previous steps and prompting the model to make a command to execute.
+
+        Parameters:
+        - state (State): used to get updated info and background commands
+
+        Returns:
+        - CmdRunAction(command) - bash command to run
+        - IPythonRunCellAction(code) - IPython code to run
+        - AgentDelegateAction(agent, inputs) - delegate action for (sub)task
+        - MessageAction(content) - Message action to run (e.g. ask for clarification)
+        - AgentFinishAction() - end the interaction
+        """
+        history_str = f'{state.history}'
+        urls = _get_site_urls()
+        _GITLAB_URL = urls['GITLAB']
+        _SHOPPING_URL = urls['SHOPPING']
+        _SHOPPING_ADMIN_URL = urls['SHOPPING_ADMIN']
+        _MAP_URL = urls['MAP']
+        _REDDIT_URL = urls['REDDIT']
+        site_hints = _get_site_hints(history_str, urls)
+        schema_section = _get_api_schema_section(history_str, urls)
+        SYSTEM_PROMPT = (
+            SYSTEM_PREFIX
+            + API_PROMPT
+            + site_hints
+            + schema_section
+            + BROWSING_PREFIX
+            + SYSTEM_SUFFIX
+            + EXAMPLE_PROMPT
+        )
+
+        messages: list[dict[str, str]] = [
+            {'role': 'system', 'content': SYSTEM_PROMPT},
+        ]
+        cur_axtree_txt = ''
+        error_prefix = ''
+        last_obs = None
+        last_action = None
+        prev_actions = []
+        browse_prompt = get_browse_prompt('', '', '')
+        for i, (prev_action, obs) in enumerate(state.history):
+            if type(prev_action).__name__ == 'BrowseInteractiveAction':
+                last_action = prev_action
+                last_obs = obs
+                # Removing the first action is for webarena only
+                if i != 1 and i != 2 and i != 3:
+                    prev_actions.append(prev_action.browser_actions)
+                if type(last_obs).__name__ == 'BrowserOutputObservation':
+                    if last_obs.error and i > 3:
+                        # add error recovery prompt prefix
+                        error_prefix = get_error_prefix(last_obs.last_browser_action)
+                        self.error_accumulator += 1
+                        if self.error_accumulator > 10:
+                            return MessageAction(
+                                'Too many errors encountered. Task failed.'
+                            )
+                    try:
+                        cur_axtree_txt = flatten_axtree_to_str(
+                            last_obs.axtree_object,
+                            extra_properties=last_obs.extra_element_properties,
+                            with_clickable=True,
+                            filter_visible_only=True,
+                        )
+                    except Exception as e:
+                        logger.error(
+                            'Error when trying to process the accessibility tree: %s', e
+                        )
+                        return MessageAction('Error encountered when browsing.')
+                prev_action_str = '\n'.join(prev_actions)
+                browse_prompt = get_browse_prompt(
+                    error_prefix, cur_axtree_txt, prev_action_str
+                )
+            if i == 3:
+                browse_prompt = get_browse_prompt('', cur_axtree_txt, '')
+                continue
+            if i == 1 or i == 2:
+                continue
+            if prev_action is not None:
+                message = get_action_message(prev_action)
+                if message:
+                    messages.append(message)
+            if obs is not None:
+                message = get_observation_message(obs)
+                if message:
+                    messages.append(message)
+
+        # logger.info(f"browse_prompt: {browse_prompt}")
+        if (
+            last_action is not None
+            and type(last_action).__name__ == 'BrowseInteractiveAction'
+            and last_action.browsergym_send_msg_to_user
+        ):
+            return MessageAction(last_action.browsergym_send_msg_to_user)
+
+        response = None
+
+        if EVAL_MODE and len(state.history) == 1:
+            # for webarena and miniwob++ eval, we need to retrieve the initial observation already in browser env
+            # initialize and retrieve the first observation by issuing an noop OP
+            # For non-benchmark browsing, the browser env starts with a blank page, and the agent is expected to first navigate to desired websites
+            # This message will not be included in `messages`
+
+            ### SHOPPING
+            if _SHOPPING_URL in history_str:
+                logger.info('logging in to shopping website')
+                action = f'goto("{_SHOPPING_URL}/customer/account/login/")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### MAP
+            if _MAP_URL in history_str:
+                logger.info('logging in to map website')
+                action = f'goto("{_MAP_URL}")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### SHOPPING ADMIN
+            if _SHOPPING_ADMIN_URL in history_str:
+                logger.info('logging in to shopping admin website')
+                action = f'goto("{_SHOPPING_ADMIN_URL}")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### REDDIT
+            if _REDDIT_URL in history_str:
+                logger.info('logging in to reddit website')
+                action = f'goto("{_REDDIT_URL}/login")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### GITLAB
+            if _GITLAB_URL in history_str:
+                logger.info('logging in to gitlab')
+                action = f'goto("{_GITLAB_URL}/users/sign_in")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### GITLAB and REDDIT
+            if _GITLAB_URL in history_str and _REDDIT_URL in history_str:
+                logger.info('logging in to reddit')
+                action = f'goto("{_REDDIT_URL}/login")\n'
+                action += 'fill("62", "MarvelsGrantMan136")\n'
+                action += 'fill("65", "test1234")\n'
+                action += 'click("76")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+        elif EVAL_MODE and len(state.history) <= 2:
+            ### SHOPPING
+            if _SHOPPING_URL in history_str:
+                action = 'fill("1375", "emma.lopez@gmail.com")\n'
+                action += 'fill("1380", "Password.123")\n'
+                action += 'click("1387")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### MAP
+            if _MAP_URL in history_str:
+                MAP_START_URL = os.environ.get('MAP_START_URL', _MAP_URL)
+                action = f'goto("{MAP_START_URL}")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### SHOPPING ADMIN
+            if _SHOPPING_ADMIN_URL in history_str:
+                action = 'fill("133", "admin")\n'
+                action += 'fill("138", "admin1234")\n'
+                action += 'click("141")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### REDDIT
+            if _REDDIT_URL in history_str:
+                action = 'fill("62", "MarvelsGrantMan136")\n'
+                action += 'fill("65", "test1234")\n'
+                action += 'click("76")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### GITLAB
+            if _GITLAB_URL in history_str:
+                action = 'fill("66", "byteblaze")\n'
+                action += 'fill("70", "hello1234")\n'
+                action += 'click("83")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### GITLAB and REDDIT
+            if _GITLAB_URL in history_str and _REDDIT_URL in history_str:
+                logger.info('logging in to gitlab')
+                action = f'goto("{_GITLAB_URL}/users/sign_in")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+        elif EVAL_MODE and len(state.history) <= 3:
+            ### SHOPPING
+            if _SHOPPING_URL in history_str:
+                SHOPPING_START_URL = os.environ.get('SHOPPING_START_URL', _SHOPPING_URL)
+                logger.info(f'opening shopping {SHOPPING_START_URL}')
+                task_start_urls = [
+                    task_start_url.strip()
+                    for task_start_url in SHOPPING_START_URL.split('|AND|')
+                ]
+                action = ''
+                for url in task_start_urls:
+                    action += f'goto("{url}")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### SHOPPING ADMIN
+            if _SHOPPING_ADMIN_URL in history_str:
+                SHOPPING_ADMIN_START_URL = os.environ.get(
+                    'SHOPPING_ADMIN_START_URL', _SHOPPING_ADMIN_URL
+                )
+                logger.info(f'opening shopping admin {SHOPPING_ADMIN_START_URL}')
+                action = f'goto("{SHOPPING_ADMIN_START_URL}")'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### MAP
+            if _MAP_URL in history_str:
+                MAP_START_URL = os.environ.get('MAP_START_URL', _MAP_URL)
+                action = f'goto("{MAP_START_URL}")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### REDDIT
+            if _REDDIT_URL in history_str:
+                REDDIT_START_URL = os.environ.get('REDDIT_START_URL', _REDDIT_URL)
+                action = f'goto("{REDDIT_START_URL}")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            if _SHOPPING_URL in history_str and _REDDIT_URL in history_str:
+                SHOPPING_START_URL = os.environ.get('SHOPPING_START_URL', _SHOPPING_URL)
+                logger.info(f'opening shopping {SHOPPING_START_URL}')
+                task_start_urls = [
+                    task_start_url.strip()
+                    for task_start_url in SHOPPING_START_URL.split('|AND|')
+                ]
+                action = ''
+                for url in task_start_urls:
+                    action += f'goto("{url}")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### GITLAB
+            if _GITLAB_URL in history_str:
+                GITLAB_START_URL = os.environ.get('GITLAB_START_URL', _GITLAB_URL)
+                logger.info(f'opening gitlab {GITLAB_START_URL}')
+                action = f'goto("{GITLAB_START_URL}")'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+            ### GITLAB and REDDIT
+            if _GITLAB_URL in history_str and _REDDIT_URL in history_str:
+                logger.info('logging in to gitlab')
+                action = 'fill("66", "byteblaze")\n'
+                action += 'fill("70", "hello1234")\n'
+                action += 'click("83")\n'
+                response = f'<execute_browse> {action} </execute_browse>'
+
+        if response is None:
+            messages[-1]['content'] = messages[-1]['content'] + '\n' + browse_prompt
+            latest_user_messages = [m for m in messages if m['role'] == 'user']
+            if len(latest_user_messages) >= 1:
+                latest_user_message = latest_user_messages[-1]
+                if latest_user_message:
+                    if latest_user_message['content'].strip() == '/exit':
+                        return AgentFinishAction()
+                    latest_user_message['content'] += (
+                        f'\n\nENVIRONMENT REMINDER: You have {state.max_iterations - state.iteration} turns left to complete the task.'
+                    )
+            for message in messages:
+                message['content'] = message['content'].replace(
+                    '**JavaScript seems to be disabled in your browser.** For the best experience on our site, be sure to turn on Javascript in your browser.',
+                    '',
+                )
+                message['content'] = message['content'].replace(
+                    'The store will not work correctly when cookies are disabled.', ''
+                )
+            llm_response = self.llm.completion(
+                messages=messages,
+                stop=[
+                    '</execute_ipython>',
+                    '</execute_bash>',
+                    '</execute_browse>',
+                ],
+                temperature=0.0,
+            )
+            state.num_of_chars += sum(
+                len(message['content']) for message in messages
+            ) + len(llm_response.choices[0].message.content or '')
+            response = llm_response
+
+        if response is not None and hasattr(response, 'choices'):
+            raw_text = response.choices[0].message.content or ''
+            logger.info('[LLM response]\n%s', raw_text[:2000])
+
+        return self.action_parser.parse(response)
+
+    def search_memory(self, query: str) -> list[str]:
+        raise NotImplementedError('Implement this abstract method')

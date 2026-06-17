@@ -14,6 +14,7 @@ import json
 import re
 import subprocess
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote, quote_plus
 
@@ -21,10 +22,11 @@ from pydantic import BaseModel
 from pydantic_ai import Agent
 
 from agent.auth import AuthProvider
+from agent.planner import _AnyValue
 
 class _ParsedValue(BaseModel):
     found: bool
-    value: Union[str, int, float, bool, list, dict, None] = None
+    value: _AnyValue = None
     reason: Optional[str] = None
 
 
@@ -96,10 +98,15 @@ class ExecutionAgent:
         Supported tokens:
           [*]                   wildcard — map remaining chain over each list element
           [?(@.field==value)]   filter — keep only list elements where dict[field] == value
-          [n]                   numeric index
+          [n] / [-n]            numeric index (negatives count from the end, like Python)
+          [sort_asc:f]          sort list ascending by field f (dicts) or value (scalars)
           [sort_desc:f]         sort list descending by field f (dicts) or value (scalars)
           [:N]                  take first N elements (slice)
           .key                  dict field access
+
+        Unrecognised tokens return None (fail-loud). Callers rely on this to
+        detect accessor failures and abort the dependent step rather than
+        silently embedding the upstream object as a string.
         """
         pos = 0
         length = len(accessor)
@@ -114,8 +121,9 @@ class ExecutionAgent:
                     return [ExecutionAgent._follow_accessor(item, remaining) for item in obj]
                 return list(obj)
             # [?(@.field==value)]  exact match filter
-            # [?(@.field*=value)]  contains (substring) filter — use when the search term
-            #                      is a user-provided fragment, not a full field value
+            # [?(@.field*=value)]  fuzzy contains filter — tries exact substring, then
+            #                      normalized (no-space), then word-token overlap, then
+            #                      difflib similarity. Exact matches always pass first.
             m = re.match(r'\[\?\(@\.(\w+(?:\.\w+)*)(==|\*=)([^\]]+)\)\]', accessor[pos:])
             if m:
                 field_path = m.group(1)
@@ -137,7 +145,23 @@ class ExecutionAgent:
                     if actual is None:
                         return False
                     if op == "*=":
-                        return rv.lower() in str(actual).lower()
+                        rv_lower = rv.lower()
+                        actual_lower = str(actual).lower()
+                        # 1. Exact case-insensitive substring
+                        if rv_lower in actual_lower:
+                            return True
+                        # 2. Normalized (spaces stripped) substring — "deep learning" → "deeplearning"
+                        rv_nospace = re.sub(r'\s+', '', rv_lower)
+                        actual_nospace = re.sub(r'\s+', '', actual_lower)
+                        if rv_nospace and rv_nospace in actual_nospace:
+                            return True
+                        # 3. All query words appear in normalized field
+                        words = rv_lower.split()
+                        if words and all(w in actual_nospace for w in words):
+                            return True
+                        # 4. Difflib similarity — "future technology" → "futurology"
+                        score = SequenceMatcher(None, rv_nospace or rv_lower, actual_nospace or actual_lower).ratio()
+                        return score >= 0.6
                     try:
                         return actual == type(actual)(rv)
                     except (ValueError, TypeError):
@@ -150,17 +174,18 @@ class ExecutionAgent:
                 if isinstance(obj, list):
                     obj = [item for item in obj if _matches(item)]
                 continue
-            # [sort_desc:field] — sort list descending by a named field (or value for scalars)
-            m = re.match(r'\[sort_desc:(\w+)\]', accessor[pos:])
+            # [sort_asc:field] / [sort_desc:field] — sort list by a named field (or value for scalars)
+            m = re.match(r'\[sort_(asc|desc):(\w+)\]', accessor[pos:])
             if m:
-                field = m.group(1)
+                direction = m.group(1)
+                field = m.group(2)
                 pos += len(m.group(0))
                 if isinstance(obj, list):
                     try:
                         obj = sorted(
                             obj,
                             key=lambda x: (x.get(field, 0) if isinstance(x, dict) else x),
-                            reverse=True,
+                            reverse=(direction == "desc"),
                         )
                     except (TypeError, AttributeError):
                         pass
@@ -173,13 +198,13 @@ class ExecutionAgent:
                 if isinstance(obj, list):
                     obj = obj[:n]
                 continue
-            # [n] numeric index
-            m = re.match(r'\[(\d+)\]', accessor[pos:])
+            # [n] / [-n] numeric index (negative indices count from the end, like Python)
+            m = re.match(r'\[(-?\d+)\]', accessor[pos:])
             if m:
                 pos += len(m.group(0))
                 if isinstance(obj, list):
                     idx = int(m.group(1))
-                    if idx >= len(obj):
+                    if idx >= len(obj) or idx < -len(obj):
                         return None
                     obj = obj[idx]
                 # If obj is a dict (fan-out already distributed this item), skip the
@@ -199,7 +224,12 @@ class ExecutionAgent:
                 if obj is None:
                     return None
                 continue
-            break  # unrecognised token
+            # Unrecognised token — fail loud rather than silently returning
+            # the current obj. _resolve treats None as accessor failure and
+            # _execute_step's guard raises _MissingDependency, which is the
+            # correct outcome: the planner used an unsupported accessor
+            # pattern, so the dependent step cannot run with valid inputs.
+            return None
         return obj
 
     def _resolve_foreach(
@@ -357,6 +387,7 @@ class ExecutionAgent:
         path_params: Dict[str, str] = {}
         query_params: Dict[str, Any] = {}
         body: Optional[Any] = None
+        body_args_pending: List[tuple] = []  # (name, value) for body args, decided below
 
         for arg in step.arguments:
             name = arg.name
@@ -367,26 +398,36 @@ class ExecutionAgent:
             if name in path_param_names:
                 path_params[name] = str(value)
             elif pin == "body":
-                # If the arg is literally named "body" and the value is a dict/list,
-                # treat it as the entire request body. Otherwise treat it as a named
-                # body field and merge — this handles the case where the planner emits
-                # individual body-property args each tagged param_in="body".
-                if name == "body" and isinstance(value, (dict, list)):
-                    body = value
-                else:
-                    if body is None:
-                        body = {}
-                    if isinstance(body, dict):
-                        body[name] = value
+                body_args_pending.append((name, value))
             elif pin in ("query", "formData", "header"):
                 query_params[name] = value
             elif method in ("POST", "PUT", "PATCH"):
-                if body is None:
-                    body = {}
-                if isinstance(body, dict):
-                    body[name] = value
+                body_args_pending.append((name, value))
             else:
                 query_params[name] = value
+
+        # Decide body shape from the collected body args.
+        # Swagger generates body-parameter names like "<OperationId>Body"
+        # (e.g. PostV1CartsQuoteIdItemsBody, PutV1OrdersParent_idBody) for the
+        # Webarena shopping website. These are NOT the real JSON keys.
+        # When the planner emits a single body arg
+        # under such a name, the real top-level keys are inside `value` and we
+        # must use `value` directly as the body. Multiple body args → merge by
+        # name (each arg.name is then a real body field like "cartItem").
+        if len(body_args_pending) == 1:
+            name, value = body_args_pending[0]
+            is_auto_wrapper = (
+                name == "body"
+                or bool(re.match(r"^(Get|Post|Put|Patch|Delete)[A-Z].*Body$", name))
+            )
+            if is_auto_wrapper and isinstance(value, (dict, list)):
+                body = value
+            else:
+                body = {name: value}
+        elif len(body_args_pending) > 1:
+            body = {}
+            for name, value in body_args_pending:
+                body[name] = value
 
         # Build final URL — step.base_url wins, fall back to init-time base_url
         step_base_url = getattr(step, "base_url", "").rstrip("/") or self.base_url

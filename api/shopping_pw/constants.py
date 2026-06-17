@@ -1,6 +1,6 @@
 """Shared constants for the shipping_pw package."""
 
-BASE_URL = "http://127.0.0.1:7770"
+BASE_URL = "http://localhost:7770"
 CART_URL = f"{BASE_URL}/checkout/cart/"
 CHECKOUT_URL = f"{BASE_URL}/checkout/"
 WISHLIST_URL = f"{BASE_URL}/wishlist/"
