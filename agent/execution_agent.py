@@ -420,6 +420,18 @@ class ExecutionAgent:
                 name == "body"
                 or bool(re.match(r"^(Get|Post|Put|Patch|Delete)[A-Z].*Body$", name))
             )
+            # The planner sometimes serializes the body dict as a JSON string
+            # (e.g. arg `body` with value `'{"forum":"gaming","title":"..."}'`).
+            # Try to parse it back to a dict so the unwrap below catches it.
+            if is_auto_wrapper and isinstance(value, str):
+                stripped = value.strip()
+                if stripped.startswith("{") and stripped.endswith("}"):
+                    try:
+                        parsed = json.loads(stripped)
+                        if isinstance(parsed, dict):
+                            value = parsed
+                    except json.JSONDecodeError:
+                        pass
             if is_auto_wrapper and isinstance(value, (dict, list)):
                 body = value
             else:
@@ -474,6 +486,20 @@ class ExecutionAgent:
             body = raw
 
         if 200 <= status_code < 300 or status_code == 304:
+            # Some MCP servers (notably the reddit FastAPI wrapper) return HTTP 200
+            # with {"success": false, "error_message": "..."} for business-logic
+            # failures (e.g. the playwright vote click didn't persist). The HTTP
+            # success doesn't reflect the actual operation outcome — propagate the
+            # business-logic failure as an _HttpError so the executor treats it the
+            # same as any other tool failure (and cascade/alternative paths fire).
+            if (
+                isinstance(body, dict)
+                and body.get("success") is False
+                and "error_message" in body
+            ):
+                raise _HttpError(
+                    f"HTTP {status_code} (success=false): {body.get('error_message')}"
+                )
             return body
         # 409 Conflict: resource already exists — idempotent success.
         # Return a marked dict so _execute_step can skip LLM parsing and store
