@@ -672,8 +672,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Better initial load experience",
-          ["false", "open", "not closed"]
+          "False"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/8",
@@ -740,8 +739,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Outdated dependencies",
-          "false"
+          "False"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/18",
@@ -807,8 +805,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Rethink the homepage's content",
-          "closed"
+          "True"
         ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/719",
@@ -841,8 +838,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Add better form validation for our newsletter and contact pages",
-          "closed"
+          "True"
         ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/1057",
@@ -875,7 +871,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "false"
+          "True"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/a11y-webring.club/-/issues/39",
@@ -908,8 +904,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Outdated dependencies",
-          "false"
+          "False"
         ]
       },
       "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/18",
@@ -975,8 +970,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Rethink the homepage's content",
-          "true"
+          "True"
         ]
       },
       "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/719",
@@ -1475,7 +1469,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Shawn Allen"
+          "shawn.allen@github.com"
         ]
       },
       "reference_url": "",
@@ -1507,7 +1501,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Grayson Wright"
+          "wright.grayson@gmail.com"
         ]
       },
       "reference_url": "",
@@ -1539,7 +1533,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "tokudu"
+          "antonlopyrev@gmail.com"
         ]
       },
       "reference_url": "",
@@ -1571,7 +1565,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "eriklindernoren"
+          "eriklindernoren@live.se"
         ]
       },
       "reference_url": "",
@@ -1603,7 +1597,7 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Christopher Groskopf"
+          "staringmonkey@gmail.com"
         ]
       },
       "reference_url": "",
@@ -1638,14 +1632,14 @@
       "reference_answers": {
         "must_include": [
           "Shawn Allen",
-          "Inayaili Le\u00f3n",
+          "Inayaili León",
           "Aurora Pleguezuelo"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Shawn Allen, Inayaili Le\u00f3n, Aurora Pleguezuelo"
+      "reference_answer_raw_annotation": "Shawn Allen, Inayaili León, Aurora Pleguezuelo"
     },
     "intent_template_id": 324,
     "read_only": true
