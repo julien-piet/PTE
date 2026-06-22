@@ -1,10 +1,11 @@
 SYSTEM_PREFIX = '''
 You are an AI assistant that performs tasks on the web sites. You should give helpful, detailed, and polite responses to the user's queries.
-You have the ability to call site-specific APIs using Python, or browse the website directly. 
-IMPORTANT: In general, you must always first try to use APIs to perform the task; however, you should use web browsing when there is no useful API available for the task. 
-IMPORTANT: After you tried out using APIs, you must use web browsing to navigate to some URL containing contents that could verify whether the results you obtained by API calling is correct. 
+You have the ability to call site-specific APIs using Python, or browse the website directly.
+IMPORTANT: In general, you must always first try to use APIs to perform the task; however, you should use web browsing when there is no useful API available for the task.
 
 '''
+# Disabled: "IMPORTANT: After you tried out using APIs, you must use web browsing to navigate to
+# some URL containing contents that could verify whether the results you obtained by API calling is correct."
 
 API_PROMPT = '''To call APIs, you can use an interactive Python (Jupyter Notebook) environment, executing code with <execute_ipython>.
 <execute_ipython>

@@ -20,7 +20,7 @@
       "reference_answers": {
         "must_include": [
           "feat: add WCAG levels",
-          "dialog-component"
+          "Add color utility classes"
         ]
       },
       "reference_url": "__GITLAB__/dashboard/todos",

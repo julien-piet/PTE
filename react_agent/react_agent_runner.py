@@ -14,11 +14,14 @@ from __future__ import annotations
 
 import asyncio
 import io
+import json
 import logging
 import os
 import re
 import subprocess
 import sys
+import threading
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -84,6 +87,8 @@ class ReactAgentRunner(BaseAgentRunner):
         force_reset: bool = False,
         gitlab_base_url: str = "",
         max_iterations: int = 30,
+        webarena_output_dir: Optional[str] = None,
+        wa_dataset_path: Optional[str] = None,
     ):
         super().__init__(
             headless=headless,
@@ -96,10 +101,85 @@ class ReactAgentRunner(BaseAgentRunner):
         self._react_agent = None
         self._last_steps: list = []
         self._page = None  # active Playwright page, set during _run_task
+        self._task_log_fh = None  # per-task log file handle, opened in _run_task
+        self.webarena_output_dir = webarena_output_dir
+        self._wa_task_type: Dict[int, str] = {}
+        if webarena_output_dir:
+            self._load_wa_dataset(wa_dataset_path)
+
+    # ------------------------------------------------------------------
+    # WebArena-Verified helpers
+    # ------------------------------------------------------------------
+
+    def _load_wa_dataset(self, path: Optional[str] = None) -> None:
+        """Build task_id → task_type index from the WA-Verified dataset."""
+        dataset_path = Path(path) if path else (
+            _PROJECT_ROOT / "eval" / "tests" / "test_files" / "webarena-verified.json"
+        )
+        if not dataset_path.exists():
+            print(f"  ⚠️  WA-Verified dataset not found: {dataset_path}")
+            return
+        try:
+            tasks = json.loads(dataset_path.read_text())
+            for t in tasks:
+                tid = t.get("task_id")
+                evals = t.get("eval", [])
+                task_type = "NAVIGATE"
+                if evals and isinstance(evals, list):
+                    expected = evals[0].get("expected", {})
+                    task_type = str(expected.get("task_type", "NAVIGATE")).upper()
+                if tid is not None:
+                    self._wa_task_type[int(tid)] = task_type
+            print(f"  ✓ Loaded {len(self._wa_task_type)} task_type mappings from WA-Verified dataset")
+        except Exception as exc:
+            print(f"  ⚠️  Failed to load WA-Verified dataset: {exc}")
+
+    def _save_wa_response(self, task: Dict[str, Any], raw_answer: str) -> None:
+        """Save agent_response.json in WebArena-Verified format."""
+        task_id = task.get("task_id", "unknown")
+        task_out = Path(self.webarena_output_dir) / str(task_id)
+        task_out.mkdir(parents=True, exist_ok=True)
+
+        task_type = self._wa_task_type.get(int(task_id) if str(task_id).isdigit() else -1, "NAVIGATE")
+
+        # Try to extract a JSON object from the raw answer (greedy brace-match)
+        response = None
+        if raw_answer:
+            # Greedy extraction: find first { ... last }
+            start = raw_answer.find("{")
+            end = raw_answer.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                candidate = raw_answer[start:end + 1]
+                try:
+                    parsed = json.loads(candidate)
+                    if isinstance(parsed, dict) and "task_type" in parsed and "status" in parsed:
+                        response = parsed
+                except json.JSONDecodeError:
+                    pass
+
+        if response is None:
+            # Fallback: construct from raw answer text
+            response = {
+                "task_type": task_type,
+                "status": "SUCCESS" if raw_answer else "UNKNOWN_ERROR",
+                "retrieved_data": [raw_answer] if task_type == "RETRIEVE" and raw_answer else None,
+                "error_details": None if raw_answer else "No answer produced",
+            }
+
+        out_file = task_out / "agent_response.json"
+        out_file.write_text(json.dumps(response, indent=2))
+        self._log(f"  ✓ Saved {out_file}")
 
     # ------------------------------------------------------------------
     # BaseAgentRunner interface
     # ------------------------------------------------------------------
+
+    def _log(self, msg: str = "", end: str = "\n") -> None:
+        """Print to terminal AND write to the per-task log file if one is open."""
+        print(msg, end=end)
+        if self._task_log_fh:
+            self._task_log_fh.write(msg + end)
+            self._task_log_fh.flush()
 
     async def _init_agent(self) -> None:
         from react_agent.codeact_agent.codeact_agent import CodeActAgent
@@ -112,6 +192,13 @@ class ReactAgentRunner(BaseAgentRunner):
         """Run the CodeActAgent ReAct loop on a single task."""
         intent = task.get("intent", "")
         raw_start = task.get("start_url", "")
+        # Open per-task log file early so all subsequent _log() calls are captured.
+        _task_id_for_log = task.get("task_id", "unknown")
+        if self.webarena_output_dir:
+            from datetime import datetime, timezone as _tz
+            _log_dir = Path(self.webarena_output_dir) / str(_task_id_for_log)
+            _log_dir.mkdir(parents=True, exist_ok=True)
+            self._task_log_fh = open(_log_dir / "agent.log", "w")
         gitlab_url = getattr(self, "base_url", None) or self.gitlab_base_url
         start_url = raw_start.replace("__GITLAB__", gitlab_url).strip("/")
         token = self.glpat or os.environ.get("GLPAT") or os.environ.get("GITLAB_TOKEN") or _token_from_server_env()
@@ -134,16 +221,29 @@ class ReactAgentRunner(BaseAgentRunner):
         ]
         if start_url and start_url != gitlab_url:
             prompt_parts.append(f"Start URL: {start_url}")
+        if self.webarena_output_dir:
+            prompt_parts.append(
+                "\nRESPONSE FORMAT (required): Put your final answer inside Finish[...] where the"
+                " content is a JSON object with NO extra text or markdown:\n"
+                '{"task_type": "NAVIGATE", "status": "SUCCESS", "retrieved_data": null, "error_details": null}\n'
+                "task_type: RETRIEVE (looked up data), MUTATE (changed something), NAVIGATE (went to a page)\n"
+                "status: SUCCESS, ACTION_NOT_ALLOWED_ERROR, PERMISSION_DENIED_ERROR, NOT_FOUND_ERROR,"
+                " DATA_VALIDATION_ERROR, or UNKNOWN_ERROR\n"
+                "retrieved_data: array of results for RETRIEVE tasks (use numbers/booleans, not strings),"
+                " null for MUTATE/NAVIGATE\n"
+                "error_details: null on SUCCESS, brief explanation otherwise"
+            )
         prompt = "\n".join(prompt_parts)
 
-        print(f"\n{'='*70}")
-        print(f"[Task] {intent}")
+        self._log(f"\n{'='*70}")
+        self._log(f"[Task] {intent}")
         if start_url and start_url != gitlab_url:
-            print(f"[Start URL] {start_url}")
-        print(f"{'='*70}")
+            self._log(f"[Start URL] {start_url}")
+        self._log(f"{'='*70}")
 
-        # Expose URL for _get_site_urls() inside the agent.
+        # Expose URL and per-worker token for agent code that reads os.environ directly.
         os.environ["GITLAB"] = gitlab_url
+        os.environ["GITLAB_TOKEN"] = token
 
         # codeact_agent.py treats any env var whose value is '' as matching every
         # page ('' in any_string is True).  Set placeholder values for sites not
@@ -158,10 +258,14 @@ class ReactAgentRunner(BaseAgentRunner):
         answer = ""
 
         from playwright.async_api import async_playwright
+        self._log(f"  [timing] launching browser | active_threads={threading.active_count()} | t={time.monotonic():.1f}")
         async with async_playwright() as pw:
             _browser = await pw.chromium.launch(headless=self.headless)
+            _context = await _browser.new_context()
+            if self.webarena_output_dir:
+                await _context.tracing.start(screenshots=False, snapshots=True)
             try:
-                self._page = await _browser.new_page()
+                self._page = await _context.new_page()
                 # Log in before the ReAct loop so all subsequent navigations are authenticated.
                 await self._login_browser(gitlab_url)
                 if start_url:
@@ -172,28 +276,38 @@ class ReactAgentRunner(BaseAgentRunner):
                         pass
                 try:
                     loop = asyncio.get_event_loop()
+                    hit_max_iterations = False
+                    stall_reason: Optional[str] = None
+                    _last_action_key: Optional[str] = None
+                    _consecutive_same_action = 0
+                    _SAME_ACTION_LIMIT = 3
+                    _url_visit_counts: dict = {}
+                    _URL_VISIT_LIMIT = 4
                     while state.iteration < self.max_iterations:
+                        self._log(f"\n[Step {state.iteration + 1}/{self.max_iterations}] Calling LLM... (active_threads={threading.active_count()})")
+                        _step_t0 = time.monotonic()
                         try:
                             action = await asyncio.wait_for(
                                 loop.run_in_executor(None, self._react_agent.step, state),
                                 timeout=180,
                             )
                         except asyncio.TimeoutError:
-                            print(f"\n[Step {state.iteration + 1}] LLM call timed out after 180s — stopping")
+                            self._log(f"\n[Step {state.iteration + 1}] LLM call timed out after 180s (active_threads={threading.active_count()}) — stopping")
                             break
+                        self._log(f"  [timing] LLM step done in {time.monotonic()-_step_t0:.1f}s")
                         state.iteration += 1
                         step_num = state.iteration
                         action_type = type(action).__name__
 
                         if action_type == "AgentFinishAction":
-                            print(f"\n[Step {step_num}] AgentFinishAction")
-                            print(f"  Thought: {str(action.thought)[:500]}")
+                            self._log(f"\n[Step {step_num}] AgentFinishAction")
+                            self._log(f"  Thought: {str(action.thought)[:500]}")
                             answer = action.thought or answer
                             break
 
                         if action_type == "MessageAction":
-                            print(f"\n[Step {step_num}] MessageAction")
-                            print(f"  Content: {str(action.content)[:500]}")
+                            self._log(f"\n[Step {step_num}] MessageAction")
+                            self._log(f"  Content: {str(action.content)[:500]}")
                             answer = action.content
                             if re.search(r"<finish\s*/?>", answer, re.IGNORECASE) or "Finish[" in answer:
                                 break
@@ -205,10 +319,16 @@ class ReactAgentRunner(BaseAgentRunner):
                             continue
 
                         if action_type == "IPythonRunCellAction":
-                            print(f"\n[Step {step_num}] IPythonRunCellAction")
-                            print(f"  Code:\n{action.code.rstrip()}")
-                            output = self._exec_python(action.code, gitlab_url, token)
-                            print(f"  Output: {output[:800]}")
+                            self._log(f"\n[Step {step_num}] IPythonRunCellAction")
+                            self._log(f"  Code:\n{action.code.rstrip()}")
+                            try:
+                                output = await asyncio.wait_for(
+                                    loop.run_in_executor(None, self._exec_python, action.code, gitlab_url, token),
+                                    timeout=60,
+                                )
+                            except asyncio.TimeoutError:
+                                output = "Error: Python execution timed out after 60s"
+                            self._log(f"  Output: {output[:800]}")
                             obs = IPythonRunCellObservation()
                             obs.content = output
                             state.history.append((action, obs))
@@ -218,12 +338,12 @@ class ReactAgentRunner(BaseAgentRunner):
 
                         elif action_type == "CmdRunAction":
                             if action.command.strip() == "exit":
-                                print(f"\n[Step {step_num}] CmdRunAction: exit — stopping")
+                                self._log(f"\n[Step {step_num}] CmdRunAction: exit — stopping")
                                 break
-                            print(f"\n[Step {step_num}] CmdRunAction")
-                            print(f"  Command: {action.command.rstrip()}")
+                            self._log(f"\n[Step {step_num}] CmdRunAction")
+                            self._log(f"  Command: {action.command.rstrip()}")
                             output = self._exec_bash(action.command)
-                            print(f"  Output: {output[:800]}")
+                            self._log(f"  Output: {output[:800]}")
                             obs = CmdOutputObservation()
                             obs.content = output
                             obs.command_id = str(step_num)
@@ -234,40 +354,63 @@ class ReactAgentRunner(BaseAgentRunner):
                             )
 
                         elif action_type == "BrowseInteractiveAction":
-                            if state.iteration <= 3:
-                                # EVAL_MODE emits 3 hardcoded login-scaffold steps at the
-                                # start of every task (goto login, fill credentials, goto
-                                # start_url) using BIDs from the WebArena benchmark that
-                                # don't match real pages.  The browser is already
-                                # authenticated above; silently acknowledge these.
-                                print(f"\n[Step {step_num}] BrowseInteractiveAction (EVAL_MODE warmup — skipped)")
-                                obs = BrowserOutputObservation()
-                                obs.content = ""
-                                obs.error = False
-                                obs.axtree_object = {}
-                                obs.extra_element_properties = {}
-                                obs.last_browser_action = action.browser_actions
-                                state.history.append((action, obs))
-                            else:
-                                print(f"\n[Step {step_num}] BrowseInteractiveAction")
-                                print(f"  Actions: {action.browser_actions.strip()[:300]}")
-                                content, err, axtree_obj, extra_props = await self._exec_browse(
-                                    action.browser_actions
-                                )
-                                print(f"  Result: {content[:400]}")
-                                obs = BrowserOutputObservation()
-                                obs.content = content
-                                obs.error = err
-                                obs.axtree_object = axtree_obj
-                                obs.extra_element_properties = extra_props
-                                obs.last_browser_action = action.browser_actions
-                                state.history.append((action, obs))
-                                self._last_steps.append(
-                                    {"type": "browse", "actions": action.browser_actions, "content": content[:500]}
-                                )
+                            self._log(f"\n[Step {step_num}] BrowseInteractiveAction")
+                            self._log(f"  Actions: {action.browser_actions.strip()[:300]}")
+                            content, err, axtree_obj, extra_props = await self._exec_browse(
+                                action.browser_actions
+                            )
+                            self._log(f"  Result: {content[:400]}")
+                            obs = BrowserOutputObservation()
+                            obs.content = content
+                            obs.error = err
+                            obs.axtree_object = axtree_obj
+                            obs.extra_element_properties = extra_props
+                            obs.last_browser_action = action.browser_actions
+                            state.history.append((action, obs))
+                            self._last_steps.append(
+                                {"type": "browse", "actions": action.browser_actions, "content": content[:500]}
+                            )
 
                         else:
-                            print(f"\n[Step {step_num}] Unknown action: {action_type}")
+                            self._log(f"\n[Step {step_num}] Unknown action: {action_type}")
+
+                        # --- Stall detection ---
+                        # 1. Same action repeated consecutively
+                        action_key: Optional[str] = None
+                        if action_type == "BrowseInteractiveAction":
+                            action_key = action.browser_actions.strip()
+                        elif action_type == "IPythonRunCellAction":
+                            action_key = action.code.strip()
+                        elif action_type == "CmdRunAction":
+                            action_key = action.command.strip()
+                        if action_key is not None:
+                            if action_key == _last_action_key:
+                                _consecutive_same_action += 1
+                            else:
+                                _last_action_key = action_key
+                                _consecutive_same_action = 1
+                            if _consecutive_same_action >= _SAME_ACTION_LIMIT:
+                                stall_reason = f"same action repeated {_SAME_ACTION_LIMIT} times in a row"
+                                break
+
+                        # 2. Same URL visited too many times
+                        if action_type == "BrowseInteractiveAction" and not stall_reason:
+                            for _m in re.finditer(r'goto\("([^"]+)"\)', action.browser_actions):
+                                _url = _m.group(1)
+                                _url_visit_counts[_url] = _url_visit_counts.get(_url, 0) + 1
+                                if _url_visit_counts[_url] >= _URL_VISIT_LIMIT:
+                                    stall_reason = f"URL visited {_URL_VISIT_LIMIT}+ times: {_url}"
+                                    break
+                            if stall_reason:
+                                break
+
+
+                    if stall_reason:
+                        self._log(f"\n[Stall detected: {stall_reason} — stopping early]")
+
+                    if state.iteration >= self.max_iterations:
+                        hit_max_iterations = True
+                        self._log(f"\n[Max iterations ({self.max_iterations}) reached — stopping]")
 
                 except Exception as exc:
                     import traceback
@@ -280,18 +423,54 @@ class ReactAgentRunner(BaseAgentRunner):
                     }
             finally:
                 self._page = None
-                await _browser.close()
+                if self.webarena_output_dir:
+                    task_out = Path(self.webarena_output_dir) / str(task.get("task_id", "unknown"))
+                    task_out.mkdir(parents=True, exist_ok=True)
+                    self._log(f"  [timing] tracing.stop start | active_threads={threading.active_count()} | t={time.monotonic():.1f}")
+                    try:
+                        await asyncio.wait_for(
+                            _context.tracing.stop(path=str(task_out / "network.zip")),
+                            timeout=30,
+                        )
+                        self._log(f"  ✓ Saved {task_out / 'network.zip'}")
+                    except asyncio.TimeoutError:
+                        self._log(f"  ⚠️  tracing.stop timed out after 30s — skipping trace save")
+                    except Exception as _te:
+                        self._log(f"  ⚠️  tracing.stop error: {_te}")
+                    self._log(f"  [timing] tracing.stop done | t={time.monotonic():.1f}")
+                self._log(f"  [timing] context.close start | t={time.monotonic():.1f}")
+                try:
+                    await asyncio.wait_for(_context.close(), timeout=15)
+                except Exception as _ce:
+                    self._log(f"  ⚠️  context.close error/timeout: {_ce}")
+                self._log(f"  [timing] browser.close start | active_threads={threading.active_count()} | t={time.monotonic():.1f}")
+                try:
+                    await asyncio.wait_for(_browser.close(), timeout=15)
+                except Exception as _be:
+                    self._log(f"  ⚠️  browser.close error/timeout: {_be}")
+                self._log(f"  [timing] browser closed | active_threads={threading.active_count()} | t={time.monotonic():.1f}")
+                if self._task_log_fh:
+                    self._task_log_fh.close()
+                    self._task_log_fh = None
 
         # Extract Finish[answer] if the agent embedded the answer inline.
-        finish_match = re.search(r"Finish\[(.+?)\]", answer, re.DOTALL)
+        # Use greedy match (.+) so JSON arrays like [1, 2, 3] inside retrieved_data aren't truncated.
+        finish_match = re.search(r"Finish\[(.+)\]", answer, re.DOTALL)
         if finish_match:
             answer = finish_match.group(1).strip()
 
-        print(f"\n[Answer] {str(answer)[:300]}")
+        if self.webarena_output_dir:
+            self._save_wa_response(task, answer)
+
+        self._log(f"\n[Answer] {str(answer)[:300]}")
+        max_iter_error = f"max_iterations reached ({self.max_iterations})" if hit_max_iterations else None
+        stall_error = f"stall_detected: {stall_reason}" if stall_reason else None
+        final_error = max_iter_error or stall_error
         return {
-            "success": True,
+            "success": not (hit_max_iterations or bool(stall_reason)),
             "final_url": None,
             "answer": answer,
+            "error": final_error,
             "execution_result": {"steps": self._last_steps},
         }
 
@@ -312,9 +491,9 @@ class ReactAgentRunner(BaseAgentRunner):
             await self._page.fill("#user_password", password)
             await self._page.locator('button[type="submit"]').click()
             await self._page.wait_for_load_state("load", timeout=15000)
-            print(f"  ✓ Browser logged in as {username} @ {gitlab_url}")
+            self._log(f"  ✓ Browser logged in as {username} @ {gitlab_url}")
         except Exception as exc:
-            print(f"  ⚠️  Browser pre-login failed: {exc}")
+            self._log(f"  ⚠️  Browser pre-login failed: {exc}")
 
     async def _inject_bids(self) -> None:
         """Stamp sequential data-pw-bid attributes onto visible interactive elements only."""
@@ -513,11 +692,36 @@ class ReactAgentRunner(BaseAgentRunner):
 
     def _exec_python(self, code: str, gitlab_url: str, token: str) -> str:
         """Execute a Python code block; capture and return stdout (thread-safe)."""
+        import requests as _requests_lib
+        import builtins as _builtins_mod
+
+        class _RequestsWithTimeout:
+            """Drop-in requests wrapper that enforces a default timeout on every HTTP call."""
+            def __getattr__(self, name):
+                attr = getattr(_requests_lib, name)
+                if callable(attr) and name in ('get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'request'):
+                    def _wrapped(*args, **kwargs):
+                        kwargs.setdefault('timeout', 30)
+                        return attr(*args, **kwargs)
+                    return _wrapped
+                return attr
+
+        _requests_wrapper = _RequestsWithTimeout()
+        _real_import = _builtins_mod.__import__
+
+        def _safe_import(name, *args, **kwargs):
+            if name == 'requests':
+                return _requests_wrapper
+            return _real_import(name, *args, **kwargs)
+
+        custom_builtins = dict(vars(_builtins_mod))
+        custom_builtins['__import__'] = _safe_import
+
         buf = io.StringIO()
         namespace: Dict[str, Any] = {
-            "__builtins__": __builtins__,
+            "__builtins__": custom_builtins,
             "print": lambda *a, **kw: print(*a, **{**kw, "file": buf}),
-            "requests": __import__("requests"),
+            "requests": _requests_wrapper,
             "json": __import__("json"),
             "os": os,
             "re": re,

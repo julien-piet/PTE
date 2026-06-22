@@ -4,6 +4,7 @@ identifies the best API endpoints for a given task, and returns a full execution
 plan in the planner.py ToolBasedResponse format.
 """
 
+import asyncio
 import json
 import os
 import re
@@ -144,13 +145,23 @@ class PlanningAgent:
             print(f"[PlanningAgent] {label} calling LLM (prompt length: {len(prompt)} chars)...")
         agent = Agent(self.llm, output_type=output_type, **self._agent_kwargs)
         try:
-            result = await agent.run(prompt)
-        except Exception as exc:
-            cause = getattr(exc, "__cause__", None)
-            err_msg = (f"[PlanningAgent] {label} LLM ERROR: {type(exc).__name__}: {exc}"
-                       + (f"\n  caused by: {type(cause).__name__}: {cause}" if cause else ""))
-            print(f"\n{err_msg}")
-            self._record(f"{label}.llm_error", err_msg)
+            result = await asyncio.wait_for(agent.run(prompt), timeout=300) #increased from 120s for gemini
+        except asyncio.TimeoutError as exc:
+            msg = f"[PlanningAgent] {label} LLM call timed out after 120s"
+            print(f"\n{msg}")
+            self._record(f"{label}.llm_timeout", msg)
+            raise TimeoutError(msg) from exc
+        except BaseException as exc:
+            if isinstance(exc, Exception):
+                cause = getattr(exc, "__cause__", None)
+                err_msg = (f"[PlanningAgent] {label} LLM ERROR: {type(exc).__name__}: {exc}"
+                           + (f"\n  caused by: {type(cause).__name__}: {cause}" if cause else ""))
+                print(f"\n{err_msg}")
+                self._record(f"{label}.llm_error", err_msg)
+            else:
+                msg = f"[PlanningAgent] {label} cancelled (outer timeout or shutdown)"
+                print(f"\n{msg}")
+                self._record(f"{label}.llm_cancelled", msg)
             raise
         try:
             import litellm

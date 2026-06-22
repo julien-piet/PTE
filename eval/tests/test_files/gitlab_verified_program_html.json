@@ -1601,9 +1601,9 @@
     "geolocation": null,
     "intent_template": "{{name}} wants to check my dotfile configurations. Please invite him to the repo as a guest.",
     "instantiation_dict": {
-      "name": "Jakub Klinkovsk\u00fd"
+      "name": "Jakub Klinkovský"
     },
-    "intent": "Jakub Klinkovsk\u00fd wants to check my dotfile configurations. Please invite him to the repo as a guest.",
+    "intent": "Jakub Klinkovský wants to check my dotfile configurations. Please invite him to the repo as a guest.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -1947,12 +1947,12 @@
     "intent_template": "Follow {{account_list}} on Gitlab",
     "instantiation_dict": {
       "account_list": [
-        "Jakub Klinkovsk\u00fd",
+        "Jakub Klinkovský",
         "Koushik",
         "Vinta Chen"
       ]
     },
-    "intent": "Follow [\"Jakub Klinkovsk\u00fd\", \"Koushik\", \"Vinta Chen\"] on Gitlab",
+    "intent": "Follow [\"Jakub Klinkovský\", \"Koushik\", \"Vinta Chen\"] on Gitlab",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -1991,10 +1991,10 @@
       "account_list": [
         "Jakub K",
         "ghost",
-        "Beno\u00eet Blanchon"
+        "Benoît Blanchon"
       ]
     },
-    "intent": "Follow [\"Jakub K\", \"ghost\", \"Beno\u00eet Blanchon\"] on Gitlab",
+    "intent": "Follow [\"Jakub K\", \"ghost\", \"Benoît Blanchon\"] on Gitlab",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2122,7 +2122,7 @@
       "name": "nolan_honest_fans",
       "topics": "movies directed by Christopher Nolan"
     },
-    "intent": "Create a repo named nolan_honest_fans with movies directed by Christopher Nolan in a README file",
+    "intent": "Create a repository named nolan_honest_fans with a README file containing only Christopher Nolan's theatrically released feature-length films (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2171,7 +2171,7 @@
       "name": "nolan_old_fans",
       "topics": "movies directed by Christopher Nolan before 2010"
     },
-    "intent": "Create a repo named nolan_old_fans with movies directed by Christopher Nolan before 2010 in a README file",
+    "intent": "Create a repository named nolan_old_fans with a README file containing only Christopher Nolan's theatrically released feature-length films before 2010 (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2214,7 +2214,7 @@
       "name": "nolan_young_fans",
       "topics": "movies directed by Christopher Nolan after 2010"
     },
-    "intent": "Create a repo named nolan_young_fans with movies directed by Christopher Nolan after 2010 in a README file",
+    "intent": "Create a repository named nolan_young_fans with a README file containing only Christopher Nolan's theatrically released feature-length films after 2010 (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2256,7 +2256,7 @@
       "name": "nolan_followers",
       "topics": "career timeline of Christopher Nolan"
     },
-    "intent": "Create a repo named nolan_followers with career timeline of Christopher Nolan in a README file",
+    "intent": "Create a repository named nolan_followers with a README file containing career timeline headings of Christopher Nolan in order (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2297,7 +2297,7 @@
       "name": "nolan_academy_awards",
       "topics": "movies that won Academy Awards by Christopher Nolan"
     },
-    "intent": "Create a repo named nolan_academy_awards with movies that won Academy Awards by Christopher Nolan in a README file",
+    "intent": "Create a repository named nolan_academy_awards with a README file containing movies that won Academy Awards by Christopher Nolan (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2339,7 +2339,7 @@
       "name": "bafta_awards_nolan",
       "topics": "movies that are nominated BAFTA Awards by Christopher Nolan"
     },
-    "intent": "Create a repo named bafta_awards_nolan with movies that are nominated BAFTA Awards by Christopher Nolan in a README file",
+    "intent": "Create a repository named bafta_awards_nolan with a README file containing movies that are nominated BAFTA Awards by Christopher Nolan (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2378,10 +2378,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Jakub Klinkovsk\u00fd and Beno\u00eet Blanchon",
+      "collaborator_account_list": "Jakub Klinkovský and Benoît Blanchon",
       "repo": "gimmiethat.space"
     },
-    "intent": "Invite Jakub Klinkovsk\u00fd and Beno\u00eet Blanchon as collaborator(s) to gimmiethat.space repo",
+    "intent": "Invite Jakub Klinkovský and Benoît Blanchon as collaborator(s) to gimmiethat.space repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2454,10 +2454,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Beno\u00eet and Abishek",
+      "collaborator_account_list": "Benoît and Abishek",
       "repo": "my HTML5 markup extention"
     },
-    "intent": "Invite Beno\u00eet and Abishek as collaborator(s) to my HTML5 markup extention repo",
+    "intent": "Invite Benoît and Abishek as collaborator(s) to my HTML5 markup extention repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2492,10 +2492,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Jakub K, Alex Dills, Alex Hutnik and Beno\u00eet Blanchon",
+      "collaborator_account_list": "Jakub K, Alex Dills, Alex Hutnik and Benoît Blanchon",
       "repo": "my time tracking tool project"
     },
-    "intent": "Invite Jakub K, Alex Dills, Alex Hutnik and Beno\u00eet Blanchon as collaborator(s) to my time tracking tool project repo",
+    "intent": "Invite Jakub K, Alex Dills, Alex Hutnik and Benoît Blanchon as collaborator(s) to my time tracking tool project repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
