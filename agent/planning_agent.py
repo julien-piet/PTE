@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from pydantic_ai import Agent
 
 from agent.common.configurator import Configurator
+from agent.plan_checker import SwaggerPlanChecker
 from agent.planner import build_agent_models, validate_plan
 from agent.providers.provider import ModelProvider
 
@@ -1384,6 +1385,19 @@ class PlanningAgent:
                         (pending_validation_error + "\n" if pending_validation_error else "") + violation_msg
                     )
 
+                # Static swagger required-parameter check (deterministic, no LLM).
+                # Catches missing required body fields / path params before execution.
+                _swagger_checker = SwaggerPlanChecker()
+                _swagger_issues = _swagger_checker.check(plan_result.plan, kept)
+                if _swagger_issues:
+                    self._record("swagger_required_param_violations", _swagger_issues)
+                    _swagger_msg = "Swagger required-parameter violations:\n" + "\n".join(
+                        f"  - {i}" for i in _swagger_issues
+                    )
+                    pending_validation_error = (
+                        (pending_validation_error + "\n" if pending_validation_error else "") + _swagger_msg
+                    )
+
                 # Step 2: verify argument-level wiring in the built plan, fix if needed.
                 # Validation errors from _validate_plan are merged with _check_plan issues
                 # so _fix_plan gets full context in one pass.
@@ -1407,6 +1421,16 @@ class PlanningAgent:
                     except ValueError as exc:
                         pending_validation_error = str(exc)
                         self._record(f"validate_plan.attempt_{attempt + 1}_error", pending_validation_error)
+                    # Re-run swagger check after fix to catch newly introduced violations
+                    _swagger_issues = _swagger_checker.check(plan_result.plan, kept)
+                    if _swagger_issues:
+                        self._record(f"swagger_required_param_violations.attempt_{attempt + 1}", _swagger_issues)
+                        _swagger_msg = "Swagger required-parameter violations:\n" + "\n".join(
+                            f"  - {i}" for i in _swagger_issues
+                        )
+                        pending_validation_error = (
+                            (pending_validation_error + "\n" if pending_validation_error else "") + _swagger_msg
+                        )
 
                 if pending_validation_error:
                     raise ValueError(

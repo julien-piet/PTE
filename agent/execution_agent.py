@@ -378,8 +378,28 @@ class ExecutionAgent:
 
         # Resolve all argument values, substituting {step_id.result} and {loop_item} references.
         # Bare-reference normalization (missing {}) is enforced at the Argument model level.
+        _JSON_TEMPLATE_RE = re.compile(r"\{(?:step_\w+\.result|loop_item)")
+
         def _normalize(arg) -> Any:
-            return self._resolve(arg.value, outputs)
+            raw = arg.value
+            # If the raw value is a JSON-object template string with embedded references,
+            # parse the template BEFORE substituting references. This avoids escaping
+            # failures when substituted values (e.g. license/file content) contain
+            # newlines or quotes that would make the post-substitution string invalid JSON.
+            if isinstance(raw, str):
+                stripped = raw.strip()
+                if (
+                    stripped.startswith("{")
+                    and stripped.endswith("}")
+                    and _JSON_TEMPLATE_RE.search(stripped)
+                ):
+                    try:
+                        template = json.loads(stripped)
+                        if isinstance(template, dict):
+                            return {k: self._resolve(v, outputs) for k, v in template.items()}
+                    except json.JSONDecodeError:
+                        pass
+            return self._resolve(raw, outputs)
 
         # Detect path parameters from {name} tokens in the URL template
         path_param_names = set(re.findall(r"\{(\w+)\}", path_template))
@@ -440,6 +460,12 @@ class ExecutionAgent:
             body = {}
             for name, value in body_args_pending:
                 body[name] = value
+
+        # Strip Rails-style [] suffix from JSON body keys.
+        # Swagger specs generated from Rails docs use "field[]" for array params
+        # (e.g. "actions[]"), but GitLab's JSON API expects plain "field" ("actions").
+        if isinstance(body, dict):
+            body = {(k[:-2] if k.endswith("[]") else k): v for k, v in body.items()}
 
         # Build final URL — step.base_url wins, fall back to init-time base_url
         step_base_url = getattr(step, "base_url", "").rstrip("/") or self.base_url
