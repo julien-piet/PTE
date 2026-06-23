@@ -63,7 +63,18 @@ _PTE_FILES: dict[str, list[str]] = {
         "gitlab_verified_string_match.json",
         "gitlab_verified_program_html.json",
     ],
-    # future: "shopping": [...], "reddit": [...], etc.
+    "shopping": [
+        "shopping_verified_string_match.json",
+        "shopping_verified_program_html.json",
+    ],
+    "shopping_admin": [
+        "shopping_admin_verified_string_match.json",
+        "shopping_admin_verified_program_html.json",
+    ],
+    "reddit": [
+        "reddit_verified_string_match.json",
+        "reddit_verified_program_html.json",
+    ],
 }
 
 

@@ -378,8 +378,28 @@ class ExecutionAgent:
 
         # Resolve all argument values, substituting {step_id.result} and {loop_item} references.
         # Bare-reference normalization (missing {}) is enforced at the Argument model level.
+        _JSON_TEMPLATE_RE = re.compile(r"\{(?:step_\w+\.result|loop_item)")
+
         def _normalize(arg) -> Any:
-            return self._resolve(arg.value, outputs)
+            raw = arg.value
+            # If the raw value is a JSON-object template string with embedded references,
+            # parse the template BEFORE substituting references. This avoids escaping
+            # failures when substituted values (e.g. license/file content) contain
+            # newlines or quotes that would make the post-substitution string invalid JSON.
+            if isinstance(raw, str):
+                stripped = raw.strip()
+                if (
+                    stripped.startswith("{")
+                    and stripped.endswith("}")
+                    and _JSON_TEMPLATE_RE.search(stripped)
+                ):
+                    try:
+                        template = json.loads(stripped)
+                        if isinstance(template, dict):
+                            return {k: self._resolve(v, outputs) for k, v in template.items()}
+                    except json.JSONDecodeError:
+                        pass
+            return self._resolve(raw, outputs)
 
         # Detect path parameters from {name} tokens in the URL template
         path_param_names = set(re.findall(r"\{(\w+)\}", path_template))
@@ -420,6 +440,18 @@ class ExecutionAgent:
                 name == "body"
                 or bool(re.match(r"^(Get|Post|Put|Patch|Delete)[A-Z].*Body$", name))
             )
+            # The planner sometimes serializes the body dict as a JSON string
+            # (e.g. arg `body` with value `'{"forum":"gaming","title":"..."}'`).
+            # Try to parse it back to a dict so the unwrap below catches it.
+            if is_auto_wrapper and isinstance(value, str):
+                stripped = value.strip()
+                if stripped.startswith("{") and stripped.endswith("}"):
+                    try:
+                        parsed = json.loads(stripped)
+                        if isinstance(parsed, dict):
+                            value = parsed
+                    except json.JSONDecodeError:
+                        pass
             if is_auto_wrapper and isinstance(value, (dict, list)):
                 body = value
             else:
@@ -428,6 +460,12 @@ class ExecutionAgent:
             body = {}
             for name, value in body_args_pending:
                 body[name] = value
+
+        # Strip Rails-style [] suffix from JSON body keys.
+        # Swagger specs generated from Rails docs use "field[]" for array params
+        # (e.g. "actions[]"), but GitLab's JSON API expects plain "field" ("actions").
+        if isinstance(body, dict):
+            body = {(k[:-2] if k.endswith("[]") else k): v for k, v in body.items()}
 
         # Build final URL — step.base_url wins, fall back to init-time base_url
         step_base_url = getattr(step, "base_url", "").rstrip("/") or self.base_url
@@ -474,6 +512,20 @@ class ExecutionAgent:
             body = raw
 
         if 200 <= status_code < 300 or status_code == 304:
+            # Some MCP servers (notably the reddit FastAPI wrapper) return HTTP 200
+            # with {"success": false, "error_message": "..."} for business-logic
+            # failures (e.g. the playwright vote click didn't persist). The HTTP
+            # success doesn't reflect the actual operation outcome — propagate the
+            # business-logic failure as an _HttpError so the executor treats it the
+            # same as any other tool failure (and cascade/alternative paths fire).
+            if (
+                isinstance(body, dict)
+                and body.get("success") is False
+                and "error_message" in body
+            ):
+                raise _HttpError(
+                    f"HTTP {status_code} (success=false): {body.get('error_message')}"
+                )
             return body
         # 409 Conflict: resource already exists — idempotent success.
         # Return a marked dict so _execute_step can skip LLM parsing and store
