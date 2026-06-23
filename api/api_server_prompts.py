@@ -275,3 +275,53 @@ Apparel, footwear, phone cases, and similar products reject add-to-cart / add-to
 - Wishlist (`POST /add_to_wishlist`): pass `options: {{"<option_id>": "<option_type_id>"}}` (both as strings).
 - Keep in mind that the `GET /fuzzy_search` does not return if the product has required options or not, so you may need to check the product details via `GET /V1/products/{{sku}}` to determine if you need to include options when adding to cart or wishlist.
 """
+
+SHOPPING_ADMIN_HINTS = f"""
+Some endpoints require an `{{sku}}` parameter. The product `{{sku}}` path is a unique string identifier for each product in the Magento database (e.g., "B086GNDL8K").
+
+Many Magento endpoints return lists of items (e.g., `GET /V1/products`, `GET /V1/orders`, `GET /V1/customers/search`). To find specific items efficiently across any of these list endpoints, use the `searchCriteria` API to filter, sort, and paginate your requests:
+- Filtering Logic (AND/OR):
+  - OR Logic: Filters placed inside the SAME `filterGroups` index act as a logical OR. 
+    * Example (SKU is "A1" OR "B2"): 
+      `searchCriteria[filterGroups][0][filters][0][field]=sku&searchCriteria[filterGroups][0][filters][0][value]=A1&searchCriteria[filterGroups][0][filters][1][field]=sku&searchCriteria[filterGroups][0][filters][1][value]=B2`
+  - AND Logic: Filters placed in DIFFERENT `filterGroups` indices act as a logical AND.
+    * Example (Name contains "Bag" AND Price > 50): 
+      `searchCriteria[filterGroups][0][filters][0][field]=name&searchCriteria[filterGroups][0][filters][0][value]=%Bag%&searchCriteria[filterGroups][0][filters][0][conditionType]=like&searchCriteria[filterGroups][1][filters][0][field]=price&searchCriteria[filterGroups][1][filters][0][value]=50&searchCriteria[filterGroups][1][filters][0][conditionType]=gt`
+- Condition Types: Define how to match data using `conditionType`. Available types:
+  - `eq` (equals), `neq` (not equals)
+  - `gt` (greater than), `gteq` (greater than or equal), `lt` (less than), `lteq` (less than or equal)
+  - `like` (SQL LIKE — wrap value in `%` wildcards, e.g., `%keyword%`), `nlike` (not like)
+  - `in` (value is in a comma-separated list), `nin` (not in list). Example for `in`: `searchCriteria[filterGroups][0][filters][0][field]=sku&searchCriteria[filterGroups][0][filters][0][value]=SKU1,SKU2,SKU3&searchCriteria[filterGroups][0][filters][0][conditionType]=in`
+  - `null` (field is null), `notnull` (field is not null)
+  - `finset` (value exists within a comma-separated database field)
+  - `from`, `to` (range boundaries)
+  - When using `like`, wrap the value in literal wildcard characters (e.g., `%keyword%`). Do NOT manually URL-encode the `%` to `%25`. 
+- Sorting: Dictate order using `searchCriteria[sortOrders][<index>][field]` and `searchCriteria[sortOrders][<index>][direction]` (ASC or DESC).
+- Pagination: Control result pages using `searchCriteria[pageSize]` (number of items per page) and `searchCriteria[currentPage]` (1-indexed page number). Example: `searchCriteria[pageSize]=20&searchCriteria[currentPage]=1`.
+- Getting all items: To fetch all items with no filters, you MUST still pass at least an empty searchCriteria: `?searchCriteria=all` or `?searchCriteria[pageSize]=50`.
+
+CRITICAL — POST/PUT request body structure:
+The Swagger/OpenAPI schema defines body parameters with auto-generated names like "PostV1CartsQuoteIdItemsBody" or "PutV1OrdersParent_idBody". These names are NOT the JSON wrapper key. You MUST look at the `required` property inside the body parameter's `schema` to find the correct top-level JSON key.
+
+For example, POST /V1/carts/{{cartId}}/items has a body parameter whose schema requires a "cartItem" property. The correct request body is:
+  {{"cartItem": {{"sku": "...", "qty": 1, "quote_id": "..."}}}}
+NOT:
+  {{"PostV1CartsQuoteIdItemsBody": {{"sku": "...", "qty": 1}}}}
+
+Common body wrapper keys by endpoint:
+- POST /V1/carts/{{cartId}}/items → {{"cartItem": {{...}}}}
+- POST /V1/reviews → {{"review": {{...}}}}
+- POST /V1/cmsPage → {{"page": {{...}}}}
+- POST /V1/cmsBlock → {{"block": {{...}}}}
+- PUT /V1/orders/{{parent_id}} → {{"entity": {{...}}}}
+- POST /V1/orders → {{"entity": {{...}}}}
+- PUT /V1/customers/me → {{"customer": {{...}}}}
+
+Always consult the schema's `required` field inside the body parameter definition to determine the correct JSON wrapper key.
+
+CRITICAL — searchCriteria is REQUIRED for list endpoints:
+Endpoints like `GET /V1/orders`, `GET /V1/products`, and other list/search endpoints REQUIRE the `searchCriteria` query parameter. Calling these endpoints with no query parameters at all will return HTTP 400 with "searchCriteria is required".
+- Always include at least one `searchCriteria` parameter, even if you do not need any specific filters (see "Getting all items" above).
+
+CRITICAL — Use your judgement when setting the pagnination parameters `searchCriteria[pageSize]`, a small page size may not yield enough results to solve the task, while a large page size may be inefficient. The information you are looking for may not always be on the first response.
+"""
