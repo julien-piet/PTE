@@ -199,27 +199,72 @@ class ReactAgentRunner(BaseAgentRunner):
             _log_dir = Path(self.webarena_output_dir) / str(_task_id_for_log)
             _log_dir.mkdir(parents=True, exist_ok=True)
             self._task_log_fh = open(_log_dir / "agent.log", "w")
-        gitlab_url = getattr(self, "base_url", None) or self.gitlab_base_url
+        # Derive site from task["sites"] first (mirrors planning_agent._run_task pattern),
+        # falling back to runner.server set by the caller.
+        task_sites = task.get("sites") or []
+        site = task_sites[0] if task_sites else getattr(self, "server", "gitlab")
+        site = site.lower()
+
+        base_url = getattr(self, "base_url", None) or self.gitlab_base_url
+
+        # Map site name → env key used by codeact_agent._get_site_urls().
+        _SITE_TO_ENV: dict[str, str] = {
+            "gitlab":         "GITLAB",
+            "shopping":       "SHOPPING",
+            "shopping_admin": "SHOPPING_ADMIN",
+            "reddit":         "REDDIT",
+            "map":            "MAP",
+        }
+        active_env_key = _SITE_TO_ENV.get(site, "GITLAB")
+
+        # Resolve __GITLAB__ placeholder in start_url — use the real gitlab URL
+        # from env when this task is not a gitlab task.
+        gitlab_url = base_url if site == "gitlab" else os.environ.get("GITLAB", base_url)
         start_url = raw_start.replace("__GITLAB__", gitlab_url).strip("/")
+
         token = self.glpat or os.environ.get("GLPAT") or os.environ.get("GITLAB_TOKEN") or _token_from_server_env()
 
-        # Include the GitLab URL in the prompt so history_str picks it up for
-        # _get_site_hints() / _get_api_schema_section() inside step().
+        # Set the active site's env var so codeact_agent._get_api_schema_section()
+        # finds the URL in history_str and loads the right API schemas.
+        os.environ[active_env_key] = base_url
+        os.environ["GITLAB_TOKEN"] = token
+
+        # codeact_agent.py treats '' as matching every page ('' in any_string is True).
+        # Stamp placeholder values for all unused sites to prevent false matches.
+        for _key in ("GITLAB", "REDDIT", "SHOPPING", "SHOPPING_ADMIN", "MAP"):
+            if not os.environ.get(_key):
+                os.environ[_key] = f"http://{_key.lower()}.invalid"
+
+        # Site-aware prompt so history_str contains the real URL and the agent
+        # gets correct variable names / API hints for the active site.
+        _SITE_META: dict[str, tuple[str, str]] = {
+            "gitlab":         ("GitLab", "the GitLab REST API"),
+            "shopping":       ("Shopping", "the Shopping REST API"),
+            "shopping_admin": ("Shopping Admin", "the Shopping Admin REST API"),
+            "reddit":         ("Reddit", "the Reddit API"),
+            "map":            ("Map", "the Map API"),
+        }
+        site_label, api_label = _SITE_META.get(site, ("GitLab", "the GitLab REST API"))
         prompt_parts = [
-            f"GitLab instance: {gitlab_url}",
+            f"{site_label} instance: {base_url}",
             f"Task: {intent}",
-            "You can use <execute_ipython> to call the GitLab REST API or <execute_browse> to navigate the web with a real browser.",
+            f"You can use <execute_ipython> to call {api_label} or <execute_browse> to navigate the web with a real browser.",
             "Pre-defined variables available in every Python block:",
-            "  GITLAB_URL  — base URL of the GitLab instance",
-            "  GITLAB_TOKEN — authenticated personal access token",
-            "  Example: requests.get(f'{GITLAB_URL}/api/v4/projects', headers={'PRIVATE-TOKEN': GITLAB_TOKEN})",
-            "", #EVAL INFORMATION FOR STRING_MATCH
+            f"  {active_env_key}_URL  — base URL of the {site_label} instance",
+        ]
+        if site == "gitlab":
+            prompt_parts += [
+                "  GITLAB_TOKEN — authenticated personal access token",
+                "  Example: requests.get(f'{GITLAB_URL}/api/v4/projects', headers={'PRIVATE-TOKEN': GITLAB_TOKEN})",
+            ]
+        prompt_parts += [
+            "",  # EVAL INFORMATION FOR STRING_MATCH
             "IMPORTANT: When your final answer is the URL of a page you navigated to, or the content "
             "visible on a page, include the URL and the relevant text you see on the page in your answer. "
             "Do not just say 'I have opened the page' — quote the actual page content or URL so the "
             "evaluator can verify you visited the correct destination.",
         ]
-        if start_url and start_url != gitlab_url:
+        if start_url and start_url != base_url:
             prompt_parts.append(f"Start URL: {start_url}")
         if self.webarena_output_dir:
             prompt_parts.append(
@@ -236,21 +281,9 @@ class ReactAgentRunner(BaseAgentRunner):
         prompt = "\n".join(prompt_parts)
 
         self._log(f"\n{'='*70}")
-        self._log(f"[Task] {intent}")
-        if start_url and start_url != gitlab_url:
+        self._log(f"[Task] {intent} [site={site}]")
+        if start_url and start_url != base_url:
             self._log(f"[Start URL] {start_url}")
-        self._log(f"{'='*70}")
-
-        # Expose URL and per-worker token for agent code that reads os.environ directly.
-        os.environ["GITLAB"] = gitlab_url
-        os.environ["GITLAB_TOKEN"] = token
-
-        # codeact_agent.py treats any env var whose value is '' as matching every
-        # page ('' in any_string is True).  Set placeholder values for sites not
-        # in use so EVAL_MODE doesn't emit Reddit/Shopping login steps for GitLab tasks.
-        for _unused_key in ("REDDIT", "SHOPPING", "SHOPPING_ADMIN", "MAP"):
-            if not os.environ.get(_unused_key):
-                os.environ[_unused_key] = f"http://{_unused_key.lower()}.invalid"
 
         self._react_agent.reset()
         self._last_steps = []
@@ -267,7 +300,7 @@ class ReactAgentRunner(BaseAgentRunner):
             try:
                 self._page = await _context.new_page()
                 # Log in before the ReAct loop so all subsequent navigations are authenticated.
-                await self._login_browser(gitlab_url)
+                await self._login_browser(task, base_url)
                 if start_url:
                     try:
                         await self._page.goto(start_url, wait_until="domcontentloaded", timeout=30000)
@@ -323,7 +356,7 @@ class ReactAgentRunner(BaseAgentRunner):
                             self._log(f"  Code:\n{action.code.rstrip()}")
                             try:
                                 output = await asyncio.wait_for(
-                                    loop.run_in_executor(None, self._exec_python, action.code, gitlab_url, token),
+                                    loop.run_in_executor(None, self._exec_python, action.code, gitlab_url, token, f"{active_env_key}_URL", base_url),
                                     timeout=60,
                                 )
                             except asyncio.TimeoutError:
@@ -478,20 +511,52 @@ class ReactAgentRunner(BaseAgentRunner):
     # Helpers
     # ------------------------------------------------------------------
 
-    async def _login_browser(self, gitlab_url: str) -> None:
-        """Authenticate the Playwright session against GitLab before the task loop."""
+    async def _login_browser(self, task: Dict[str, Any], base_url: str) -> None:
+        """Authenticate the Playwright session for the task's site before the task loop.
+
+        Mirrors _login_for_task in run_program_html_benchmark.py but uses async Playwright.
+        """
+        sites = task.get("sites") or []
         try:
-            from api import gitlab_pw
-            username, password = gitlab_pw.get_default_gitlab_credentials()
-        except Exception:
-            username, password = "byteblaze", "hello1234"
-        try:
-            await self._page.goto(f"{gitlab_url}/users/sign_in", wait_until="load", timeout=30000)
-            await self._page.fill("#user_login", username)
-            await self._page.fill("#user_password", password)
-            await self._page.locator('button[type="submit"]').click()
-            await self._page.wait_for_load_state("load", timeout=15000)
-            self._log(f"  ✓ Browser logged in as {username} @ {gitlab_url}")
+            if "gitlab" in sites:
+                from api import gitlab_pw
+                username, password = gitlab_pw.get_default_gitlab_credentials()
+                await self._page.goto(f"{base_url}/users/sign_in", wait_until="load", timeout=30000)
+                await self._page.fill("#user_login", username)
+                await self._page.fill("#user_password", password)
+                await self._page.locator('button[type="submit"]').click()
+                await self._page.wait_for_load_state("load", timeout=15000)
+                self._log(f"  ✓ Browser logged in as {username} @ {base_url}")
+
+            elif "reddit" in sites:
+                from config.init_tokens.refresh_reddit_session import refresh_session
+                phpsessid = refresh_session()
+                await self._page.context.add_cookies([
+                    {"name": "PHPSESSID", "value": phpsessid, "domain": d, "path": "/"}
+                    for d in ("localhost", "127.0.0.1")
+                ])
+                self._log("  ✓ Browser reddit session cookie set")
+
+            elif "shopping_admin" in sites:
+                username = os.environ.get("SHOPPING_ADMIN_USER", "admin")
+                password = os.environ.get("SHOPPING_ADMIN_PASS", "admin1234")
+                await self._page.goto(f"{base_url}/admin", wait_until="load", timeout=30000)
+                await self._page.locator('input[name="login[username]"], input#username').first.fill(username)
+                await self._page.locator('input[name="login[password]"], input#login').first.fill(password)
+                await self._page.locator('button.action-login, button.action-primary, button[type="submit"]').first.click()
+                await self._page.wait_for_load_state("load", timeout=15000)
+                self._log(f"  ✓ Browser logged in as {username} @ {base_url}/admin")
+
+            elif "shopping" in sites:
+                username = os.environ.get("SHOPPING_USER", "emma.lopez@gmail.com")
+                password = os.environ.get("SHOPPING_PASS", "Password.123")
+                await self._page.goto(f"{base_url}/customer/account/login/", wait_until="load", timeout=30000)
+                await self._page.locator("form#login-form input#email").fill(username)
+                await self._page.locator("form#login-form input#pass").first.fill(password)
+                await self._page.locator("form#login-form button#send2, form#login-form button.action.login.primary").first.click()
+                await self._page.wait_for_load_state("load", timeout=15000)
+                self._log(f"  ✓ Browser logged in as {username} @ {base_url}")
+
         except Exception as exc:
             self._log(f"  ⚠️  Browser pre-login failed: {exc}")
 
@@ -690,7 +755,7 @@ class ReactAgentRunner(BaseAgentRunner):
             msg = "\n".join(errors + [f"Error reading page: {exc}"])
             return msg, True, {}, {}
 
-    def _exec_python(self, code: str, gitlab_url: str, token: str) -> str:
+    def _exec_python(self, code: str, gitlab_url: str, token: str, site_url_var: str = "GITLAB_URL", site_url: str = "") -> str:
         """Execute a Python code block; capture and return stdout (thread-safe)."""
         import requests as _requests_lib
         import builtins as _builtins_mod
@@ -728,6 +793,8 @@ class ReactAgentRunner(BaseAgentRunner):
             "GITLAB_URL": gitlab_url,
             "GITLAB_TOKEN": token,
         }
+        if site_url_var and site_url_var != "GITLAB_URL" and site_url:
+            namespace[site_url_var] = site_url
         try:
             exec(compile(code, "<ipython>", "exec"), namespace)  # noqa: S102
             output = buf.getvalue()
