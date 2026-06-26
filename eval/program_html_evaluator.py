@@ -431,6 +431,15 @@ class ProgramHtmlEvaluator:
             sku = match.group(1)
             return self._shopping_get_sku_latest_review_author(sku)
 
+        # func:shopping_get_customer_cart_items('email', 'password')
+        match = re.match(
+            r"func:shopping_get_customer_cart_items\('([^']+)',\s*'([^']+)'\)",
+            locator,
+        )
+        if match:
+            email, password = match.group(1), match.group(2)
+            return self._shopping_get_customer_cart_items(email, password)
+
         raise ValueError(f"Unknown func: pattern in locator: {locator!r}")
 
     def _gitlab_get_project_member_role(self, page: Page, username: str) -> str:
@@ -487,42 +496,76 @@ class ProgramHtmlEvaluator:
 
         return ""
 
-    def _shopping_get_latest_review_for_sku(self, sku: str) -> dict:
-        """
-        Fetch the most recently created review for a product SKU via the
-        Magento REST API.  Returns the review dict, or {} if none found.
-
-        Uses an admin token read from config/.server_env (ADMIN_AUTH_TOKEN),
-        falling back to a fresh token if the env file is absent.
-        """
-        import requests as _requests
+    def _shopping_get_admin_token(self) -> str:
+        """Return a cached or freshly-minted Magento admin token."""
         from pathlib import Path as _Path
 
         shopping_base = self.base_urls.get("__SHOPPING__", DEFAULT_BASE_URLS["__SHOPPING__"])
         token = ""
-
-        # Try reading a cached admin token from .server_env first to avoid
-        # an extra network round-trip on every eval check.
         server_env = _Path(__file__).parent.parent / "config" / ".server_env"
         if server_env.exists():
             for line in server_env.read_text().splitlines():
                 if line.strip().startswith("ADMIN_AUTH_TOKEN="):
                     token = line.strip().split("=", 1)[1].strip()
                     break
-
         if not token:
             from config.init_tokens.refresh_shopping_tokens import refresh_tokens
             token = refresh_tokens(base_url=shopping_base)
+        return token
 
+    def _shopping_get_latest_review_for_sku(self, sku: str) -> dict:
+        """
+        Fetch the most recently created review for a product SKU via the
+        Magento REST API.  Returns the review dict, or {} if none found.
+
+        Checks approved reviews first (product reviews endpoint), then falls
+        back to the admin review search endpoint to catch pending reviews too —
+        agents may submit reviews that land in "Pending" status rather than
+        "Approved", and both represent a successful submission.
+        """
+        import requests as _requests
+
+        shopping_base = self.base_urls.get("__SHOPPING__", DEFAULT_BASE_URLS["__SHOPPING__"])
+        token = self._shopping_get_admin_token()
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # First try the product reviews endpoint (approved reviews only).
         url = f"{shopping_base}/rest/V1/products/{sku}/reviews"
-        resp = _requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
-        if resp.status_code != 200:
+        resp = _requests.get(url, headers=headers, timeout=15)
+        if resp.status_code == 200:
+            reviews = resp.json()
+            if reviews:
+                return max(reviews, key=lambda r: r.get("id", 0))
+
+        # Fall back to admin search to also find pending/unapproved reviews.
+        # Requires knowing the product's entity_id — get it from the product API.
+        prod_resp = _requests.get(
+            f"{shopping_base}/rest/V1/products/{sku}",
+            headers=headers,
+            timeout=15,
+        )
+        if prod_resp.status_code != 200:
             return {}
-        reviews = resp.json()
-        if not reviews:
+        product_id = prod_resp.json().get("id")
+        if not product_id:
             return {}
-        # Most recently created = highest id
-        return max(reviews, key=lambda r: r.get("id", 0))
+
+        search_url = (
+            f"{shopping_base}/rest/V1/reviews"
+            f"?searchCriteria[filter_groups][0][filters][0][field]=entity_pk_value"
+            f"&searchCriteria[filter_groups][0][filters][0][value]={product_id}"
+            f"&searchCriteria[sortOrders][0][field]=id"
+            f"&searchCriteria[sortOrders][0][direction]=DESC"
+            f"&searchCriteria[pageSize]=1"
+        )
+        search_resp = _requests.get(search_url, headers=headers, timeout=15)
+        if search_resp.status_code != 200:
+            return {}
+        data = search_resp.json()
+        items = data.get("items", [])
+        if not items:
+            return {}
+        return items[0]
 
     def _shopping_get_sku_latest_review_rating(self, sku: str) -> str:
         """
@@ -548,6 +591,45 @@ class ProgramHtmlEvaluator:
         """
         review = self._shopping_get_latest_review_for_sku(sku)
         return review.get("nickname", "")
+
+    def _shopping_get_customer_cart_items(self, email: str, password: str) -> str:
+        """
+        Return a newline-joined list of product names currently in the
+        customer's cart, fetched via the Magento REST API.  Returns "" if
+        the cart is empty or authentication fails.
+
+        Avoids browser-session issues by using the REST API directly.
+        Used by: func:shopping_get_customer_cart_items('<email>', '<password>')
+        """
+        import requests as _requests
+
+        shopping_base = self.base_urls.get("__SHOPPING__", DEFAULT_BASE_URLS["__SHOPPING__"])
+
+        # Get a customer token.
+        token_resp = _requests.post(
+            f"{shopping_base}/rest/V1/integration/customer/token",
+            json={"username": email, "password": password},
+            timeout=15,
+        )
+        if token_resp.status_code != 200:
+            return ""
+        token = token_resp.json()
+        if not isinstance(token, str):
+            return ""
+
+        headers = {"Authorization": f"Bearer {token}"}
+        items_resp = _requests.get(
+            f"{shopping_base}/rest/V1/carts/mine/items",
+            headers=headers,
+            timeout=15,
+        )
+        if items_resp.status_code != 200:
+            return ""
+        items = items_resp.json()
+        if not isinstance(items, list):
+            return ""
+        names = [item.get("name", "") for item in items if item.get("name")]
+        return "\n".join(names)
 
     # ------------------------------------------------------------------
     # Content checking

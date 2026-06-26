@@ -59,6 +59,13 @@ if _env_path.exists():
 # Helpers shared by both runners
 # ---------------------------------------------------------------------------
 
+# Process-wide cache for the Postmill PHPSESSID used by eval-side Playwright
+# logins. The eval always logs in as the same user, so one refresh per run is
+# enough — re-logging per task was both slow and a source of session-state
+# divergence with the MCP server's own actions.
+_CACHED_EVAL_PHPSESSID: Optional[str] = None
+
+
 def _resolve_placeholder(url: str) -> str:
     """Replace __PLACEHOLDER__ tokens with real base URLs."""
     for token, base in DEFAULT_BASE_URLS.items():
@@ -161,14 +168,21 @@ def _login_for_task(
         # and set PHPSESSID on BOTH hosts so the cookie covers whichever the
         # eval URL ends up resolving to. Mirrors _make_browser_page in
         # api/servers/reddit.py.
+        # Cache the eval-side PHPSESSID process-wide so we don't re-login per
+        # task. The eval always logs in as the same Postmill user, so the same
+        # session is valid for the lifetime of the test run. Per-task refresh
+        # was both slow (~1s/task of /login overhead) and creating session-state
+        # divergence between the MCP server's actions and the eval's checks.
+        global _CACHED_EVAL_PHPSESSID
         from config.init_tokens.refresh_reddit_session import refresh_session
-        try:
-            phpsessid = refresh_session()
-        except Exception as exc:
-            print(f"   ⚠️  reddit session refresh failed: {exc}")
-            return False
+        if not _CACHED_EVAL_PHPSESSID:
+            try:
+                _CACHED_EVAL_PHPSESSID = refresh_session()
+            except Exception as exc:
+                print(f"   ⚠️  reddit session refresh failed: {exc}")
+                return False
         page.context.add_cookies([
-            {"name": "PHPSESSID", "value": phpsessid, "domain": d, "path": "/"}
+            {"name": "PHPSESSID", "value": _CACHED_EVAL_PHPSESSID, "domain": d, "path": "/"}
             for d in ("localhost", "127.0.0.1")
         ])
         return True
@@ -390,6 +404,44 @@ class BaseAgentRunner:
         # Fallback: full-string comparison (handles short answers)
         return difflib.SequenceMatcher(None, ref_l, answer_l).ratio() >= threshold
 
+    @staticmethod
+    def _strip_markdown(s: str) -> str:
+        """Strip common markdown formatting so eval comparisons aren't brittle
+        to whether the agent wrapped the answer in **bold**, [links](url), code
+        spans, headers, or bullet markers.
+
+        Conservative: keeps the visible text, drops the formatting markers and
+        the URL portion of links. Tables and code-block fences are stripped to
+        their inner content. Trailing/leading whitespace collapsed.
+        """
+        if not isinstance(s, str):
+            return s
+        # Strip fenced code blocks (keep inner content)
+        s = re.sub(r"```[a-zA-Z]*\n?", "", s)
+        s = s.replace("```", "")
+        # Inline code: keep the text, drop the backticks
+        s = re.sub(r"`([^`]*)`", r"\1", s)
+        # Links / images: [text](url) and ![alt](url) → text / alt
+        s = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", s)
+        # Bold / italic markers (**, __, *, _) — drop the marker, keep text
+        s = re.sub(r"\*\*([^*]+)\*\*", r"\1", s)
+        s = re.sub(r"__([^_]+)__", r"\1", s)
+        s = re.sub(r"(?<!\*)\*(?!\*)([^*\n]+)\*(?!\*)", r"\1", s)
+        s = re.sub(r"(?<!_)_(?!_)([^_\n]+)_(?!_)", r"\1", s)
+        # Headings: leading # …
+        s = re.sub(r"^\s*#{1,6}\s+", "", s, flags=re.MULTILINE)
+        # Bullets / numbered list markers at line start
+        s = re.sub(r"^\s*([-*+]|\d+\.)\s+", "", s, flags=re.MULTILINE)
+        # Blockquote markers
+        s = re.sub(r"^\s*>\s?", "", s, flags=re.MULTILINE)
+        # Horizontal rules
+        s = re.sub(r"^\s*[-*_]{3,}\s*$", "", s, flags=re.MULTILINE)
+        # Pipe characters from tables (keep cell text)
+        s = s.replace("|", " ")
+        # Collapse runs of whitespace
+        s = re.sub(r"\s+", " ", s).strip()
+        return s
+
     def _evaluate_string_match(self, task: Dict[str, Any], result: Dict[str, Any]) -> bool:
         answer = result.get("answer", "")
         if not answer:
@@ -400,23 +452,26 @@ class BaseAgentRunner:
         exact_match  = reference_answers.get("exact_match")
         fuzzy_match  = reference_answers.get("fuzzy_match")
 
-        answer_lower = answer.lower()
+        # Strip markdown once — agents often format answers with bold, headings,
+        # bullets, code spans, or links. Eval expectations are plain text.
+        answer_plain = self._strip_markdown(answer)
+        answer_lower = answer_plain.lower()
 
         for item in must_include:
             if isinstance(item, list):
                 # OR group: at least one alternative must appear
-                if not any(str(alt).lower() in answer_lower for alt in item):
+                if not any(self._strip_markdown(str(alt)).lower() in answer_lower for alt in item):
                     return False
-            elif isinstance(item, str) and item.lower() not in answer_lower:
+            elif isinstance(item, str) and self._strip_markdown(item).lower() not in answer_lower:
                 return False
-            elif isinstance(item, (int, float)) and str(item) not in answer:
+            elif isinstance(item, (int, float)) and str(item) not in answer_plain:
                 return False
         for item in must_exclude:
-            if isinstance(item, str) and item.lower() in answer_lower:
+            if isinstance(item, str) and self._strip_markdown(item).lower() in answer_lower:
                 return False
 
         if exact_match is not None:
-            normalize = lambda s: re.sub(r"\s+", " ", s).strip().lower()
+            normalize = lambda s: re.sub(r"\s+", " ", self._strip_markdown(s)).strip().lower()
             if normalize(answer) != normalize(str(exact_match)):
                 return False
 
@@ -427,7 +482,7 @@ class BaseAgentRunner:
                 return True
             items = fuzzy_match if isinstance(fuzzy_match, list) else [fuzzy_match]
             for ref_item in items:
-                if not self._fuzzy_contains(answer, str(ref_item)):
+                if not self._fuzzy_contains(answer_plain, str(ref_item)):
                     return False
 
         return True
@@ -453,9 +508,18 @@ class BaseAgentRunner:
                     }
                 # Build a per-check evaluator that resolves __GITLAB__ to this
                 # worker's URL rather than the module-level default (8023).
+                # __SHOPPING_ADMIN__ also gets the "/admin" suffix appended:
+                # the Luma admin UI lives at <host>:7780/admin/<module>/... ,
+                # not <host>:7780/<module>/... (which hits the storefront 404).
+                # The agent's REST base URL stays bare (port 7780 root) since
+                # Magento REST paths begin with /rest/V1/, not /admin/rest/V1/.
+                _shopping_admin_base = (
+                    _SERVER_URLS["shopping_admin"].rstrip("/") + "/admin"
+                )
                 evaluator = ProgramHtmlEvaluator(base_urls={
                     **DEFAULT_BASE_URLS,
                     "__GITLAB__": self.gitlab_base_url,
+                    "__SHOPPING_ADMIN__": _shopping_admin_base,
                 })
                 eval_result = evaluator.evaluate(task, page, last_url=last_url)
             finally:

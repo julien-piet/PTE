@@ -124,7 +124,7 @@ class ExecutionAgent:
             # [?(@.field*=value)]  fuzzy contains filter — tries exact substring, then
             #                      normalized (no-space), then word-token overlap, then
             #                      difflib similarity. Exact matches always pass first.
-            m = re.match(r'\[\?\(@\.(\w+(?:\.\w+)*)(==|\*=)([^\]]+)\)\]', accessor[pos:])
+            m = re.match(r'\[\?\(@\.(\w+(?:\.\w+)*)\s*(==|\*=)\s*([^\]]+)\)\]', accessor[pos:])
             if m:
                 field_path = m.group(1)
                 operator   = m.group(2)

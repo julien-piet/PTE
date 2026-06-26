@@ -492,13 +492,13 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Jane Smith"
+          "janesmith456@yahoo.com"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Jane Smith"
+      "reference_answer_raw_annotation": "janesmith456@yahoo.com"
     },
     "intent_template_id": 276
   },
@@ -523,14 +523,14 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Sarah Miller",
-          "Michael Nguyen"
+          "helloworld@yahoo.com",
+          "michael.nguyen@yahoo.com"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Adam Garcia, Michael Nguyen, Sarah Miller"
+      "reference_answer_raw_annotation": "helloworld@yahoo.com, michael.nguyen@yahoo.com"
     },
     "intent_template_id": 276
   },
@@ -555,14 +555,14 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Veronica Costello",
-          "Emma Davis"
+          "musiclover99@hotmail.com",
+          "roni_cost@example.com"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Lisa Kim, Lisa Green, Julia Williams, Brian Smith, Alexander Thomas"
+      "reference_answer_raw_annotation": "musiclover99@hotmail.com, roni_cost@example.com"
     },
     "intent_template_id": 276
   },
@@ -587,13 +587,15 @@
       ],
       "reference_answers": {
         "must_include": [
-          "Jane Doe"
+          "adam.garcia@gmail.com",
+          "jason.miller@yahoo.com",
+          "jennifer.white@yahoo.com"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Jane Doe"
+      "reference_answer_raw_annotation": "adam.garcia@gmail.com, jason.miller@yahoo.com, jennifer.white@yahoo.com"
     },
     "intent_template_id": 276
   },
@@ -1755,7 +1757,7 @@
     "geolocation": null,
     "intent_template": "Get the {{attribute}} of the {{status}} order.{{retrieved_data_format_spec}}",
     "instantiation_dict": {
-      "attribute": "customer name",
+      "attribute": "customer email",
       "status": "most recent cancelled"
     },
     "intent": "Get the customer email of the most recent cancelled order.",
@@ -1765,12 +1767,12 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Lily Potter"
+        "exact_match": "harrypotterfan1@gmail.com"
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Lily Potter"
+      "reference_answer_raw_annotation": "harrypotterfan1@gmail.com"
     },
     "intent_template_id": 366
   },
@@ -2443,7 +2445,7 @@
     "geolocation": null,
     "intent_template": "Get the {{attribute}} of the customer who has the most cancellations in the history{{retrieved_data_format_spec}}",
     "instantiation_dict": {
-      "attribute": "name"
+      "attribute": "email"
     },
     "intent": "Get the email of the customer who has the most cancellations in the history",
     "require_reset": false,
@@ -2452,12 +2454,12 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "Samantha Jones"
+        "exact_match": "coolcat321@hotmail.com"
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "Samantha Jones"
+      "reference_answer_raw_annotation": "coolcat321@hotmail.com"
     },
     "intent_template_id": 234
   },
@@ -2549,13 +2551,13 @@
       ],
       "reference_answers": {
         "must_include": [
-          "148"
+          "148.8"
         ]
       },
       "reference_url": "",
       "program_html": [],
       "string_note": "",
-      "reference_answer_raw_annotation": "$148"
+      "reference_answer_raw_annotation": "$148.80"
     },
     "intent_template_id": 234
   },

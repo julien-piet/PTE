@@ -50,18 +50,9 @@ from eval.tests.agent_test_utils import extract_agent_details, task_status
 
 
 @asynccontextmanager
-async def _local_session(shopping_admin_url: str, shopping_url: str):
-    """Stub worker session for a single local Shopping Admin (Luma) instance.
-
-    Both URLs are yielded because the admin Magento token endpoint lives on
-    the storefront URL (port 7770) while the agent talks to the Luma admin
-    panel (port 7780).
-    """
-    yield {
-        "worker_id": "local",
-        "shopping_admin_url": shopping_admin_url,
-        "shopping_url": shopping_url,
-    }
+async def _local_session(shopping_admin_url: str):
+    """Stub worker session for a single local Shopping Admin (Luma) instance."""
+    yield {"worker_id": "local", "shopping_admin_url": shopping_admin_url}
 
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -200,14 +191,13 @@ def test_agent_accomplishes_shopping_admin_tasks(
     tasks = _load_tasks(request.config)
     force_reset = request.config.getoption("--force-reset", default=False)
     multi_docker = request.config.getoption("--multi-docker", default=False)
-    # The agent calls the Magento REST API on port 7770 with an admin Bearer
-    # token. Port 7780 hosts a *separate* Magento backend (Luma admin panel)
-    # whose user database does not grant our token any catalog scope (returns
-    # 401 "Magento_Catalog::products"). The shopping_admin URL is only needed
-    # by the program_html Playwright eval, which resolves __SHOPPING_ADMIN__
-    # via DEFAULT_BASE_URLS independently.
-    base_url = request.config.getoption("--base-url") or _SERVER_URLS["shopping"]
-    shopping_storefront_url = base_url
+    # Port 7780 (Luma admin) is a *separate* Magento instance from the
+    # storefront (7770) with its own catalog database, integration users,
+    # and ACLs. The task data (e.g. product 126 = "Hollister Backyard
+    # Sweatshirt") lives on 7780, so both the agent's REST calls and the
+    # admin Bearer token must come from 7780. The shopping storefront URL
+    # plays no role in shopping_admin tasks.
+    base_url = request.config.getoption("--base-url") or _SERVER_URLS["shopping_admin"]
     output_name = request.config.getoption("--output", default=None)
     if not output_name:
         # Always save logs — auto-generate a timestamped filename when --output
@@ -223,7 +213,7 @@ def test_agent_accomplishes_shopping_admin_tasks(
     single_admin_token: Optional[str] = None
     if not multi_docker:
         print("Refreshing shopping admin auth token...")
-        single_admin_token = _refresh_shopping_admin_tokens(base_url=shopping_storefront_url)
+        single_admin_token = _refresh_shopping_admin_tokens(base_url=base_url)
 
     print(f"\nRunning {len(tasks)} tasks with {n_workers} workers")
 
@@ -238,11 +228,11 @@ def test_agent_accomplishes_shopping_admin_tasks(
             async with sem:
                 try:
                     if multi_docker:
-                        # workers_new only validates the "shopping" service, but
-                        # the orchestrator co-locates Luma Admin on the same
+                        # workers_new._URL_FIELD does not list shopping_admin,
+                        # but the orchestrator co-locates it on the shopping
                         # worker and returns shopping_admin_url in the same
-                        # response dict. Acquire via "shopping" and read both
-                        # URLs out of the worker session.
+                        # response dict. Acquire via "shopping" and pull
+                        # shopping_admin_url back out.
                         worker_ctx = _workers_new.worker_session(
                             str(task["task_id"]),
                             server="shopping",
@@ -250,41 +240,39 @@ def test_agent_accomplishes_shopping_admin_tasks(
                             read_only=task.get("read_only", False),
                         )
                     else:
-                        worker_ctx = _local_session(base_url, shopping_storefront_url)
+                        worker_ctx = _local_session(base_url)
 
                     async with worker_ctx as w:
-                        shopping_url_for_worker = w.get("shopping_url", shopping_storefront_url)
+                        shopping_admin_url_for_worker = w.get("shopping_admin_url", base_url)
 
                         runner = AgentRunner(
                             headless=True,
                             enable_reset=False,
                             force_reset=False,
                         )
-                        # server="shopping" routes the planner's API-filename
-                        # tags (shopping_api_schema.json) to shopping_url,
-                        # where the admin token is authorised. The Playwright
-                        # eval logs into the Luma admin UI on port 7780
-                        # separately, using DEFAULT_BASE_URLS to resolve
-                        # __SHOPPING_ADMIN__.
-                        runner.server = "shopping"
-                        runner.base_url = shopping_url_for_worker
+                        # The agent talks to the Luma admin Magento instance on
+                        # port 7780 (separate catalog DB from the storefront).
+                        # server="shopping_admin" registers cleanly with the
+                        # auth registry; the actual auth header is overridden
+                        # below with the admin Bearer issued by 7780 itself.
+                        runner.server = "shopping_admin"
+                        runner.base_url = shopping_admin_url_for_worker
 
                         await runner._init_agent()
 
                         if runner._agent.execution_agent is not None:
                             if multi_docker:
                                 admin_token = _refresh_shopping_admin_tokens(
-                                    base_url=shopping_url_for_worker
+                                    base_url=shopping_admin_url_for_worker
                                 )
                             else:
                                 admin_token = single_admin_token
 
-                            # The Magento admin token is valid for catalog,
-                            # orders, customers, products, etc. — everything
-                            # the Luma admin tasks need. Wrap it in
-                            # RefreshableAuth so it auto-renews when the JWT
-                            # exp claim is within 5 minutes of expiry.
-                            _base_for_refresh = shopping_url_for_worker
+                            # Token issued by the 7780 instance has full admin
+                            # scope on that instance's catalog/orders/customers
+                            # endpoints. Wrap in RefreshableAuth so it auto-
+                            # renews when the JWT exp claim is within 5 min.
+                            _base_for_refresh = shopping_admin_url_for_worker
                             runner._agent.execution_agent.auth = RefreshableAuth(
                                 initial_token=admin_token,
                                 refresh_fn=lambda: _refresh_shopping_admin_tokens(

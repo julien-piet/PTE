@@ -185,8 +185,9 @@ For Project Templates. Use this json schema to search through available built-in
 """
 
 REDDIT_HINTS = f"""
-When looking up a specific post by title or keyword, use GET /search rather than GET /user_posts.
-/user_posts is paginated and may not return all of a user's posts, so it can miss the target post.
+When a task says "my post" or "my submission" (i.e. a post created by the logged-in user), use GET /user_posts with the known username (MarvelsGrantMan136) to list the user's posts, then select the correct one by matching on title, forum, or vote count as the task specifies. Do NOT use GET /search for "my post" lookups — search returns all users' posts and requires an extra step to filter by author, and may miss the target if the title is not indexed as a keyword match.
+
+When looking up a specific post by title or keyword that is NOT owned by the logged-in user, use GET /search rather than GET /user_posts.
 /search performs a full-text search across all posts and reliably surfaces the relevant result.
 
 GET /search ranks by keyword frequency across title and body, not by relevance or exact match — the first result is not necessarily the best match.
@@ -199,6 +200,23 @@ Reddit URLs encode structured data in their path segments. When a URL is provide
 - Comment URLs follow the pattern /f/<forum>/<post_id>/-/comment/<comment_id> — extract all three identifiers from the path.
 - User profile URLs follow the pattern /u/<username> — extract username from the path.
 Use these extracted values as literal arguments in subsequent steps. Only fall back to a lookup endpoint if the URL is not available or the required identifier cannot be read from the path.
+
+GET /forum_posts returns only post metadata (title, score, author, url) — it does NOT include the post body or description text. The post identifier field in the response is called "id" (not "post_id"). When wiring a post from /forum_posts into a downstream endpoint that requires a post_id parameter, use {{step_N.result.posts[0].id}}. If the task requires reading post content (e.g. "posts that recommend a book", "posts that mention X", "posts whose description contains Y"), you MUST add a follow-up step using GET /post (foreach over the post IDs from /forum_posts) to retrieve the full post body before answering.
+
+Voting on multiple posts ("like/upvote all submissions by user X in forum Y"):
+- Step 1: GET /user_posts?username=X&forum=Y — returns {{posts: [{{id, url, subreddit, ...}}, ...]}} scoped to the given forum. Omit forum= if no forum filter is needed.
+- Step 2: POST /vote_post as a foreach step iterating over {{step_1.result.posts}}.
+  - Set post_url argument: value={{loop_item.url}}, value_type="reference".
+  - Set direction argument: value="upvote", value_type="literal".
+- Do NOT use GET /forum_posts for this pattern — it does not filter by author.
+- Do NOT set post_url to a fixed index like {{step_1.result.posts[0].url}} — that votes only one post.
+
+POST /create_post argument rules (CRITICAL):
+- Always supply forum, title, and body as THREE SEPARATE arguments, each with its own name, value, value_type, and param_in="body". Never pack them into a single wrapper argument.
+- forum: value_type="reference" pointing to the canonical name from /find_forum_by_name (e.g. {{step_1.result.name}}), or value_type="literal" if the exact forum name is already known.
+- title: value_type="literal" with the exact title string from the task. NEVER a reference.
+- body: value_type="literal" with the exact body text from the task. If the task does not specify body text, use an empty string "". NEVER a reference to a prior step's output (do not pull body text from /search, /forum_posts, /post, or any other API response).
+- url (optional): value_type="reference" when re-posting an image — wire to the image URL from a prior GET /post step (e.g. {{step_N.result.link_url}}). Omit entirely for text posts.
 """
 
 SHOPPING_HINTS = f"""

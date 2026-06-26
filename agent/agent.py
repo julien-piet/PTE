@@ -134,7 +134,7 @@ class Agent:
 
         plan_response = await asyncio.wait_for(
             self.planning_agent.plan(prompt),
-            timeout=120,
+            timeout=600,
         )
         self.last_plan_response = plan_response
 

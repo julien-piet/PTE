@@ -20,8 +20,8 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__SHOPPING__/checkout/cart",
-          "locator": "",
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_customer_cart_items('emma.lopez@gmail.com', 'Password.123')",
           "required_contents": {
             "must_include": [
               [
@@ -58,8 +58,8 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__SHOPPING__/checkout/cart",
-          "locator": "",
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_customer_cart_items('emma.lopez@gmail.com', 'Password.123')",
           "required_contents": {
             "must_include": [
               "V8 +Energy, Healthy Energy Drink, Steady Energy from Black and Green Tea, Pomegranate Blueberry, 8 Ounce Can ,Pack of 24"
@@ -92,8 +92,8 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__SHOPPING__/checkout/cart",
-          "locator": "",
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_customer_cart_items('emma.lopez@gmail.com', 'Password.123')",
           "required_contents": {
             "must_include": [
               "Tazrigo 5pcs White Dental Resin Brush Pens Dental Shaping Silicone Tooth Tool"
@@ -126,8 +126,8 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__SHOPPING__/checkout/cart",
-          "locator": "",
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_customer_cart_items('emma.lopez@gmail.com', 'Password.123')",
           "required_contents": {
             "must_include": [
               "VIVIKI Women Glitter Socks Ultrathin Transparent Tulle Lace Socks - No Show Ankle Crew Socks 3 Pack"
@@ -160,8 +160,8 @@
       "reference_url": "",
       "program_html": [
         {
-          "url": "__SHOPPING__/checkout/cart",
-          "locator": "",
+          "url": "__SHOPPING__",
+          "locator": "func:shopping_get_customer_cart_items('emma.lopez@gmail.com', 'Password.123')",
           "required_contents": {
             "must_include": [
               "DP to HDMI Cable 6FT (2 Pack), Fosmon Gold Plated Displayport to HDMI Cable 1080p Full HD for PCs to HDTV, Monitor, Projector with HDMI Port"

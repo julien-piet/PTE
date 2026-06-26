@@ -134,10 +134,15 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
                 return data
             v = data.get("value", "")
             if not isinstance(v, str):
-                raise ValueError(
-                    f"Argument '{data.get('name', '?')}': value_type is 'reference' "
-                    f"but value is {type(v).__name__}, not a string."
-                )
+                # LLM sometimes emits an int step index instead of a reference
+                # string (e.g. 2 instead of "{step_2.result}"). Coerce it rather
+                # than hard-failing so the model gets a retry with corrected data.
+                if isinstance(v, int):
+                    data["value"] = "{step_" + str(v) + ".result}"
+                    v = data["value"]
+                else:
+                    data["value"] = str(v)
+                    v = data["value"]
             # Auto-wrap bare references that are missing braces:
             # "step_1.result[0].id" → "{step_1.result[0].id}"
             if not v.startswith("{") and re.match(r"\w+\.result", v):
@@ -185,8 +190,8 @@ def build_agent_models(allowed_tools: Sequence[str]) -> AgentModelBundle:
                         pos += re.match(r'\.\w+', accessor[pos:]).end()
                     elif accessor[pos:pos + 3] == '[*]':
                         pos += 3
-                    elif re.match(r'\[\?\(@\.\w+(?:\.\w+)*(?:==|\*=)[^\]]*\)\]', accessor[pos:]):
-                        pos += re.match(r'\[\?\(@\.\w+(?:\.\w+)*(?:==|\*=)[^\]]*\)\]', accessor[pos:]).end()
+                    elif re.match(r'\[\?\(@\.\w+(?:\.\w+)*\s*(?:==|\*=)\s*[^\]]*\)\]', accessor[pos:]):
+                        pos += re.match(r'\[\?\(@\.\w+(?:\.\w+)*\s*(?:==|\*=)\s*[^\]]*\)\]', accessor[pos:]).end()
                     elif re.match(r'\[sort_desc:\w+\]', accessor[pos:]):
                         pos += re.match(r'\[sort_desc:\w+\]', accessor[pos:]).end()
                     elif re.match(r'\[:\d+\]', accessor[pos:]):
