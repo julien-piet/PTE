@@ -3,6 +3,38 @@
     "sites": [
       "gitlab"
     ],
+    "task_id": 259,
+    "require_login": true,
+    "storage_state": "./.auth/gitlab_state.json",
+    "start_url": "__GITLAB__",
+    "geolocation": null,
+    "intent_template": "Get me my RSS feed token",
+    "instantiation_dict": {},
+    "intent": "Get me my RSS feed token",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__GITLAB__",
+          "locator": "(async () => { const r = await fetch('/api/v4/user', {credentials: 'include'}); if (!r.ok) return ''; const u = await r.json(); return u.feed_token || ''; })()",
+          "required_contents": {
+            "exact_match": "TMN_bBn9Z48qVbUFZV45"
+          }
+        }
+      ]
+    },
+    "intent_template_id": 312,
+    "read_only": true
+  },
+  {
+    "sites": [
+      "gitlab"
+    ],
     "task_id": 389,
     "require_login": true,
     "storage_state": "./.auth/gitlab_state.json",
@@ -1601,9 +1633,9 @@
     "geolocation": null,
     "intent_template": "{{name}} wants to check my dotfile configurations. Please invite him to the repo as a guest.",
     "instantiation_dict": {
-      "name": "Jakub Klinkovský"
+      "name": "Jakub Klinkovsk\u00fd"
     },
-    "intent": "Jakub Klinkovský wants to check my dotfile configurations. Please invite him to the repo as a guest.",
+    "intent": "Jakub Klinkovsk\u00fd wants to check my dotfile configurations. Please invite him to the repo as a guest.",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -1947,12 +1979,12 @@
     "intent_template": "Follow {{account_list}} on Gitlab",
     "instantiation_dict": {
       "account_list": [
-        "Jakub Klinkovský",
+        "Jakub Klinkovsk\u00fd",
         "Koushik",
         "Vinta Chen"
       ]
     },
-    "intent": "Follow [\"Jakub Klinkovský\", \"Koushik\", \"Vinta Chen\"] on Gitlab",
+    "intent": "Follow [\"Jakub Klinkovsk\u00fd\", \"Koushik\", \"Vinta Chen\"] on Gitlab",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -1991,10 +2023,10 @@
       "account_list": [
         "Jakub K",
         "ghost",
-        "Benoît Blanchon"
+        "Beno\u00eet Blanchon"
       ]
     },
-    "intent": "Follow [\"Jakub K\", \"ghost\", \"Benoît Blanchon\"] on Gitlab",
+    "intent": "Follow [\"Jakub K\", \"ghost\", \"Beno\u00eet Blanchon\"] on Gitlab",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2109,266 +2141,6 @@
   },
   {
     "sites": [
-      "gitlab",
-      "wikipedia"
-    ],
-    "task_id": 556,
-    "require_login": true,
-    "storage_state": "./.auth/gitlab_state.json",
-    "start_url": "__GITLAB__",
-    "geolocation": null,
-    "intent_template": "Create a repo named {{name}} with {{topics}} in a README file",
-    "instantiation_dict": {
-      "name": "nolan_honest_fans",
-      "topics": "movies directed by Christopher Nolan"
-    },
-    "intent": "Create a repository named nolan_honest_fans with a README file containing only Christopher Nolan's theatrically released feature-length films (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
-    "require_reset": false,
-    "eval": {
-      "eval_types": [
-        "program_html"
-      ],
-      "reference_answers": null,
-      "reference_url": "",
-      "program_html": [
-        {
-          "url": "__GITLAB__/byteblaze/nolan_honest_fans/-/raw/main/README.md",
-          "locator": "",
-          "required_contents": {
-            "must_include": [
-              "Following",
-              "Memento",
-              "Insomnia",
-              "Batman Begins",
-              "The Prestige",
-              "The Dark Knight",
-              "Inception",
-              "The Dark Knight Rises",
-              "Interstellar",
-              "Dunkirk",
-              "Tenet",
-              "Oppenheimer"
-            ]
-          }
-        }
-      ]
-    },
-    "intent_template_id": 87,
-    "read_only": false
-  },
-  {
-    "sites": [
-      "gitlab",
-      "wikipedia"
-    ],
-    "task_id": 557,
-    "require_login": true,
-    "storage_state": "./.auth/gitlab_state.json",
-    "start_url": "__GITLAB__",
-    "geolocation": null,
-    "intent_template": "Create a repo named {{name}} with {{topics}} in a README file",
-    "instantiation_dict": {
-      "name": "nolan_old_fans",
-      "topics": "movies directed by Christopher Nolan before 2010"
-    },
-    "intent": "Create a repository named nolan_old_fans with a README file containing only Christopher Nolan's theatrically released feature-length films before 2010 (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
-    "require_reset": false,
-    "eval": {
-      "eval_types": [
-        "program_html"
-      ],
-      "reference_answers": null,
-      "reference_url": "",
-      "program_html": [
-        {
-          "url": "__GITLAB__/byteblaze/nolan_old_fans/-/raw/main/README.md",
-          "locator": "",
-          "required_contents": {
-            "must_include": [
-              "Following",
-              "Memento",
-              "Insomnia",
-              "Batman Begins",
-              "The Prestige",
-              "The Dark Knight"
-            ]
-          }
-        }
-      ]
-    },
-    "intent_template_id": 87,
-    "read_only": false
-  },
-  {
-    "sites": [
-      "gitlab",
-      "wikipedia"
-    ],
-    "task_id": 558,
-    "require_login": true,
-    "storage_state": "./.auth/gitlab_state.json",
-    "start_url": "__GITLAB__",
-    "geolocation": null,
-    "intent_template": "Create a repo named {{name}} with {{topics}} in a README file",
-    "instantiation_dict": {
-      "name": "nolan_young_fans",
-      "topics": "movies directed by Christopher Nolan after 2010"
-    },
-    "intent": "Create a repository named nolan_young_fans with a README file containing only Christopher Nolan's theatrically released feature-length films after 2010 (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
-    "require_reset": false,
-    "eval": {
-      "eval_types": [
-        "program_html"
-      ],
-      "reference_answers": null,
-      "reference_url": "",
-      "program_html": [
-        {
-          "url": "__GITLAB__/byteblaze/nolan_young_fans/-/raw/main/README.md",
-          "locator": "",
-          "required_contents": {
-            "must_include": [
-              "The Dark Knight Rises",
-              "Interstellar",
-              "Dunkirk",
-              "Tenet",
-              "Oppenheimer"
-            ]
-          }
-        }
-      ]
-    },
-    "intent_template_id": 87,
-    "read_only": false
-  },
-  {
-    "sites": [
-      "gitlab",
-      "wikipedia"
-    ],
-    "task_id": 559,
-    "require_login": true,
-    "storage_state": "./.auth/gitlab_state.json",
-    "start_url": "__GITLAB__",
-    "geolocation": null,
-    "intent_template": "Create a repo named {{name}} with {{topics}} in a README file",
-    "instantiation_dict": {
-      "name": "nolan_followers",
-      "topics": "career timeline of Christopher Nolan"
-    },
-    "intent": "Create a repository named nolan_followers with a README file containing career timeline headings of Christopher Nolan in order (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
-    "require_reset": false,
-    "eval": {
-      "eval_types": [
-        "program_html"
-      ],
-      "reference_answers": null,
-      "reference_url": "",
-      "program_html": [
-        {
-          "url": "__GITLAB__/byteblaze/nolan_followers/-/raw/main/README.md",
-          "locator": "",
-          "required_contents": {
-            "must_include": [
-              "Memento",
-              "The Dark Knight",
-              "Inception",
-              "Oppenheimer"
-            ]
-          }
-        }
-      ]
-    },
-    "intent_template_id": 87,
-    "read_only": false
-  },
-  {
-    "sites": [
-      "gitlab",
-      "wikipedia"
-    ],
-    "task_id": 560,
-    "require_login": true,
-    "storage_state": "./.auth/gitlab_state.json",
-    "start_url": "__GITLAB__",
-    "geolocation": null,
-    "intent_template": "Create a repo named {{name}} with {{topics}} in a README file",
-    "instantiation_dict": {
-      "name": "nolan_academy_awards",
-      "topics": "movies that won Academy Awards by Christopher Nolan"
-    },
-    "intent": "Create a repository named nolan_academy_awards with a README file containing movies that won Academy Awards by Christopher Nolan (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
-    "require_reset": false,
-    "eval": {
-      "eval_types": [
-        "program_html"
-      ],
-      "reference_answers": null,
-      "reference_url": "",
-      "program_html": [
-        {
-          "url": "__GITLAB__/byteblaze/nolan_academy_awards/-/raw/main/README.md",
-          "locator": "",
-          "required_contents": {
-            "must_include": [
-              "The Dark Knight",
-              "Inception",
-              "Interstellar",
-              "Dunkirk",
-              "Tenet"
-            ]
-          }
-        }
-      ]
-    },
-    "intent_template_id": 87,
-    "read_only": false
-  },
-  {
-    "sites": [
-      "gitlab",
-      "wikipedia"
-    ],
-    "task_id": 561,
-    "require_login": true,
-    "storage_state": "./.auth/gitlab_state.json",
-    "start_url": "__GITLAB__",
-    "geolocation": null,
-    "intent_template": "Create a repo named {{name}} with {{topics}} in a README file",
-    "instantiation_dict": {
-      "name": "bafta_awards_nolan",
-      "topics": "movies that are nominated BAFTA Awards by Christopher Nolan"
-    },
-    "intent": "Create a repository named bafta_awards_nolan with a README file containing movies that are nominated BAFTA Awards by Christopher Nolan (use the provided wiki site to look up any needed information). Use the Web IDE to create the README. Structure it with the repository name as the main heading and a bulleted list of the film titles. Commit to the default branch.",
-    "require_reset": false,
-    "eval": {
-      "eval_types": [
-        "program_html"
-      ],
-      "reference_answers": null,
-      "reference_url": "",
-      "program_html": [
-        {
-          "url": "__GITLAB__/byteblaze/bafta_awards_nolan/-/raw/main/README.md",
-          "locator": "",
-          "required_contents": {
-            "must_include": [
-              "The Dark Knight",
-              "Inception",
-              "The Dark Knight Rises",
-              "Interstellar",
-              "Dunkirk",
-              "Tenet"
-            ]
-          }
-        }
-      ]
-    },
-    "intent_template_id": 87,
-    "read_only": false
-  },
-  {
-    "sites": [
       "gitlab"
     ],
     "task_id": 567,
@@ -2378,10 +2150,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Jakub Klinkovský and Benoît Blanchon",
+      "collaborator_account_list": "Jakub Klinkovsk\u00fd and Beno\u00eet Blanchon",
       "repo": "gimmiethat.space"
     },
-    "intent": "Invite Jakub Klinkovský and Benoît Blanchon as collaborator(s) to gimmiethat.space repo",
+    "intent": "Invite Jakub Klinkovsk\u00fd and Beno\u00eet Blanchon as collaborator(s) to gimmiethat.space repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2454,10 +2226,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Benoît and Abishek",
+      "collaborator_account_list": "Beno\u00eet and Abishek",
       "repo": "my HTML5 markup extention"
     },
-    "intent": "Invite Benoît and Abishek as collaborator(s) to my HTML5 markup extention repo",
+    "intent": "Invite Beno\u00eet and Abishek as collaborator(s) to my HTML5 markup extention repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
@@ -2492,10 +2264,10 @@
     "geolocation": null,
     "intent_template": "Invite {{collaborator_account_list}} as collaborator to {{repo}} repo",
     "instantiation_dict": {
-      "collaborator_account_list": "Jakub K, Alex Dills, Alex Hutnik and Benoît Blanchon",
+      "collaborator_account_list": "Jakub K, Alex Dills, Alex Hutnik and Beno\u00eet Blanchon",
       "repo": "my time tracking tool project"
     },
-    "intent": "Invite Jakub K, Alex Dills, Alex Hutnik and Benoît Blanchon as collaborator(s) to my time tracking tool project repo",
+    "intent": "Invite Jakub K, Alex Dills, Alex Hutnik and Beno\u00eet Blanchon as collaborator(s) to my time tracking tool project repo",
     "require_reset": false,
     "eval": {
       "eval_types": [
