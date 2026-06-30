@@ -502,7 +502,12 @@ class RssTokenResult:
 
 def get_rss_token(page: Page) -> RssTokenResult:
     """
-    Read the current RSS/feed token from the user's profile page.
+    Read the current RSS/feed token from the personal access tokens page.
+
+    This GitLab version shows the feed token in a "Feed token" section on
+    /-/profile/personal_access_tokens (not on the main profile page). The
+    #feed_token input is masked; the real value lives in the "Copy feed
+    token" button's data-clipboard-text attribute.
 
     Args:
         page: Playwright Page instance (must be logged in)
@@ -510,24 +515,28 @@ def get_rss_token(page: Page) -> RssTokenResult:
     Returns:
         RssTokenResult with the current token value
     """
-    page.goto(PROFILE_URL, wait_until="domcontentloaded", timeout=60000)
+    page.goto(ACCESS_TOKENS_URL, wait_until="domcontentloaded", timeout=60000)
 
     try:
-        page.wait_for_selector("#rss-token", timeout=5000)
-        token = page.input_value("#rss-token")
-        if not token:
-            return RssTokenResult(success=False, error_message="RSS token field empty")
-        return RssTokenResult(success=True, token=token)
+        page.wait_for_selector("#feed_token", timeout=10000)
     except TimeoutError:
-        return RssTokenResult(success=False, error_message="RSS token field not found on profile page")
+        return RssTokenResult(
+            success=False,
+            error_message="Feed token field not found on personal access tokens page",
+        )
+
+    token = page.locator("button[aria-label='Copy feed token']").get_attribute("data-clipboard-text")
+    if not token:
+        return RssTokenResult(success=False, error_message="Feed token value not found")
+    return RssTokenResult(success=True, token=token)
 
 
 def reset_rss_token(page: Page) -> RssTokenResult:
     """
     Reset (regenerate) the RSS/feed token and return the new value.
 
-    Navigates to the profile page, clicks "Reset RSS token", confirms the
-    modal if one appears, then reads the new token value.
+    Navigates to the personal access tokens page, clicks "reset this token"
+    in the Feed token section, confirms the modal, then reads the new value.
 
     Args:
         page: Playwright Page instance (must be logged in)
@@ -535,45 +544,40 @@ def reset_rss_token(page: Page) -> RssTokenResult:
     Returns:
         RssTokenResult with the newly generated token value
     """
-    page.goto(PROFILE_URL, wait_until="domcontentloaded", timeout=60000)
-
-    reset_btn_selector = "a[data-confirm], button[data-confirm]"
-    # More specific: the reset RSS token link/button near the rss-token input
-    rss_reset_selector = "a[href*='reset_rss_token'], button[data-url*='reset_rss_token']"
+    page.goto(ACCESS_TOKENS_URL, wait_until="domcontentloaded", timeout=60000)
 
     try:
-        page.wait_for_selector("#rss-token", timeout=5000)
+        page.wait_for_selector("#feed_token", timeout=10000)
     except TimeoutError:
-        return RssTokenResult(success=False, error_message="RSS token section not found on profile page")
+        return RssTokenResult(
+            success=False,
+            error_message="Feed token field not found on personal access tokens page",
+        )
 
-    # Find the reset button in the RSS token section
-    reset_btn = page.locator(rss_reset_selector)
-    if reset_btn.count() == 0:
-        # Fall back: look for any link/button near the rss-token input
-        reset_btn = page.locator(".rss-feed .btn, .rss-token-reset, [data-testid='reset-rss-token']")
-    if reset_btn.count() == 0:
-        return RssTokenResult(success=False, error_message="Reset RSS token button not found")
+    reset_link = page.locator("a[href*='reset_feed_token']")
+    if reset_link.count() == 0:
+        return RssTokenResult(success=False, error_message="Reset feed token link not found")
 
-    reset_btn.first.click()
+    reset_link.first.click()
 
-    # Handle confirmation dialog (browser native or modal)
+    # GitLab shows a confirmation modal before issuing the PUT request.
     try:
-        page.wait_for_selector(".modal.show, .modal[aria-modal='true']", timeout=2000)
-        confirm_btn = page.locator(".modal .btn-danger, .modal .js-modal-action-primary").first
-        confirm_btn.click()
+        page.wait_for_selector("#confirmationModal___BV_modal_footer_", timeout=3000)
+        page.locator("#confirmationModal___BV_modal_footer_ .js-modal-action-primary").click()
     except TimeoutError:
-        pass  # No modal — browser native confirm was auto-accepted or not present
+        pass  # No modal — request may have gone through directly
 
     page.wait_for_load_state("networkidle", timeout=15000)
 
     try:
-        page.wait_for_selector("#rss-token", timeout=5000)
-        token = page.input_value("#rss-token")
-        if not token:
-            return RssTokenResult(success=False, error_message="RSS token field empty after reset")
-        return RssTokenResult(success=True, token=token)
+        page.wait_for_selector("#feed_token", timeout=5000)
     except TimeoutError:
-        return RssTokenResult(success=False, error_message="RSS token field not found after reset")
+        return RssTokenResult(success=False, error_message="Feed token field not found after reset")
+
+    token = page.locator("button[aria-label='Copy feed token']").get_attribute("data-clipboard-text")
+    if not token:
+        return RssTokenResult(success=False, error_message="Feed token value not found after reset")
+    return RssTokenResult(success=True, token=token)
 
 
 def delete_account(page: Page, password: str) -> DeleteResult:

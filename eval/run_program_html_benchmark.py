@@ -599,6 +599,8 @@ class AgentRunner(BaseAgentRunner):
         init_servers = {server_name: base_url}
         if server_name == "shopping":
             init_servers["shopping_extra"] = _SERVER_URLS["shopping_extra"]
+        if server_name == "gitlab":
+            init_servers["gitlab_extra"] = _SERVER_URLS["gitlab_extra"]
         self._agent.initialize(init_servers)
         print("✓ Agent initialized\n")
 
@@ -646,6 +648,8 @@ class AgentRunner(BaseAgentRunner):
             run_servers["reddit"] = _SERVER_URLS["reddit_extra"]
         if server_name == "shopping":
             run_servers["shopping_extra"] = _SERVER_URLS["shopping_extra"]
+        if server_name == "gitlab":
+            run_servers["gitlab_extra"] = _SERVER_URLS["gitlab_extra"]
         result = await self._agent.run_task(prompt, servers=run_servers)
         agent_result = {
             "success": True,

@@ -9,6 +9,7 @@
 import asyncio
 import json
 import os
+import socket
 import subprocess
 import time
 from contextlib import asynccontextmanager
@@ -25,6 +26,23 @@ def _server() -> str:
         raise RuntimeError("REMOTE_HOST not set — add it to config/.env (e.g. annabella@red5k.cs.berkeley.edu)")
     return host
 
+
+def _is_local() -> bool:
+    """True if REMOTE_HOST (if set) resolves to this machine, so the ssh hop
+    can be skipped and the orchestrator invoked directly."""
+    host = os.environ.get("REMOTE_HOST")
+    if not host:
+        return True
+    target = host.split("@", 1)[-1].split(".")[0]
+    return target == socket.gethostname().split(".")[0]
+
+
+def _orch_argv(*args: str) -> list:
+    """Build the subprocess argv for an orchestrator command, prefixing with
+    ssh only when REMOTE_HOST points at a different machine."""
+    cmd = ["python3", ORCH, *args]
+    return cmd if _is_local() else ["ssh", _server(), *cmd]
+
 # Maps server name → the URL field returned by the orchestrator's acquire command.
 _URL_FIELD = {
     "gitlab":         "gitlab_url",
@@ -36,7 +54,7 @@ _URL_FIELD = {
 
 def num_workers() -> int:
     result = subprocess.run(
-        ["ssh", _server(), f"python3 {ORCH} num_workers"],
+        _orch_argv("num_workers"),
         text=True,
         capture_output=True,
     )
@@ -50,7 +68,7 @@ def num_workers() -> int:
 
 def acquire_worker(task_id: str) -> dict:
     result = subprocess.run(
-        ["ssh", _server(), f"python3 {ORCH} acquire --task-id {task_id}"],
+        _orch_argv("acquire", "--task-id", str(task_id)),
         text=True,
         capture_output=True,
     )
@@ -84,15 +102,15 @@ def release_worker(
                        passes --server so only that service is restarted instead of the
                        full worker stack.
     """
-    cmd = f"python3 {ORCH} release --worker-id {worker_id}"
+    args = ["release", "--worker-id", str(worker_id)]
     if force_restart is not None:
         if not force_restart:
-            cmd += " --read-only"
+            args.append("--read-only")
     elif read_only:
-        cmd += " --read-only"
+        args.append("--read-only")
     elif server is not None:
-        cmd += f" --server {server}"
-    subprocess.run(["ssh", _server(), cmd], check=False)
+        args += ["--server", server]
+    subprocess.run(_orch_argv(*args), check=False)
 
 def wait_for_server(url: str, timeout: int = 120, interval: int = 5) -> None:
     """Poll server URL until HTTP 200 or timeout."""

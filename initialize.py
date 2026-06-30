@@ -22,6 +22,7 @@ Usage:
 import argparse
 import os
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -39,6 +40,16 @@ GITLAB_EXTRA_SCRIPT   = PROJECT_ROOT / "api" / "servers" / "gitlab_extra.py"
 load_dotenv(PROJECT_ROOT / "config" / ".env")
 
 _procs: list = []
+
+
+# ── Locality detection ───────────────────────────────────────────────────────
+
+def _is_local(server: str) -> bool:
+    """True if `server` (USER@HOST) resolves to this machine, so the SSH
+    port-forwarding tunnels are unnecessary — the services already bind
+    these ports locally."""
+    target = server.split("@", 1)[-1].split(".")[0]
+    return target == socket.gethostname().split(".")[0]
 
 
 # ── Shutdown ─────────────────────────────────────────────────────────────────
@@ -208,8 +219,11 @@ def main():
     print("  PTE Environment Initialization")
     print("=" * 50 + "\n")
 
-    # 1. Port forwarding
-    start_port_forwarding(args.server)
+    # 1. Port forwarding (skip entirely when already running on the target server)
+    if _is_local(args.server):
+        print(f"Server {args.server!r} is this machine — skipping SSH port forwarding.\n")
+    else:
+        start_port_forwarding(args.server)
 
     # 2. Shopping Extra API
     if not args.no_shopping_extra:
