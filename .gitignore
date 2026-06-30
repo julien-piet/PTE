@@ -228,3 +228,6 @@ notebooks/*.DS_Store
 #logs
 logs/
 eval/tests/logs/
+
+
+.claude/
