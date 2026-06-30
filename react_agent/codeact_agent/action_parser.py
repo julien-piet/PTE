@@ -75,7 +75,7 @@ class InterleavingResponseParser(ResponseParser):
 
     def parse_response(self, response) -> str:
         if isinstance(response, str): action = response
-        else: action = response.choices[0].message.content
+        else: action = response.choices[0].message.content or ''
         for lang in ['bash', 'ipython', 'browse']:
             if f'<execute_{lang}>' in action and f'</execute_{lang}>' not in action:
                 action += f'</execute_{lang}>'

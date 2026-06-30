@@ -2384,7 +2384,7 @@
       "category": "must-have product in my life",
       "price": "$30"
     },
-    "intent": "Create a post in the most appropriate forum. Title it \"must-have product in my life recommendations\" and in post details ask \"I need recommendations for must-have product in my life within a budget of $30 please\"",
+    "intent": "Create a post in the most appropriate forum. Title it \"Must have product at last for ever recommendations\" and in post details ask \"I need recommendations for Must have product at last for ever within a budget of $30 please\"",
     "require_reset": false,
     "eval": {
       "eval_types": [

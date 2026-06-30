@@ -26675,7 +26675,7 @@
           {
             "name": "body",
             "in": "body",
-            "required": false,
+            "required": true,
             "schema": {
               "type": "object",
               "properties": {

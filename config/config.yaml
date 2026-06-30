@@ -4,16 +4,13 @@ mcp_env_path: config/.mcpenv
 shared_env_path: config/.sharedenv
 server_env_path: config/.server_env
 
-agent_llm_provider: google-gla
+agent_llm_provider: google
 agent_llm_model: gemini-3.5-flash
 # agent_llm_provider: anthropic
 # agent_llm_model: claude-sonnet-4-6
 # agent_llm_model: claude-opus-4-6
 # agent_llm_provider: openai
 # agent_llm_model: gpt-4.1
-
-# agent_llm_provider: google
-# agent_llm_model: gemini-2.5-flash
 
 llm_access_retry: 3
 
@@ -34,32 +31,14 @@ llm_providers:
     temp: 0.0
 
  anthropic:
-  - model: claude-3-7-sonnet-20250219
-    temp: 0.0
-
-  - model: claude-opus-4-1-20250805
-    temp: 0.0
-
-  - model: claude-sonnet-4-0
-    temp: 0.0
-
-  - model: claude-sonnet-3-7
+  - model: claude-sonnet-4-6
     temp: 0.0
 
   - model: claude-opus-4-6
     temp: 0.0
 
-  - model: claude-sonnet-4-6
-    temp: 0.0
-
  google:
   - model: gemini-3.5-flash
-    temp: 0.0
-  - model: gemini-3-flash-preview
-    temp: 0.0
-  - model: gemini-1.5-flash
-    temp: 0.0
-  - model: gemini-1.5-pro
-    temp: 0.0
+    temp: 1.0
 
 

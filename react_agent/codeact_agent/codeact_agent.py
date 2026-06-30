@@ -125,24 +125,40 @@ class _ConfigLLM:
         'google-gla': 'gemini',
     }
 
-    def __init__(self, provider: str, model: str):
+    def __init__(self, provider: str, model: str, temperature: float = 0.0):
         prefix = self._PROVIDER_PREFIX.get(provider.lower())
         self.model = f'{prefix}/{model}' if prefix else model
         self.total_cost: float = 0.0
+        self.temperature = temperature
 
-    def completion(self, messages, stop=None, temperature=0.0, **kwargs):
+    def completion(self, messages, stop=None, temperature=None, **kwargs):
+        import time
+        if temperature is None:
+            temperature = self.temperature
         import litellm
+        n_msgs = len(messages)
+        n_chars = sum(len(m.get("content") or "") for m in messages)
+        print(f"  [LLM] model={self.model} | {n_msgs} messages | ~{n_chars} chars input")
+        t0 = time.monotonic()
         response = litellm.completion(
             model=self.model,
             messages=messages,
             stop=stop,
             temperature=temperature,
+            request_timeout=150,  # hard network deadline so the thread itself exits, freeing executor slots
             **kwargs,
         )
+        elapsed = time.monotonic() - t0
+        step_cost = 0.0
         try:
-            self.total_cost += litellm.completion_cost(completion_response=response)
+            step_cost = litellm.completion_cost(completion_response=response)
+            self.total_cost += step_cost
         except Exception:
             pass
+        usage = getattr(response, "usage", None)
+        in_tok = getattr(usage, "prompt_tokens", "?")
+        out_tok = getattr(usage, "completion_tokens", "?")
+        print(f"  [LLM] done in {elapsed:.1f}s | tokens in={in_tok} out={out_tok} | step=${step_cost:.4f} | total=${self.total_cost:.4f}")
         return response
 
 
@@ -154,11 +170,18 @@ def _llm_from_config():
         config.load_all_env()
         provider = config._data.get('agent_llm_provider', '')
         model = config._data.get('agent_llm_model', '')
-        if provider and model:
-            return _ConfigLLM(provider, model)
+        if not (provider and model):
+            return None
+        entries = config._data.get('llm_providers', {}).get(provider.lower(), [])
+        match = next((e for e in entries if e.get('model') == model), None)
+        if match is None:
+            raise ValueError(
+                f"Model '{model}' not found under llm_providers.{provider} in config.yaml. "
+                f"Add an entry with a 'temp' field."
+            )
+        return _ConfigLLM(provider, model, temperature=float(match['temp']))
     except Exception:
-        pass
-    return None
+        raise
 
 # --- API schema loading (mirrors planning_agent.py pattern) ---
 
@@ -255,7 +278,12 @@ if not USE_NAV and USE_CONCISE_ANSWER:
     EVAL_MODE = True  # disabled NAV actions and only return concise answer, for webarena and miniwob benchmarks\
 else:
     EVAL_MODE = False
-EVAL_MODE = True
+# Force off: EVAL_MODE=True emits 3 hardcoded BrowseInteractiveAction warmup steps at the
+# start of every task (goto login page, fill credentials, goto start URL) using element BIDs
+# from the original WebArena benchmark HTML that don't exist in our setup.  The runner
+# already handles login before the ReAct loop, so these steps accomplish nothing and just
+# consume 3 of the max_iterations budget.
+EVAL_MODE = False
 PROMPT_CACHE = True
 
 GITLAB_URL = os.environ.get('GITLAB', '')
@@ -507,11 +535,9 @@ class CodeActAgent(Agent):
             if type(prev_action).__name__ == 'BrowseInteractiveAction':
                 last_action = prev_action
                 last_obs = obs
-                # Removing the first action is for webarena only
-                if i != 1 and i != 2 and i != 3:
-                    prev_actions.append(prev_action.browser_actions)
+                prev_actions.append(prev_action.browser_actions)
                 if type(last_obs).__name__ == 'BrowserOutputObservation':
-                    if last_obs.error and i > 3:
+                    if last_obs.error:
                         # add error recovery prompt prefix
                         error_prefix = get_error_prefix(last_obs.last_browser_action)
                         self.error_accumulator += 1
@@ -535,11 +561,6 @@ class CodeActAgent(Agent):
                 browse_prompt = get_browse_prompt(
                     error_prefix, cur_axtree_txt, prev_action_str
                 )
-            if i == 3:
-                browse_prompt = get_browse_prompt('', cur_axtree_txt, '')
-                continue
-            if i == 1 or i == 2:
-                continue
             if prev_action is not None:
                 message = get_action_message(prev_action)
                 if message:
@@ -733,7 +754,6 @@ class CodeActAgent(Agent):
                     '</execute_bash>',
                     '</execute_browse>',
                 ],
-                temperature=0.0,
             )
             state.num_of_chars += sum(
                 len(message['content']) for message in messages
