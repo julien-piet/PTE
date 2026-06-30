@@ -5,6 +5,8 @@ Initialize the PTE test environment.
 Starts:
   - SSH port forwarding to the remote worker machine
   - Shopping Extra API server on port 7790
+  - Reddit Extra API server on port 7791
+  - GitLab Extra API server on port 7792
 
 Then health-checks all configured servers and waits.
 Ctrl-C shuts everything down cleanly.
@@ -32,6 +34,7 @@ PORT_FORWARD_SINGLE = PROJECT_ROOT / "eval" / "docker" / "port_forwarding" / "po
 PORT_FORWARD_MULTI  = PROJECT_ROOT / "eval" / "docker" / "port_forwarding" / "port_forwarding_new.sh"
 SHOPPING_EXTRA_SCRIPT = PROJECT_ROOT / "api" / "servers" / "shopping_extra.py"
 REDDIT_EXTRA_SCRIPT   = PROJECT_ROOT / "api" / "servers" / "reddit.py"
+GITLAB_EXTRA_SCRIPT   = PROJECT_ROOT / "api" / "servers" / "gitlab_extra.py"
 
 load_dotenv(PROJECT_ROOT / "config" / ".env")
 
@@ -144,6 +147,24 @@ def start_reddit_extra() -> None:
         sys.exit(1)
 
 
+def start_gitlab_extra() -> None:
+    if not GITLAB_EXTRA_SCRIPT.exists():
+        print(f"✗ GitLab extra script not found: {GITLAB_EXTRA_SCRIPT}", file=sys.stderr)
+        sys.exit(1)
+    print("Starting GitLab Extra API on port 7792...")
+    proc = subprocess.Popen(
+        [sys.executable, str(GITLAB_EXTRA_SCRIPT)],
+        cwd=str(PROJECT_ROOT),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    _procs.append(proc)
+    time.sleep(1)
+    if proc.poll() is not None:
+        print("✗ GitLab Extra API failed to start", file=sys.stderr)
+        sys.exit(1)
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
@@ -166,6 +187,12 @@ def main():
         action="store_true",
         default=False,
         help="Skip the Reddit Extra API server (e.g. for non-Reddit runs).",
+    )
+    parser.add_argument(
+        "--no-gitlab-extra",
+        action="store_true",
+        default=False,
+        help="Skip the GitLab Extra API server (e.g. for non-GitLab runs).",
     )
     args = parser.parse_args()
 
@@ -192,7 +219,11 @@ def main():
     if not args.no_reddit_extra:
         start_reddit_extra()
 
-    # 4. Health checks
+    # 4. GitLab Extra API
+    if not args.no_gitlab_extra:
+        start_gitlab_extra()
+
+    # 5. Health checks
     sys.path.insert(0, str(PROJECT_ROOT))
     from config.servers import SERVER_URLS
 
@@ -206,6 +237,8 @@ def main():
         checks.append(("http://127.0.0.1:7790/docs", "Shopping Extra"))
     if not args.no_reddit_extra:
         checks.append(("http://127.0.0.1:7791/docs", "Reddit Extra"))
+    if not args.no_gitlab_extra:
+        checks.append(("http://127.0.0.1:7792/docs", "GitLab Extra"))
 
     all_ok = all(_wait_for_http(url, label) for url, label in checks)
 
@@ -215,7 +248,7 @@ def main():
     else:
         print("⚠ Some services did not respond — tests may fail.\n")
 
-    # 4. Stay alive, watch for unexpected crashes
+    # 6. Stay alive, watch for unexpected crashes
     while True:
         time.sleep(2)
         for proc in _procs:

@@ -4,10 +4,10 @@ mcp_env_path: config/.mcpenv
 shared_env_path: config/.sharedenv
 server_env_path: config/.server_env
 
-agent_llm_provider: google
-agent_llm_model: gemini-3.5-flash
-# agent_llm_provider: anthropic
-# agent_llm_model: claude-sonnet-4-6
+# agent_llm_provider: google
+# agent_llm_model: gemini-3.5-flash
+agent_llm_provider: anthropic
+agent_llm_model: claude-sonnet-4-6
 # agent_llm_model: claude-opus-4-6
 # agent_llm_provider: openai
 # agent_llm_model: gpt-4.1

@@ -289,6 +289,9 @@ class AuthRegistry:
         # Reddit Extra — no auth required (handles auth internally via Playwright)
         registry.register("reddit_extra", StaticAuth({}))
 
+        # GitLab Extra — no auth required (handles login internally via Playwright)
+        registry.register("gitlab_extra", StaticAuth({}))
+
         # Reddit — session fetched fresh at runtime by run_tasks_batch_new and injected
         # via StaticAuth per task. Register a placeholder unconditionally so
         # agent.initialize() passes without needing REDDIT_PHPSESSID in .server_env.

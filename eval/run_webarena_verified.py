@@ -8,7 +8,7 @@ Each completed task produces:
 
 Usage:
     # Run all GitLab tasks (single worker)
-    python eval/run_webarena_verified.py --site gitlab --output-dir wa_output
+    python3 eval/run_webarena_verified.py --site gitlab --output-dir wa_output
 
     # Run specific task IDs
     python eval/run_webarena_verified.py --task-ids 44 108 --output-dir wa_output
@@ -150,7 +150,7 @@ def _load_tasks(
             print(f"ERROR: No tasks found for task IDs {task_ids}")
             sys.exit(1)
     elif site:
-        tasks = [t for t in tasks if site in (t.get("sites") or [])]
+        tasks = [t for t in tasks if (t.get("sites") or []) == [site]]
         if not tasks:
             print(f"ERROR: No tasks found for site '{site}'")
             sys.exit(1)
@@ -379,7 +379,7 @@ async def main() -> None:
                 task_cost = getattr(llm, "total_cost", None)
                 costs = [task_cost] if task_cost is not None else []
 
-        correct = passed and not error
+        correct = passed and not error and eval_source != "wa_only"
         outcome = "PASS" if correct else ("ERROR" if error else "FAIL")
         entry = {
             "task_id": task_id,

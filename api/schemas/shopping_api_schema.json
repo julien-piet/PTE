@@ -2453,7 +2453,7 @@
                 "tags": [
                     "customerCustomerRepositoryV1"
                 ],
-                "description": "Create or update a customer.",
+                "description": "Update an existing customer. The {customerId} path parameter must be the numeric integer customer ID (e.g. 27).",
                 "operationId": "PutV1CustomersCustomerId",
                 "consumes": [
                     "application/json",
@@ -2467,8 +2467,9 @@
                     {
                         "name": "customerId",
                         "in": "path",
-                        "type": "string",
-                        "required": true
+                        "type": "integer",
+                        "required": true,
+                        "description": "The numeric integer ID of the customer to update (e.g. 27). Must equal the id field inside the customer body object."
                     },
                     {
                         "name": "PutV1CustomersCustomerIdBody",
@@ -10491,7 +10492,7 @@
                 "tags": [
                     "quoteCartItemRepositoryV1"
                 ],
-                "description": "Add/update the specified cart item.",
+                "description": "Add/update the specified cart item. Products with required custom options (is_require=true) return HTTP 400 if product_option is omitted.",
                 "operationId": "PostV1CartsQuoteIdItems",
                 "consumes": [
                     "application/json",
@@ -10517,14 +10518,16 @@
                             ],
                             "properties": {
                                 "cartItem": {
-                                    "$ref": "#/definitions/quote-data-cart-item-interface"
+                                    "$ref": "#/definitions/quote-data-cart-item-interface",
+                                    "description": "The cart item object. Must contain at minimum: sku, qty, and quote_id (matching the path parameter)."
                                 }
                             },
                             "type": "object",
                             "xml": {
                                 "name": "request"
                             }
-                        }
+                        },
+                        "description": "Request body MUST be a JSON object with a top-level \"cartItem\" key wrapping all cart item fields. Sending cart item fields at the top level (without the \"cartItem\" wrapper) returns HTTP 400 \"%fieldName\" is required. Example minimal body: {\"cartItem\": {\"sku\": \"PRODUCT-SKU\", \"qty\": 1, \"quote_id\": \"<quoteId>\"}}"
                     }
                 ],
                 "responses": {
@@ -23843,7 +23846,7 @@
                 },
                 "street": {
                     "type": "array",
-                    "description": "Street",
+                    "description": "Street lines as an array of strings (e.g. [\"123 Main St\"]). Must be an array even for a single line \u2014 passing a plain string causes HTTP 400.",
                     "items": {
                         "type": "string"
                     }
@@ -26852,7 +26855,7 @@
         },
         "quote-data-product-option-interface": {
             "type": "object",
-            "description": "Product option interface",
+            "description": "Product option container. Required when a product has required custom options. All option types (custom, configurable, bundle) are set via extension_attributes.",
             "properties": {
                 "extension_attributes": {
                     "$ref": "#/definitions/quote-data-product-option-extension-interface"
@@ -26861,13 +26864,14 @@
         },
         "quote-data-product-option-extension-interface": {
             "type": "object",
-            "description": "ExtensionInterface class for @see \\Magento\\Quote\\Api\\Data\\ProductOptionInterface",
+            "description": "Extension attributes holding product option data. Use custom_options for products with custom options (radio/dropdown/text/checkbox types). Use configurable_item_options for configurable products (size, color attribute choices). Use bundle_options for bundle products.",
             "properties": {
                 "custom_options": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/catalog-data-custom-option-interface"
-                    }
+                    },
+                    "description": "Custom option selections. Required when product has custom options with is_require=true. Each entry maps option_id (from GET /V1/products/{sku}/options) to option_value (the option_type_id as a string for radio/dropdown, or the literal text/date value)."
                 },
                 "downloadable_option": {
                     "$ref": "#/definitions/downloadable-data-downloadable-option-interface"
@@ -26876,7 +26880,8 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/bundle-data-bundle-option-interface"
-                    }
+                    },
+                    "description": "Bundle product option selections. Each entry specifies option_id, option_qty, and option_selections (list of selection ids)."
                 },
                 "grouped_options": {
                     "type": "array",
@@ -26888,21 +26893,22 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/configurable-product-data-configurable-item-option-value-interface"
-                    }
+                    },
+                    "description": "Configurable product attribute selections (e.g., size, color). Each entry maps option_id (attribute id string) to option_value (attribute option value id integer)."
                 }
             }
         },
         "catalog-data-custom-option-interface": {
             "type": "object",
-            "description": "Interface CustomOptionInterface",
+            "description": "A single custom option selection. Use GET /V1/products/{sku}/options to get option_id and valid option_type_id values for the product.",
             "properties": {
                 "option_id": {
                     "type": "string",
-                    "description": "Option id"
+                    "description": "The option id from GET /V1/products/{sku}/options response (field: option_id)."
                 },
                 "option_value": {
                     "type": "string",
-                    "description": "Option value"
+                    "description": "For radio/dropdown/checkbox options: the option_type_id of the selected value (as a string). For field/area/date options: the literal string value entered by the user."
                 },
                 "extension_attributes": {
                     "$ref": "#/definitions/catalog-data-custom-option-extension-interface"
@@ -27054,7 +27060,7 @@
                 },
                 "street": {
                     "type": "array",
-                    "description": "Street",
+                    "description": "Street lines as an array of strings (e.g. [\"123 Main St\"]). Must be an array even for a single line \u2014 passing a plain string causes HTTP 400.",
                     "items": {
                         "type": "string"
                     }
@@ -28890,7 +28896,7 @@
                 },
                 "street": {
                     "type": "array",
-                    "description": "Array of any street values. Otherwise, null.",
+                    "description": "Street lines as an array of strings (e.g. [\"123 Main St\"]). Must be an array even for a single line \u2014 passing a plain string causes HTTP 400.",
                     "items": {
                         "type": "string"
                     }
@@ -33548,11 +33554,11 @@
                 },
                 "percent": {
                     "type": "integer",
-                    "description": "Review vote in percent. Must equal value * 20 (1→20, 2→40, 3→60, 4→80, 5→100)."
+                    "description": "Review vote in percent. Must equal value * 20 (1\u219220, 2\u219240, 3\u219260, 4\u219280, 5\u2192100)."
                 },
                 "value": {
                     "type": "integer",
-                    "description": "Star rating, integer 1–5."
+                    "description": "Star rating, integer 1\u20135."
                 }
             },
             "required": [
