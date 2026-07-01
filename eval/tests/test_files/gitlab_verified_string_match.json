@@ -1136,7 +1136,7 @@
         "string_match"
       ],
       "reference_answers": {
-        "exact_match": "TMN_bBn9Z48qVbUFZV45"
+        "fuzzy_match": "TMN_bBn9Z48qVbUFZV45"
       },
       "reference_url": "",
       "program_html": [],

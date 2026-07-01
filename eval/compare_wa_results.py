@@ -8,6 +8,8 @@ Usage:
         --output-dir wa_react_web_api_output \\
         --config /path/to/config.example.json
 
+    python eval/compare_wa_results.py --output-dir wa_gitlab_claude_output --config ../webarena-verified/examples/configs/config.example.json
+    
     # Run WA eval on just 2 re-run tasks, then combine with ALL existing results:
     python eval/compare_wa_results.py \\
         --output-dir wa_react_web_api_output \\
@@ -243,7 +245,7 @@ def main() -> None:
             print(f"ERROR: invalid --task-ids value: {args.task_ids}")
             sys.exit(1)
 
-    wa_dir = Path(args.wa_dir) if args.wa_dir else (_PROJECT_ROOT.parent.parent / "webarena-verified")
+    wa_dir = Path(args.wa_dir) if args.wa_dir else (_PROJECT_ROOT.parent / "webarena-verified")
 
     if not args.skip_eval:
         if not args.config:
