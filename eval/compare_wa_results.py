@@ -8,6 +8,8 @@ Usage:
         --output-dir wa_react_web_api_output \\
         --config /path/to/config.example.json
 
+    python eval/compare_wa_results.py --output-dir wa_gitlab_claude_output --config ../webarena-verified/examples/configs/config.example.json
+    
     # Run WA eval on just 2 re-run tasks, then combine with ALL existing results:
     python eval/compare_wa_results.py \\
         --output-dir wa_react_web_api_output \\
@@ -34,17 +36,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).parent.parent
-_PTE_TEST_FILES = [
+_GITLAB_PTE_TEST_FILES = [
     "gitlab_verified_string_match.json",
     "gitlab_verified_program_html.json",
 ]
+_SHOPPING_PTE_TEST_FILES = [
+    "shopping_verified_string_match.json",
+    "shopping_verified_program_html.json",
+]
 
 
-def _load_gitlab_pte_ids() -> set[int]:
-    """Return the 185 task_ids that have PTE counterparts in the two gitlab verified files."""
+def _load_pte_ids(filenames: list[str]) -> set[int]:
     test_files = Path(__file__).parent / "tests" / "test_files"
     ids: set[int] = set()
-    for fname in _PTE_TEST_FILES:
+    for fname in filenames:
         fp = test_files / fname
         if fp.exists():
             for t in json.loads(fp.read_text()):
@@ -52,6 +57,16 @@ def _load_gitlab_pte_ids() -> set[int]:
         else:
             print(f"⚠️  PTE file not found: {fp}")
     return ids
+
+
+def _load_gitlab_pte_ids() -> set[int]:
+    """Return the 185 task_ids that have PTE counterparts in the gitlab verified files."""
+    return _load_pte_ids(_GITLAB_PTE_TEST_FILES)
+
+
+def _load_shopping_pte_ids() -> set[int]:
+    """Return the 181 task_ids that have PTE counterparts in the shopping verified files."""
+    return _load_pte_ids(_SHOPPING_PTE_TEST_FILES)
 
 
 def _run_wa_eval(
@@ -120,6 +135,57 @@ def _read_wa_results(output_dir: Path) -> dict[int, bool]:
     return wa
 
 
+def _write_subset_results(
+    output_dir: Path,
+    all_rows: list[dict],
+    run_ids: set[int],
+    pte_ids: set[int],
+    label: str,
+    out_filename: str,
+    description: str,
+) -> None:
+    """Filter all_rows to pte_ids, write a JSON results file, and print a summary."""
+    subset_rows = [r for r in all_rows if r["task_id"] in pte_ids]
+    for missing_id in sorted(pte_ids - run_ids):
+        subset_rows.append({"task_id": missing_id, "pte": False, "wa": False, "combined": False})
+    subset_rows.sort(key=lambda r: r["task_id"])
+
+    total = len(subset_rows)
+    pte_n  = sum(1 for r in subset_rows if r["pte"])
+    wa_n   = sum(1 for r in subset_rows if r["wa"])
+    comb_n = sum(1 for r in subset_rows if r["combined"])
+
+    def _pct(n: int) -> str:
+        return f"{100 * n / total:.0f}%" if total else "n/a"
+
+    out_file = output_dir / out_filename
+    out_file.write_text(json.dumps({
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "description": description,
+        "summary": {
+            "total": total,
+            "run": len(run_ids & pte_ids),
+            "not_run": len(pte_ids - run_ids),
+            "pte_passed": pte_n,
+            "wa_passed": wa_n,
+            "combined_passed": comb_n,
+        },
+        "results": subset_rows,
+    }, indent=2))
+    print(f"  Written: {out_file}")
+
+    print(f"\n{'='*52}")
+    print(f"{label}  ({total} PTE tasks)")
+    print(f"{'='*52}")
+    print(f"  Total PTE tasks : {total}")
+    print(f"  Run             : {len(run_ids & pte_ids)}")
+    print(f"  Not run yet     : {len(pte_ids - run_ids)}")
+    print(f"  PTE passed      : {pte_n} / {total}  ({_pct(pte_n)})")
+    print(f"  WA  passed      : {wa_n} / {total}  ({_pct(wa_n)})")
+    print(f"  Combined PASS   : {comb_n} / {total}  ({_pct(comb_n)})  ← OR of both evals")
+    print()
+
+
 def _print_table(rows: list[dict]) -> None:
     """Print a formatted table of per-task results."""
     col_w = {"task_id": 8, "pte": 6, "wa": 6, "combined": 8}
@@ -179,7 +245,7 @@ def main() -> None:
             print(f"ERROR: invalid --task-ids value: {args.task_ids}")
             sys.exit(1)
 
-    wa_dir = Path(args.wa_dir) if args.wa_dir else (_PROJECT_ROOT.parent.parent / "webarena-verified")
+    wa_dir = Path(args.wa_dir) if args.wa_dir else (_PROJECT_ROOT.parent / "webarena-verified")
 
     if not args.skip_eval:
         if not args.config:
@@ -257,50 +323,22 @@ def main() -> None:
     out_file.write_text(json.dumps(combined_data, indent=2))
     print(f"  Written: {out_file}")
 
-    # --- Write gitlab_only_results.json (185 PTE tasks only) ---
-    pte_ids = _load_gitlab_pte_ids()
-    gitlab_rows = [r for r in rows if r["task_id"] in pte_ids]
-    # Include PTE tasks that weren't run yet (show as all-FAIL)
     run_ids = {r["task_id"] for r in rows}
-    for missing_id in sorted(pte_ids - run_ids):
-        gitlab_rows.append({"task_id": missing_id, "pte": False, "wa": False, "combined": False})
-    gitlab_rows.sort(key=lambda r: r["task_id"])
 
-    g_total = len(gitlab_rows)
-    g_pte_n = sum(1 for r in gitlab_rows if r["pte"])
-    g_wa_n  = sum(1 for r in gitlab_rows if r["wa"])
-    g_comb_n = sum(1 for r in gitlab_rows if r["combined"])
-
-    def _pct_g(n: int) -> str:
-        return f"{100 * n / g_total:.0f}%" if g_total else "n/a"
-
-    gitlab_out = output_dir / "gitlab_only_results.json"
-    gitlab_data = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "description": "Results filtered to the 185 GitLab tasks with PTE counterparts",
-        "summary": {
-            "total": g_total,
-            "run": len(run_ids & pte_ids),
-            "not_run": len(pte_ids - run_ids),
-            "pte_passed": g_pte_n,
-            "wa_passed": g_wa_n,
-            "combined_passed": g_comb_n,
-        },
-        "results": gitlab_rows,
-    }
-    gitlab_out.write_text(json.dumps(gitlab_data, indent=2))
-    print(f"  Written: {gitlab_out}")
-
-    print(f"\n{'='*52}")
-    print("GitLab-only Summary  (185 PTE tasks)")
-    print(f"{'='*52}")
-    print(f"  Total PTE tasks : {g_total}")
-    print(f"  Run             : {gitlab_data['summary']['run']}")
-    print(f"  Not run yet     : {gitlab_data['summary']['not_run']}")
-    print(f"  PTE passed      : {g_pte_n} / {g_total}  ({_pct_g(g_pte_n)})")
-    print(f"  WA  passed      : {g_wa_n} / {g_total}  ({_pct_g(g_wa_n)})")
-    print(f"  Combined PASS   : {g_comb_n} / {g_total}  ({_pct_g(g_comb_n)})  ← OR of both evals")
-    print()
+    _write_subset_results(
+        output_dir, rows, run_ids,
+        pte_ids=_load_gitlab_pte_ids(),
+        label="GitLab-only Summary",
+        out_filename="gitlab_only_results.json",
+        description="Results filtered to the 185 GitLab tasks with PTE counterparts",
+    )
+    _write_subset_results(
+        output_dir, rows, run_ids,
+        pte_ids=_load_shopping_pte_ids(),
+        label="Shopping-only Summary",
+        out_filename="shopping_only_results.json",
+        description="Results filtered to the 181 shopping tasks with PTE counterparts",
+    )
 
 
 if __name__ == "__main__":

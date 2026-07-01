@@ -44,6 +44,11 @@ SERVERS: dict = {
         "label":        "Reddit Extra",
         "username_env": None,
     },
+    "gitlab_extra": {
+        "url":          "http://127.0.0.1:7792",
+        "label":        "GitLab Extra",
+        "username_env": None,
+    },
 }
 
 # Convenience alias used throughout the codebase

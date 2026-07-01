@@ -874,7 +874,7 @@ class PlanningAgent:
             f"Available API endpoints:\n{endpoint_details}\n\n"
             + wiring_section
             + user_context_section
-            # + api_hints_section + "\n"
+            + api_hints_section + "\n"
             + "Build a complete step-by-step execution plan for the task above.\n"
             "The validated chain above is the binding backbone of the plan — implement each chain endpoint "
             "in order. Do NOT substitute a different endpoint for any chain step, and do NOT skip chain steps. "
@@ -1274,6 +1274,11 @@ class PlanningAgent:
                     selected_files.append("shopping_extra_api_schema.json")
                 if "shopping_extra_api_schema.json" in selected_files and "shopping_api_schema.json" not in selected_files:
                     selected_files.append("shopping_api_schema.json")
+                # Always include gitlab_extra when gitlab is selected
+                if "gitlab_api_schema.json" in selected_files and "gitlab_extra_api_schema.json" not in selected_files:
+                    selected_files.append("gitlab_extra_api_schema.json")
+                if "gitlab_extra_api_schema.json" in selected_files and "gitlab_api_schema.json" not in selected_files:
+                    selected_files.append("gitlab_api_schema.json")
                 self._record("selected_api_files", selected_files)
                 if not selected_files:
                     raise ValueError(f"No suitable API file found for task: {task!r}")

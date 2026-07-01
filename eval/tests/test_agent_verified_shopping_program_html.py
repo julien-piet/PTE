@@ -152,7 +152,7 @@ def _flush_result(out_path: Path, entry: dict) -> None:
 # Task loading
 # ---------------------------------------------------------------------------
 
-TASK_FILE = Path(__file__).parent / "test_files" / "shopping_program_html_verified.json"
+TASK_FILE = Path(__file__).parent / "test_files" / "shopping_verified_program_html.json"
 
 
 def _load_tasks(config=None) -> List[Dict[str, Any]]:

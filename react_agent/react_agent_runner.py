@@ -102,6 +102,7 @@ class ReactAgentRunner(BaseAgentRunner):
         self._last_steps: list = []
         self._page = None  # active Playwright page, set during _run_task
         self._task_log_fh = None  # per-task log file handle, opened in _run_task
+        self._shopping_admin_username_token: Optional[str] = None  # pre-fetched per shopping task
         self.webarena_output_dir = webarena_output_dir
         self._wa_task_type: Dict[int, str] = {}
         if webarena_output_dir:
@@ -257,6 +258,11 @@ class ReactAgentRunner(BaseAgentRunner):
                 "  GITLAB_TOKEN — authenticated personal access token",
                 "  Example: requests.get(f'{GITLAB_URL}/api/v4/projects', headers={'PRIVATE-TOKEN': GITLAB_TOKEN})",
             ]
+        elif site == "shopping":
+            prompt_parts += [
+                "  SHOPPING_ADMIN_USERNAME_TOKEN — Magento admin API token, use as: headers={'Authorization': f'Bearer {SHOPPING_ADMIN_USERNAME_TOKEN}'}",
+                f"  Example: requests.get(f'{{SHOPPING_URL}}/rest/V1/products', headers={{'Authorization': f'Bearer {{SHOPPING_ADMIN_USERNAME_TOKEN}}'}})",
+            ]
         prompt_parts += [
             "",  # EVAL INFORMATION FOR STRING_MATCH
             "IMPORTANT: When your final answer is the URL of a page you navigated to, or the content "
@@ -299,6 +305,12 @@ class ReactAgentRunner(BaseAgentRunner):
                 await _context.tracing.start(screenshots=False, snapshots=True)
             try:
                 self._page = await _context.new_page()
+                # Pre-fetch Magento admin token for shopping tasks so it's available
+                # in every Python block without the agent needing to guess credentials.
+                if site == "shopping":
+                    self._shopping_admin_username_token = await self._fetch_shopping_admin_username_token(base_url)
+                else:
+                    self._shopping_admin_username_token = None
                 # Log in before the ReAct loop so all subsequent navigations are authenticated.
                 await self._login_browser(task, base_url)
                 if start_url:
@@ -510,6 +522,25 @@ class ReactAgentRunner(BaseAgentRunner):
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    async def _fetch_shopping_admin_username_token(self, base_url: str) -> Optional[str]:
+        """Obtain a Magento admin token via the REST API so the agent never has to guess credentials."""
+        import aiohttp
+        username = os.environ.get("SHOPPING_ADMIN_USER", "admin")
+        password = os.environ.get("SHOPPING_ADMIN_PASS", "admin1234")
+        url = f"{base_url}/rest/V1/integration/admin/token"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json={"username": username, "password": password}, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                    if resp.status == 200:
+                        token = await resp.json()
+                        self._log(f"  ✓ Shopping admin API token obtained for {username}")
+                        return token
+                    else:
+                        self._log(f"  ⚠️  Failed to obtain shopping admin token: HTTP {resp.status}")
+        except Exception as exc:
+            self._log(f"  ⚠️  Shopping admin token fetch failed: {exc}")
+        return None
 
     async def _login_browser(self, task: Dict[str, Any], base_url: str) -> None:
         """Authenticate the Playwright session for the task's site before the task loop.
@@ -795,6 +826,8 @@ class ReactAgentRunner(BaseAgentRunner):
         }
         if site_url_var and site_url_var != "GITLAB_URL" and site_url:
             namespace[site_url_var] = site_url
+        if self._shopping_admin_username_token:
+            namespace["SHOPPING_ADMIN_USERNAME_TOKEN"] = self._shopping_admin_username_token
         try:
             exec(compile(code, "<ipython>", "exec"), namespace)  # noqa: S102
             output = buf.getvalue()
