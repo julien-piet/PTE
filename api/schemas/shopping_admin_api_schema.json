@@ -650,6 +650,14 @@
             "description": "Bulk operation item repository interface. An bulk is a group of queue messages. An bulk operation item is a queue message."
         },
         {
+            "name": "divanteReviewApiGetProductReviewsV1",
+            "description": "Retrieve product reviews by sku Used fully qualified namespaces in annotations for proper work of WebApi request parser"
+        },
+        {
+            "name": "divanteReviewApiReviewRepositoryV1",
+            "description": "In Magento 2 Repository considered as an implementation of Facade pattern which provides a simplified interface to a larger body of code responsible for Domain Entity management The main intention is to make API more readable and reduce dependencies of business logic code on the inner workings of a module, since most code uses the facade, thus allowing more flexibility in developing the system Along with this such approach helps to segregate two responsibilities: 1. Repository now could be considered as an API - Interface for usage (calling) in the business logic 2. Separate class-commands to which Repository proxies initial call (like, Get Save GetList Delete) could be    considered as SPI - Interfaces that you should extend and implement to customize current behaviour Used fully qualified namespaces in annotations for proper work of WebApi request parser"
+        },
+        {
             "name": "payPalBraintreeAuthV1",
             "description": "Interface AuthInterface"
         }
@@ -24154,6 +24162,359 @@
                 }
             }
         },
+        "/V1/products/{sku}/reviews": {
+            "get": {
+                "tags": [
+                    "divanteReviewApiGetProductReviewsV1"
+                ],
+                "description": "Get product reviews.",
+                "operationId": "GetV1ProductsSkuReviews",
+                "consumes": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "parameters": [
+                    {
+                        "name": "sku",
+                        "in": "path",
+                        "type": "string",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 Success.",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/divante-review-api-data-review-interface"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "401 Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    }
+                }
+            }
+        },
+        "/V1/reviews/{reviewId}": {
+            "get": {
+                "tags": [
+                    "divanteReviewApiReviewRepositoryV1"
+                ],
+                "description": "Get review by id.",
+                "operationId": "GetV1ReviewsReviewId",
+                "consumes": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "parameters": [
+                    {
+                        "name": "reviewId",
+                        "in": "path",
+                        "type": "integer",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 Success.",
+                        "schema": {
+                            "$ref": "#/definitions/divante-review-api-data-review-interface"
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "401": {
+                        "description": "401 Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "divanteReviewApiReviewRepositoryV1"
+                ],
+                "description": "Delete Review by Id",
+                "operationId": "DeleteV1ReviewsReviewId",
+                "consumes": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "parameters": [
+                    {
+                        "name": "reviewId",
+                        "in": "path",
+                        "type": "integer",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "400 Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "401": {
+                        "description": "401 Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    }
+                }
+            }
+        },
+        "/V1/reviews/{id}": {
+            "put": {
+                "tags": [
+                    "divanteReviewApiReviewRepositoryV1"
+                ],
+                "description": "Save review.",
+                "operationId": "PutV1ReviewsId",
+                "consumes": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "PutV1ReviewsIdBody",
+                        "in": "body",
+                        "schema": {
+                            "required": [
+                                "review"
+                            ],
+                            "properties": {
+                                "review": {
+                                    "$ref": "#/definitions/divante-review-api-data-review-interface"
+                                }
+                            },
+                            "type": "object",
+                            "xml": {
+                                "name": "request"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 Success.",
+                        "schema": {
+                            "$ref": "#/definitions/divante-review-api-data-review-interface"
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "401": {
+                        "description": "401 Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    }
+                }
+            }
+        },
+        "/V1/reviews": {
+            "post": {
+                "tags": [
+                    "divanteReviewApiReviewRepositoryV1"
+                ],
+                "description": "Save review.",
+                "operationId": "PostV1Reviews",
+                "consumes": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "parameters": [
+                    {
+                        "name": "PostV1ReviewsBody",
+                        "in": "body",
+                        "schema": {
+                            "required": [
+                                "review"
+                            ],
+                            "properties": {
+                                "review": {
+                                    "$ref": "#/definitions/divante-review-api-data-review-interface"
+                                }
+                            },
+                            "type": "object",
+                            "xml": {
+                                "name": "request"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 Success.",
+                        "schema": {
+                            "$ref": "#/definitions/divante-review-api-data-review-interface"
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "401": {
+                        "description": "401 Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "divanteReviewApiReviewRepositoryV1"
+                ],
+                "description": "Lists the review items that match specified search criteria.",
+                "operationId": "GetV1Reviews",
+                "consumes": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml"
+                ],
+                "parameters": [
+                    {
+                        "name": "searchCriteria[filterGroups][0][filters][0][field]",
+                        "in": "query",
+                        "type": "string",
+                        "description": "Field"
+                    },
+                    {
+                        "name": "searchCriteria[filterGroups][0][filters][0][value]",
+                        "in": "query",
+                        "type": "string",
+                        "description": "Value"
+                    },
+                    {
+                        "name": "searchCriteria[filterGroups][0][filters][0][conditionType]",
+                        "in": "query",
+                        "type": "string",
+                        "description": "Condition type"
+                    },
+                    {
+                        "name": "searchCriteria[sortOrders][0][field]",
+                        "in": "query",
+                        "type": "string",
+                        "description": "Sorting field."
+                    },
+                    {
+                        "name": "searchCriteria[sortOrders][0][direction]",
+                        "in": "query",
+                        "type": "string",
+                        "description": "Sorting direction."
+                    },
+                    {
+                        "name": "searchCriteria[pageSize]",
+                        "in": "query",
+                        "type": "integer",
+                        "description": "Page size."
+                    },
+                    {
+                        "name": "searchCriteria[currentPage]",
+                        "in": "query",
+                        "type": "integer",
+                        "description": "Current page."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 Success.",
+                        "schema": {
+                            "$ref": "#/definitions/divante-review-api-data-review-search-result-interface"
+                        }
+                    },
+                    "401": {
+                        "description": "401 Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/error-response"
+                        }
+                    }
+                }
+            }
+        },
         "/V1/applepay/auth": {
             "get": {
                 "tags": [
@@ -34876,6 +35237,142 @@
                     "description": "List of operations.",
                     "items": {
                         "$ref": "#/definitions/asynchronous-operations-data-operation-interface"
+                    }
+                },
+                "search_criteria": {
+                    "$ref": "#/definitions/framework-search-criteria-interface"
+                },
+                "total_count": {
+                    "type": "integer",
+                    "description": "Total count."
+                }
+            },
+            "required": [
+                "items",
+                "search_criteria",
+                "total_count"
+            ]
+        },
+        "divante-review-api-data-review-interface": {
+            "type": "object",
+            "description": "Represents a Review object Used fully qualified namespaces in annotations for proper work of WebApi request parser",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "Review id"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Review title"
+                },
+                "detail": {
+                    "type": "string",
+                    "description": "Review detail."
+                },
+                "nickname": {
+                    "type": "string",
+                    "description": "Author nickname."
+                },
+                "customer_id": {
+                    "type": "integer",
+                    "description": "Customer id."
+                },
+                "ratings": {
+                    "type": "array",
+                    "description": "Review ratings.",
+                    "items": {
+                        "$ref": "#/definitions/divante-review-api-data-rating-vote-interface"
+                    }
+                },
+                "review_entity": {
+                    "type": "string",
+                    "description": "Review entity type."
+                },
+                "review_type": {
+                    "type": "integer",
+                    "description": "Reviewer type. Possible values: 1 - Customer, 2 - Guest, 3 - Administrator."
+                },
+                "review_status": {
+                    "type": "integer",
+                    "description": "Review status. Possible values: 1 - Approved, 2 - Pending, 3 - Not Approved."
+                },
+                "created_at": {
+                    "type": "string",
+                    "description": "Posted date"
+                },
+                "entity_pk_value": {
+                    "type": "integer",
+                    "description": "Entity ID"
+                },
+                "store_id": {
+                    "type": "integer",
+                    "description": "Store id in which review was added"
+                },
+                "stores": {
+                    "type": "array",
+                    "description": "Stores in which review is visible",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "required": [
+                "id",
+                "title",
+                "detail",
+                "nickname",
+                "ratings",
+                "review_entity",
+                "review_type",
+                "review_status",
+                "created_at",
+                "entity_pk_value",
+                "store_id",
+                "stores"
+            ]
+        },
+        "divante-review-api-data-rating-vote-interface": {
+            "type": "object",
+            "description": "Represents a ReviewVote object Used fully qualified namespaces in annotations for proper work of WebApi request parser",
+            "properties": {
+                "vote_id": {
+                    "type": "integer",
+                    "description": "Rating vote id."
+                },
+                "rating_id": {
+                    "type": "integer",
+                    "description": "Rating id"
+                },
+                "rating_name": {
+                    "type": "string",
+                    "description": "Rating code."
+                },
+                "percent": {
+                    "type": "integer",
+                    "description": "Review Vote in percent"
+                },
+                "value": {
+                    "type": "integer",
+                    "description": "Rating value."
+                }
+            },
+            "required": [
+                "vote_id",
+                "rating_id",
+                "rating_name",
+                "percent",
+                "value"
+            ]
+        },
+        "divante-review-api-data-review-search-result-interface": {
+            "type": "object",
+            "description": "Search results of Repository::getList method Used fully qualified namespaces in annotations for proper work of WebApi request parser",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "description": "Attributes list.",
+                    "items": {
+                        "$ref": "#/definitions/divante-review-api-data-review-interface"
                     }
                 },
                 "search_criteria": {
